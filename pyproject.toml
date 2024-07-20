@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crackernut"
+description = "A library for crackernut device."
+dynamic = ["version"]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.26.0",
+    "pandas>=2.2.2"
+]
+
+readme = "README.md"
+authors = [
+    { name = "Dingzb", email = "dzb9898@qq.com" }
+]
+maintainers = [
+    { name = "Dingzb", email = "dzb9898@qq.com" }
+]
+
+[project.optional-dependencies]
+
+test = [
+    'pytest'
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "crackernut.__version__" }
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "test"
+]
