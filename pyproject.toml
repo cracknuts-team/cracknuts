@@ -26,6 +26,10 @@ test = [
     'pytest'
 ]
 
+marimo = [
+    'marimo'
+]
+
 [tool.setuptools.dynamic]
 version = { attr = "crackernut.__version__" }
 
