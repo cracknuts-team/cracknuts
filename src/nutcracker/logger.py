@@ -73,4 +73,4 @@ def get_logger(name: str | type | object | ModuleType, level: Optional[int] = No
 
 
 def default_logger() -> logging.Logger:
-    return get_logger("crackernut")
+    return get_logger("nutcracker")
