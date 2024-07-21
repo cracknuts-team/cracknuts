@@ -19,3 +19,9 @@ def test_multiple_echo():
     print('====', basic_device.echo('11223344'))
     print('++++', basic_device.echo('556677'))
     basic_device.disconnect()
+
+
+def test_scrat_analog_gain():
+    basic_device = BasicCracker(server_address=('127.0.0.1', 12345))
+    basic_device.connect()
+    basic_device.scrat_analog_voltage(1, 12)

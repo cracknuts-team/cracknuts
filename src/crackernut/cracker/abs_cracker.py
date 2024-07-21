@@ -1,5 +1,6 @@
 import socket
 import struct
+import typing
 from abc import ABC
 
 from crackernut import logger
@@ -67,39 +68,50 @@ class Commands:
 
 
 class AbsCracker(ABC):
-    """Solution
-    Solution
+    """Cracker
+    Cracker
     """
 
     def __init__(self, server_address):
         """
-        :param server_address: Solution device address (ip, port)
+        :param server_address: Cracker device address (ip, port)
         """
         self._logger = logger.get_logger(self)
         self._server_address = server_address
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(5)
+        self._connection_status = False
 
     def connect(self):
         """
-        Connect to solution device.
-        :return: Solution self.
+        Connect to Cracker device.
+        :return: Cracker self.
         """
-        self._socket.connect(self._server_address)
+        try:
+            self._socket.connect(self._server_address)
+            self._connection_status = True
+        except socket.error as e:
+            self._logger.error('Connection failed: %s', e)
+            self._connection_status = False
         return self
 
     def disconnect(self):
         """
-        Disconnect solution device.
-        :return: Solution self.
+        Disconnect Cracker device.
+        :return: Cracker self.
         """
-        self._socket.close()
+        try:
+            self._socket.close()
+        except socket.error as e:
+            self._logger.error('Disconnection failed: %s', e)
+        finally:
+            self._connection_status = False
         return self
 
     def reconnect(self):
         """
-        Reconnect to solution device.
-        :return: Solution self.
+        Reconnect to Cracker device.
+        :return: Cracker self.
         """
         self.disconnect()
         self.connect()
@@ -109,50 +121,44 @@ class AbsCracker(ABC):
         Get connection status.
         :return: True or False
         """
-        try:
-            result = self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE)
-            self.connect()
-            result = self._socket.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE)
-            if result == 0:
-                return True
-            else:
-                return False
-        except socket.error as e:
-            self._logger.error(
-                "Get error on check status from %s: %s", self._server_address, e
-            )
-            return False
+        return self._connection_status
 
-    def send_and_receive(self, message):
+    def send_and_receive(self, message) -> None | bytes:
         """
         Send message to socket
         :param message:
         :return:
         """
-        # if not self.get_connection_status():
-        #     self.connect()
-        self._logger.debug("Send message to %s: %s", self._server_address, message)
-        self._socket.sendall(message)
-        resp_header = self._socket.recv(protocol.RESP_HEADER_SIZE)
-        # todo need todo unpack by protocol module
-        magic, version, direction, status, length = struct.unpack(
-            protocol.RESP_HEADER_FORMAT, resp_header
-        )
-        self._logger.debug(
-            "Receive header from %s: %s",
-            self._server_address,
-            (magic, version, direction, status, length),
-        )
+        try:
+            if not self.get_connection_status():
+                self.connect()
+            self._logger.debug("Send message to %s: %s", self._server_address, message)
+            self._socket.sendall(message)
+            resp_header = self._socket.recv(protocol.RESP_HEADER_SIZE)
 
-        if length == 0:
+            magic, version, direction, status, length = struct.unpack(
+                protocol.RESP_HEADER_FORMAT, resp_header
+            )
+            self._logger.debug(
+                "Receive header from %s: %s",
+                self._server_address,
+                (magic, version, direction, status, length),
+            )
+
+            if length == 0:
+                return None
+            resp_payload = self._socket.recv(length)
+            self._logger.debug(
+                "Receive payload from %s: %s", self._server_address, resp_payload
+            )
+            return resp_payload
+        except socket.error as e:
+            self._logger.error('Send message failed: %s', e)
             return None
-        resp_payload = self._socket.recv(length)
-        self._logger.debug(
-            "Receive payload from %s: %s", self._server_address, resp_payload
-        )
-        return resp_payload
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None):
+        if isinstance(payload, str):
+            payload = bytes.fromhex(payload)
         return self.send_and_receive(protocol.build_send_message(command, payload))
 
     def echo(self, payload: str) -> str:
@@ -160,7 +166,9 @@ class AbsCracker(ABC):
         length <= 1024
         """
         self._socket.sendall(payload.encode('ascii'))
-        return self._socket.recv(1024).decode('ascii')
+        res = self._socket.recv(1024).decode('ascii')
+        self._logger.debug(f'Get response: {res}')
+        return res
 
     def echo_hex(self, payload: str) -> str:
         """
@@ -168,10 +176,27 @@ class AbsCracker(ABC):
         """
         payload = bytes.fromhex(payload)
         self._socket.sendall(payload)
-        return self._socket.recv(1024).hex()
+        res = self._socket.recv(1024).hex()
+        self._logger.debug(f'Get response: {res}')
+        return res
 
     def get_id(self) -> str:
         ...
 
     def get_name(self) -> str:
+        ...
+
+    def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
+        ...
+
+    def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
+        ...
+
+    def scrat_analog_voltage(self, channel: int, voltage: int):
+        ...
+
+    def scrat_analog_bias_voltage(self, channel: int, voltage: int):
+        ...
+
+    def scrat_analog_gain(self):
         ...

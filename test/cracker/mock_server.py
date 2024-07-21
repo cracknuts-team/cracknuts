@@ -52,6 +52,7 @@ def start_server():
         conn, addr = server_socket.accept()
         print(f"Connected by {addr}")
         handle_message(conn)
+        print(f"Disconnected by {addr}")
 
 
 if __name__ == "__main__":

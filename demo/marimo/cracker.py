@@ -21,15 +21,20 @@ def __(set_connnection_status):
     from crackernut.cracker.basic_cracker import BasicCracker
 
 
-    def connect(v):
+    def connect(addr):
         global basic_cracker
-        basic_cracker = BasicCracker(('127.0.0.1', 12345))
+        ip, port = addr.split(':')
+        basic_cracker = BasicCracker((ip, int(port)))
         basic_cracker.connect()
         set_connnection_status('已连接')
 
+    def disconnect(v):
+        if basic_cracker:
+            basic_cracker.disconnect()
+            set_connnection_status('未连接')
 
     basic_cracker = None
-    return BasicCracker, basic_cracker, connect
+    return BasicCracker, basic_cracker, connect, disconnect
 
 
 @app.cell
@@ -37,17 +42,19 @@ def __(basic_cracker):
     def echo(message):
         # basic_cracker = BasicCracker(('127.0.0.1', 12345))
         # basic_cracker.connect()
-        return basic_cracker.echo(message)
+        if message:
+            return basic_cracker.echo(message)
 
     # echo(text_echo_req.value)
     return echo,
 
 
 @app.cell
-def __(connect, echo, mo):
-    text_ip = mo.ui.text('192.168.0.10')
+def __(connect, disconnect, echo, mo):
+    text_ip = mo.ui.text('127.0.0.1:12345')
 
-    button_connect = mo.ui.button(label='连接', on_change=connect)
+    button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value))
+    button_disconnect = mo.ui.button(label='断开连接', on_change=disconnect)
 
     ### for test
     text_echo_req = mo.ui.text(label='请求')
@@ -65,6 +72,7 @@ def __(connect, echo, mo):
     switch_connection = mo.ui.switch()
     return (
         button_connect,
+        button_disconnect,
         button_run,
         button_send_echo_message,
         button_test,
@@ -89,6 +97,7 @@ def __(get_connnection_status):
 @app.cell
 def __(
     button_connect,
+    button_disconnect,
     button_run,
     button_send_echo_message,
     button_test,
@@ -110,6 +119,7 @@ def __(
                 {text_ip}
             </label>
             {button_connect}
+            {button_disconnect}
             <span>{get_connnection_status()}</span>
             <span>{get_cracker_id()}</span>
             <span>{get_cracker_name()}</span>

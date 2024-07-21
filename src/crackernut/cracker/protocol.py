@@ -42,10 +42,7 @@ def version():
     return __version__
 
 
-def _build_message(direction: bytes, command: int, payload: bytes | str = None):
-    if isinstance(payload, str):
-        payload = bytes.fromhex(payload)
-
+def _build_message(direction: bytes, command: int, payload: bytes = None):
     content = struct.pack(REQ_HEADER_FORMAT, MAGIC_STR, int(__version__.split('.')[0]), direction, command, 0,
                           0 if payload is None else len(payload))
     if payload is not None:
@@ -54,9 +51,9 @@ def _build_message(direction: bytes, command: int, payload: bytes | str = None):
     return content
 
 
-def build_send_message(command: int, payload: bytes | str = None):
+def build_send_message(command: int, payload: bytes = None):
     return _build_message(DIRECTION_SEND, command, payload)
 
 
-def build_response_message(status: int, payload: bytes | str = None):
+def build_response_message(status: int, payload: bytes = None):
     return _build_message(DIRECTION_RESPONSE, status, payload)
