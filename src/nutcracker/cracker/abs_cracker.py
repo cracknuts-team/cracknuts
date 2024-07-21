@@ -3,8 +3,8 @@ import struct
 import typing
 from abc import ABC
 
-from crackernut import logger
-from crackernut.cracker import protocol
+from nutcracker import logger
+from nutcracker.cracker import protocol
 
 
 class Commands:

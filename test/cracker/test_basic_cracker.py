@@ -1,4 +1,4 @@
-from crackernut.cracker.basic_cracker import BasicCracker
+from nutcracker.cracker.basic_cracker import BasicCracker
 
 
 def test_echo():

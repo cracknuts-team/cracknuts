@@ -1,7 +1,7 @@
 import abc
 
-from crackernut import logger
-from crackernut.cracker.abs_cracker import AbsCracker
+from nutcracker import logger
+from nutcracker.cracker.abs_cracker import AbsCracker
 
 
 class Acquisition(abc.ABC):

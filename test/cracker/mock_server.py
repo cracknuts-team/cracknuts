@@ -1,7 +1,7 @@
 import socket
 
-from crackernut.cracker import protocol
-from crackernut.cracker.protocol import *
+from nutcracker.cracker import protocol
+from nutcracker.cracker.protocol import *
 
 
 def handle_message(conn):
