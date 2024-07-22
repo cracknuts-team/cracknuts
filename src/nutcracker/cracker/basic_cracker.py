@@ -13,9 +13,6 @@ class BasicCracker(AbsCracker):
 
     def __init__(self, server_address):
         super().__init__(server_address)
-        self._command_get_id = 1
-        self._command_get_name = 2
-        self.__logger = logger.get_logger(BasicCracker.__module__)
 
     def get_id(self):
         return self.send_and_receive(protocol.build_send_message(Commands.GET_ID)).decode('ascii')
@@ -43,9 +40,9 @@ class BasicCracker(AbsCracker):
             payload |= 1 << 7
         if enable[8]:
             payload |= 1 << 8
-        self._logger.debug('Scrat analog_chanel_enable payload: %s', format(payload, '08b'))
-
-        return self.send_with_command(Commands.SCRAT_ANALOG_CHANNEL_ENABLE, payload.to_bytes(1, byteorder='big'))
+        payload = struct.pack('>I', payload)
+        self._logger.debug('Scrat analog_chanel_enable payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_ANALOG_CHANNEL_ENABLE, payload)
 
     def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
         payload = 0
@@ -67,9 +64,11 @@ class BasicCracker(AbsCracker):
             payload |= 1 << 7
         if coupling[8]:
             payload |= 1 << 8
-        self._logger.debug('scrat_analog_coupling payload: %s', format(payload, '08b'))
 
-        return self.send_with_command(Commands.SCRAT_ANALOG_COUPLING, struct.pack('>I', payload))
+        payload = struct.pack('>I', payload)
+        self._logger.debug('scrat_analog_coupling payload: %s', payload.hex())
+
+        return self.send_with_command(Commands.SCRAT_ANALOG_COUPLING, payload)
 
     def scrat_analog_voltage(self, channel: int, voltage: int):
         payload = struct.pack('>BI', channel, voltage)
@@ -83,4 +82,28 @@ class BasicCracker(AbsCracker):
 
     def scrat_analog_gain(self):
         super().scrat_analog_gain()
+
+    def cracker_nut_voltage(self, voltage):
+        payload = struct.pack('>I', voltage)
+        self._logger.debug('cracker_nut_voltage payload: %s', payload.hex())
+        return self.send_with_command(Commands.CRACKER_NUT_VOLTAGE, payload)
+
+    def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
+        payload = 0
+        if interface.get(0):
+            payload |= 1
+        if interface.get(1):
+            payload |= 1 << 1
+        if interface.get(2):
+            payload |= 1 << 2
+        if interface.get(3):
+            payload |= 1 << 3
+
+        payload = struct.pack('>I', payload)
+        self._logger.debug('cracker_nut_interface payload: %s', payload.hex())
+        print(self._logger.name)
+        return self.send_with_command(Commands.CRACKER_NUT_INTERFACE, payload)
+
+    def cracker_nut_timeout(self, timeout: int):
+        super().cracker_nut_timeout(timeout)
 

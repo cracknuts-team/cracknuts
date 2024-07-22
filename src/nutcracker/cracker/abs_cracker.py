@@ -5,6 +5,7 @@ from abc import ABC
 
 from nutcracker import logger
 from nutcracker.cracker import protocol
+import nutcracker.utils.hex_util as hex_util
 
 
 class Commands:
@@ -90,6 +91,7 @@ class AbsCracker(ABC):
         try:
             self._socket.connect(self._server_address)
             self._connection_status = True
+            self._logger.info('Connected to cracker: {}'.format(self._server_address))
         except socket.error as e:
             self._logger.error('Connection failed: %s', e)
             self._connection_status = False
@@ -132,10 +134,12 @@ class AbsCracker(ABC):
         try:
             if not self.get_connection_status():
                 self.connect()
-            self._logger.debug("Send message to %s: %s", self._server_address, message)
+            self._logger.debug("Send message to %s: \n%s", self._server_address,
+                               hex_util.get_bytes_matrix(message))
             self._socket.sendall(message)
             resp_header = self._socket.recv(protocol.RESP_HEADER_SIZE)
-
+            self._logger.debug("Get response header from %s: \n%s", self._server_address,
+                               hex_util.get_bytes_matrix(resp_header))
             magic, version, direction, status, length = struct.unpack(
                 protocol.RESP_HEADER_FORMAT, resp_header
             )
@@ -149,7 +153,7 @@ class AbsCracker(ABC):
                 return None
             resp_payload = self._socket.recv(length)
             self._logger.debug(
-                "Receive payload from %s: %s", self._server_address, resp_payload
+                "Receive payload from %s: \%s", self._server_address, hex_util.get_bytes_matrix(resp_payload)
             )
             return resp_payload
         except socket.error as e:
@@ -200,3 +204,14 @@ class AbsCracker(ABC):
 
     def scrat_analog_gain(self):
         ...
+
+    def cracker_nut_voltage(self, voltage: int):
+        ...
+
+    def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
+        ...
+
+    def cracker_nut_timeout(self, timeout: int):
+        ...
+
+    # def cracker_serial_baud(self,):

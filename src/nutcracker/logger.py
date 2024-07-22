@@ -9,7 +9,7 @@ _LOG_FORMATTER = logging.Formatter('[%(levelname)s] %(asctime)s %(module)s.%(fun
 _LOGGERS: dict[str, logging.Logger] = {}
 
 
-def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleType | None = None) -> None:
+def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleType | object  | None = None) -> None:
     global _LOG_LEVEL
     if isinstance(level, str):
         level = level.upper()
@@ -37,8 +37,19 @@ def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleTyp
         _LOG_LEVEL = level
 
     _logger = None
+
     if logger:
-        _logger = _LOGGERS[logger]
+        if isinstance(logger, ModuleType):
+            logger = logger.__name__
+        elif isinstance(logger, type):
+            logger = logger.__module__ + '.' + logger.__name__
+        elif isinstance(logger, str):
+            logger = logger
+        else:
+            logger = logger.__class__.__module__ + '.' + logger.__class__.__name__
+
+        _logger = _LOGGERS.get(logger)
+
     if not _logger:
         for _logger in _LOGGERS.values():
             _logger.setLevel(_LOG_LEVEL)
