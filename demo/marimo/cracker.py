@@ -43,7 +43,7 @@ def __(basic_cracker):
         # basic_cracker = BasicCracker(('127.0.0.1', 12345))
         # basic_cracker.connect()
         if message:
-            return basic_cracker.echo(message)
+            return basic_cracker.echo_hex(message)
 
     # echo(text_echo_req.value)
     return echo,
@@ -51,7 +51,7 @@ def __(basic_cracker):
 
 @app.cell
 def __(connect, disconnect, echo, mo):
-    text_ip = mo.ui.text('127.0.0.1:12345')
+    text_ip = mo.ui.text('192.168.0.10:8080')
 
     button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value))
     button_disconnect = mo.ui.button(label='断开连接', on_change=disconnect)
@@ -147,9 +147,7 @@ def __(
                             <option>11111</option>
                         </select></label>
                         <label for="">NUT时钟相位:
-                            <select>
-                                <option>11111</option>
-                            </select></label>
+                            <input type="number"/></label>
                     </div>
                 </div>
                 <div style="border: 1px solid black; margin: 5px; padding: 5px;">

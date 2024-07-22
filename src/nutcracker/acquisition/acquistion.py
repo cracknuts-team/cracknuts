@@ -14,7 +14,29 @@ class Acquisition(abc.ABC):
         ...
 
     def test(self):
-        ...
+        self.connect_scrat()
+        self.config_cracker()
+        self.connect_scrat()
+        self.config_scrat()
+        # init
+        self.hook_pre_init()
+        self.hook_init() # self.transfer() 用户
+        self.save_dataset()
+        self.hook_post_init()
+        # loop
+        for i in range(10):
+            self.hook_pre_loop()
+            self.loop()
+            self.show_wave() # 展示波形
+            # self.save_wave()
+            # self.save_data()
+            self.hook_post_loop()
+
+        self.hook_pre_finish()
+        self.finish()
+        self.save_data()
+        self.hook_post_finish()
+
 
     def connect_scrat(self):
         """

@@ -12,7 +12,7 @@ def handle_message(conn):
         if not header_data:
             break
         elif not header_data.startswith(protocol.MAGIC_STR):
-            print("Receive not header", header_data.decode('utf-8'))
+            print("Receive not header", header_data)
             conn.sendall(header_data)
         else:
             magic, version, direction, command, rfu, length = struct.unpack(
