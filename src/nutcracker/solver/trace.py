@@ -50,15 +50,18 @@ def get_traces_df_from_ndarray(traces: np.ndarray, trace_index_mn=None, trace_in
 def load_traces(path: str) -> typing.Tuple[str, pd.DataFrame, int, int]:
     if os.path.isdir(path):
         # load scarr data from zarr format file.
-        traces_source = zarr.open(path, "r")['0/0/traces']
+        scarr_data = zarr.open(path, "r")
+        traces_source = scarr_data['0/0/traces']
         trace_count = traces_source.shape[0]
-        data_count = traces_source.shape[1]
+        sample_count = traces_source.shape[1]
+        data = scarr_data['0/0/plaintext']
         data_type = 'zarr'
     else:
         # load newae data from npy format file.
         traces_source = np.load(path)
         trace_count = traces_source.shape[0]
-        data_count = traces_source.shape[1]
+        sample_count = traces_source.shape[1]
         data_type = 'npy'
+        data = None
 
-    return data_type, traces_source, trace_count, data_count
+    return data_type, traces_source, trace_count, sample_count, data
