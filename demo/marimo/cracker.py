@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.7.0"
+__generated_with = "0.7.8"
 app = marimo.App(width="medium")
 
 
@@ -243,77 +243,7 @@ def __(
 
 
 @app.cell
-def __(mo):
-    mo.ui.dropdown(label='使能', options={'100', '100'})
-    return
-
-
-@app.cell
-def __(mo):
-    range_slider = mo.ui.range_slider(start=0, stop=100, step=1, value=[0, 100], full_width=True)
-    range_slider
-    return range_slider,
-
-
-@app.cell
-def __(range_slider):
-    range_slider.value
-    return
-
-
-@app.cell
-def __(mo):
-    import anywidget
-    import traitlets
-
-    class CounterWidget(anywidget.AnyWidget):
-      # Widget front-end JavaScript code
-      _esm = """
-        function render({ model, el }) {
-          let getCount = () => model.get("count");
-          let button = document.createElement("button");
-          button.innerHTML = `count is ${getCount()}`;
-          button.addEventListener("click", () => {
-            model.set("count", getCount() + 1);
-            model.save_changes();
-          });
-          model.on("change:count", () => {
-            button.innerHTML = `count is ${getCount()}`;
-          });
-          el.appendChild(button);
-        }
-        export default { render };
-      """
-      _css = """
-        button {
-          padding: 5px !important;
-          border-radius: 5px !important;
-          background-color: #f0f0f0 !important;
-
-          &:hover {
-            background-color: lightblue !important;
-            color: white !important;
-          }
-        }
-      """
-
-      # Stateful property that can be accessed by JavaScript & Python
-      count = traitlets.Int(0).tag(sync=True)
-
-    widget = mo.ui.anywidget(CounterWidget())
-
-
-    widget
-    return CounterWidget, anywidget, traitlets, widget
-
-
-@app.cell
-def __(widget):
-    # In another cell, you can access the widget's value
-    widget.value
-
-    # You can also access the widget's specific properties
-    # widget.count
+def __():
     return
 
 
