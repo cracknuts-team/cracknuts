@@ -27,12 +27,161 @@ def test_get_name():
     assert basic_device.get_name() is not None
 
 
-def test_cracker_nut_voltage():
-    assert basic_device.cracker_nut_voltage(1) is None
+def test_scrat_analog_channel_enable():
+    assert basic_device.scrat_analog_channel_enable({1: True}) is None
+
+
+def test_scrat_analog_coupling():
+    assert basic_device.scrat_analog_coupling({1: 1}) is None
+
+
+def test_scrat_analog_voltage():
+    assert basic_device.scrat_analog_voltage(1, 1) is None
+
+
+def test_scrat_analog_bias_voltage():
+    assert basic_device.scrat_analog_bias_voltage(1, 1) is None
+
+
+def test_scrat_analog_gain():
+    assert basic_device.scrat_analog_gain(1) is None
+
+
+def test_scrat_digital_channel_enable():
+    assert basic_device.scrat_digital_channel_enable({1: True}) is None
+
+
+def test_scrat_digital_voltage():
+    assert basic_device.scrat_digital_voltage(1) is None
+
+
+def test_scrat_trigger_mode():
+    assert basic_device.scrat_trigger_mode(1, 1) is None
+
+
+def test_scrat_analog_trigger_source():
+    assert basic_device.scrat_analog_trigger_source(1) is None
+
+
+def test_scrat_digital_trigger_source():
+    assert basic_device.scrat_digital_trigger_source(1) is None
+
+
+def test_scrat_analog_trigger_voltage():
+    assert basic_device.scrat_analog_trigger_voltage(1) is None
+
+
+def test_scrat_trigger_delay():
+    assert basic_device.scrat_trigger_delay(1) is None
+
+
+def test_scrat_sample_len():
+    assert basic_device.scrat_sample_len(1) is None
+
+
+def test_scrat_arm():
+    assert basic_device.scrat_arm() is None
+
+
+def test_scrat_is_triggered():
+    assert basic_device.scrat_is_triggered() is None
+
+
+def test_scrat_get_analog_wave():
+    assert basic_device.scrat_get_analog_wave(1, 1, 1) is not None
+
+
+def test_scrat_get_digital_wave():
+    assert basic_device.scrat_get_digital_wave(1, 1, 1) is not None
 
 
 def test_cracker_nut_interface():
     assert basic_device.cracker_nut_interface({0: True}) is None
+
+
+def test_cracker_nut_timeout():
+    assert basic_device.cracker_nut_timeout(0) is None
+
+
+def test_cracker_serial_baud():
+    assert basic_device.cracker_serial_baud(0) is None
+
+
+def test_cracker_serial_width():
+    assert basic_device.cracker_serial_width(0) is None
+
+
+def test_cracker_serial_stop():
+    assert basic_device.cracker_serial_stop(0) is None
+
+
+def test_cracker_serial_odd_eve():
+    assert basic_device.cracker_serial_odd_eve(0) is None
+
+
+def test_cracker_serial_data():
+    assert basic_device.cracker_serial_data(10, b'aaaa') is not None
+
+
+### failed: timeout
+def test_cracker_spi_cpol():
+    assert basic_device.cracker_spi_cpol(1) is None
+
+
+### failed: timeout
+def test_cracker_spi_cpha():
+    assert basic_device.cracker_spi_cpha(1) is None
+
+
+### failed: timeout
+def test_cracker_spi_data_len():
+    assert basic_device.cracker_spi_data_len(1) is None
+
+
+### failed: timeout
+def test_cracker_spi_freq():
+    assert basic_device.cracker_spi_freq(1) is None
+
+
+### failed: timeout
+def test_cracker_spi_timeout():
+    assert basic_device.cracker_spi_timeout(1) is None
+
+
+### failed: timeout
+def test_cracker_spi_data():
+    assert basic_device.cracker_spi_data(1, b'aa') is not None
+
+
+### failed: timeout
+def test_cracker_i2c_freq():
+    assert basic_device.cracker_i2c_freq(1) is None
+
+
+### failed: timeout
+def test_cracker_i2c_timeout():
+    assert basic_device.cracker_i2c_timeout(1) is None
+
+
+### failed: timeout
+def test_cracker_i2c_data():
+    assert basic_device.cracker_i2c_data(1, b'bb') is not None
+
+
+### failed: timeout
+def test_cracker_ican_freq():
+    assert basic_device.cracker_can_freq(1) is None
+
+
+### failed: timeout
+def test_cracker_can_timeout():
+    assert basic_device.cracker_can_timeout(1) is None
+
+
+### failed: timeout
+def test_cracker_ican_data():
+    assert basic_device.cracker_can_data(1, b'bb') is not None
+
 
 
 def test_multiple_echo():

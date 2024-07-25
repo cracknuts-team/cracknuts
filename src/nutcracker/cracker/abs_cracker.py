@@ -233,7 +233,7 @@ class AbsCracker(ABC):
         ...
 
     @abstractmethod
-    def scrat_analog_trigger_voltage(self, valtage: int):
+    def scrat_analog_trigger_voltage(self, voltage: int):
         ...
 
     @abstractmethod
