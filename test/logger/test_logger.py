@@ -21,4 +21,4 @@ def test_get_logger():
 def test_logger_print():
     _logger = logger.get_logger("test_logger_print", level=logging.DEBUG)
     _logger.setLevel(logging.WARNING)
-    _logger.debug("test")
+    _logger.error("test %s", (1,2))
