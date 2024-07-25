@@ -73,7 +73,7 @@ class AbsCracker(ABC):
     Cracker
     """
 
-    def __init__(self, server_address):
+    def __init__(self, server_address=None):
         """
         :param server_address: Cracker device address (ip, port)
         """
@@ -82,6 +82,9 @@ class AbsCracker(ABC):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(5)
         self._connection_status = False
+
+    def set_addr(self, ip, port) -> None:
+        self._server_address = ip, port
 
     def connect(self):
         """

@@ -11,9 +11,6 @@ import nutcracker.logger as logger
 
 class BasicCracker(AbsCracker):
 
-    def __init__(self, server_address):
-        super().__init__(server_address)
-
     def get_id(self):
         return self.send_and_receive(protocol.build_send_message(Commands.GET_ID)).decode('ascii')
 
