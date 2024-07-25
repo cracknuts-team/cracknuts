@@ -19,23 +19,23 @@ class BasicCracker(AbsCracker):
 
     def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
         payload = 0
-        if enable[0]:
+        if enable.get(0):
             payload |= 1
-        if enable[1]:
+        if enable.get(1):
             payload |= 1 << 1
-        if enable[2]:
+        if enable.get(2):
             payload |= 1 << 2
-        if enable[3]:
+        if enable.get(3):
             payload |= 1 << 3
-        if enable[4]:
+        if enable.get(4):
             payload |= 1 << 4
-        if enable[5]:
+        if enable.get(5):
             payload |= 1 << 5
-        if enable[6]:
+        if enable.get(6):
             payload |= 1 << 6
-        if enable[7]:
+        if enable.get(7):
             payload |= 1 << 7
-        if enable[8]:
+        if enable.get(8):
             payload |= 1 << 8
         payload = struct.pack('>I', payload)
         self._logger.debug('Scrat analog_chanel_enable payload: %s', payload.hex())
@@ -43,23 +43,23 @@ class BasicCracker(AbsCracker):
 
     def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
         payload = 0
-        if coupling[0]:
+        if coupling.get(0):
             payload |= 1
-        if coupling[1]:
+        if coupling.get(1):
             payload |= 1 << 1
-        if coupling[2]:
+        if coupling.get(2):
             payload |= 1 << 2
-        if coupling[3]:
+        if coupling.get(3):
             payload |= 1 << 3
-        if coupling[4]:
+        if coupling.get(4):
             payload |= 1 << 4
-        if coupling[5]:
+        if coupling.get(5):
             payload |= 1 << 5
-        if coupling[6]:
+        if coupling.get(6):
             payload |= 1 << 6
-        if coupling[7]:
+        if coupling.get(7):
             payload |= 1 << 7
-        if coupling[8]:
+        if coupling.get(8):
             payload |= 1 << 8
 
         payload = struct.pack('>I', payload)
@@ -79,23 +79,23 @@ class BasicCracker(AbsCracker):
 
     def scrat_digital_channel_enable(self, enable: typing.Dict[int, bool]):
         payload = 0
-        if enable[0]:
+        if enable.get(0):
             payload |= 1
-        if enable[1]:
+        if enable.get(1):
             payload |= 1 << 1
-        if enable[2]:
+        if enable.get(2):
             payload |= 1 << 2
-        if enable[3]:
+        if enable.get(3):
             payload |= 1 << 3
-        if enable[4]:
+        if enable.get(4):
             payload |= 1 << 4
-        if enable[5]:
+        if enable.get(5):
             payload |= 1 << 5
-        if enable[6]:
+        if enable.get(6):
             payload |= 1 << 6
-        if enable[7]:
+        if enable.get(7):
             payload |= 1 << 7
-        if enable[8]:
+        if enable.get(8):
             payload |= 1 << 8
         payload = struct.pack('>I', payload)
         self._logger.debug('scrat_digital_channel_enable payload: %s', payload.hex())
@@ -112,31 +112,49 @@ class BasicCracker(AbsCracker):
         return self.send_with_command(Commands.SCRAT_TRIGGER_MODE, payload)
 
     def scrat_analog_trigger_source(self, channel: int):
-        pass
+        payload = struct.pack('>B', channel)
+        self._logger.debug('scrat_analog_trigger_source payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_ANALOG_TRIGGER_SOURCE, payload)
 
     def scrat_digital_trigger_source(self, channel: int):
-        pass
+        payload = struct.pack('>B', channel)
+        self._logger.debug('scrat_digital_trigger_source payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_DIGITAL_TRIGGER_SOURCE, payload)
 
-    def scrat_analog_trigger_voltage(self, valtage: int):
-        pass
+    def scrat_analog_trigger_voltage(self, voltage: int):
+        payload = struct.pack('>I', voltage)
+        self._logger.debug('scrat_analog_trigger_voltage payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_ANALOG_TRIGGER_VOLTAGE, payload)
 
     def scrat_trigger_delay(self, delay: int):
-        pass
+        payload = struct.pack('>I', delay)
+        self._logger.debug('scrat_trigger_delay payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_TRIGGER_DELAY, payload)
 
     def scrat_sample_len(self, length: int):
-        pass
+        payload = struct.pack('>I', length)
+        self._logger.debug('scrat_sample_len payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_SAMPLE_LENGTH, payload)
 
     def scrat_arm(self):
-        pass
+        payload = None
+        self._logger.debug('scrat_sample_len payload: %s', payload)
+        return self.send_with_command(Commands.SCRAT_ARM, payload)
 
     def scrat_is_triggered(self):
-        pass
+        payload = None
+        self._logger.debug('scrat_is_triggered payload: %s', payload)
+        return self.send_with_command(Commands.SCRAT_IS_TRIGGERED, payload)
 
     def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int):
-        pass
+        payload = struct.pack('>BII', channel, offset, sample_count)
+        self._logger.debug('scrat_get_analog_wave payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_GET_ANALOG_WAVES, payload)
 
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
-        pass
+        payload = struct.pack('>BII', channel, offset, sample_count)
+        self._logger.debug('scrat_get_digital_wave payload: %s', payload.hex())
+        return self.send_with_command(Commands.SCRAT_GET_DIGITAL_WAVES, payload)
 
     def scrat_analog_gain(self, gain):
         payload = struct.pack('>B', gain)
@@ -213,7 +231,7 @@ class BasicCracker(AbsCracker):
     def cracker_spi_freq(self, freq: int):
         payload = struct.pack('>B', freq)
         self._logger.debug('cracker_spi_freq payload: %s', payload.hex())
-        return self.send_with_command(Commands.CRACKER_SPI_FRQ, payload)
+        return self.send_with_command(Commands.CRACKER_SPI_FREQ, payload)
 
     def cracker_spi_timeout(self, timeout: int):
         payload = struct.pack('>B', timeout)
@@ -257,16 +275,3 @@ class BasicCracker(AbsCracker):
         payload += data
         self._logger.debug('cracker_can_data payload: %s', payload.hex())
         return self.send_with_command(Commands.CRACKER_CA_DATA, payload)
-
-
-
-
-
-
-
-
-
-
-
-
-
