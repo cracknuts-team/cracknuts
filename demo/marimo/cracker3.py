@@ -1,7 +1,19 @@
 import marimo
 
-__generated_with = "0.7.11"
+__generated_with = "0.7.0"
 app = marimo.App(width="medium")
+
+
+@app.cell
+def __(panel):
+    panel 
+    return
+
+
+@app.cell
+def __(chart_wave, mo, refresh_button):
+    mo.vstack([refresh_button, chart_wave])
+    return
 
 
 @app.cell
@@ -12,7 +24,9 @@ def __():
     from nutcracker.cracker.basic_cracker import BasicCracker
     from nutcracker.acquisition.acquisition import Acquisition
     import nutcracker.solver.trace as nt
-    return Acquisition, BasicCracker, alt, mo, np, nt
+    import nutcracker.logger as t_logger
+    import logging
+    return Acquisition, BasicCracker, alt, logging, mo, np, nt, t_logger
 
 
 @app.cell
@@ -22,11 +36,20 @@ def __(mo):
 
 
 @app.cell
-def __(Acquisition, BasicCracker, basic_cracker, set_connnection_status):
+def __(
+    Acquisition,
+    BasicCracker,
+    basic_cracker,
+    logging,
+    set_connnection_status,
+    t_logger,
+):
     # define acquisition, basic cracker device and other function call in marimo loop.
 
     basic_cracker = BasicCracker()
     acquisition = Acquisition(basic_cracker)
+
+    t_logger.set_level(logging.DEBUG, basic_cracker)
 
     def connect(addr):
         global basic_cracker
@@ -42,6 +65,9 @@ def __(Acquisition, BasicCracker, basic_cracker, set_connnection_status):
         if basic_cracker:
             basic_cracker.disconnect()
             set_connnection_status('未连接')
+
+    def set_nut_voltage(voltage):
+        basic_cracker.cracker_nut_voltage(voltage)
 
     def start_test(v):
         acquisition.test()
@@ -63,6 +89,7 @@ def __(Acquisition, BasicCracker, basic_cracker, set_connnection_status):
         connect,
         disconnect,
         echo,
+        set_nut_voltage,
         start_run,
         start_test,
         stop,
@@ -70,7 +97,16 @@ def __(Acquisition, BasicCracker, basic_cracker, set_connnection_status):
 
 
 @app.cell
-def __(connect, disconnect, echo, mo, start_run, start_test, stop):
+def __(
+    connect,
+    disconnect,
+    echo,
+    mo,
+    set_nut_voltage,
+    start_run,
+    start_test,
+    stop,
+):
     # define acquisition ui
 
     text_ip = mo.ui.text('192.168.0.10:8080')
@@ -93,6 +129,14 @@ def __(connect, disconnect, echo, mo, start_run, start_test, stop):
     button_stop = mo.ui.button(label='停止', on_click=stop)
 
     switch_connection = mo.ui.switch()
+
+    nut_voltage = mo.ui.number(label='Nut电压', start=1, stop=10, step=1, on_change=set_nut_voltage)
+    nut_interface = mo.ui.dropdown(label='Nut通讯选择', options={'UART': 0, 'SPI': 1, 'I2C': 2, 'CAN': 3}, allow_select_none=False, value='UART')
+    nut_timeout = mo.ui.number(label='Nut通信超时', start=1, stop=10, step=1)
+    serial_baud = mo.ui.dropdown(label='串口波特率', options={'9600': 9600, '115200': 115200, '57600': 57600, '19200': 19200}, allow_select_none=False, value='9600')
+    serial_width = mo.ui.dropdown(label='串口数据位', options={'5': 5, '6': 6, '7': 7, '8': 8})
+    serial_stop = mo.ui.dropdown(label='串口停止位', options={'1': 0, '1.5': 1, '2': 2})
+    serial_odd_eve = mo.ui.dropdown(label='串口奇偶', options={'偶校验': 0, '奇校验': 1})
     return (
         button_connect,
         button_disconnect,
@@ -103,6 +147,13 @@ def __(connect, disconnect, echo, mo, start_run, start_test, stop):
         get_cracker_id,
         get_cracker_name,
         get_echo_res,
+        nut_interface,
+        nut_timeout,
+        nut_voltage,
+        serial_baud,
+        serial_odd_eve,
+        serial_stop,
+        serial_width,
         set_cracker_id,
         set_cracker_name,
         set_echo_res,
@@ -110,12 +161,6 @@ def __(connect, disconnect, echo, mo, start_run, start_test, stop):
         text_echo_req,
         text_ip,
     )
-
-
-@app.cell
-def __(get_connnection_status):
-    get_connnection_status()
-    return
 
 
 @app.cell
@@ -131,11 +176,14 @@ def __(
     get_cracker_name,
     get_echo_res,
     mo,
-    switch_connection,
+    nut_interface,
+    nut_timeout,
+    nut_voltage,
+    serial_baud,
     text_echo_req,
     text_ip,
 ):
-    mo.Html(f'''
+    panel = mo.Html(f'''
     <div style="border-radius: 5px; border: 1px solid black; margin: 5px; padding: 5px;">
 
         <div style="padding: 5px;">
@@ -162,19 +210,13 @@ def __(
             <div style="border-radius: 5px; border: 1px solid black; display: inline-block; margin: 5px; padding: 5px; vertical-align: top; height: 350px;">
                 <div style="border: 1px solid black; margin: 5px; padding: 5px;">
                     <div>
-                        <label for="">NUT电压: <select>
-                            <option>11111</option>
-                        </select></label>
-                        <label for="">供电使能
-                            {switch_connection}
+                        <span style="width: 100px;">{nut_voltage}</span>
+                        <label for="">{nut_interface}
                         </label>
                     </div>
                     <div>
-                        <label for="">NUT时钟: <select>
-                            <option>11111</option>
-                        </select></label>
-                        <label for="">NUT时钟相位:
-                            <input type="number"/></label>
+                        <label for="">{nut_timeout}</label>
+                        <label for="">{serial_baud}</label>
                     </div>
                 </div>
                 <div style="border: 1px solid black; margin: 5px; padding: 5px;">
@@ -266,7 +308,7 @@ def __(
         </div>
     </div>
     ''')
-    return
+    return panel,
 
 
 @app.cell
@@ -307,12 +349,6 @@ def __(mo):
         default_interval="1s",
     )
     return refresh_button,
-
-
-@app.cell
-def __(chart_wave, mo, refresh_button):
-    mo.vstack([refresh_button, chart_wave])
-    return
 
 
 if __name__ == "__main__":

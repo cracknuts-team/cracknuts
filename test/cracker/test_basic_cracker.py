@@ -95,6 +95,10 @@ def test_scrat_get_digital_wave():
     assert basic_device.scrat_get_digital_wave(1, 1, 1) is not None
 
 
+def test_cracker_nut_voltage():
+    assert basic_device.cracker_nut_voltage(1) is None
+
+
 def test_cracker_nut_interface():
     assert basic_device.cracker_nut_interface({0: True}) is None
 
@@ -183,15 +187,10 @@ def test_cracker_ican_data():
     assert basic_device.cracker_can_data(1, b'bb') is not None
 
 
-
 def test_multiple_echo():
-    print('====', basic_device.echo('11223344'))
-    print('++++', basic_device.echo('556677'))
+    print(basic_device.get_id())
+    print(basic_device.get_name())
     basic_device.disconnect()
-
-
-def test_scrat_analog_gain():
-    assert basic_device.scrat_analog_voltage(1, 12) is None
 
 
 if __name__ == '__main__':

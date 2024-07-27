@@ -1,5 +1,4 @@
 import logging
-import typing
 from types import ModuleType
 from typing import Optional
 

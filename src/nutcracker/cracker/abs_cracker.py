@@ -80,8 +80,7 @@ class AbsCracker(ABC):
         """
         self._logger = logger.get_logger(self)
         self._server_address = server_address
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.settimeout(5)
+        self._socket: socket.socket | None = None
         self._connection_status = False
 
     def set_addr(self, ip, port) -> None:
@@ -93,6 +92,9 @@ class AbsCracker(ABC):
         :return: Cracker self.
         """
         try:
+            if not self._socket:
+                self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self._socket.settimeout(5)
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info('Connected to cracker: {}'.format(self._server_address))
@@ -108,6 +110,8 @@ class AbsCracker(ABC):
         """
         try:
             self._socket.close()
+            self._socket = None
+            self._logger.info(f'Disconnect from {self._server_address}')
         except socket.error as e:
             self._logger.error('Disconnection failed: %s', e)
         finally:
