@@ -1,7 +1,25 @@
 import marimo
 
-__generated_with = "0.7.8"
+__generated_with = "0.7.0"
 app = marimo.App(width="normal")
+
+
+@app.cell
+def __(
+    button_open_trace,
+    chart_detail_base,
+    chart_overview,
+    index_start,
+    index_stop,
+    mo,
+    sample_count,
+    select_trace_attr,
+    trace_select,
+    trace_start,
+    trace_stop,
+):
+    mo.vstack([mo.vstack([trace_select, select_trace_attr]), mo.vstack([mo.hstack([trace_start, trace_stop, index_start, index_stop, sample_count, button_open_trace]), chart_detail_base]), chart_overview])
+    return
 
 
 @app.cell
@@ -184,11 +202,11 @@ def __(
             trace_data, _ = trace.get_traces_df_from_ndarray(get_selected_trace_data(), trace_start.value, trace_stop.value, index_start.value, index_stop.value, sample_count.value)
         set_downsample_data(trace_data)
 
-    trace_start=mo.ui.number(label="Trace index start", start=0, stop=get_trace_count(), full_width=True, on_change=set_trace_start)
-    trace_stop=mo.ui.number(label="Trace index stop", start=0, stop=get_trace_count(), value=min(get_trace_count(), 1), full_width=True, on_change=set_trace_stop)
-    index_start=mo.ui.number(label="Sample start", start=0, stop=get_data_count(), full_width=True, on_change=set_index_start)
-    index_stop=mo.ui.number(label="Sample index stop", start=0, stop=get_data_count(), value=get_data_count(), full_width=True, on_change=set_index_stop)
-    sample_count=mo.ui.number(label="Downsample count", start=0, stop=1000, value=1000, full_width=True, on_change=set_sample_count)
+    trace_start=mo.ui.number(label="Trace index start", start=0, stop=get_trace_count(), full_width=True, on_change=set_trace_start, debounce=True)
+    trace_stop=mo.ui.number(label="Trace index stop", start=0, stop=get_trace_count(), value=min(get_trace_count(), 1), full_width=True, on_change=set_trace_stop, debounce=True)
+    index_start=mo.ui.number(label="Sample start", start=0, stop=get_data_count(), full_width=True, on_change=set_index_start, debounce=True)
+    index_stop=mo.ui.number(label="Sample index stop", start=0, stop=get_data_count(), value=get_data_count(), full_width=True, on_change=set_index_stop, debounce=True)
+    sample_count=mo.ui.number(label="Downsample count", start=0, stop=1000, value=1000, full_width=True, on_change=set_sample_count, debounce=True)
     button_open_trace = mo.ui.button(label='Open', on_click=open_trace_file)
     return (
         button_open_trace,
@@ -270,45 +288,28 @@ def __(
 
 
 @app.cell
-def __(
-    get_select_file_trace_attr,
-    get_selected_sample_count,
-    get_selected_trace_count,
-    mo,
-):
+def __(get_select_file_trace_attr, mo):
+    trace_select = mo.ui.file_browser(multiple=False, on_change=get_select_file_trace_attr)
+    return trace_select,
+
+
+@app.cell
+def __(get_selected_sample_count, get_selected_trace_count, mo):
     select_trace_attr = mo.md(f'''
     Trace count: {get_selected_trace_count()}   Sample count: {get_selected_sample_count()}
     ''')
-    trace_select = mo.ui.file_browser(multiple=False, on_change=get_select_file_trace_attr)
-    return select_trace_attr, trace_select
+    return select_trace_attr,
 
 
 @app.cell
 def __():
-    # mo.vstack([trace_select, select_trace_attr])
-    return
-
-
-@app.cell
-def __(
-    button_open_trace,
-    chart_detail_base,
-    chart_overview,
-    index_start,
-    index_stop,
-    mo,
-    sample_count,
-    select_trace_attr,
-    trace_select,
-    trace_start,
-    trace_stop,
-):
-    mo.vstack([mo.vstack([trace_select, select_trace_attr]), mo.vstack([mo.hstack([trace_start, trace_stop, index_start, index_stop, sample_count, button_open_trace]), chart_detail_base]), chart_overview])
+    # mo.vstack([mo.vstack([trace_select, select_trace_attr]), mo.vstack([mo.hstack([trace_start, trace_stop, index_start, index_stop, sample_count, button_open_trace]), chart_detail_base]), chart_overview])
     return
 
 
 @app.cell
 def __():
+    # chart_selected()
     return
 
 
