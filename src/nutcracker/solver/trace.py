@@ -1,5 +1,6 @@
 import os
 import typing
+from typing import Tuple, Any
 
 import numpy as np
 import pandas as pd
@@ -47,7 +48,7 @@ def get_traces_df_from_ndarray(traces: np.ndarray, trace_index_mn=None, trace_in
     return pd.DataFrame(traces_dict).melt(id_vars='index', var_name='traces', value_name='value'), trace_indexes
 
 
-def load_traces(path: str) -> typing.Tuple[str, pd.DataFrame, int, int]:
+def load_traces(path: str) -> tuple[str, Any, Any, Any, Any | None]:
     if os.path.isdir(path):
         # load scarr data from zarr format file.
         scarr_data = zarr.open(path, "r")

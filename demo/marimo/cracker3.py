@@ -6,7 +6,7 @@ app = marimo.App(width="medium")
 
 @app.cell
 def __(panel):
-    panel 
+    panel
     return
 
 
@@ -51,9 +51,8 @@ def __(
 
     t_logger.set_level(logging.DEBUG, basic_cracker)
 
-    def connect(addr):
+    def connect(ip, port):
         global basic_cracker
-        ip, port = addr.split(':')
         basic_cracker.set_addr(ip, int(port))
         try:
             basic_cracker.connect()
@@ -66,8 +65,20 @@ def __(
             basic_cracker.disconnect()
             set_connnection_status('未连接')
 
+    def set_nut_enable(enable):
+        basic_cracker.cracker_nut_enable(enable)
+
     def set_nut_voltage(voltage):
-        basic_cracker.cracker_nut_voltage(voltage)
+        basic_cracker.cracker_nut_voltage(int(voltage * 1000))
+
+    def set_nut_interface(interface):
+        basic_cracker.cracker_nut_interface(interface)
+
+    def set_nut_timeout(timeout):
+        basic_cracker.cracker_nut_timeout(timeout)
+
+    def set_serial_baud(baud):
+        basic_cracker.cracker_serial_baud(baud)
 
     def start_test(v):
         acquisition.test()
@@ -89,7 +100,11 @@ def __(
         connect,
         disconnect,
         echo,
+        set_nut_enable,
+        set_nut_interface,
+        set_nut_timeout,
         set_nut_voltage,
+        set_serial_baud,
         start_run,
         start_test,
         stop,
@@ -102,16 +117,21 @@ def __(
     disconnect,
     echo,
     mo,
+    set_nut_enable,
+    set_nut_interface,
+    set_nut_timeout,
     set_nut_voltage,
+    set_serial_baud,
     start_run,
     start_test,
     stop,
 ):
     # define acquisition ui
 
-    text_ip = mo.ui.text('192.168.0.10:8080')
+    text_ip = mo.ui.text('192.168.0.10')
+    text_port = mo.ui.text('8080')
 
-    button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value))
+    button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value, text_port.value))
     button_disconnect = mo.ui.button(label='断开连接', on_change=disconnect)
 
     ### for test
@@ -130,10 +150,12 @@ def __(
 
     switch_connection = mo.ui.switch()
 
-    nut_voltage = mo.ui.number(label='Nut电压', start=1, stop=10, step=1, on_change=set_nut_voltage)
-    nut_interface = mo.ui.dropdown(label='Nut通讯选择', options={'UART': 0, 'SPI': 1, 'I2C': 2, 'CAN': 3}, allow_select_none=False, value='UART')
-    nut_timeout = mo.ui.number(label='Nut通信超时', start=1, stop=10, step=1)
-    serial_baud = mo.ui.dropdown(label='串口波特率', options={'9600': 9600, '115200': 115200, '57600': 57600, '19200': 19200}, allow_select_none=False, value='9600')
+    nut_enable = mo.ui.dropdown(label='Nut使能', options={'启用': 1, '停用': 0}, value='停用', on_change=set_nut_enable)
+
+    nut_voltage = mo.ui.number(label='Nut电压', start=2.0, stop=4.4, step=0.1, on_change=set_nut_voltage, value=3.3)
+    nut_interface = mo.ui.dropdown(label='Nut通讯选择', options={'UART': 0, 'SPI': 1, 'I2C': 2, 'CAN': 3}, allow_select_none=False, value='UART', on_change=set_nut_interface)
+    nut_timeout = mo.ui.number(label='Nut通信超时', start=10, stop=60000, step=100, value=10000, on_change=set_nut_timeout)
+    serial_baud = mo.ui.dropdown(label='串口波特率', options={'9600': 9600, '115200': 115200, '57600': 57600, '19200': 19200}, allow_select_none=False, value='115200', on_change=set_serial_baud)
     serial_width = mo.ui.dropdown(label='串口数据位', options={'5': 5, '6': 6, '7': 7, '8': 8})
     serial_stop = mo.ui.dropdown(label='串口停止位', options={'1': 0, '1.5': 1, '2': 2})
     serial_odd_eve = mo.ui.dropdown(label='串口奇偶', options={'偶校验': 0, '奇校验': 1})
@@ -147,6 +169,7 @@ def __(
         get_cracker_id,
         get_cracker_name,
         get_echo_res,
+        nut_enable,
         nut_interface,
         nut_timeout,
         nut_voltage,
@@ -160,6 +183,7 @@ def __(
         switch_connection,
         text_echo_req,
         text_ip,
+        text_port,
     )
 
 
@@ -176,23 +200,20 @@ def __(
     get_cracker_name,
     get_echo_res,
     mo,
+    nut_enable,
     nut_interface,
     nut_timeout,
     nut_voltage,
     serial_baud,
     text_echo_req,
     text_ip,
+    text_port,
 ):
     panel = mo.Html(f'''
     <div style="border-radius: 5px; border: 1px solid black; margin: 5px; padding: 5px;">
 
         <div style="padding: 5px;">
-            <button>connect</button>
-            <label> IP:
-                {text_ip}
-            </label>
-            {button_connect}
-            {button_disconnect}
+            IP: {text_ip} PORT {text_port} {button_connect} {button_disconnect}
             <span>{get_connnection_status()}</span>
             <span>{get_cracker_id()}</span>
             <span>{get_cracker_name()}</span>
@@ -210,13 +231,10 @@ def __(
             <div style="border-radius: 5px; border: 1px solid black; display: inline-block; margin: 5px; padding: 5px; vertical-align: top; height: 350px;">
                 <div style="border: 1px solid black; margin: 5px; padding: 5px;">
                     <div>
-                        <span style="width: 100px;">{nut_voltage}</span>
-                        <label for="">{nut_interface}
-                        </label>
+                        {nut_voltage}V | &nbsp;&nbsp;&nbsp; {nut_enable}
                     </div>
                     <div>
-                        <label for="">{nut_timeout}</label>
-                        <label for="">{serial_baud}</label>
+
                     </div>
                 </div>
                 <div style="border: 1px solid black; margin: 5px; padding: 5px;">
@@ -246,18 +264,12 @@ def __(
 
             <div style="border-radius: 5px; border: 1px solid black; display: inline-block; margin: 5px; padding: 5px; vertical-align: top; height: 350px;">
                 <div style="padding: 5px;">
-                    <label>通信超时:
-                        <select>
-                            <option>213123</option>
-                        </select>
-                    </label>
+                    {nut_interface} {nut_timeout} ms
                 </div>
                 <div>
-                    <div style="border: 1px solid black; display: inline-block; margin: 5px; width: 150px;">
+                    <div style="border: 1px solid black; display: inline-block; margin: 5px; width: 200px;">
                         <div style="border-bottom: 1px solid black; padding: 5px;">UART</div>
-                        <div style="padding: 5px;"><label>Baud: <select>
-                            <option>123</option>
-                        </select></label></div>
+                        <div style="padding: 5px;">{serial_baud}</div>
                         <div style="padding: 5px;"><label>Size: <select>
                             <option>123</option>
                         </select></label></div>
@@ -349,6 +361,12 @@ def __(mo):
         default_interval="1s",
     )
     return refresh_button,
+
+
+@app.cell
+def __(mo):
+    mo.ui.number(start=1, stop=10).style({'color': 'red', 'width': '10px;'})
+    return
 
 
 if __name__ == "__main__":

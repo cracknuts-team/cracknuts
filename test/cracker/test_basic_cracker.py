@@ -95,8 +95,16 @@ def test_scrat_get_digital_wave():
     assert basic_device.scrat_get_digital_wave(1, 1, 1) is not None
 
 
+def test_cracker_nut_enable():
+    assert basic_device.cracker_nut_enable(1) is None
+
+
+def test_cracker_nut_disable():
+    assert basic_device.cracker_nut_enable(0) is None
+
+
 def test_cracker_nut_voltage():
-    assert basic_device.cracker_nut_voltage(1) is None
+    assert basic_device.cracker_nut_voltage(3300) is None
 
 
 def test_cracker_nut_interface():
@@ -123,8 +131,22 @@ def test_cracker_serial_odd_eve():
     assert basic_device.cracker_serial_odd_eve(0) is None
 
 
-def test_cracker_serial_data():
-    assert basic_device.cracker_serial_data(10, b'aaaa') is not None
+def test_cracker_set_key():
+    d = '01 00 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
+    d = d.replace(' ', '')
+    d = bytes.fromhex(d)
+    print(d)
+    r = basic_device.cracker_serial_data(len(d), d)
+    assert r is not None
+
+
+def test_cracker_encrypt():
+    d = '01 02 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
+    d = d.replace(' ', '')
+    d = bytes.fromhex(d)
+    for i in range(1000):
+        r = basic_device.cracker_serial_data(len(d), d)
+        assert r is not None
 
 
 ### failed: timeout
@@ -185,6 +207,10 @@ def test_cracker_can_timeout():
 ### failed: timeout
 def test_cracker_ican_data():
     assert basic_device.cracker_can_data(1, b'bb') is not None
+
+
+def test_cracker_scrat_is_triggered():
+    assert basic_device.scrat_is_triggered() is None
 
 
 def test_multiple_echo():
