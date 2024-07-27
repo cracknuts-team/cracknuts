@@ -161,6 +161,11 @@ class BasicCracker(AbsCracker):
         self._logger.debug('scrat_analog_gain payload: %s', payload.hex())
         return self.send_with_command(Commands.SCRAT_ANALOG_GAIN, payload)
 
+    def cracker_nut_enable(self, enable: int):
+        payload = struct.pack('>B', enable)
+        self._logger.debug('cracker_nut_enable payload: %s', payload.hex())
+        return self.send_with_command(Commands.CRACKER_NUT_ENABLE, payload)
+
     def cracker_nut_voltage(self, voltage):
         payload = struct.pack('>I', voltage)
         self._logger.debug('cracker_nut_voltage payload: %s', payload.hex())
@@ -210,7 +215,7 @@ class BasicCracker(AbsCracker):
     def cracker_serial_data(self, expect_len: int, data: bytes):
         payload = struct.pack('>I', expect_len)
         payload += data
-        self._logger.debug('cracker_serial_odd_eve payload: %s', payload.hex())
+        self._logger.debug('cracker_serial_data payload: %s', payload.hex())
         return self.send_with_command(Commands.CRACKER_SERIAL_DATA, payload)
 
     def cracker_spi_cpol(self, cpol: int):

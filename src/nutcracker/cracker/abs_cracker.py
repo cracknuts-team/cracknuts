@@ -43,7 +43,8 @@ class Commands:
     SCRAT_GET_ANALOG_WAVES = 0x0130
     SCRAT_GET_DIGITAL_WAVES = 0x0130
 
-    CRACKER_NUT_VOLTAGE = 0x0200
+    CRACKER_NUT_ENABLE = 0x0200
+    CRACKER_NUT_VOLTAGE = 0x0201
     CRACKER_NUT_INTERFACE = 0x0210
     CRACKER_NUT_TIMEOUT = 0x0224
 
@@ -161,7 +162,7 @@ class AbsCracker(ABC):
                 return None
             resp_payload = self._socket.recv(length)
             self._logger.debug(
-                "Receive payload from %s: \%s", self._server_address, hex_util.get_bytes_matrix(resp_payload)
+                "Receive payload from %s: \n%s", self._server_address, hex_util.get_bytes_matrix(resp_payload)
             )
             return resp_payload
         except socket.error as e:
@@ -266,6 +267,10 @@ class AbsCracker(ABC):
 
     @abstractmethod
     def scrat_analog_gain(self, gain: int):
+        ...
+
+    @abstractmethod
+    def cracker_nut_enable(self, enable: int):
         ...
 
     @abstractmethod
