@@ -3,3 +3,5 @@ dist
 *.egg-info
 demo/data
 .venv
+
+**/__pycache__/**
