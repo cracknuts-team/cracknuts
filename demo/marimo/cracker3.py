@@ -5,6 +5,12 @@ app = marimo.App(width="medium")
 
 
 @app.cell
+def __(nut_voltage):
+    nut_voltage
+    return
+
+
+@app.cell
 def __(panel):
     panel
     return
@@ -32,7 +38,14 @@ def __():
 @app.cell
 def __(mo):
     get_connnection_status, set_connnection_status = mo.state(value='未连接')
-    return get_connnection_status, set_connnection_status
+
+    get_nut_voltage_state, set_nut_voltage_state = mo.state(3.3)
+    return (
+        get_connnection_status,
+        get_nut_voltage_state,
+        set_connnection_status,
+        set_nut_voltage_state,
+    )
 
 
 @app.cell
@@ -42,6 +55,7 @@ def __(
     basic_cracker,
     logging,
     set_connnection_status,
+    set_nut_voltage_state,
     t_logger,
 ):
     # define acquisition, basic cracker device and other function call in marimo loop.
@@ -54,11 +68,13 @@ def __(
     def connect(ip, port):
         global basic_cracker
         basic_cracker.set_addr(ip, int(port))
-        try:
-            basic_cracker.connect()
+        basic_cracker.connect()
+        if basic_cracker.get_connection_status():
             set_connnection_status('已连接')
-        except Exception as e:
-            print(e)
+        else:
+            set_connnection_status('未连接')
+            set_nut_voltage_state(3.3)
+            print('inti voltage.')
 
     def disconnect(v):
         if basic_cracker:
@@ -66,28 +82,39 @@ def __(
             set_connnection_status('未连接')
 
     def set_nut_enable(enable):
-        basic_cracker.cracker_nut_enable(enable)
+        if basic_cracker.get_connection_status():
+            basic_cracker.cracker_nut_enable(enable)
+        else:
+            print(f'set_nut_enable {enable}')
 
     def set_nut_voltage(voltage):
-        basic_cracker.cracker_nut_voltage(int(voltage * 1000))
+        set_nut_voltage_state(voltage)
+        if basic_cracker.get_connection_status():
+            basic_cracker.cracker_nut_voltage(int(voltage * 1000))
 
     def set_nut_interface(interface):
-        basic_cracker.cracker_nut_interface(interface)
+        if basic_cracker.get_connection_status():
+            basic_cracker.cracker_nut_interface(interface)
 
     def set_nut_timeout(timeout):
-        basic_cracker.cracker_nut_timeout(timeout)
+        if basic_cracker.get_connection_status():
+            basic_cracker.cracker_nut_timeout(timeout)
 
     def set_serial_baud(baud):
-        basic_cracker.cracker_serial_baud(baud)
+        if basic_cracker.get_connection_status():
+            basic_cracker.cracker_serial_baud(baud)
 
     def start_test(v):
-        acquisition.test()
+        if basic_cracker.get_connection_status():
+            acquisition.test()
 
     def stop(v):
-        acquisition.stop()
+        if basic_cracker.get_connection_status():
+            acquisition.stop()
 
     def start_run(v):
-        acquisition.run()
+        if basic_cracker.get_connection_status():
+            acquisition.run()
 
     def echo(message):
         # basic_cracker = BasicCracker(('127.0.0.1', 12345))
@@ -112,10 +139,16 @@ def __(
 
 
 @app.cell
+def __(mo, set_nut_voltage_state):
+    button_connect = mo.ui.button(label='连接', on_change=lambda _: set_nut_voltage_state(3.3))
+    return button_connect,
+
+
+@app.cell
 def __(
-    connect,
     disconnect,
     echo,
+    get_nut_voltage_state,
     mo,
     set_nut_enable,
     set_nut_interface,
@@ -129,9 +162,10 @@ def __(
     # define acquisition ui
 
     text_ip = mo.ui.text('192.168.0.10')
-    text_port = mo.ui.text('8080')
+    text_port = mo.ui.text('8081')
 
-    button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value, text_port.value))
+    # button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value, text_port.value))
+    # button_connect = mo.ui.button(label='连接', on_change=lambda _: set_nut_voltage_state(3.3))
     button_disconnect = mo.ui.button(label='断开连接', on_change=disconnect)
 
     ### for test
@@ -152,15 +186,14 @@ def __(
 
     nut_enable = mo.ui.dropdown(label='Nut使能', options={'启用': 1, '停用': 0}, value='停用', on_change=set_nut_enable)
 
-    nut_voltage = mo.ui.number(label='Nut电压', start=2.0, stop=4.4, step=0.1, on_change=set_nut_voltage, value=3.3)
+    nut_voltage = mo.ui.number(label='Nut电压', start=2.0, stop=4.4, step=0.1, on_change=set_nut_voltage, value=get_nut_voltage_state(), debounce=True)
     nut_interface = mo.ui.dropdown(label='Nut通讯选择', options={'UART': 0, 'SPI': 1, 'I2C': 2, 'CAN': 3}, allow_select_none=False, value='UART', on_change=set_nut_interface)
-    nut_timeout = mo.ui.number(label='Nut通信超时', start=10, stop=60000, step=100, value=10000, on_change=set_nut_timeout)
+    nut_timeout = mo.ui.number(label='Nut通信超时', start=10, stop=60000, step=100, value=10000, on_change=set_nut_timeout, debounce=True)
     serial_baud = mo.ui.dropdown(label='串口波特率', options={'9600': 9600, '115200': 115200, '57600': 57600, '19200': 19200}, allow_select_none=False, value='115200', on_change=set_serial_baud)
     serial_width = mo.ui.dropdown(label='串口数据位', options={'5': 5, '6': 6, '7': 7, '8': 8})
     serial_stop = mo.ui.dropdown(label='串口停止位', options={'1': 0, '1.5': 1, '2': 2})
     serial_odd_eve = mo.ui.dropdown(label='串口奇偶', options={'偶校验': 0, '奇校验': 1})
     return (
-        button_connect,
         button_disconnect,
         button_run,
         button_send_echo_message,
@@ -188,6 +221,12 @@ def __(
 
 
 @app.cell
+def __(get_nut_voltage_state):
+    get_nut_voltage_state()
+    return
+
+
+@app.cell
 def __(
     button_connect,
     button_disconnect,
@@ -199,6 +238,7 @@ def __(
     get_cracker_id,
     get_cracker_name,
     get_echo_res,
+    get_nut_voltage_state,
     mo,
     nut_enable,
     nut_interface,
@@ -217,6 +257,7 @@ def __(
             <span>{get_connnection_status()}</span>
             <span>{get_cracker_id()}</span>
             <span>{get_cracker_name()}</span>
+            {get_nut_voltage_state()}
         </div>
         <span>文本回声测试：</span>{text_echo_req} {button_send_echo_message} {get_echo_res()}
         <div style="padding: 5px;">

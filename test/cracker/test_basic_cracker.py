@@ -3,7 +3,7 @@ import logging
 from nutcracker.cracker.basic_cracker import BasicCracker
 from nutcracker.logger import set_level
 
-basic_device = BasicCracker(server_address=('192.168.0.10', 8080))
+basic_device = BasicCracker(server_address=('192.168.0.11', 8080))
 
 
 def setup_function():
