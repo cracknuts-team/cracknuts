@@ -110,7 +110,8 @@ class AbsCracker(ABC):
         :return: Cracker self.
         """
         try:
-            self._socket.close()
+            if self._socket:
+                self._socket.close()
             self._socket = None
             self._logger.info(f'Disconnect from {self._server_address}')
         except socket.error as e:
