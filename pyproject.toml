@@ -2,9 +2,7 @@
 name = "nutcracker"
 version = "0.1.0"
 description = "nutcracker"
-authors = [
-    { name = "HikariS", email = "542547695@qq.com" }
-]
+authors = [{ name = "HikariS", email = "542547695@qq.com" }]
 dependencies = [
     "numpy>=2.0.1",
     "pandas>=2.2.2",
@@ -29,3 +27,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nutcracker"]
+
+[[tool.rye.sources]]
+name = "default"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"

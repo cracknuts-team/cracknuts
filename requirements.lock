@@ -22,6 +22,8 @@ attrs==23.2.0
 click==8.1.7
     # via marimo
     # via uvicorn
+colorama==0.4.6
+    # via click
 docutils==0.21.2
     # via marimo
 fasteners==0.19
