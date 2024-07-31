@@ -4,9 +4,9 @@ Basic device
 import struct
 import typing
 
-from nutcracker.cracker import protocol
-from nutcracker.cracker.abs_cracker import AbsCracker, Commands
-import nutcracker.logger as logger
+from cracknuts.cracker import protocol
+from cracknuts.cracker.abs_cracker import AbsCracker, Commands
+import cracknuts.logger as logger
 
 
 class BasicCracker(AbsCracker):

@@ -7,7 +7,7 @@ app = marimo.App(width="medium")
 @app.cell
 def __():
     import marimo as mo
-    from nutcracker.solver import trace
+    from cracknuts.solver import trace
     import altair as alt
     from vega_datasets import data
     import numpy as np
@@ -267,7 +267,7 @@ def __(
     typing,
     zarr,
 ):
-    import nutcracker.solver.trace
+    import cracknuts.solver.trace
 
     # trace
     # get_trace_count, set_trace_count = mo.state(0) 
@@ -432,7 +432,7 @@ def __(
         get_trace_display_control_panel,
         get_zarr_dir,
         load_traces,
-        nutcracker,
+        cracknuts,
         open_trace_file,
         selected_trace_attribute_panel,
         selected_trace_attribute_panel2,

@@ -7,7 +7,7 @@ app = marimo.App(width="medium")
 @app.cell
 def __():
     import marimo as mo
-    from nutcracker.solver import trace
+    from cracknuts.solver import trace
     import altair as alt
     from vega_datasets import data
     import numpy as np

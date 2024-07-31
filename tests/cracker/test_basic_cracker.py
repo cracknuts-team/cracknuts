@@ -1,7 +1,7 @@
 import logging
 
-from nutcracker.cracker.basic_cracker import BasicCracker
-from nutcracker.logger import set_level
+from cracknuts.cracker.basic_cracker import BasicCracker
+from cracknuts.logger import set_level
 
 basic_device = BasicCracker(server_address=('192.168.0.11', 8080))
 
