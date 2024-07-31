@@ -7,8 +7,8 @@ import typing
 import numpy as np
 import zarr
 
-from nutcracker import logger
-from nutcracker.cracker.abs_cracker import AbsCracker
+from cracknuts import logger
+from cracknuts.cracker.abs_cracker import AbsCracker
 
 
 class Acquisition(abc.ABC):

@@ -1,9 +1,9 @@
 import logging
 import time
 
-from nutcracker import logger
-from nutcracker.acquisition.acquisition import Acquisition
-from nutcracker.cracker.basic_cracker import BasicCracker
+from cracknuts import logger
+from cracknuts.acquisition.acquisition import Acquisition
+from cracknuts.cracker.basic_cracker import BasicCracker
 
 
 class MyAcquisition(Acquisition):
