@@ -1,94 +1,31 @@
 import marimo
 
-__generated_with = "0.7.0"
+__generated_with = "0.7.3"
 app = marimo.App(width="medium")
 
 
-@app.cell(hide_code=True)
-def __(mo):
-    mo.md(r"# 软件实现AES算法的CPA分析")
-    return
-
-
-@app.cell(hide_code=True)
-def __(mo):
-    mo.md(r"## 基于汉明重量的AES CPA攻击简介")
-    return
-
-
-@app.cell(hide_code=True)
+@app.cell
 def __(mo):
     mo.md(
         r"""
-        ## 能量迹文件格式介绍
-        能量迹文件格式为zarr, 参见https://zarr.readthedocs.io/en/stable/tutorial.html
+        # 软件实现AES算法的CPA分析示例 
+
+        这里给出一个对软件实现的AES算法进行CPA分析的例子。例子中的AES算法运行于STM32F1，使用的是mbedTLS的查小表实现。对于采集到的能量迹，我们使用zarr格式存储（参见https://zarr.readthedocs.io/en/stable/tutorial.html）。
         """
     )
     return
 
 
 @app.cell
-def __():
-    # import zarr
-    # import matplotlib.pyplot as plt
-    # import numpy as np
-    # from sys import stdout
-    # from numcodecs import Blosc
-    return
-
-
-@app.cell(hide_code=True)
-def __(mo):
-    mo.md(r"采集到的AES能量迹存储在如下文件中：")
-    return
-
-
-@app.cell
-def __():
-    dataset_name = '../data/aes_cp_3.zarr'
-    return dataset_name,
-
-
-@app.cell
-def __(dataset_name, zarr):
-    dataset = zarr.open(dataset_name, "r")
-    return dataset,
-
-
-@app.cell
-def __(dataset):
-    dataset.info
-    return
-
-
-@app.cell(hide_code=True)
 def __(mo):
     mo.md(
         r"""
-        文件格式如下：  
-        其中traces是能量迹，plaintext是明文数据
+        ***
+        ## 打开曲线
+        下面，我们打开名为aes_cp_3.zarr的曲线文件。这里面存储了8177条能量迹，每条能量迹包含5000个点，对应的是AES第一轮运行的部分。
         """
     )
     return
-
-
-@app.cell(hide_code=True)
-def __(dataset):
-    dataset.tree()
-    return
-
-
-@app.cell
-def __(dataset, plt):
-    #画出其中一条能量迹
-    fig2, ax2 = plt.subplots(figsize=(32, 4))
-    ax2.plot(dataset['0/0/traces'][0], color='blue')
-
-    ax2.set_xlabel('Samples')
-    ax2.set_ylabel('Value')
-    # plt.show()
-    ax2
-    return ax2, fig2
 
 
 @app.cell
@@ -109,22 +46,89 @@ def __(
     return
 
 
-@app.cell(hide_code=True)
-def __(mo):
-    mo.md(r"## 完整分析过程")
-    return
-
-
-@app.cell(hide_code=True)
+@app.cell
 def __(mo):
     mo.md(
         r"""
-        使用scarr库（https://github.com/decryptofy/scarr.git）来进行AES第一轮第0个字节的CPA分析展示。  
-        python版本要求：python 3.10以上  
-        依赖包安装过程：  
-        git clone https://github.com/decryptofy/scarr.git  
-        cd scarr  
-        pip install .
+        ***
+        ## 能量迹文件格式介绍
+        """
+    )
+    return
+
+
+@app.cell
+def __():
+    # import zarr
+    # import matplotlib.pyplot as plt
+    # import numpy as np
+    # from sys import stdout
+    # from numcodecs import Blosc
+    return
+
+
+@app.cell
+def __():
+    dataset_name = '../../../solver/aes_cp_3.zarr' #文件名赋值的语句
+    return dataset_name,
+
+
+@app.cell
+def __(dataset_name, zarr):
+    dataset = zarr.open(dataset_name, "r")
+    return dataset,
+
+
+@app.cell
+def __(mo):
+    mo.md("zarr格式文件的信息如下")
+    return
+
+
+@app.cell
+def __(dataset):
+    dataset.info
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        我们所打开的文件包含的数据及格式如下：  
+        其中traces是能量迹，plaintext是明文数据
+        """
+    )
+    return
+
+
+@app.cell
+def __(dataset):
+    dataset.tree()
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        ***
+        ## 一键分析
+        """
+    )
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        > 下面使用scarr库（https://github.com/decryptofy/scarr.git）来进行AES第一轮第0个字节的CPA分析展示。  
+        > python版本要求：python 3.10以上  
+        > 依赖包安装过程：  
+        > git clone https://github.com/decryptofy/scarr.git  
+        > cd scarr  
+        > pip install .
         """
     )
     return
@@ -137,6 +141,12 @@ def __():
     from scarr.model_values.sbox_weight import SboxWeight
     from scarr.container.container import Container, ContainerOptions
     return Container, ContainerOptions, SboxWeight, cpa, th
+
+
+@app.cell
+def __(mo):
+    mo.md(r"打开能量迹文件对其进行分析")
+    return
 
 
 @app.cell
@@ -161,37 +171,71 @@ def __(container2):
 
 
 @app.cell
-def __(results2):
-    results2.shape
+def __():
+    # engine2.get_candidate()
     return
 
 
 @app.cell
-def __(engine2):
-    engine2.get_candidate()
+def __(mo):
+    mo.md(r"下面是分析结果的前十位：")
     return
 
 
 @app.cell
-def __(plt, results2):
-    fig, ax = plt.subplots(figsize=(32, 4))
-    ax.plot(results2[0,0,0,:,:5000].T, color='gray')
-    ax.plot(results2[0,0,0,0x11,:5000].T, color='red')
-
-    ax.set_xlabel('Samples')
-    ax.set_ylabel('CPA')
-    # plt.show()
-
-    ax
-    return ax, fig
+def __(candidates, mo, np):
+    t = ''
+    for _i in range(0, 10):
+        tstr = '第' + str(_i+1)+ '个候选值：'+ str(np.abs(candidates).argsort()[::-1][_i]) + '， 对应的相关系数为：'+ str(candidates[np.abs(candidates).argsort()[::-1][_i]]) +  '</br>'
+        t += tstr
+    mo.md(t)
+        # print('第',_i+1, '个候选值：', np.abs(candidates).argsort()[::-1][_i], '， 对应的相关系数为：',  candidates[np.abs(candidates).argsort()[::-1][_i]] )
+    return t, tstr
 
 
-@app.cell(hide_code=True)
+@app.cell
+def __(mo):
+    mo.md(r"将256个密钥猜测的相关系数曲线画出来如下，其中红色曲线为正确密钥所对应的曲线。")
+    return
+
+
+@app.cell
+def __(np, results2):
+    from bokeh.plotting import figure, show, output_notebook
+    from bokeh.models import ColumnDataSource, HoverTool
+
+    output_notebook() 
+
+    p = figure(width=1000, height=200, title="分析结果展示")
+    for _i in range(0, 256):
+        p.line(np.arange(0, 5000), results2[0,0,0,_i,:].T, color='gray')
+    p.line(np.arange(0, 5000), results2[0,0,0,0x11,:].T, color="red")
+    hover = HoverTool()
+    hover.tooltips = [
+        ("index", "$index"),
+        ("(x,y)", "($x, $y)"),
+    ]
+    p.add_tools(hover)
+    p
+    # show(p)
+    return (
+        ColumnDataSource,
+        HoverTool,
+        figure,
+        hover,
+        output_notebook,
+        p,
+        show,
+    )
+
+
+@app.cell
 def __(mo):
     mo.md(
         r"""
+        ***
         ## 分解讲解
-        在这里面，为了便于清晰展示，程序运行速度将比较慢。
+        下面我们对上述分析做分解讲解。原理对应的是《Power Analysis Attacks》一书第六章中关于软件实现AES的基于相关系数的分析。
         """
     )
     return
@@ -199,18 +243,25 @@ def __(mo):
 
 @app.cell
 def __(mo):
-    mo.md(
-        r"""
-        - 第一步： 选择所分析算法的中间变量，作为CPA分析的对象。中间变量的选取原则为需要是变化的数据$d$和一小部分密钥$k$的函数，即$f(d,k)$. 这里我们选择AES的第一轮的S盒输出作为中间变量，此时$d$为明文，$k$为whitening key的一个字节。选择这样的中间变量的原因是需要已知且变化的数据，且涉及的密钥比特数不应太多，以使猜测密钥进行CPA的复杂度可以接受。
-        - 第二步：能量迹采集。
-        """
-    )
+    mo.md(r"- 第一步：能量迹采集。可参见采集Demo.")
     return
 
 
 @app.cell
 def __(mo):
-    mo.md(r"- 第三步：计算中间变量猜测值的汉明重量。即计算$HW(S(p \oplus k))$，其中$HW$指的是汉明重量。汉明重量的计算，可以直接计算，也可以将0-255的汉明重量预计算出来存于WEIGHTS中，以空间换时间。对于某个明文$p$，我们将所有256种密钥猜测的$HW(S(p \oplus k))$都计算出来，也是空间换时间。")
+    mo.md(r"- 第二步： 选择所分析算法的中间变量，作为CPA分析的对象。中间变量的选取原则为需要是变化的数据$d$和一小部分密钥$k$的函数，即$f(d,k)$. 这里我们选择AES的第一轮的S盒输出作为中间变量，此时$d$为明文，$k$为whitening key的一个字节。选择这样的中间变量的原因是需要已知且变化的数据，且涉及的密钥比特数不应太多，以使猜测密钥进行CPA的复杂度可以接受。")
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"- 第三步：计算中间变量猜测值的汉明重量。即计算$HW(S(p \oplus k))$，其中$HW$指的是汉明重量。汉明重量的计算，可以直接计算，也可以将0-255的汉明重量预计算出来存于WEIGHTS中，以空间换时间。对于某个明文$p$，我们将所有256种密钥猜测的$HW(S(p \oplus k))$都计算出来，也是空间换时间。第二步和第三步计算出来的是一个8177*256的矩阵如下：")
+    return
+
+
+@app.cell
+def __(intermedia_data):
+    intermedia_data
     return
 
 
@@ -273,8 +324,8 @@ def __(njit, np, prange):
 
 
 @app.cell
-def __(dataset):
-    dataset.tree()
+def __():
+    # dataset.tree()
     return
 
 
@@ -288,8 +339,8 @@ def __(dataset):
 
 
 @app.cell
-def __(data):
-    data.shape
+def __():
+    # data.shape
     return
 
 
@@ -309,8 +360,8 @@ def __(AES_SBOX, KEYS, WEIGHTS, data, np):
 
 
 @app.cell
-def __(intermedia_data, mo):
-    mo.md(f'intermedia_data.shape: {intermedia_data.shape}')
+def __():
+    # mo.md(f'intermedia_data.shape: {intermedia_data.shape}')
     return
 
 
@@ -347,11 +398,11 @@ def __(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(mo):
     mo.md(
         r"""
-        下面是计算相关系数的过程:  
+        <!-- 下面是计算相关系数的过程:  
 
          sample_sum: $\sum_{d=1}^{D} t_{d,j}$
 
@@ -361,7 +412,7 @@ def __(mo):
 
          model_sq_sum: $\sum_{d=1}^{D} h^2_{d,i}$
 
-         prod_sum: $\sum_{d=1}^{D} h_{d,i} \cdot t_{d,j}$
+         prod_sum: $\sum_{d=1}^{D} h_{d,i} \cdot t_{d,j}$ -->
         """
     )
     return
@@ -385,8 +436,8 @@ def __(traces):
 
 
 @app.cell
-def __(traces):
-    traces.shape
+def __():
+    # traces.shape
     return
 
 
@@ -434,21 +485,21 @@ def __(
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(mo):
-    mo.md(r"result里存的是相关系数矩阵$r_{i,j}$，即第$i$个密钥猜测，第$j$个时间点的相关系数值。")
+    mo.md(r"计算的结果是相关系数矩阵$r_{i,j}$，即第$i$个密钥猜测，第$j$个时间点的相关系数值。$r_{i,j}$是一个256*5000的矩阵如下：")
     return
 
 
 @app.cell
 def __(result):
-    result.shape
+    result
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(mo):
-    mo.md(r"下面找出最大的$r_{i,j}$，并定位其对应的密钥猜测ck，这也是对这个密钥字节的CPA分析结果。在本例子中，所设置的AES-128的密钥为0x1122334455667788。因此，对于第一轮的CPA分析，我们所关注的第0字节的密钥为17(0x11). 可见CPA的分析结果是正确的。")
+    mo.md(r"下面找出绝对值最大的$r_{i,j}$，并定位其对应的密钥猜测ck，这也是对这个密钥字节的CPA分析结果。在本例子中，所设置的AES-128的密钥为0x1122334455667788。因此，对于第一轮的CPA分析，我们所关注的第0字节的密钥为17(0x11). 可见CPA的分析结果是正确的。")
     return
 
 
@@ -467,47 +518,45 @@ def __(candidate, np, result):
     for k in range(256):
         candidates[k] = result[k,candidate[k]]
     ck = np.abs(candidates).argmax()
-    print(ck)
+    #print(ck)
     return candidates, ck, k
 
 
 @app.cell
-def __(plt, result):
-    fig1, ax1 = plt.subplots(figsize=(32, 4))
-    for j in range(0, 256):
-        ax1.plot(result[j,:], color='gray')
-    ax1.plot(result[0x11,:], color='red')
+def __(mo, t):
+    mo.md(t)
+    return
 
-    ax1.set_xlabel('Samples')
-    ax1.set_ylabel('CPA')
-    # plt.show()
-    ax1
-    return ax1, fig1, j
+
+@app.cell
+def __(p):
+    p
+    return
 
 
 @app.cell
 def __(mo):
-    mo.md(r"## 对齐代码实验")
+    mo.md(r"<!-- ## 对齐代码实验 -->")
     return
 
 
 @app.cell
 def __():
-    import scipy as sp
-    return sp,
+    # import scipy as sp
+    return
 
 
 @app.cell
-def __(traces):
-    # 参照曲线是哪条
-    ref_num = 0
-    # 参照曲线开始点和结束点
-    sStart = 500
-    sEnd = 1500
+def __():
+    # # 参照曲线是哪条
+    # ref_num = 0
+    # # 参照曲线开始点和结束点
+    # sStart = 500
+    # sEnd = 1500
 
-    ref_trace = traces[0, sStart:sEnd]
-    ref_trace = ref_trace[::-1]
-    return ref_num, ref_trace, sEnd, sStart
+    # ref_trace = traces[0, sStart:sEnd]
+    # ref_trace = ref_trace[::-1]
+    return
 
 
 @app.cell(hide_code=True)
@@ -516,7 +565,7 @@ def __():
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __():
     import marimo as mo
     from nutcracker.solver import trace
@@ -678,7 +727,7 @@ def __(mo, np, pd):
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(
     get_data_count,
     get_selected_trace_data,
@@ -718,7 +767,7 @@ def __(
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(alt, get_downsample_data, mo, set_downsample_data):
     # chart overview
     interval_selection = alt.selection_interval(encodings=['x'])
@@ -745,7 +794,7 @@ def __(alt, get_downsample_data, mo, set_downsample_data):
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(
     alt,
     get_downsample_data,
@@ -792,7 +841,7 @@ def __(get_select_file_trace_attr, mo):
     return trace_select,
 
 
-@app.cell(hide_code=True)
+@app.cell
 def __(get_selected_sample_count, get_selected_trace_count, mo):
     select_trace_attr = mo.md(f'''
     Trace count: {get_selected_trace_count()}   Sample count: {get_selected_sample_count()}
