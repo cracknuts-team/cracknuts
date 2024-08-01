@@ -15,7 +15,7 @@ maintainers = [
     { name = "Dingzb", email = "dingzibiao@gmail.com" }
 ]
 dependencies = [
-    "numpy >= 2.0.1",
+    "numpy > 1, < 2",
     "pandas >= 2.2.2"
 ]
 

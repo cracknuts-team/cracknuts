@@ -48,7 +48,7 @@ def get_traces_df_from_ndarray(traces: np.ndarray, trace_index_mn=None, trace_in
     return pd.DataFrame(traces_dict).melt(id_vars='index', var_name='traces', value_name='value'), trace_indexes
 
 
-def load_traces(path: str) -> tuple[str, Any, Any, Any, Any | None]:
+def load_traces(path: str) -> tuple[str, Any, Any, Any, Any, Any | None]:
     if os.path.isdir(path):
         # load scarr data from zarr format file.
         scarr_data = zarr.open(path, "r")
@@ -57,6 +57,7 @@ def load_traces(path: str) -> tuple[str, Any, Any, Any, Any | None]:
         sample_count = traces_source.shape[1]
         data = scarr_data['0/0/plaintext']
         data_type = 'zarr'
+        origin_data = scarr_data
     else:
         # load newae data from npy format file.
         traces_source = np.load(path)
@@ -64,5 +65,6 @@ def load_traces(path: str) -> tuple[str, Any, Any, Any, Any | None]:
         sample_count = traces_source.shape[1]
         data_type = 'npy'
         data = None
+        origin_data = None
 
-    return data_type, traces_source, trace_count, sample_count, data
+    return data_type, traces_source, trace_count, sample_count, data, origin_data
