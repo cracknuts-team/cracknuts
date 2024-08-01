@@ -568,20 +568,20 @@ def __():
 @app.cell
 def __():
     import marimo as mo
-    from nutcracker.solver import trace
+    from cracknuts.solver import trace
     import altair as alt
     # from vega_datasets import data
     import numpy as np
     import pandas as pd
     import zarr
     import os
-    import nutcracker.solver.trace
+    import cracknuts.solver.trace
 
     import matplotlib.pyplot as plt
     import numpy as np
     from sys import stdout
     from numcodecs import Blosc
-    return Blosc, alt, mo, np, nutcracker, os, pd, plt, stdout, trace, zarr
+    return Blosc, alt, mo, np, cracknuts, os, pd, plt, stdout, trace, zarr
 
 
 @app.cell

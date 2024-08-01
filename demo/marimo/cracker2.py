@@ -7,11 +7,11 @@ app = marimo.App(width="medium")
 @app.cell
 def __():
     import marimo as mo
-    import nutcracker.solver.trace as nt
+    import cracknuts.solver.trace as nt
     import numpy as np
     import altair as alt
-    from nutcracker.acquisition.acquisition import Acquisition
-    import nutcracker.logger as logger
+    from cracknuts.acquisition.acquisition import Acquisition
+    import cracknuts.logger as logger
     import logging
     return Acquisition, alt, logger, logging, mo, np, nt
 

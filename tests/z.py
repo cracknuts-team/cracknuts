@@ -1,4 +1,4 @@
-from nutcracker.cracker.basic_cracker import BasicCracker
+from cracknuts.cracker.basic_cracker import BasicCracker
 
 basic_device = BasicCracker(server_address=('127.0.0.1', 65432))
 basic_device.connect()
