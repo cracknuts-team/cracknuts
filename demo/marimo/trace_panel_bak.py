@@ -7,7 +7,7 @@ app = marimo.App(width="normal")
 @app.cell
 def __():
     import marimo as mo
-    from nutcracker.solver import trace
+    from cracknuts.solver import trace
     import altair as alt
     from vega_datasets import data
     import numpy as np
@@ -252,7 +252,7 @@ def __(get_selected_sample_count, get_selected_trace_count, mo):
 
 @app.cell
 def __(mo, os, trace):
-    import nutcracker.solver.trace
+    import cracknuts.solver.trace
 
     get_selected_trace_count, set_selected_trace_count = mo.state(0)
     get_selected_sample_count, set_selected_sample_count = mo.state(0)
@@ -295,7 +295,7 @@ def __(mo, os, trace):
         get_selected_sample_count,
         get_selected_trace_count,
         get_zarr_dir,
-        nutcracker,
+        cracknuts,
         set_selected_data,
         set_selected_sample_count,
         set_selected_trace_count,

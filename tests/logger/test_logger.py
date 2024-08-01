@@ -1,15 +1,15 @@
 import logging
 
-from nutcracker import logger
+from cracknuts import logger
 
 
 def test_get_logger():
-    import nutcracker
-    from nutcracker.logger import default_logger, get_logger
+    import cracknuts
+    from cracknuts.logger import default_logger, get_logger
     print(',,,,,,',default_logger().name)
-    assert default_logger().name == 'nutcracker'
+    assert default_logger().name == 'cracknuts'
     assert get_logger("test_get_logger").name == "test_get_logger"
-    assert get_logger(nutcracker.logger).name == 'nutcracker.logger'
+    assert get_logger(cracknuts.logger).name == 'cracknuts.logger'
 
     class LoggerTest:
         def __init__(self):

@@ -4,9 +4,9 @@ import typing
 from abc import ABC
 from abc import abstractmethod
 
-from nutcracker import logger
-from nutcracker.cracker import protocol
-import nutcracker.utils.hex_util as hex_util
+from cracknuts import logger
+from cracknuts.cracker import protocol
+import cracknuts.utils.hex_util as hex_util
 
 
 class Commands:

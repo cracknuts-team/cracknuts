@@ -25,15 +25,15 @@ def __(
 @app.cell
 def __():
     import marimo as mo
-    from nutcracker.solver import trace
+    from cracknuts.solver import trace
     import altair as alt
     from vega_datasets import data
     import numpy as np
     import pandas as pd
     import zarr
     import os
-    import nutcracker.solver.trace
-    return alt, data, mo, np, nutcracker, os, pd, trace, zarr
+    import cracknuts.solver.trace
+    return alt, data, mo, np, cracknuts, os, pd, trace, zarr
 
 
 @app.cell
@@ -299,18 +299,6 @@ def __(get_selected_sample_count, get_selected_trace_count, mo):
     Trace count: {get_selected_trace_count()}   Sample count: {get_selected_sample_count()}
     ''')
     return select_trace_attr,
-
-
-@app.cell
-def __():
-    # mo.vstack([mo.vstack([trace_select, select_trace_attr]), mo.vstack([mo.hstack([trace_start, trace_stop, index_start, index_stop, sample_count, button_open_trace]), chart_detail_base]), chart_overview])
-    return
-
-
-@app.cell
-def __():
-    # chart_selected()
-    return
 
 
 if __name__ == "__main__":

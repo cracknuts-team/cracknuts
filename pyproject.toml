@@ -1,33 +1,39 @@
-[project]
-name = "nutcracker"
-version = "0.1.0"
-description = "nutcracker"
-authors = [{ name = "HikariS", email = "542547695@qq.com" }]
-dependencies = [
-    "numpy>=2.0.1",
-    "pandas>=2.2.2",
-    "vega-datasets>=0.9.0",
-    "marimo>=0.7.12",
-    "altair>=5.3.0",
-    "zarr>=2.18.2",
-]
-readme = "README.md"
-requires-python = ">= 3.8"
-
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.rye]
-managed = true
-dev-dependencies = []
+[project]
+name = "CrackNuts"
+description = "A library for nut cracker device."
+dynamic = ["version"]
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [
+    { name = "Dingzb", email = "dingzibiao@gmail.com" }
+]
+maintainers = [
+    { name = "Dingzb", email = "dingzibiao@gmail.com" }
+]
+dependencies = [
+    "numpy >= 2.0.1",
+    "pandas >= 2.2.2"
+]
 
-[tool.hatch.metadata]
-allow-direct-references = true
+[project.optional-dependencies]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/nutcracker"]
+test = [
+    'pytest'
+]
 
-[[tool.rye.sources]]
-name = "default"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+marimo = [
+    'marimo'
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "cracknuts.__version__" }
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+
+[tool.pdm]

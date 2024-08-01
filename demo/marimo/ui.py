@@ -362,10 +362,10 @@ def __(
 def __():
     import altair as alt
     import numpy as np
-    from nutcracker.cracker.basic_cracker import BasicCracker
-    from nutcracker.acquisition.acquisition import Acquisition
-    import nutcracker.solver.trace as nt
-    import nutcracker.logger as t_logger
+    from cracknuts.cracker.basic_cracker import BasicCracker
+    from cracknuts.acquisition.acquisition import Acquisition
+    import cracknuts.solver.trace as nt
+    import cracknuts.logger as t_logger
     import logging
     return Acquisition, BasicCracker, alt, logging, np, nt, t_logger
 
