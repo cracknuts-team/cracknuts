@@ -162,20 +162,28 @@ def __(Container, ContainerOptions, SboxWeight, cpa, get_dataset_name, th):
 
 
 @app.cell
-def __(container2):
+def __(container2, engine2):
     container2.run()
-    return
-
-
-@app.cell
-def __(container2):
     results2 = container2.engine.get_result()
+    engine2.get_candidate()
     return results2,
 
 
 @app.cell
-def __(engine2):
-    engine2.get_candidate()
+def __():
+    # container2.run()
+    return
+
+
+@app.cell
+def __():
+    # results2 = container2.engine.get_result()
+    return
+
+
+@app.cell
+def __():
+    # engine2.get_candidate()
     return
 
 

@@ -1,13 +1,7 @@
 import marimo
 
-__generated_with = "0.7.0"
-app = marimo.App(width="medium")
-
-
-@app.cell
-def __(nut_voltage):
-    nut_voltage
-    return
+__generated_with = "0.7.14"
+app = marimo.App(width="full")
 
 
 @app.cell
@@ -16,7 +10,7 @@ def __(panel):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def __(chart_wave, mo, refresh_button):
     mo.vstack([refresh_button, chart_wave])
     return
@@ -186,26 +180,57 @@ def __(
 
     nut_enable = mo.ui.dropdown(label='Nut使能', options={'启用': 1, '停用': 0}, value='停用', on_change=set_nut_enable)
 
-    nut_voltage = mo.ui.number(label='Nut电压', start=2.0, stop=4.4, step=0.1, on_change=set_nut_voltage, value=get_nut_voltage_state(), debounce=True)
+    nut_voltage = mo.ui.number(label='Nut电压', start=2.0, stop=4.4, step=0.1, on_change=set_nut_voltage, value=get_nut_voltage_state(), debounce=True, full_width=False)
     nut_interface = mo.ui.dropdown(label='Nut通讯选择', options={'UART': 0, 'SPI': 1, 'I2C': 2, 'CAN': 3}, allow_select_none=False, value='UART', on_change=set_nut_interface)
     nut_timeout = mo.ui.number(label='Nut通信超时', start=10, stop=60000, step=100, value=10000, on_change=set_nut_timeout, debounce=True)
     serial_baud = mo.ui.dropdown(label='串口波特率', options={'9600': 9600, '115200': 115200, '57600': 57600, '19200': 19200}, allow_select_none=False, value='115200', on_change=set_serial_baud)
-    serial_width = mo.ui.dropdown(label='串口数据位', options={'5': 5, '6': 6, '7': 7, '8': 8})
-    serial_stop = mo.ui.dropdown(label='串口停止位', options={'1': 0, '1.5': 1, '2': 2})
-    serial_odd_eve = mo.ui.dropdown(label='串口奇偶', options={'偶校验': 0, '奇校验': 1})
+    serial_width = mo.ui.dropdown(label='串口数据位', value='5', options={'5': 5, '6': 6, '7': 7, '8': 8})
+    serial_stop = mo.ui.dropdown(label='串口停止位', value='1', options={'1': 0, '1.5': 1, '2': 2})
+    serial_odd_eve = mo.ui.dropdown(label='串口奇偶', value='偶校验', options={'偶校验': 0, '奇校验': 1})
+
+    spi_cpol = mo.ui.dropdown(label='CPOL', value='0', options={'0': 0, '1': 1})
+    spi_cpha = mo.ui.dropdown(label='CPHA', value='0', options={'0': 0, '1': 1})
+    spi_baud = mo.ui.number(label='数据位长', value=0, start=0, step=1, stop=100)
+    spi_freq = mo.ui.number(label='速率', value=0, start=0, step=1, stop=100)
+    spi_timeout = mo.ui.number(label='超时', value=0, start=0, step=1, stop=100)
+
+    # i2c_cpol = mo.ui.dropdown(label='CPOL', value='0', options={'0': 0, '1': 1})
+    # spi_cpha = mo.ui.dropdown(label='CPHA', value='0', options={'0': 0, '1': 1})
+    # spi_baud = mo.ui.number(label='数据位长', value=0, start=0, step=1, stop=100)
+    i2c_freq = mo.ui.number(label='速率', value=0, start=0, step=1, stop=100)
+    i2c_timeout = mo.ui.number(label='超时', value=0, start=0, step=1, stop=100)
+
+    can_freq = mo.ui.number(label='速率', value=0, start=0, step=1, stop=100)
+    can_timeout = mo.ui.number(label='超时', value=0, start=0, step=1, stop=100)
+
+    scrat_sample_rate = mo.ui.dropdown(label='采样率', value='62.5 mHz', options={'62.5 mHz': 52500, '50 mHz': 50000, '25 mHz': 25000, '10 mHz': 100000})
+    scrat_sample_phase = mo.ui.number(label='采样时钟相位（ °）', value=0, start=-360, step=10, stop=360)
+    scrat_sample_length = mo.ui.number(label='采样长度', value=1024, start=1000, step=1, stop=100000)
+
+    scrat_delay = mo.ui.number(label='延迟时间', value=0, start=-5000, step=100, stop=5000)
+    scrat_gain = mo.ui.number(label='采样增益（%）', value=0, start=0, step=5, stop=100)
     return (
         button_disconnect,
         button_run,
         button_send_echo_message,
         button_stop,
         button_test,
+        can_freq,
+        can_timeout,
         get_cracker_id,
         get_cracker_name,
         get_echo_res,
+        i2c_freq,
+        i2c_timeout,
         nut_enable,
         nut_interface,
         nut_timeout,
         nut_voltage,
+        scrat_delay,
+        scrat_gain,
+        scrat_sample_length,
+        scrat_sample_phase,
+        scrat_sample_rate,
         serial_baud,
         serial_odd_eve,
         serial_stop,
@@ -213,6 +238,11 @@ def __(
         set_cracker_id,
         set_cracker_name,
         set_echo_res,
+        spi_baud,
+        spi_cpha,
+        spi_cpol,
+        spi_freq,
+        spi_timeout,
         switch_connection,
         text_echo_req,
         text_ip,
@@ -234,17 +264,32 @@ def __(
     button_send_echo_message,
     button_stop,
     button_test,
+    can_freq,
+    can_timeout,
     get_connnection_status,
     get_cracker_id,
     get_cracker_name,
     get_echo_res,
-    get_nut_voltage_state,
+    i2c_freq,
+    i2c_timeout,
     mo,
     nut_enable,
     nut_interface,
     nut_timeout,
     nut_voltage,
+    scrat_delay,
+    scrat_gain,
+    scrat_sample_length,
+    scrat_sample_phase,
+    scrat_sample_rate,
     serial_baud,
+    serial_odd_eve,
+    serial_stop,
+    serial_width,
+    spi_baud,
+    spi_cpha,
+    spi_cpol,
+    spi_timeout,
     text_echo_req,
     text_ip,
     text_port,
@@ -257,9 +302,8 @@ def __(
             <span>{get_connnection_status()}</span>
             <span>{get_cracker_id()}</span>
             <span>{get_cracker_name()}</span>
-            {get_nut_voltage_state()}
         </div>
-        <span>文本回声测试：</span>{text_echo_req} {button_send_echo_message} {get_echo_res()}
+        <!-- <span>文本回声测试：</span>{text_echo_req} {button_send_echo_message} {get_echo_res()} -->
         <div style="padding: 5px;">
             {button_test}
             {button_run}
@@ -280,25 +324,15 @@ def __(
                 </div>
                 <div style="border: 1px solid black; margin: 5px; padding: 5px;">
                     <div>
-                        <div style="padding: 5px; display: inline-block"><label for="">采样时钟: <select>
-                            <option>11111</option>
-                        </select></label></div>
-                        <div style="padding: 5px; display: inline-block"><label for="">采样时钟相位: <select>
-                            <option>11111</option>
-                        </select></label></div>
+                        <div style="padding: 5px; display: inline-block">{scrat_sample_rate}</div>
+                        <div style="padding: 5px; display: inline-block">{scrat_sample_phase}</div>
                     </div>
                     <div>
-                        <div style="padding: 5px; display: inline-block"><label for="">采样点数: <select>
-                            <option>11111</option>
-                        </select></label></div>
-                        <div style="padding: 5px; display: inline-block"><label for="">延时点数: <select>
-                            <option>11111</option>
-                        </select></label></div>
+                        <div style="padding: 5px; display: inline-block">{scrat_sample_length}</div>
+                        <div style="padding: 5px; display: inline-block">{scrat_delay}</div>
                     </div>
                     <div>
-                        <div style="padding: 5px; display: inline-block"><label for="">采样增益: <select>
-                            <option>11111</option>
-                        </select></label></div>
+                        <div style="padding: 5px; display: inline-block">{scrat_gain}</div>
                     </div>
                 </div>
             </div>
@@ -311,51 +345,31 @@ def __(
                     <div style="border: 1px solid black; display: inline-block; margin: 5px; width: 200px;">
                         <div style="border-bottom: 1px solid black; padding: 5px;">UART</div>
                         <div style="padding: 5px;">{serial_baud}</div>
-                        <div style="padding: 5px;"><label>Size: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>Stop: <select>
-                            <option>123</option>
-                        </select></label></div>
+                        <div style="padding: 5px;">{serial_width}</div>
+                        <div style="padding: 5px;">{serial_stop}</div>
+                        <div style="padding: 5px;">{serial_odd_eve}</div>
                     </div>
-                    <div style="border: 1px solid black; display: inline-block; margin: 5px; width: 150px;">
+                    <div style="border: 1px solid black; display: inline-block; margin: 5px;">
                         <div style="border-bottom: 1px solid black; padding: 5px;">SPI</div>
-                        <div style="padding: 5px;"><label>CPOL: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>CPHA: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>BAUD: <select>
-                            <option>123</option>
-                        </select></label></div>
+                        <div style="padding: 5px;">{spi_cpol}</div>
+                        <div style="padding: 5px;">{spi_cpha}</div>
+                        <div style="padding: 5px;">{spi_baud}</div>
+                        <div style="padding: 5px;">{spi_timeout}</div>
                     </div>
                 </div>
                 <div>
-                    <div style="border: 1px solid black; display: inline-block; margin: 5px; width: 150px;">
+                    <div style="border: 1px solid black; display: inline-block; margin: 5px;">
                         <div style="border-bottom: 1px solid black; padding: 5px;">I2C</div>
-                        <div style="padding: 5px;"><label>CPOL: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>CPHA: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>BAUD: <select>
-                            <option>123</option>
-                        </select></label></div>
+                        <div style="padding: 5px;">{i2c_freq}</div>
+                        <div style="padding: 5px;">{i2c_timeout}</div>
                     </div>
-                    <div style="border: 1px solid black; display: inline-block; margin: 5px; width: 150px;">
+                    <!--
+                    <div style="border: 1px solid black; display: inline-block; margin: 5px;">
                         <div style="border-bottom: 1px solid black; padding: 5px;">CAN</div>
-                        <div style="padding: 5px;"><label>CPOL: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>CPHA: <select>
-                            <option>123</option>
-                        </select></label></div>
-                        <div style="padding: 5px;"><label>BAUD: <select>
-                            <option>123</option>
-                        </select></label></div>
+                        <div style="padding: 5px;">{can_freq}</div>
+                        <div style="padding: 5px;">{can_timeout}</div>
                     </div>
+                    -->
                 </div>
             </div>
         </div>
