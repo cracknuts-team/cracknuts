@@ -2,14 +2,14 @@ import logging
 import time
 
 from cracknuts import logger
-from cracknuts.acquisition.acquisition import Acquisition
+from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate
 from cracknuts.cracker.basic_cracker import BasicCracker
 
 cracker = BasicCracker()
 cracker.set_addr('192.168.0.10', 8080)
 cracker.connect()
 
-acq = Acquisition(cracker)
+acq = AcquisitionTemplate(cracker)
 
 
 def setup_functions():

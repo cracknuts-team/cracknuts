@@ -1,5 +1,6 @@
 import abc
 import datetime
+import sys
 import threading
 import time
 import typing
@@ -11,17 +12,21 @@ from cracknuts import logger
 from cracknuts.cracker.abs_cracker import AbsCracker
 
 
-class Acquisition(abc.ABC):
+class AcquisitionTemplate(abc.ABC):
 
-    def __init__(self, cracker: AbsCracker):
+    def __init__(self, cracker: AbsCracker | None = None):
         self._logger = logger.get_logger(self)
-        self._cracker = cracker
+        self.cracker = cracker
         self._last_wave: np.ndarray | None = np.array([np.zeros(1000)])
         self._running = False
         self._trace_count = 1
         self._on_wave_loaded_callback: typing.Callable = typing.Callable[[np.ndarray], None]
         self._trigger_judge_wait_time: float = 0.2  # second
         self._trigger_judge_timeout: float = 2000000  # microsecond
+        self._run_thread = None
+
+    def set_cracker(self, cracker: AbsCracker):
+        self.cracker = cracker
 
     def on_wave_loaded(self, callback: typing.Callable[[np.ndarray], None]) -> None:
         self._on_wave_loaded_callback = callback
@@ -31,7 +36,13 @@ class Acquisition(abc.ABC):
         self._run(save_data=True, count=count)
 
     def run_sync(self, count=1):
-        self._do_run(save_data=True, count=count)
+        try:
+            self._do_run(save_data=True, count=count)
+            self._logger.debug('stop by timeout.')
+            self.stop()
+        except KeyboardInterrupt:
+            self._logger.debug('stop by interrupted.')
+            self.stop()
 
     def test(self, count=1):
         self._logger.debug('Start test mode.')
@@ -41,7 +52,8 @@ class Acquisition(abc.ABC):
         self._running = False
 
     def _run(self, save_data: bool = False, count=1):
-        threading.Thread(target=self._do_run, kwargs={'save_data': save_data, 'count': count}).start()
+        self._run_thread = threading.Thread(target=self._do_run, kwargs={'save_data': save_data, 'count': count})
+        self._run_thread.start()
 
     def _do_run(self, save_data: bool = False, count=1):
 
@@ -69,6 +81,8 @@ class Acquisition(abc.ABC):
 
     def _loop(self):
         for i in range(self._trace_count):
+            if not self._running:
+                break
             self._logger.debug('Get wave data: %s', i)
             self.pre_do()
             start = datetime.datetime.now()
@@ -95,7 +109,7 @@ class Acquisition(abc.ABC):
             #         # time.sleep(1) # test
             #         # break
             #     break
-                # time.sleep(self._trigger_judge_wait_time)
+            # time.sleep(self._trigger_judge_wait_time)
             self._save_wave()
             self._post_do()
 
@@ -143,7 +157,7 @@ class Acquisition(abc.ABC):
         Connect to cracker device.
         :return:
         """
-        self._cracker.connect()
+        self.cracker.connect()
 
     def connect_net(self):
         ...
@@ -157,9 +171,9 @@ class Acquisition(abc.ABC):
     def pre_init(self):
         ...
 
+    @abc.abstractmethod
     def init(self):
         ...
-
 
     def post_init(self):
         ...
@@ -170,8 +184,9 @@ class Acquisition(abc.ABC):
     def pre_do(self):
         ...
 
+    @abc.abstractmethod
     def do(self):
-       ...
+        ...
 
     def _post_do(self):
         ...
@@ -212,3 +227,45 @@ class Acquisition(abc.ABC):
 
     def get_last_wave(self):
         return self._last_wave
+
+    @staticmethod
+    def builder():
+        return AcquisitionBuilder()
+
+
+class AcquisitionBuilder:
+
+    def __init__(self):
+        self._cracker = None
+        self._do_function = lambda _: ...
+        self._init_function = lambda _: ...
+
+    def cracker(self, cracker: AbsCracker):
+        self._cracker = cracker
+        return self
+
+    def init(self, init_function: typing.Callable[[AbsCracker], None]):
+        if init_function:
+            self._init_function = init_function
+        return self
+
+    def do(self, do_function: typing.Callable[[AbsCracker], None]):
+        if do_function:
+            self._do_function = do_function
+        return self
+
+    def build(self):
+        if self._cracker is None:
+            raise ValueError('No cracker')
+
+        builder_self = self
+
+        class AnonymousAcquisition(AcquisitionTemplate):
+
+            def init(self):
+                builder_self._init_function(self.cracker)
+
+            def do(self):
+                builder_self._do_function(self.cracker)
+
+        return AnonymousAcquisition(builder_self._cracker)
