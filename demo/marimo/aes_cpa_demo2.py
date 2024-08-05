@@ -194,7 +194,8 @@ def __(mo):
 
 
 @app.cell
-def __(candidates, mo, np):
+def __(candidates, get_dataset_name, mo, np):
+    mo.stop(get_dataset_name() is None)
     t = ''
     for _i in range(0, 10):
         tstr = '第' + str(_i+1)+ '个候选值：'+ str(np.abs(candidates).argsort()[::-1][_i]) + '， 对应的相关系数为：'+ str(candidates[np.abs(candidates).argsort()[::-1][_i]]) +  '</br>'
