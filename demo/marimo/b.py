@@ -1,12 +1,12 @@
 import marimo
 
-__generated_with = "0.7.0"
+__generated_with = "0.7.14"
 app = marimo.App(width="medium")
 
 
 @app.cell
 def __(mo):
-    mo.md("# Reactive plots! ðŸš—")
+    mo.md("""# Reactive plots! ðŸš—""")
     return
 
 
@@ -45,7 +45,7 @@ def __(height, mo, width):
 
 @app.cell
 def __(mo):
-    mo.md("This plot is **interactive**! Click and drag to select points to get a filtered dataset.")
+    mo.md("""This plot is **interactive**! Click and drag to select points to get a filtered dataset.""")
     return
 
 
@@ -194,7 +194,7 @@ def __(alt, cars, color, mo, x_axis, y_axis):
 
 @app.cell
 def __(mo):
-    mo.md("Select one or more cars from the table.")
+    mo.md("""Select one or more cars from the table.""")
     return
 
 

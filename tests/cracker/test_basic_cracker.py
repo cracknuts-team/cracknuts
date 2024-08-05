@@ -3,7 +3,7 @@ import logging
 from cracknuts.cracker.basic_cracker import BasicCracker
 from cracknuts.logger import set_level
 
-basic_device = BasicCracker(server_address=('192.168.0.11', 8080))
+basic_device = BasicCracker(server_address=('192.168.0.12', 8080))
 
 
 def setup_function():
@@ -221,4 +221,6 @@ def test_multiple_echo():
 
 if __name__ == '__main__':
     setup_function()
-    test_cracker_nut_interface()
+    # test_cracker_nut_interface()
+    test_cracker_nut_enable()
+    # test_cracker_nut_voltage()

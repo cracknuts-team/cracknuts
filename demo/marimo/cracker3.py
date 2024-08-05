@@ -22,11 +22,22 @@ def __():
     import altair as alt
     import numpy as np
     from cracknuts.cracker.basic_cracker import BasicCracker
-    from cracknuts.acquisition.acquisition import Acquisition
+    from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate
     import cracknuts.solver.trace as nt
     import cracknuts.logger as t_logger
     import logging
-    return Acquisition, BasicCracker, alt, logging, mo, np, nt, t_logger
+    import time
+    return (
+        AcquisitionTemplate,
+        BasicCracker,
+        alt,
+        logging,
+        mo,
+        np,
+        nt,
+        t_logger,
+        time,
+    )
 
 
 @app.cell
@@ -44,20 +55,62 @@ def __(mo):
 
 @app.cell
 def __(
-    Acquisition,
+    AbsCracker,
+    AcquisitionTemplate,
     BasicCracker,
-    basic_cracker,
     logging,
-    set_connnection_status,
-    set_nut_voltage_state,
     t_logger,
+    time,
 ):
-    # define acquisition, basic cracker device and other function call in marimo loop.
+    def init(c: AbsCracker):
+        c.cracker_nut_voltage(3300)
+        time.sleep(1)
+        c.cracker_nut_enable(1)
+        time.sleep(2)
+        # aes
+        # key = '01 00 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
+        # des
+        key = '02 00 00 00 00 00 00 08 88 99 AA BB CC DD EE FF'
+        key = key.replace(' ', '')
+        key = bytes.fromhex(key)
+        data_len = 6
+        c.cracker_serial_data(data_len, key)
+
+
+    def do(c: AbsCracker):
+        # aes
+        # d = '01 02 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
+        # l = '00 00 00 00 00 10 62 F6 79 BE 2B F0 D9 31 64 1E 03 9C A3 40 1B B2'
+        # l = len(l.split(' '))
+        # des
+        data = '02 02 00 00 00 00 00 08 88 99 AA BB CC DD EE FF'
+        res_sample = '00 00 00 00 00 08 97 9F FF 9B 97 0C A6 A4'
+        
+        data_len = len(res_sample.split(' '))
+        data = data.replace(' ', '')
+        data = bytes.fromhex(data)
+        c.cracker_serial_data(data_len, data)
 
     basic_cracker = BasicCracker()
-    acquisition = Acquisition(basic_cracker)
 
     t_logger.set_level(logging.DEBUG, basic_cracker)
+
+    def get_acquisition():
+        return AcquisitionTemplate.builder().cracker(basic_cracker).init(init).do(do).build()
+
+    acquisition = get_acquisition()
+    t_logger.set_level(logging.DEBUG, acquisition)
+    return acquisition, basic_cracker, do, get_acquisition, init
+
+
+@app.cell
+def __(
+    acquisition,
+    basic_cracker,
+    set_connnection_status,
+    set_nut_voltage_state,
+):
+
 
     def connect(ip, port):
         global basic_cracker
@@ -68,7 +121,6 @@ def __(
         else:
             set_connnection_status('未连接')
             set_nut_voltage_state(3.3)
-            print('inti voltage.')
 
     def disconnect(v):
         if basic_cracker:
@@ -100,7 +152,7 @@ def __(
 
     def start_test(v):
         if basic_cracker.get_connection_status():
-            acquisition.test()
+            acquisition.test(1000)
 
     def stop(v):
         if basic_cracker.get_connection_status():
@@ -116,8 +168,6 @@ def __(
         if message:
             return basic_cracker.echo_hex(message)
     return (
-        acquisition,
-        basic_cracker,
         connect,
         disconnect,
         echo,
@@ -133,13 +183,8 @@ def __(
 
 
 @app.cell
-def __(mo, set_nut_voltage_state):
-    button_connect = mo.ui.button(label='连接', on_change=lambda _: set_nut_voltage_state(3.3))
-    return button_connect,
-
-
-@app.cell
 def __(
+    connect,
     disconnect,
     echo,
     get_nut_voltage_state,
@@ -155,10 +200,10 @@ def __(
 ):
     # define acquisition ui
 
-    text_ip = mo.ui.text('192.168.0.10')
-    text_port = mo.ui.text('8081')
+    text_ip = mo.ui.text('192.168.0.12')
+    text_port = mo.ui.text('8080')
 
-    # button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value, text_port.value))
+    button_connect = mo.ui.button(label='连接', on_change=lambda _: connect(text_ip.value, text_port.value))
     # button_connect = mo.ui.button(label='连接', on_change=lambda _: set_nut_voltage_state(3.3))
     button_disconnect = mo.ui.button(label='断开连接', on_change=disconnect)
 
@@ -210,6 +255,7 @@ def __(
     scrat_delay = mo.ui.number(label='延迟时间', value=0, start=-5000, step=100, stop=5000)
     scrat_gain = mo.ui.number(label='采样增益（%）', value=0, start=0, step=5, stop=100)
     return (
+        button_connect,
         button_disconnect,
         button_run,
         button_send_echo_message,

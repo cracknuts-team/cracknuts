@@ -2,17 +2,17 @@ import logging
 import time
 
 from cracknuts import logger
-from cracknuts.acquisition.acquisition import Acquisition
+from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate
 from cracknuts.cracker.basic_cracker import BasicCracker
 
 
-class MyAcquisition(Acquisition):
+class MyAcquisitionTemplate(AcquisitionTemplate):
     def init(self):
         self._logger.debug('Set voltage...')
-        self._cracker.cracker_nut_voltage(3300)
+        self.cracker.cracker_nut_voltage(3300)
         time.sleep(1)
         self._logger.debug('Set enable...')
-        self._cracker.cracker_nut_enable(1)
+        self.cracker.cracker_nut_enable(1)
         time.sleep(2)
         self._logger.debug('Set key...')
         # set_key = '01 00 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
@@ -20,7 +20,7 @@ class MyAcquisition(Acquisition):
         set_key = '02 00 00 00 00 00 00 08 88 99 AA BB CC DD EE FF'
         set_key = set_key.replace(' ', '')
         set_key = bytes.fromhex(set_key)
-        self._cracker.cracker_serial_data(l, set_key)
+        self.cracker.cracker_serial_data(l, set_key)
 
     def do(self):
         # enc
@@ -33,17 +33,16 @@ class MyAcquisition(Acquisition):
         l = len(l.split(' '))
         d = d.replace(' ', '')
         d = bytes.fromhex(d)
-        print('aaaaa ', l)
-        self._cracker.cracker_serial_data(l, d)
+        self.cracker.cracker_serial_data(l, d)
 
 
 if __name__ == '__main__':
     cracker = BasicCracker()
     logger.set_level(logging.WARNING, cracker)
-    cracker.set_addr('192.168.0.11', 8080)
+    cracker.set_addr('192.168.0.12', 8080)
     cracker.connect()
     if cracker.get_connection_status():
-        acq = MyAcquisition(cracker)
+        acq = MyAcquisitionTemplate(cracker)
         logger.set_level(logging.WARNING, acq)
-        acq.run_sync(1000)
+        acq.run_sync(5000)
 
