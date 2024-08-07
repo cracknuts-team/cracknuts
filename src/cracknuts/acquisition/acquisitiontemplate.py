@@ -1,5 +1,6 @@
 import abc
 import datetime
+import struct
 import sys
 import threading
 import time
@@ -89,27 +90,27 @@ class AcquisitionTemplate(abc.ABC):
             self.do()
             print('count: ', i, 'delay: ', datetime.datetime.now() - start)
             trigger_judge_start_time = datetime.datetime.now().microsecond
-            # while self._running:
-            #     trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
-            #     if trigger_judge_time > self._trigger_judge_timeout:
-            #         self._logger.error("Triggered judge timeout and will get next waves, "
-            #                            "judge time: %s and timeout is %s",
-            #                            trigger_judge_time, self._trigger_judge_timeout)
-            #         break
-            #     self._logger.debug('Judge trigger status.')
-            #     # if self._is_triggered():
-            #         # self._last_wave = self._get_waves()
-            #         # if self._last_wave is not None:
-            #         #     self._logger.debug('Got wave: %s.', self._last_wave.shape)
-            #         # if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
-            #         #     try:
-            #         #         self._on_wave_loaded_callback(self._last_wave)
-            #         #     except Exception as e:
-            #         #         self._logger.error('Wave loaded event callback error: %s', e.args)
-            #         # time.sleep(1) # test
-            #         # break
-            #     break
-            # time.sleep(self._trigger_judge_wait_time)
+            while self._running:
+                trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
+                if trigger_judge_time > self._trigger_judge_timeout:
+                    self._logger.error("Triggered judge timeout and will get next waves, "
+                                       "judge time: %s and timeout is %s",
+                                       trigger_judge_time, self._trigger_judge_timeout)
+                    break
+                self._logger.debug('Judge trigger status.')
+                if self._is_triggered():
+                    self._last_wave = self._get_waves()
+                    if self._last_wave is not None:
+                        self._logger.debug('Got wave: %s.', self._last_wave.shape)
+                    if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
+                        try:
+                            self._on_wave_loaded_callback(self._last_wave)
+                        except Exception as e:
+                            self._logger.error('Wave loaded event callback error: %s', e.args)
+                    time.sleep(1)  # test
+                    break
+                break
+            time.sleep(self._trigger_judge_wait_time)
             self._save_wave()
             self._post_do()
 
@@ -200,7 +201,7 @@ class AcquisitionTemplate(abc.ABC):
         return True
 
     def _get_waves(self):
-        return np.array([np.random.random(1000)])
+        return self.cracker.scrat_get_analog_wave(1, 0, 1000)
 
     def _save_wave(self):
         ...
