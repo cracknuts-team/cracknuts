@@ -84,6 +84,7 @@ class AbsCracker(ABC):
         self._server_address = server_address
         self._socket: socket.socket | None = None
         self._connection_status = False
+        self._channel_enable: dict = {0: False, 1: False, 2: False, 3: False, 4: False, 5: False, 6: False, 7: False}
 
     def set_addr(self, ip, port) -> None:
         self._server_address = ip, port
