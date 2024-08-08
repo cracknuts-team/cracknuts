@@ -157,7 +157,9 @@ class BasicCracker(AbsCracker):
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
         payload = struct.pack('>BII', channel, offset, sample_count)
         self._logger.debug('scrat_get_digital_wave payload: %s', payload.hex())
-        return self.send_with_command(Commands.SCRAT_GET_DIGITAL_WAVES, payload)
+        wave_bytes = self.send_with_command(Commands.SCRAT_GET_ANALOG_WAVES, payload)
+        wave = struct.unpack(f'>{sample_count}I', wave_bytes)
+        return np.array(wave, dtype=np.int32)
 
     def scrat_analog_gain(self, gain):
         payload = struct.pack('>B', gain)
