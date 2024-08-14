@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.7.12"
+__generated_with = "0.7.19"
 app = marimo.App(width="medium")
 
 
@@ -35,13 +35,12 @@ def __(plt, signal, time):
     for i in range(10, len(time), 29):  # 从索引13开始每隔13个点标记
         axs[1].scatter(time[i], signal[i], color='red')
 
-    plt.show()
     return axs, fig, i
 
 
 @app.cell
 def __(plt):
-    plt.show()
+    plt.gca()
     return
 
 
