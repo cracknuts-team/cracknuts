@@ -21,6 +21,9 @@ dependencies = [
     "serial>=0.0.97",
 ]
 
+[tool.setuptools.dynamic]
+version = { attr = "cracknuts.__version__" }
+
 [tool.rye]
 managed = true
 dev-dependencies = []
