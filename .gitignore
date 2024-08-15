@@ -2,7 +2,8 @@
 dist
 *.egg-info
 demo/data
-venv*
+venv
+.venv
 outputs
 
 **/__pycache__/**
