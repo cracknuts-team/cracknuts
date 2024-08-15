@@ -70,6 +70,9 @@ class Commands:
     CRACKER_CAN_TIMEOUT = 0x0254
     CRACKER_CA_DATA = 0x025A
 
+    PROTOCOL_PREFIX = 'cnp'
+    PROTOCOL_DEFAULT_PORT = 9761
+
 
 class AbsCracker(ABC):
     """Cracker
@@ -88,6 +91,24 @@ class AbsCracker(ABC):
 
     def set_addr(self, ip, port) -> None:
         self._server_address = ip, port
+
+    def set_uri(self, uri: str) -> None:
+        if not uri.startswith('cnp://') and uri.count(':') < 2:
+            uri = 'cnp://' + uri
+
+        uri = uri.replace('cnp://', '', 1)
+        if ':' in uri:
+            host, port = uri.split(':')
+        else:
+            host, port = uri, Commands.PROTOCOL_DEFAULT_PORT
+
+        self._server_address = host, int(port)
+
+    def get_uri(self):
+        if self._server_address is None:
+            return None
+        else:
+            return f'cnp://{self._server_address[0]}:{self._server_address[1]}'
 
     def connect(self):
         """
@@ -130,7 +151,7 @@ class AbsCracker(ABC):
         self.disconnect()
         self.connect()
 
-    def get_connection_status(self):
+    def get_connection_status(self) -> bool:
         """
         Get connection status.
         :return: True or False
