@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.7.14"
+__generated_with = "0.7.20"
 app = marimo.App(width="full")
 
 
@@ -85,7 +85,7 @@ def __(
         # des
         data = '02 02 00 00 00 00 00 08 88 99 AA BB CC DD EE FF'
         res_sample = '00 00 00 00 00 08 97 9F FF 9B 97 0C A6 A4'
-        
+
         data_len = len(res_sample.split(' '))
         data = data.replace(' ', '')
         data = bytes.fromhex(data)
@@ -110,8 +110,6 @@ def __(
     set_connnection_status,
     set_nut_voltage_state,
 ):
-
-
     def connect(ip, port):
         global basic_cracker
         basic_cracker.set_addr(ip, int(port))

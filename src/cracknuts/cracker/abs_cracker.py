@@ -4,6 +4,8 @@ import typing
 from abc import ABC
 from abc import abstractmethod
 
+import numpy as np
+
 from cracknuts import logger
 from cracknuts.cracker import protocol
 import cracknuts.utils.hex_util as hex_util
@@ -282,7 +284,7 @@ class AbsCracker(ABC):
         ...
 
     @abstractmethod
-    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int):
+    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
         ...
 
     @abstractmethod
