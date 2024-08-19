@@ -1,14 +1,170 @@
+import abc
 import socket
 import struct
 import typing
 from abc import ABC
-from abc import abstractmethod
 
 import numpy as np
 
+import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
-import cracknuts.utils.hex_util as hex_util
+
+
+class Cracker(typing.Protocol):
+
+    def set_addr(self, ip, port) -> None:
+        ...
+
+    def set_uri(self, uri: str) -> None:
+        ...
+
+    def get_uri(self):
+        ...
+
+    def connect(self):
+        ...
+
+    def disconnect(self):
+        ...
+
+    def reconnect(self):
+        ...
+
+    def get_connection_status(self) -> bool:
+        ...
+
+    def send_and_receive(self, message) -> None | bytes:
+        ...
+
+    def send_with_command(self, command: int | bytes, payload: str | bytes = None):
+        ...
+
+    def echo(self, payload: str) -> str:
+        ...
+
+    def echo_hex(self, payload: str) -> str:
+        ...
+
+    def get_id(self) -> str:
+        ...
+
+    def get_name(self) -> str:
+        ...
+
+    def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
+        ...
+
+    def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
+        ...
+
+    def scrat_analog_voltage(self, channel: int, voltage: int):
+        ...
+
+    def scrat_analog_bias_voltage(self, channel: int, voltage: int):
+        ...
+
+    def scrat_digital_channel_enable(self, enable: typing.Dict[int, bool]):
+        ...
+
+    def scrat_digital_voltage(self, voltage: int):
+        ...
+
+    def scrat_trigger_mode(self, source: int, stop: int):
+        ...
+
+    def scrat_analog_trigger_source(self, channel: int):
+        ...
+
+    def scrat_digital_trigger_source(self, channel: int):
+        ...
+
+    def scrat_analog_trigger_voltage(self, voltage: int):
+        ...
+
+    def scrat_trigger_delay(self, delay: int):
+        ...
+
+    def scrat_sample_len(self, length: int):
+        ...
+
+    def scrat_arm(self):
+        ...
+
+    def scrat_is_triggered(self):
+        ...
+
+    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
+        ...
+
+    def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
+        ...
+
+    def scrat_analog_gain(self, gain: int):
+        ...
+
+    def cracker_nut_enable(self, enable: int):
+        ...
+
+    def cracker_nut_voltage(self, voltage: int):
+        ...
+
+    def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
+        ...
+
+    def cracker_nut_timeout(self, timeout: int):
+        ...
+
+    def cracker_serial_baud(self, baud: int):
+        ...
+
+    def cracker_serial_width(self, width: int):
+        ...
+
+    def cracker_serial_stop(self, stop: int):
+        ...
+
+    def cracker_serial_odd_eve(self, odd_eve: int):
+        ...
+
+    def cracker_serial_data(self, expect_len: int, data: bytes):
+        ...
+
+    def cracker_spi_cpol(self, cpol: int):
+        ...
+
+    def cracker_spi_cpha(self, cpha: int):
+        ...
+
+    def cracker_spi_data_len(self, cpha: int):
+        ...
+
+    def cracker_spi_freq(self, freq: int):
+        ...
+
+    def cracker_spi_timeout(self, timeout: int):
+        ...
+
+    def cracker_spi_data(self, expect_len: int, data: bytes):
+        ...
+
+    def cracker_i2c_freq(self, freq: int):
+        ...
+
+    def cracker_i2c_timeout(self, timeout: int):
+        ...
+
+    def cracker_i2c_data(self, expect_len: int, data: bytes):
+        ...
+
+    def cracker_can_freq(self, freq: int):
+        ...
+
+    def cracker_can_timeout(self, timeout: int):
+        ...
+
+    def cracker_can_data(self, expect_len: int, data: bytes):
+        ...
 
 
 class Commands:
@@ -76,7 +232,7 @@ class Commands:
     PROTOCOL_DEFAULT_PORT = 9761
 
 
-class AbsCracker(ABC):
+class AbsCracker(ABC, Cracker):
     """Cracker
     Cracker
     """
@@ -127,7 +283,6 @@ class AbsCracker(ABC):
         except socket.error as e:
             self._logger.error('Connection failed: %s', e)
             self._connection_status = False
-        return self
 
     def disconnect(self):
         """
@@ -143,7 +298,6 @@ class AbsCracker(ABC):
             self._logger.error('Disconnection failed: %s', e)
         finally:
             self._connection_status = False
-        return self
 
     def reconnect(self):
         """
@@ -192,7 +346,7 @@ class AbsCracker(ABC):
             )
             return resp_payload
         except socket.error as e:
-            self._logger.error('Send message failed: %s', e)
+            self._logger.error('Send message failed: %s, and msg: %s', e, message)
             return None
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None):
@@ -219,162 +373,162 @@ class AbsCracker(ABC):
         self._logger.debug(f'Get response: {res}')
         return res
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_id(self) -> str:
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_name(self) -> str:
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_voltage(self, channel: int, voltage: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_bias_voltage(self, channel: int, voltage: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_digital_channel_enable(self, enable: typing.Dict[int, bool]):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_digital_voltage(self, voltage: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_trigger_mode(self, source: int, stop: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_trigger_source(self, channel: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_digital_trigger_source(self, channel: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_trigger_voltage(self, voltage: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_trigger_delay(self, delay: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_sample_len(self, length: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_arm(self):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_is_triggered(self):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def scrat_analog_gain(self, gain: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_nut_enable(self, enable: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_nut_voltage(self, voltage: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_nut_timeout(self, timeout: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_serial_baud(self, baud: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_serial_width(self, width: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_serial_stop(self, stop: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_serial_odd_eve(self, odd_eve: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_serial_data(self, expect_len: int, data: bytes):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_spi_cpol(self, cpol: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_spi_cpha(self, cpha: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_spi_data_len(self, cpha: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_spi_freq(self, freq: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_spi_timeout(self, timeout: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_spi_data(self, expect_len: int, data: bytes):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_i2c_freq(self, freq: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_i2c_timeout(self, timeout: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_i2c_data(self, expect_len: int, data: bytes):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_can_freq(self, freq: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_can_timeout(self, timeout: int):
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def cracker_can_data(self, expect_len: int, data: bytes):
         ...

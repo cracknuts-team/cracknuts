@@ -5,14 +5,17 @@ from cracknuts import logger
 from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate, AcquisitionBuilder
 from cracknuts.cracker.cracker import AbsCracker
 from cracknuts.cracker.basic_cracker import BasicCracker
+from cracknuts.cracker.mock_cracker import MockCracker
+from cracknuts.cracker.stateful_cracker import StatefulCracker
 
-cracker = BasicCracker()
+cracker = MockCracker()
 logger.set_level(logging.DEBUG, cracker)
 
 # 11 为效果好的板子
 cracker.set_addr('192.168.0.13', 8080)
 cracker.connect()
 
+cracker = StatefulCracker(cracker)
 
 def init(c: AbsCracker):
     c.cracker_nut_voltage(3300)

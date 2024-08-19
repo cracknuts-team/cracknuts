@@ -5,7 +5,7 @@ import struct
 import typing
 
 from cracknuts.cracker import protocol
-from cracknuts.cracker.abs_cracker import AbsCracker, Commands
+from cracknuts.cracker.cracker import AbsCracker, Commands
 import numpy as np
 
 
@@ -151,8 +151,12 @@ class BasicCracker(AbsCracker):
         payload = struct.pack('>BII', channel, offset, sample_count)
         self._logger.debug('scrat_get_analog_wave payload: %s', payload.hex())
         wave_bytes = self.send_with_command(Commands.SCRAT_GET_ANALOG_WAVES, payload)
-        wave = struct.unpack(f'>{sample_count}I', wave_bytes)
-        return np.array(wave, dtype=np.int32)
+        self._logger.debug('scrat_get_analog_wave wave_bytes: %s', wave_bytes.hex())
+        if wave_bytes is None:
+            return np.array([[]])
+        else:
+            wave = struct.unpack(f'>{sample_count}H', wave_bytes)
+            return np.array(wave, dtype=np.int32)
 
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
         payload = struct.pack('>BII', channel, offset, sample_count)

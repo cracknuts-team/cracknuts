@@ -3,7 +3,7 @@ import logging
 from cracknuts.cracker.basic_cracker import BasicCracker
 from cracknuts.logger import set_level
 
-basic_device = BasicCracker(server_address=('192.168.0.12', 8080))
+basic_device = BasicCracker(server_address=('192.168.0.13', 8080))
 
 
 def setup_function():
@@ -88,7 +88,7 @@ def test_scrat_is_triggered():
 
 
 def test_scrat_get_analog_wave():
-    assert basic_device.scrat_get_analog_wave(1, 1, 1) is not None
+    assert basic_device.scrat_get_analog_wave(1, 0, 100) is not None
 
 
 def test_scrat_get_digital_wave():
