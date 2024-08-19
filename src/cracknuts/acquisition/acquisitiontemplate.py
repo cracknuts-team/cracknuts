@@ -1,34 +1,40 @@
 import abc
 import datetime
-import struct
-import sys
 import threading
 import time
 import typing
 
 import numpy as np
-import zarr
 
 from cracknuts import logger
-from cracknuts.cracker.abs_cracker import AbsCracker
+from cracknuts.cracker.cracker import AbsCracker, Cracker
+from cracknuts.cracker.stateful_cracker import StatefulCracker
 
 
 class AcquisitionTemplate(abc.ABC):
 
-    def __init__(self, cracker: AbsCracker | None = None):
+    def __init__(self, cracker: StatefulCracker | None = None):
         self._logger = logger.get_logger(self)
-        self._last_wave: np.ndarray | None = np.array([np.zeros(1000)])
+        self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
         self._running = False
         self._trace_count = 1
-        self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
-        self._trigger_judge_wait_time: float = 0.2  # second
+        self._trigger_judge_wait_time: float = 0.05  # second
         self._trigger_judge_timeout: float = 2000000  # microsecond
         self._run_thread = None
+        self.cracker: StatefulCracker = cracker
 
-        self.cracker: AbsCracker = cracker
+        self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
+        self._on_run_finished_callback: typing.Callable[[], None] | None = None
+        self._on_run_process_changed_callback: typing.Callable[[typing.Dict], None] | None = None
 
-    def set_cracker(self, cracker: AbsCracker):
+    def set_cracker(self, cracker: StatefulCracker):
         self.cracker = cracker
+
+    def on_run_finished(self, callback: typing.Callable[[], None]) -> None:
+        self._on_run_finished_callback = callback
+
+    def on_run_progress_changed(self, callback: typing.Callable[[typing.Dict], None]) -> None:
+        self._on_run_process_changed_callback = callback
 
     def on_wave_loaded(self, callback: typing.Callable[[np.ndarray], None]) -> None:
         self._on_wave_loaded_callback = callback
@@ -46,7 +52,7 @@ class AcquisitionTemplate(abc.ABC):
             self._logger.debug('stop by interrupted.')
             self.stop()
 
-    def test(self, count=1):
+    def test(self, count=-1):
         self._logger.debug('Start test mode.')
         self._run(count=count)
 
@@ -60,11 +66,6 @@ class AcquisitionTemplate(abc.ABC):
     def _do_run(self, save_data: bool = False, count=1):
 
         self._running = True
-        # self.connect_scrat()
-        # self.config_cracker()
-        # self.connect_scrat()
-        # self.config_scrat()
-        # init
         self._trace_count = count
         self.pre_init()
         self.init()  # self.transfer() 用户
@@ -79,10 +80,13 @@ class AcquisitionTemplate(abc.ABC):
             self.save_data()
         self.post_finish()
 
-        self._running = True
+        self._running = False
+        if self._on_run_finished_callback is not None:
+            self._on_run_finished_callback()
 
     def _loop(self):
-        for i in range(self._trace_count):
+        i = 0
+        while self._trace_count - i != 0:
             if not self._running:
                 break
             self._logger.debug('Get wave data: %s', i)
@@ -100,9 +104,11 @@ class AcquisitionTemplate(abc.ABC):
                     break
                 self._logger.debug('Judge trigger status.')
                 if self._is_triggered():
-                    self._last_wave = self._get_waves()
+                    self._last_wave = self._get_waves(self.cracker.get_config_scrat_offset(),
+                                                      self.cracker.get_config_scrat_sample_count())
                     if self._last_wave is not None:
-                        self._logger.debug('Got wave: %s.', self._last_wave.shape)
+                        # self._logger.debug('Got wave: %s.', {k: v.shape for k, v in self._last_wave.items()})
+                        self._logger.debug('Got wave: %s.', self._last_wave)
                     if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
                         try:
                             self._on_wave_loaded_callback(self._last_wave)
@@ -113,6 +119,9 @@ class AcquisitionTemplate(abc.ABC):
             time.sleep(self._trigger_judge_wait_time)
             self._save_wave()
             self._post_do()
+            i += 1
+            if self._on_run_process_changed_callback is not None:
+                self._on_run_process_changed_callback({'finished': i, 'total': self._trace_count})
 
     def _loop_without_log(self):
         for i in range(self._trace_count):
@@ -196,12 +205,14 @@ class AcquisitionTemplate(abc.ABC):
         ...
 
     def _is_triggered(self):
-        # for test
-        time.sleep(0.1)
-        return True
+        return self.cracker.scrat_is_triggered()
 
-    def _get_waves(self):
-        return self.cracker.scrat_get_analog_wave(1, 0, 1000)
+    def _get_waves(self, offset: int, sample_count: int) -> typing.Dict[int, np.ndarray]:
+        enable_channels = self.cracker.get_config_scrat_enable_channels()
+        wave_dict = {}
+        for c in enable_channels:
+            wave_dict[c] = self.cracker.scrat_get_analog_wave(c, offset, sample_count)
+        return wave_dict
 
     def _save_wave(self):
         ...
@@ -226,7 +237,7 @@ class AcquisitionTemplate(abc.ABC):
     def finish(self):
         pass
 
-    def get_last_wave(self) -> np.ndarray:
+    def get_last_wave(self) -> typing.Dict[int, np.ndarray]:
         return self._last_wave
 
     @staticmethod
@@ -241,16 +252,16 @@ class AcquisitionBuilder:
         self._do_function = lambda _: ...
         self._init_function = lambda _: ...
 
-    def cracker(self, cracker: AbsCracker):
+    def cracker(self, cracker: StatefulCracker):
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[AbsCracker], None]):
+    def init(self, init_function: typing.Callable[[StatefulCracker], None]):
         if init_function:
             self._init_function = init_function
         return self
 
-    def do(self, do_function: typing.Callable[[AbsCracker], None]):
+    def do(self, do_function: typing.Callable[[StatefulCracker], None]):
         if do_function:
             self._do_function = do_function
         return self

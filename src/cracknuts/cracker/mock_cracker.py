@@ -2,7 +2,7 @@ import typing
 
 import numpy as np
 
-from cracknuts.cracker.abs_cracker import AbsCracker
+from cracknuts.cracker.cracker import AbsCracker
 
 
 class MockCracker(AbsCracker):
