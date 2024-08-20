@@ -5,13 +5,21 @@ import time
 import typing
 
 import numpy as np
-
 from cracknuts import logger
-from cracknuts.cracker.cracker import AbsCracker, Cracker
 from cracknuts.cracker.stateful_cracker import StatefulCracker
 
 
+class AcqProgress:
+
+    def __init__(self, finished, total):
+        self.finished: int = None
+        self.total: int = None
+
+
 class AcquisitionTemplate(abc.ABC):
+    _STATUS_STOPED = 0
+    _STATUS_TEST = 1
+    _STATUS_RUNNING = 2
 
     def __init__(self, cracker: StatefulCracker | None = None):
         self._logger = logger.get_logger(self)
@@ -24,17 +32,23 @@ class AcquisitionTemplate(abc.ABC):
         self.cracker: StatefulCracker = cracker
 
         self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
-        self._on_run_finished_callback: typing.Callable[[], None] | None = None
-        self._on_run_process_changed_callback: typing.Callable[[typing.Dict], None] | None = None
+        self._on_status_change_listeners: typing.List[typing.Callable[[int], None]] = []
+        self._on_run_progress_changed_listeners: typing.List[typing.Callable[[typing.Dict], None]] = []
 
     def set_cracker(self, cracker: StatefulCracker):
         self.cracker = cracker
 
-    def on_run_finished(self, callback: typing.Callable[[], None]) -> None:
-        self._on_run_finished_callback = callback
+    def on_status_changed(self, callback: typing.Callable[[int], None]) -> None:
+        """
+        User should not use this function. If you need to perform actions when the ACQ state changes,
+        please use the node functions in the ACQ lifecycle point: `init`, `do`, and `finish`.
+
+        status: 0 stop, 1 test, 2 run
+        """
+        self._on_status_change_listeners.append(callback)
 
     def on_run_progress_changed(self, callback: typing.Callable[[typing.Dict], None]) -> None:
-        self._on_run_process_changed_callback = callback
+        self._on_run_progress_changed_listeners.append(callback)
 
     def on_wave_loaded(self, callback: typing.Callable[[np.ndarray], None]) -> None:
         self._on_wave_loaded_callback = callback
@@ -65,15 +79,21 @@ class AcquisitionTemplate(abc.ABC):
 
     def _do_run(self, save_data: bool = False, count=1):
 
+        if self._running:
+            raise Exception(f'AcquisitionTemplate is already running in {'run' if save_data else 'test'} mode.')
+
+        if save_data:
+            self._on_status_changed(self._STATUS_RUNNING)
+        else:
+            self._on_status_changed(self._STATUS_TEST)
+
         self._running = True
         self._trace_count = count
         self.pre_init()
-        self.init()  # self.transfer() 用户
+        self.init()
         self.save_dataset()
         self.post_init()
-
         self._loop()
-
         self.pre_finish()
         self.finish()
         if save_data:
@@ -81,8 +101,12 @@ class AcquisitionTemplate(abc.ABC):
         self.post_finish()
 
         self._running = False
-        if self._on_run_finished_callback is not None:
-            self._on_run_finished_callback()
+
+        self._on_status_changed(self._STATUS_STOPED)
+
+    def _on_status_changed(self, status: int):
+        for listener in self._on_status_change_listeners:
+            listener(status)
 
     def _loop(self):
         i = 0
@@ -120,8 +144,11 @@ class AcquisitionTemplate(abc.ABC):
             self._save_wave()
             self._post_do()
             i += 1
-            if self._on_run_process_changed_callback is not None:
-                self._on_run_process_changed_callback({'finished': i, 'total': self._trace_count})
+            self._on_progress_changed(AcqProgress(i, self._trace_count))
+
+    def _on_progress_changed(self, progress: 'AcqProgress'):
+        for listener in self._on_run_progress_changed_listeners:
+            listener({'finished': progress.finished, 'total': progress.total})
 
     def _loop_without_log(self):
         for i in range(self._trace_count):
