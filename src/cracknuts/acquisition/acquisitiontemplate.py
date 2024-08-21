@@ -12,8 +12,8 @@ from cracknuts.cracker.stateful_cracker import StatefulCracker
 class AcqProgress:
 
     def __init__(self, finished, total):
-        self.finished: int = None
-        self.total: int = None
+        self.finished: int = finished
+        self.total: int = total
 
 
 class AcquisitionTemplate(abc.ABC):
