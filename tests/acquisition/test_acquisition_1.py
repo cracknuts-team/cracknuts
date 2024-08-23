@@ -2,11 +2,11 @@ import logging
 import time
 
 from cracknuts import logger
-from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate
+from cracknuts.acquisition.acquisition import Acquisition
 from cracknuts.cracker.basic_cracker import BasicCracker
 
 
-class MyAcquisitionTemplate(AcquisitionTemplate):
+class MyAcquisition(Acquisition):
     def init(self):
         self._logger.debug('Set voltage...')
         self.cracker.cracker_nut_voltage(3300)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     cracker.set_addr('192.168.0.12', 8080)
     cracker.connect()
     if cracker.get_connection_status():
-        acq = MyAcquisitionTemplate(cracker)
+        acq = MyAcquisition(cracker)
         logger.set_level(logging.WARNING, acq)
         acq.run_sync(5000)
 
