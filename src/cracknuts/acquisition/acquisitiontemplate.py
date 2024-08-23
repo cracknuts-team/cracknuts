@@ -83,9 +83,9 @@ class AcquisitionTemplate(abc.ABC):
             raise Exception(f'AcquisitionTemplate is already running in {'run' if save_data else 'test'} mode.')
 
         if save_data:
-            self._on_status_changed(self._STATUS_RUNNING)
+            self._status_changed(self._STATUS_RUNNING)
         else:
-            self._on_status_changed(self._STATUS_TEST)
+            self._status_changed(self._STATUS_TEST)
 
         self._running = True
         self._trace_count = count
@@ -100,11 +100,7 @@ class AcquisitionTemplate(abc.ABC):
             self.save_data()
         self.post_finish()
 
-        self._running = False
-
-        self._on_status_changed(self._STATUS_STOPED)
-
-    def _on_status_changed(self, status: int):
+    def _status_changed(self, status: int):
         for listener in self._on_status_change_listeners:
             listener(status)
 
@@ -144,9 +140,11 @@ class AcquisitionTemplate(abc.ABC):
             self._save_wave()
             self._post_do()
             i += 1
-            self._on_progress_changed(AcqProgress(i, self._trace_count))
+            self._progress_changed(AcqProgress(i, self._trace_count))
+        self._running = False
+        self._status_changed(self._STATUS_STOPED)
 
-    def _on_progress_changed(self, progress: 'AcqProgress'):
+    def _progress_changed(self, progress: 'AcqProgress'):
         for listener in self._on_run_progress_changed_listeners:
             listener({'finished': progress.finished, 'total': progress.total})
 
