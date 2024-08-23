@@ -1,14 +1,18 @@
+import logging
 import typing
 
 import numpy as np
 
 from cracknuts.cracker.cracker import AbsCracker
+from cracknuts import logger
 
 
 class MockCracker(AbsCracker):
 
     def __init__(self, server_address=None):
         super().__init__(server_address)
+        self._logger = logger.get_logger(MockCracker)
+        logger.set_level(logging.INFO, MockCracker)
 
     def connect(self):
         return self
@@ -86,10 +90,10 @@ class MockCracker(AbsCracker):
         pass
 
     def cracker_nut_enable(self, enable: int):
-        pass
+        self._logger.info(f'set nut enable: {enable}')
 
     def cracker_nut_voltage(self, voltage: int):
-        pass
+        self._logger.info(f'set nut voltage: {voltage}')
 
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         pass
