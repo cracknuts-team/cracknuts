@@ -10,10 +10,10 @@ def __():
     import cracknuts.solver.trace as nt
     import numpy as np
     import altair as alt
-    from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate
+    from cracknuts.acquisition.acquisition import Acquisition
     import cracknuts.logger as logger
     import logging
-    return AcquisitionTemplate, alt, logger, logging, mo, np, nt
+    return Acquisition, alt, logger, logging, mo, np, nt
 
 
 @app.cell

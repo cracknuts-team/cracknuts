@@ -1,3 +1,3 @@
-from cracknuts.acquisition.acquisitiontemplate import (AcquisitionTemplate, AcquisitionBuilder)
+from cracknuts.acquisition.acquisition import (Acquisition, AcquisitionBuilder)
 
-__all__ = ['AcquisitionTemplate', 'AcquisitionBuilder']
+__all__ = ['Acquisition', 'AcquisitionBuilder']

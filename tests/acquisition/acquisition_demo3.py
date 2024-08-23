@@ -2,7 +2,7 @@ import logging
 import time
 
 from cracknuts import logger
-from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate, AcquisitionBuilder
+from cracknuts.acquisition.acquisition import Acquisition, AcquisitionBuilder
 from cracknuts.cracker.cracker import AbsCracker
 from cracknuts.cracker.basic_cracker import BasicCracker
 from cracknuts.cracker.mock_cracker import MockCracker
@@ -46,7 +46,7 @@ def do(c: AbsCracker):
     c.cracker_serial_data(l, d)
 
 
-acq = AcquisitionTemplate.builder().cracker(cracker).init(init).do(do).build()
+acq = Acquisition.builder().cracker(cracker).init(init).do(do).build()
 
 # acq.test(1000)
 # acq.wait()

@@ -22,13 +22,13 @@ def __():
     import altair as alt
     import numpy as np
     from cracknuts.cracker.basic_cracker import BasicCracker
-    from cracknuts.acquisition.acquisitiontemplate import AcquisitionTemplate
+    from cracknuts.acquisition.acquisition import Acquisition
     import cracknuts.solver.trace as nt
     import cracknuts.logger as t_logger
     import logging
     import time
     return (
-        AcquisitionTemplate,
+        Acquisition,
         BasicCracker,
         alt,
         logging,

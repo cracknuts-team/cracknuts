@@ -16,8 +16,8 @@ class AcqProgress:
         self.total: int = total
 
 
-class AcquisitionTemplate(abc.ABC):
-    _STATUS_STOPED = 0
+class Acquisition(abc.ABC):
+    _STATUS_STOPPED = 0
     _STATUS_TEST = 1
     _STATUS_RUNNING = 2
 
@@ -142,7 +142,7 @@ class AcquisitionTemplate(abc.ABC):
             i += 1
             self._progress_changed(AcqProgress(i, self._trace_count))
         self._running = False
-        self._status_changed(self._STATUS_STOPED)
+        self._status_changed(self._STATUS_STOPPED)
 
     def _progress_changed(self, progress: 'AcqProgress'):
         for listener in self._on_run_progress_changed_listeners:
@@ -297,7 +297,7 @@ class AcquisitionBuilder:
 
         builder_self = self
 
-        class AnonymousAcquisition(AcquisitionTemplate):
+        class AnonymousAcquisition(Acquisition):
 
             def init(self):
                 builder_self._init_function(self.cracker)
