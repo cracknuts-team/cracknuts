@@ -18,17 +18,18 @@ class AcqProgress:
 
 class Acquisition(abc.ABC):
     _STATUS_STOPPED = 0
-    _STATUS_TEST = 1
+    _STATUS_TESTING = 1
     _STATUS_RUNNING = 2
+    _STATUS_PAUSED_SWITCH = -1
 
     def __init__(self, cracker: StatefulCracker | None = None):
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
-        self._running = False
+        self._status: int = self._STATUS_STOPPED
         self._trace_count = 1
         self._trigger_judge_wait_time: float = 0.05  # second
         self._trigger_judge_timeout: float = 2000000  # microsecond
-        self._run_thread = None
+        self._run_thread_pause_event: threading.Event = threading.Event()
         self.cracker: StatefulCracker = cracker
 
         self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
@@ -43,7 +44,7 @@ class Acquisition(abc.ABC):
         User should not use this function. If you need to perform actions when the ACQ state changes,
         please use the node functions in the ACQ lifecycle point: `init`, `do`, and `finish`.
 
-        status: 0 stop, 1 test, 2 run
+        status: 0 stopped, 1 testing, 2 running 3 paused
         """
         self._on_status_change_listeners.append(callback)
 
@@ -54,12 +55,16 @@ class Acquisition(abc.ABC):
         self._on_wave_loaded_callback = callback
 
     def run(self, count=1):
-        self._logger.debug('Start run mode.')
-        self._run(save_data=True, count=count)
+        if self._status < 0:
+            self._logger.debug('Resume to run mode.')
+            self.resume()
+        else:
+            self._logger.debug('Start run mode.')
+            self._run(test=False, count=count)
 
     def run_sync(self, count=1):
         try:
-            self._do_run(save_data=True, count=count)
+            self._do_run(test=False, count=count)
             self._logger.debug('stop by timeout.')
             self.stop()
         except KeyboardInterrupt:
@@ -67,27 +72,46 @@ class Acquisition(abc.ABC):
             self.stop()
 
     def test(self, count=-1):
-        self._logger.debug('Start test mode.')
-        self._run(count=count)
+        if self._status < 0:
+            self._logger.debug('Resume to test mode.')
+            self.resume()
+        else:
+            self._logger.debug('Start test mode.')
+            self._run(test=True, count=count)
+
+    def pause(self):
+        self._logger.error('Status change from pause...')
+        if self._status > 0:
+            self._status_changed(self._STATUS_PAUSED_SWITCH)
+            self._run_thread_pause_event.clear()
+
+    def resume(self):
+        self._logger.error('Status change from resume...')
+        if self._status < 0:
+            self._status_changed(self._STATUS_PAUSED_SWITCH)
+            self._run_thread_pause_event.set()
 
     def stop(self):
-        self._running = False
+        self._logger.error('Status change from stop...')
+        if not self._run_thread_pause_event.is_set():
+            self._run_thread_pause_event.set()
+        self._status = self._STATUS_STOPPED
 
-    def _run(self, save_data: bool = False, count=1):
-        self._run_thread = threading.Thread(target=self._do_run, kwargs={'save_data': save_data, 'count': count})
-        self._run_thread.start()
+    def _run(self, test: bool = True, count=1):
+        self._run_thread_pause_event.set()
+        threading.Thread(target=self._do_run, kwargs={'test': test, 'count': count}).start()
 
-    def _do_run(self, save_data: bool = False, count=1):
+    def _do_run(self, test: bool = True, count=1):
 
-        if self._running:
-            raise Exception(f'AcquisitionTemplate is already running in {'run' if save_data else 'test'} mode.')
+        if self._status:
+            raise Exception(f'AcquisitionTemplate is already running in {'run' if not test else 'test'} mode.')
 
-        if save_data:
+        if not test:
             self._status_changed(self._STATUS_RUNNING)
         else:
-            self._status_changed(self._STATUS_TEST)
+            self._status_changed(self._STATUS_TESTING)
 
-        self._running = True
+        self._status = True
         self._trace_count = count
         self.pre_init()
         self.init()
@@ -96,26 +120,30 @@ class Acquisition(abc.ABC):
         self._loop()
         self.pre_finish()
         self.finish()
-        if save_data:
+        if not test:
             self.save_data()
         self.post_finish()
 
     def _status_changed(self, status: int):
+        self._logger.error(f'Status changed: {status}.')
+        if status < 0:
+            self._status = self._status * status
+        else:
+            self._status = status
         for listener in self._on_status_change_listeners:
-            listener(status)
+            listener(self._status)
 
     def _loop(self):
         i = 0
-        while self._trace_count - i != 0:
-            if not self._running:
-                break
+        while self._status != 0 and self._trace_count - i != 0:
+            self._run_thread_pause_event.wait()
             self._logger.debug('Get wave data: %s', i)
             self.pre_do()
             start = datetime.datetime.now()
             self.do()
-            # print('count: ', i, 'delay: ', datetime.datetime.now() - start)
+            self._logger.debug('count: ', i, 'delay: ', datetime.datetime.now() - start)
             trigger_judge_start_time = datetime.datetime.now().microsecond
-            while self._running:
+            while self._status != 0:
                 trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
                 if trigger_judge_time > self._trigger_judge_timeout:
                     self._logger.error("Triggered judge timeout and will get next waves, "
@@ -141,7 +169,7 @@ class Acquisition(abc.ABC):
             self._post_do()
             i += 1
             self._progress_changed(AcqProgress(i, self._trace_count))
-        self._running = False
+        self._logger.error(f'status change in loop...{self._status }')
         self._status_changed(self._STATUS_STOPPED)
 
     def _progress_changed(self, progress: 'AcqProgress'):
@@ -155,7 +183,7 @@ class Acquisition(abc.ABC):
             self.pre_do()
             self.do()
             trigger_judge_start_time = datetime.datetime.now().microsecond
-            while self._running:
+            while self._status:
                 trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
                 if trigger_judge_time > self._trigger_judge_timeout:
                     # self._logger.error("Triggered judge timeout and will get next waves, "
