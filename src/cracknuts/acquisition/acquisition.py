@@ -27,6 +27,7 @@ class Acquisition(abc.ABC):
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
         self._status: int = self._STATUS_STOPPED
         self._trace_count = 1
+        self._current_trace_count = 1
         self._trigger_judge_wait_time: float = 0.05  # second
         self._trigger_judge_timeout: float = 2000000  # microsecond
         self._run_thread_pause_event: threading.Event = threading.Event()
@@ -56,10 +57,8 @@ class Acquisition(abc.ABC):
 
     def run(self, count=1):
         if self._status < 0:
-            self._logger.debug('Resume to run mode.')
             self.resume()
         else:
-            self._logger.debug('Start run mode.')
             self._run(test=False, count=count)
 
     def run_sync(self, count=1):
@@ -80,19 +79,16 @@ class Acquisition(abc.ABC):
             self._run(test=True, count=count)
 
     def pause(self):
-        self._logger.error('Status change from pause...')
         if self._status > 0:
-            self._status_changed(self._STATUS_PAUSED_SWITCH)
             self._run_thread_pause_event.clear()
+            self._status = self._status * self._STATUS_PAUSED_SWITCH
 
     def resume(self):
-        self._logger.error('Status change from resume...')
         if self._status < 0:
-            self._status_changed(self._STATUS_PAUSED_SWITCH)
             self._run_thread_pause_event.set()
+            self._status = self._status * self._STATUS_PAUSED_SWITCH
 
     def stop(self):
-        self._logger.error('Status change from stop...')
         if not self._run_thread_pause_event.is_set():
             self._run_thread_pause_event.set()
         self._status = self._STATUS_STOPPED
@@ -103,15 +99,16 @@ class Acquisition(abc.ABC):
 
     def _do_run(self, test: bool = True, count=1):
 
-        if self._status:
-            raise Exception(f'AcquisitionTemplate is already running in {'run' if not test else 'test'} mode.')
+        if self._status > 0:
+            raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
 
         if not test:
-            self._status_changed(self._STATUS_RUNNING)
+            self._status = self._STATUS_RUNNING
+            self._status_changed()
         else:
-            self._status_changed(self._STATUS_TESTING)
+            self._status = self._STATUS_TESTING
+            self._status_changed()
 
-        self._status = True
         self._trace_count = count
         self.pre_init()
         self.init()
@@ -124,19 +121,18 @@ class Acquisition(abc.ABC):
             self.save_data()
         self.post_finish()
 
-    def _status_changed(self, status: int):
-        self._logger.error(f'Status changed: {status}.')
-        if status < 0:
-            self._status = self._status * status
-        else:
-            self._status = status
+    def _status_changed(self):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
     def _loop(self):
         i = 0
+        self._progress_changed(AcqProgress(i, self._trace_count))
         while self._status != 0 and self._trace_count - i != 0:
-            self._run_thread_pause_event.wait()
+            if self._status < 0:
+                self._status_changed()
+                self._run_thread_pause_event.wait()
+                self._status_changed()
             self._logger.debug('Get wave data: %s', i)
             self.pre_do()
             start = datetime.datetime.now()
@@ -156,7 +152,7 @@ class Acquisition(abc.ABC):
                                                       self.cracker.get_config_scrat_sample_count())
                     if self._last_wave is not None:
                         # self._logger.debug('Got wave: %s.', {k: v.shape for k, v in self._last_wave.items()})
-                        self._logger.debug('Got wave: %s.', self._last_wave)
+                        self._logger.debug('Got wave: ')
                     if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
                         try:
                             self._on_wave_loaded_callback(self._last_wave)
@@ -168,9 +164,10 @@ class Acquisition(abc.ABC):
             self._save_wave()
             self._post_do()
             i += 1
+            self._current_trace_count = i
             self._progress_changed(AcqProgress(i, self._trace_count))
-        self._logger.error(f'status change in loop...{self._status }')
-        self._status_changed(self._STATUS_STOPPED)
+        self._status = self._STATUS_STOPPED
+        self._status_changed()
 
     def _progress_changed(self, progress: 'AcqProgress'):
         for listener in self._on_run_progress_changed_listeners:
