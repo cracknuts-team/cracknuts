@@ -1,6 +1,7 @@
 import abc
 import socket
 import struct
+import threading
 import typing
 from abc import ABC
 
@@ -241,6 +242,7 @@ class AbsCracker(ABC, Cracker):
         """
         :param server_address: Cracker device address (ip, port)
         """
+        self._command_lock = threading.Lock()
         self._logger = logger.get_logger(self)
         self._server_address = server_address
         self._socket: socket.socket | None = None
@@ -321,6 +323,7 @@ class AbsCracker(ABC, Cracker):
         :return:
         """
         try:
+            self._command_lock.acquire()
             if not self.get_connection_status():
                 self.connect()
             self._logger.debug("Send message to %s: \n%s", self._server_address,
@@ -348,6 +351,8 @@ class AbsCracker(ABC, Cracker):
         except socket.error as e:
             self._logger.error('Send message failed: %s, and msg: %s', e, message)
             return None
+        finally:
+            self._command_lock.release()
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None):
         if isinstance(payload, str):
