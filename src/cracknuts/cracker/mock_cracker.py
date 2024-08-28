@@ -1,4 +1,5 @@
 import logging
+import time
 import typing
 
 import numpy as np
@@ -78,6 +79,7 @@ class MockCracker(AbsCracker):
         pass
 
     def scrat_is_triggered(self):
+        time.sleep(0.05)
         return True
 
     def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:

@@ -137,7 +137,7 @@ class Acquisition(abc.ABC):
             self.pre_do()
             start = datetime.datetime.now()
             self.do()
-            self._logger.debug('count: ', i, 'delay: ', datetime.datetime.now() - start)
+            self._logger.debug(f'count: {i} delay: {datetime.datetime.now() - start}')
             trigger_judge_start_time = datetime.datetime.now().microsecond
             while self._status != 0:
                 trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
@@ -151,16 +151,16 @@ class Acquisition(abc.ABC):
                     self._last_wave = self._get_waves(self.cracker.get_config_scrat_offset(),
                                                       self.cracker.get_config_scrat_sample_count())
                     if self._last_wave is not None:
-                        # self._logger.debug('Got wave: %s.', {k: v.shape for k, v in self._last_wave.items()})
-                        self._logger.debug('Got wave: ')
+                        self._logger.debug('Got wave: %s.', {k: v.shape for k, v in self._last_wave.items()})
+                        # self._logger.debug('Got wave: ')
                     if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
                         try:
                             self._on_wave_loaded_callback(self._last_wave)
                         except Exception as e:
                             self._logger.error('Wave loaded event callback error: %s', e.args)
                     break
-                break
-            time.sleep(self._trigger_judge_wait_time)
+
+                time.sleep(self._trigger_judge_wait_time)
             self._save_wave()
             self._post_do()
             i += 1
