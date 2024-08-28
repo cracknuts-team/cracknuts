@@ -4,12 +4,12 @@ import time
 from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition
 from cracknuts.cracker.basic_cracker import BasicCracker
+from cracknuts.cracker.mock_cracker import MockCracker
+from cracknuts.cracker.stateful_cracker import StatefulCracker
 
-cracker = BasicCracker()
-cracker.set_addr('192.168.0.10', 8080)
-cracker.connect()
+cracker = MockCracker()
 
-acq = Acquisition(cracker)
+acq = Acquisition.builder().cracker(StatefulCracker(cracker)).init(lambda _: None).do(lambda _:None).build()
 
 
 def setup_functions():
@@ -19,7 +19,7 @@ def setup_functions():
 
 def test_acquisition_test_mode():
     # acq.on_wave_loaded(lambda waves: print(waves.shape))
-    acq.test()
+    acq.run(1000)
     time.sleep(100000)
     # print('acq', acq.get_last_wave().shape)
     acq.stop()
