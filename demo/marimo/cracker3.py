@@ -96,7 +96,7 @@ def __(
     t_logger.set_level(logging.DEBUG, basic_cracker)
 
     def get_acquisition():
-        return AcquisitionTemplate.builder().cracker(basic_cracker).init(init).do(do).build()
+        return AcquisitionTemplate.builder().cracker(basic_cracker)._init(init).do(do).build()
 
     acquisition = get_acquisition()
     t_logger.set_level(logging.DEBUG, acquisition)

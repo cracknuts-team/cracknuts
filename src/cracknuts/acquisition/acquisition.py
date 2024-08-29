@@ -17,25 +17,31 @@ class AcqProgress:
 
 
 class Acquisition(abc.ABC):
-    _STATUS_STOPPED = 0
-    _STATUS_TESTING = 1
-    _STATUS_RUNNING = 2
+    STATUS_STOPPED = 0
+    STATUS_TESTING = 1
+    STATUS_RUNNING = 2
     _STATUS_PAUSED_SWITCH = -1
 
-    def __init__(self, cracker: StatefulCracker | None = None):
+    def __init__(self, cracker: StatefulCracker, trace_count: int = 1, trigger_judge_wait_time: float = 0.05,
+                 trigger_judge_timeout: int = 2000000, do_error_max_count: int = -1):
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
-        self._status: int = self._STATUS_STOPPED
-        self._trace_count = 1
+        self._status: int = self.STATUS_STOPPED
         self._current_trace_count = 1
-        self._trigger_judge_wait_time: float = 0.05  # second
-        self._trigger_judge_timeout: float = 2000000  # microsecond
         self._run_thread_pause_event: threading.Event = threading.Event()
+
         self.cracker: StatefulCracker = cracker
+        self.trace_count: int = trace_count
+        self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
+        self.trigger_judge_timeout: float = trigger_judge_timeout  # second
+        self.do_error_max_count: int = do_error_max_count  # -1 never exit
 
         self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
         self._on_status_change_listeners: typing.List[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: typing.List[typing.Callable[[typing.Dict], None]] = []
+
+    def get_status(self):
+        return self._status
 
     def set_cracker(self, cracker: StatefulCracker):
         self.cracker = cracker
@@ -55,28 +61,58 @@ class Acquisition(abc.ABC):
     def on_wave_loaded(self, callback: typing.Callable[[np.ndarray], None]) -> None:
         self._on_wave_loaded_callback = callback
 
-    def run(self, count=1):
+    def run(self, count=1,
+            trigger_judge_wait_time: float = 0.05,
+            trigger_judge_timeout: int = 2000000,
+            do_error_max_count: int = -1):
         if self._status < 0:
             self.resume()
         else:
-            self._run(test=False, count=count)
+            self._run(test=False, count=count,
+                      trigger_judge_wait_time=trigger_judge_wait_time,
+                      trigger_judge_timeout=trigger_judge_timeout,
+                      do_error_max_count=do_error_max_count)
 
-    def run_sync(self, count=1):
+    def run_sync(self, count=1,
+                 trigger_judge_wait_time: float = 0.05,
+                 trigger_judge_timeout: int = 2000000,
+                 do_error_max_count: int = -1):
         try:
-            self._do_run(test=False, count=count)
+            self._do_run(test=False, count=count,
+                         trigger_judge_wait_time=trigger_judge_wait_time,
+                         trigger_judge_timeout=trigger_judge_timeout,
+                         do_error_max_count=do_error_max_count)
             self._logger.debug('stop by timeout.')
-            self.stop()
         except KeyboardInterrupt:
             self._logger.debug('stop by interrupted.')
             self.stop()
 
-    def test(self, count=-1):
+    def test(self, count=-1,
+             trigger_judge_wait_time: float = 0.05,
+             trigger_judge_timeout: int = 2000000,
+             do_error_max_count: int = -1):
         if self._status < 0:
             self._logger.debug('Resume to test mode.')
             self.resume()
         else:
             self._logger.debug('Start test mode.')
-            self._run(test=True, count=count)
+            self._run(test=True, count=count,
+                      trigger_judge_wait_time=trigger_judge_wait_time,
+                      trigger_judge_timeout=trigger_judge_timeout,
+                      do_error_max_count=do_error_max_count)
+
+    def test_sync(self, count=-1,
+                  trigger_judge_wait_time: float = 0.05,
+                  trigger_judge_timeout: int = 2000000,
+                  do_error_max_count: int = -1):
+        try:
+            self._do_run(test=True, count=count,
+                         trigger_judge_wait_time=trigger_judge_wait_time,
+                         trigger_judge_timeout=trigger_judge_timeout,
+                         do_error_max_count=do_error_max_count)
+        except KeyboardInterrupt:
+            self._logger.debug('stop by interrupted.')
+            self.stop()
 
     def pause(self):
         if self._status > 0:
@@ -91,60 +127,93 @@ class Acquisition(abc.ABC):
     def stop(self):
         if not self._run_thread_pause_event.is_set():
             self._run_thread_pause_event.set()
-        self._status = self._STATUS_STOPPED
+        self._status = self.STATUS_STOPPED
 
-    def _run(self, test: bool = True, count=1):
+    def _run(self, test: bool = True, count=1,
+             trigger_judge_wait_time: float | None = None,
+             trigger_judge_timeout: int | None = None,
+             do_error_max_count: int | None = None):
+
         self._run_thread_pause_event.set()
-        threading.Thread(target=self._do_run, kwargs={'test': test, 'count': count}).start()
+        threading.Thread(target=self._do_run, kwargs={'test': test, 'count': count,
+                                                      'trigger_judge_wait_time': trigger_judge_wait_time,
+                                                      'trigger_judge_timeout': trigger_judge_timeout,
+                                                      'do_error_max_count': do_error_max_count}).start()
 
-    def _do_run(self, test: bool = True, count=1):
+    def _do_run(self, test: bool = True, count: int = 1,
+                trigger_judge_wait_time: float | None = None,
+                trigger_judge_timeout: int | None = None,
+                do_error_max_count: int | None = None):
 
         if self._status > 0:
             raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
 
         if not test:
-            self._status = self._STATUS_RUNNING
+            self._status = self.STATUS_RUNNING
             self._status_changed()
         else:
-            self._status = self._STATUS_TESTING
+            self._status = self.STATUS_TESTING
             self._status_changed()
 
-        self._trace_count = count
+        self.trace_count = count
+        if trigger_judge_wait_time is not None:
+            self.trigger_judge_wait_time = trigger_judge_wait_time
+        if trigger_judge_timeout is not None:
+            self.trigger_judge_timeout = trigger_judge_timeout
+        if do_error_max_count is not None:
+            self.do_error_max_count = do_error_max_count
+
         self.pre_init()
-        self.init()
-        self.save_dataset()
-        self.post_init()
+        try:
+            self.init()
+        except Exception as e:
+            self._logger.error('Initialization error: %s', e.args)
+            return
+        self._save_dataset()
+        self._post_init()
         self._loop()
-        self.pre_finish()
-        self.finish()
+        self._pre_finish()
+        self._finish()
         if not test:
             self.save_data()
-        self.post_finish()
+        self._post_finish()
 
     def _status_changed(self):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
     def _loop(self):
-        i = 0
-        self._progress_changed(AcqProgress(i, self._trace_count))
-        while self._status != 0 and self._trace_count - i != 0:
+        do_error_count = 0
+        trace_index = 0
+        self._progress_changed(AcqProgress(trace_index, self.trace_count))
+        while self._status != 0 and self.trace_count - trace_index != 0:
             if self._status < 0:
                 self._status_changed()
                 self._run_thread_pause_event.wait()
                 self._status_changed()
-            self._logger.debug('Get wave data: %s', i)
+            self._logger.debug('Get wave data: %s', trace_index)
             self.pre_do()
-            start = datetime.datetime.now()
-            self.do()
-            self._logger.debug(f'count: {i} delay: {datetime.datetime.now() - start}')
-            trigger_judge_start_time = datetime.datetime.now().microsecond
+            start = time.time()
+            try:
+                self.do()
+            except Exception as e:
+                self._logger.error('Do error: %s', e.args)
+                do_error_count += 1
+                if do_error_count > self.do_error_max_count:
+                    self._logger.error(
+                        f'Do function get error count: {do_error_count} is grate than do_error_max_count')
+                    break
+                else:
+                    self._logger.error(f'Do function get error count: {do_error_count}')
+                    continue
+            self._logger.debug(f'count: {trace_index} delay: {time.time() - start}')
+            trigger_judge_start_time = time.time()
             while self._status != 0:
-                trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
-                if trigger_judge_time > self._trigger_judge_timeout:
+                trigger_judge_time = time.time() - trigger_judge_start_time
+                if trigger_judge_time > self.trigger_judge_timeout:
                     self._logger.error("Triggered judge timeout and will get next waves, "
                                        "judge time: %s and timeout is %s",
-                                       trigger_judge_time, self._trigger_judge_timeout)
+                                       trigger_judge_time, self.trigger_judge_timeout)
                     break
                 self._logger.debug('Judge trigger status.')
                 if self._is_triggered():
@@ -160,13 +229,13 @@ class Acquisition(abc.ABC):
                             self._logger.error('Wave loaded event callback error: %s', e.args)
                     break
 
-                time.sleep(self._trigger_judge_wait_time)
+                time.sleep(self.trigger_judge_wait_time)
             self._save_wave()
             self._post_do()
-            i += 1
-            self._current_trace_count = i
-            self._progress_changed(AcqProgress(i, self._trace_count))
-        self._status = self._STATUS_STOPPED
+            trace_index += 1
+            self._current_trace_count = trace_index
+            self._progress_changed(AcqProgress(trace_index, self.trace_count))
+        self._status = self.STATUS_STOPPED
         self._status_changed()
 
     def _progress_changed(self, progress: 'AcqProgress'):
@@ -174,36 +243,37 @@ class Acquisition(abc.ABC):
             listener({'finished': progress.finished, 'total': progress.total})
 
     def _loop_without_log(self):
-        for i in range(self._trace_count):
-            # print('yes', self._logger.handlers[0].stream)
-            # self._logger.debug('Get wave data: %s', i)
-            self.pre_do()
-            self.do()
-            trigger_judge_start_time = datetime.datetime.now().microsecond
-            while self._status:
-                trigger_judge_time = datetime.datetime.now().microsecond - trigger_judge_start_time
-                if trigger_judge_time > self._trigger_judge_timeout:
-                    # self._logger.error("Triggered judge timeout and will get next waves, "
-                    #                    "judge time: %s and timeout is %s",
-                    #                    trigger_judge_time, self._trigger_judge_timeout)
-                    break
-                # self._logger.debug('Judge trigger status.')
-                if self._is_triggered():
-                    self._last_wave = self._get_waves()
-                    if self._last_wave is not None:
-                        ...
-                        # self._logger.debug('Got wave: %s.', self._last_wave.shape)
-                    if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
-                        try:
-                            self._on_wave_loaded_callback(self._last_wave)
-                        except Exception as e:
-                            ...
-                            # self._logger.error('Wave loaded event callback error: %s', e.args)
-                    time.sleep(1)
-                    break
-                time.sleep(self._trigger_judge_wait_time)
-            self._save_wave()
-            self._post_do()
+        ...
+        # for i in range(self.trace_count):
+        #     # print('yes', self._logger.handlers[0].stream)
+        #     # self._logger.debug('Get wave data: %s', i)
+        #     self.pre_do()
+        #     self.do()
+        #     trigger_judge_start_time = time.time()
+        #     while self._status:
+        #         trigger_judge_time = time.time() - trigger_judge_start_time
+        #         if trigger_judge_time > self.trigger_judge_timeout:
+        #             # self._logger.error("Triggered judge timeout and will get next waves, "
+        #             #                    "judge time: %s and timeout is %s",
+        #             #                    trigger_judge_time, self._trigger_judge_timeout)
+        #             break
+        #         # self._logger.debug('Judge trigger status.')
+        #         if self._is_triggered():
+        #             self._last_wave = self._get_waves()
+        #             if self._last_wave is not None:
+        #                 ...
+        #                 # self._logger.debug('Got wave: %s.', self._last_wave.shape)
+        #             if self._on_wave_loaded_callback and callable(self._on_wave_loaded_callback):
+        #                 try:
+        #                     self._on_wave_loaded_callback(self._last_wave)
+        #                 except Exception as e:
+        #                     ...
+        #                     # self._logger.error('Wave loaded event callback error: %s', e.args)
+        #             time.sleep(1)
+        #             break
+        #         time.sleep(self.trigger_judge_wait_time)
+        #     self._save_wave()
+        #     self._post_do()
 
     def connect_scrat(self):
         """
@@ -235,7 +305,7 @@ class Acquisition(abc.ABC):
     def init(self):
         ...
 
-    def post_init(self):
+    def _post_init(self):
         ...
 
     def transfer(self):
@@ -247,6 +317,14 @@ class Acquisition(abc.ABC):
     @abc.abstractmethod
     def do(self):
         ...
+
+    def _do(self):
+        try:
+            self.do()
+            return True
+        except Exception as e:
+            self._logger.error('Do error: %s', e.args)
+            return False
 
     def _post_do(self):
         ...
@@ -275,16 +353,16 @@ class Acquisition(abc.ABC):
         #     zarr.create()
         ...
 
-    def pre_finish(self):
+    def _pre_finish(self):
         ...
 
-    def post_finish(self):
+    def _post_finish(self):
         ...
 
-    def save_dataset(self):
+    def _save_dataset(self):
         ...
 
-    def finish(self):
+    def _finish(self):
         pass
 
     def get_last_wave(self) -> typing.Dict[int, np.ndarray]:

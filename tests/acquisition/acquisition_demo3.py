@@ -46,7 +46,7 @@ def do(c: AbsCracker):
     c.cracker_serial_data(l, d)
 
 
-acq = Acquisition.builder().cracker(cracker).init(init).do(do).build()
+acq = Acquisition.builder().cracker(cracker)._init(init).do(do).build()
 
 # acq.test(1000)
 # acq.wait()
