@@ -17,13 +17,17 @@ class AcqProgress:
 
 
 class Acquisition(abc.ABC):
-    STATUS_STOPPED = 0
-    STATUS_TESTING = 1
-    STATUS_RUNNING = 2
-    _STATUS_PAUSED_SWITCH = -1
+    STATUS_STOPPED: int = 0
+    STATUS_TESTING: int = 1
+    STATUS_RUNNING: int = 2
+    _STATUS_PAUSED_SWITCH: int = -1
+
+    DO_ERROR_HANDLER_STRATEGY_EXIT: int = 0
+    DO_ERROR_HANDLER_STRATEGY_CONTINUE_UNTIL_MAX_ERROR_COUNT: int = 1
 
     def __init__(self, cracker: StatefulCracker, trace_count: int = 1, trigger_judge_wait_time: float = 0.05,
-                 trigger_judge_timeout: int = 2000000, do_error_max_count: int = -1):
+                 trigger_judge_timeout: int = 2000000, do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
+                 do_error_max_count: int = -1):
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
         self._status: int = self.STATUS_STOPPED
@@ -34,6 +38,7 @@ class Acquisition(abc.ABC):
         self.trace_count: int = trace_count
         self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
         self.trigger_judge_timeout: float = trigger_judge_timeout  # second
+        self.do_error_handler_strategy: int = do_error_handler_strategy
         self.do_error_max_count: int = do_error_max_count  # -1 never exit
 
         self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
@@ -62,35 +67,40 @@ class Acquisition(abc.ABC):
         self._on_wave_loaded_callback = callback
 
     def run(self, count=1,
-            trigger_judge_wait_time: float = 0.05,
-            trigger_judge_timeout: int = 2000000,
-            do_error_max_count: int = -1):
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: int | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None):
         if self._status < 0:
             self.resume()
         else:
             self._run(test=False, count=count,
                       trigger_judge_wait_time=trigger_judge_wait_time,
                       trigger_judge_timeout=trigger_judge_timeout,
-                      do_error_max_count=do_error_max_count)
+                      do_error_max_count=do_error_max_count,
+                      do_error_handler_strategy=do_error_handler_strategy)
 
     def run_sync(self, count=1,
-                 trigger_judge_wait_time: float = 0.05,
-                 trigger_judge_timeout: int = 2000000,
-                 do_error_max_count: int = -1):
+                 trigger_judge_wait_time: float | None = None,
+                 trigger_judge_timeout: int | None = None,
+                 do_error_max_count: int | None = None,
+                 do_error_handler_strategy: int | None = None):
         try:
             self._do_run(test=False, count=count,
                          trigger_judge_wait_time=trigger_judge_wait_time,
                          trigger_judge_timeout=trigger_judge_timeout,
-                         do_error_max_count=do_error_max_count)
+                         do_error_max_count=do_error_max_count,
+                         do_error_handler_strategy=do_error_handler_strategy)
             self._logger.debug('stop by timeout.')
         except KeyboardInterrupt:
             self._logger.debug('stop by interrupted.')
             self.stop()
 
     def test(self, count=-1,
-             trigger_judge_wait_time: float = 0.05,
-             trigger_judge_timeout: int = 2000000,
-             do_error_max_count: int = -1):
+             trigger_judge_wait_time: float | None = None,
+             trigger_judge_timeout: int | None = None,
+             do_error_max_count: int | None = None,
+             do_error_handler_strategy: int | None = None):
         if self._status < 0:
             self._logger.debug('Resume to test mode.')
             self.resume()
@@ -99,17 +109,20 @@ class Acquisition(abc.ABC):
             self._run(test=True, count=count,
                       trigger_judge_wait_time=trigger_judge_wait_time,
                       trigger_judge_timeout=trigger_judge_timeout,
-                      do_error_max_count=do_error_max_count)
+                      do_error_max_count=do_error_max_count,
+                      do_error_handler_strategy=do_error_handler_strategy)
 
     def test_sync(self, count=-1,
-                  trigger_judge_wait_time: float = 0.05,
-                  trigger_judge_timeout: int = 2000000,
-                  do_error_max_count: int = -1):
+                  trigger_judge_wait_time: float | None = None,
+                  trigger_judge_timeout: int | None = None,
+                  do_error_max_count: int | None = None,
+                  do_error_handler_strategy: int | None = None):
         try:
             self._do_run(test=True, count=count,
                          trigger_judge_wait_time=trigger_judge_wait_time,
                          trigger_judge_timeout=trigger_judge_timeout,
-                         do_error_max_count=do_error_max_count)
+                         do_error_max_count=do_error_max_count,
+                         do_error_handler_strategy=do_error_handler_strategy)
         except KeyboardInterrupt:
             self._logger.debug('stop by interrupted.')
             self.stop()
@@ -132,18 +145,21 @@ class Acquisition(abc.ABC):
     def _run(self, test: bool = True, count=1,
              trigger_judge_wait_time: float | None = None,
              trigger_judge_timeout: int | None = None,
-             do_error_max_count: int | None = None):
+             do_error_max_count: int | None = None,
+             do_error_handler_strategy: int | None = None):
 
         self._run_thread_pause_event.set()
         threading.Thread(target=self._do_run, kwargs={'test': test, 'count': count,
                                                       'trigger_judge_wait_time': trigger_judge_wait_time,
                                                       'trigger_judge_timeout': trigger_judge_timeout,
-                                                      'do_error_max_count': do_error_max_count}).start()
+                                                      'do_error_max_count': do_error_max_count,
+                                                      'do_error_handler_strategy': do_error_handler_strategy}).start()
 
     def _do_run(self, test: bool = True, count: int = 1,
                 trigger_judge_wait_time: float | None = None,
                 trigger_judge_timeout: int | None = None,
-                do_error_max_count: int | None = None):
+                do_error_max_count: int | None = None,
+                do_error_handler_strategy: int | None = None):
 
         if self._status > 0:
             raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
@@ -162,7 +178,8 @@ class Acquisition(abc.ABC):
             self.trigger_judge_timeout = trigger_judge_timeout
         if do_error_max_count is not None:
             self.do_error_max_count = do_error_max_count
-
+        if do_error_handler_strategy is not None:
+            self.do_error_handler_strategy = do_error_handler_strategy
         self.pre_init()
         try:
             self.init()
@@ -199,9 +216,11 @@ class Acquisition(abc.ABC):
             except Exception as e:
                 self._logger.error('Do error: %s', e.args)
                 do_error_count += 1
-                if do_error_count > self.do_error_max_count:
+                if self.do_error_handler_strategy == self.DO_ERROR_HANDLER_STRATEGY_EXIT:
+                    self._logger.error('Exit with do error')
+                elif do_error_count > self.do_error_max_count:
                     self._logger.error(
-                        f'Do function get error count: {do_error_count} is grate than do_error_max_count')
+                        f'Exit with do function get error count: {do_error_count} is grate than do_error_max_count')
                     break
                 else:
                     self._logger.error(f'Do function get error count: {do_error_count}')
