@@ -233,7 +233,7 @@ class Commands:
     PROTOCOL_DEFAULT_PORT = 9761
 
 
-class AbsCracker(ABC, Cracker):
+class AbsCnpCracker(ABC, Cracker):
     """Cracker
     Cracker
     """

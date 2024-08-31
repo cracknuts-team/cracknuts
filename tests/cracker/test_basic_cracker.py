@@ -1,9 +1,9 @@
 import logging
 
-from cracknuts.cracker.basic_cracker import BasicCracker
+from cracknuts.cracker.basic_cracker import CrackerS1
 from cracknuts.logger import set_level
 
-basic_device = BasicCracker(server_address=('192.168.0.13', 8080))
+basic_device = CrackerS1(server_address=('192.168.0.13', 8080))
 
 
 def setup_function():

@@ -21,11 +21,11 @@ class StatefulCracker(Cracker):
         # todo how to set offset 
         return 0
     
-    def get_config_scrat_sample_count(self):
-        if self._config.get('scart_sample_count') is None:
+    def get_config_scrat_sample_len(self):
+        if self._config.get('scart_sample_len') is None:
             return 512
         else:
-            return self._config.get('scart_sample_count')
+            return self._config.get('scart_sample_len')
 
     def set_addr(self, ip, port) -> None:
         self._cracker.set_addr(ip, port)
