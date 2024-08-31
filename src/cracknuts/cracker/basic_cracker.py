@@ -1,15 +1,20 @@
-"""
-Basic device
-"""
 import struct
 import typing
 
-from cracknuts.cracker import protocol
-from cracknuts.cracker.cracker import AbsCracker, Commands
 import numpy as np
 
+from cracknuts.cracker import protocol
+from cracknuts.cracker.cracker import AbsCnpCracker, Commands
 
-class BasicCracker(AbsCracker):
+
+class DefaultConfig:
+    uri: str = 'cnp://192.168.0.1:9981'
+    scart_enable_channel: typing.Dict[int, bool] = {1: True, 2: False}
+    scart_sample_len: int = 1024
+    cracker_nut_voltage: int = 3500
+
+
+class CrackerS1(AbsCnpCracker):
 
     def get_id(self):
         return self.send_and_receive(protocol.build_send_message(Commands.GET_ID)).decode('ascii')

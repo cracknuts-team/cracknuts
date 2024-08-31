@@ -237,7 +237,7 @@ class Acquisition(abc.ABC):
                 self._logger.debug('Judge trigger status.')
                 if self._is_triggered():
                     self._last_wave = self._get_waves(self.cracker.get_config_scrat_offset(),
-                                                      self.cracker.get_config_scrat_sample_count())
+                                                      self.cracker.get_config_scrat_sample_len())
                     if self._last_wave is not None:
                         self._logger.debug('Got wave: %s.', {k: v.shape for k, v in self._last_wave.items()})
                         # self._logger.debug('Got wave: ')
@@ -318,6 +318,12 @@ class Acquisition(abc.ABC):
         ...
 
     def pre_init(self):
+        self.sync_config()
+
+    def sync_config(self):
+        """
+        Synchronize config to device, when pure python environment is not needed.
+        """
         ...
 
     @abc.abstractmethod
@@ -331,7 +337,7 @@ class Acquisition(abc.ABC):
         ...
 
     def pre_do(self):
-        ...
+        self.arm()
 
     @abc.abstractmethod
     def do(self):

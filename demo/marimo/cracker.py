@@ -18,13 +18,13 @@ def __(mo):
 
 @app.cell
 def __(set_connnection_status):
-    from cracknuts.cracker.basic_cracker import BasicCracker
+    from cracknuts.cracker.basic_cracker import CrackerS1
 
 
     def connect(addr):
         global basic_cracker
         ip, port = addr.split(':')
-        basic_cracker = BasicCracker((ip, int(port)))
+        basic_cracker = CrackerS1((ip, int(port)))
         basic_cracker.connect()
         set_connnection_status('已连接')
 
@@ -34,7 +34,7 @@ def __(set_connnection_status):
             set_connnection_status('未连接')
 
     basic_cracker = None
-    return BasicCracker, basic_cracker, connect, disconnect
+    return CrackerS1, basic_cracker, connect, disconnect
 
 
 @app.cell

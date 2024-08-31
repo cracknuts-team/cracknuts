@@ -3,7 +3,7 @@ import time
 
 from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition
-from cracknuts.cracker.basic_cracker import BasicCracker
+from cracknuts.cracker.basic_cracker import CrackerS1
 
 
 class MyAcquisition(Acquisition):
@@ -37,7 +37,7 @@ class MyAcquisition(Acquisition):
 
 
 if __name__ == '__main__':
-    cracker = BasicCracker()
+    cracker = CrackerS1()
     logger.set_level(logging.WARNING, cracker)
     cracker.set_addr('192.168.0.12', 8080)
     cracker.connect()

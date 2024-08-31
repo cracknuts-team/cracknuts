@@ -4,11 +4,11 @@ import typing
 
 import numpy as np
 
-from cracknuts.cracker.cracker import AbsCracker
 from cracknuts import logger
+from cracknuts.cracker.cracker import Cracker
 
 
-class MockCracker(AbsCracker):
+class MockCracker(Cracker):
 
     def __init__(self, server_address=None):
         super().__init__(server_address)
