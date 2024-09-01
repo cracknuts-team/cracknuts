@@ -11,11 +11,13 @@ import numpy as np
 
 class BasicCracker(AbsCracker):
 
-    def get_id(self):
-        return self.send_and_receive(protocol.build_send_message(Commands.GET_ID)).decode('ascii')
+    def get_id(self) -> str:
+        res = self.send_and_receive(protocol.build_send_message(Commands.GET_ID))
+        return res.decode('ascii') if res is not None else None
 
-    def get_name(self):
-        return self.send_and_receive(protocol.build_send_message(Commands.GET_NAME)).decode('ascii')
+    def get_name(self) -> str:
+        res = self.send_and_receive(protocol.build_send_message(Commands.GET_ID))
+        return res.decode('ascii') if res is not None else None
 
     def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
         self._channel_enable = enable
