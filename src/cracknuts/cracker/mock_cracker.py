@@ -5,15 +5,24 @@ import typing
 import numpy as np
 
 from cracknuts import logger
-from cracknuts.cracker.cracker import Cracker
+from cracknuts.cracker.cracker import Cracker, Config
 
 
 class MockCracker(Cracker):
 
     def __init__(self, server_address=None):
         super().__init__(server_address)
+        self._config = Config(
+            nut_enable=False,
+            scrat_analog_channel_enable={1: True, 2: False},
+            scrat_sample_len=1024,
+            cracker_nut_voltage=3500
+        )
         self._logger = logger.get_logger(MockCracker)
         logger.set_level(logging.INFO, MockCracker)
+
+    def get_default_config(self) -> typing.Optional['Config']:
+        return self._config
 
     def connect(self):
         return self
