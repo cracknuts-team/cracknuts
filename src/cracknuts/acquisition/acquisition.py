@@ -25,9 +25,9 @@ class Acquisition(abc.ABC):
     DO_ERROR_HANDLER_STRATEGY_EXIT: int = 0
     DO_ERROR_HANDLER_STRATEGY_CONTINUE_UNTIL_MAX_ERROR_COUNT: int = 1
 
-    def __init__(self, cracker: StatefulCracker, trace_count: int = 1, trigger_judge_wait_time: float = 0.05,
-                 trigger_judge_timeout: int = 2000000, do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
-                 do_error_max_count: int = -1):
+    def __init__(self, cracker: StatefulCracker, trace_count: int = 1, sample_offset: int = 0,
+                 trigger_judge_wait_time: float = 0.05, trigger_judge_timeout: int = 2000000,
+                 do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT, do_error_max_count: int = -1):
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
         self._status: int = self.STATUS_STOPPED
@@ -36,6 +36,7 @@ class Acquisition(abc.ABC):
 
         self.cracker: StatefulCracker = cracker
         self.trace_count: int = trace_count
+        self.sample_offset: int = sample_offset
         self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
         self.trigger_judge_timeout: float = trigger_judge_timeout  # second
         self.do_error_handler_strategy: int = do_error_handler_strategy
@@ -66,27 +67,27 @@ class Acquisition(abc.ABC):
     def on_wave_loaded(self, callback: typing.Callable[[np.ndarray], None]) -> None:
         self._on_wave_loaded_callback = callback
 
-    def run(self, count=1,
+    def run(self, count: int = 1, sample_offset: int = None,
             trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: int | None = None,
+            trigger_judge_timeout: float | None = None,
             do_error_max_count: int | None = None,
             do_error_handler_strategy: int | None = None):
         if self._status < 0:
             self.resume()
         else:
-            self._run(test=False, count=count,
+            self._run(test=False, count=count, sample_offset=sample_offset,
                       trigger_judge_wait_time=trigger_judge_wait_time,
                       trigger_judge_timeout=trigger_judge_timeout,
                       do_error_max_count=do_error_max_count,
                       do_error_handler_strategy=do_error_handler_strategy)
 
-    def run_sync(self, count=1,
+    def run_sync(self, count=1, sample_offset: int = None,
                  trigger_judge_wait_time: float | None = None,
-                 trigger_judge_timeout: int | None = None,
+                 trigger_judge_timeout: float | None = None,
                  do_error_max_count: int | None = None,
                  do_error_handler_strategy: int | None = None):
         try:
-            self._do_run(test=False, count=count,
+            self._do_run(test=False, count=count, sample_offset=sample_offset,
                          trigger_judge_wait_time=trigger_judge_wait_time,
                          trigger_judge_timeout=trigger_judge_timeout,
                          do_error_max_count=do_error_max_count,
@@ -96,9 +97,9 @@ class Acquisition(abc.ABC):
             self._logger.debug('stop by interrupted.')
             self.stop()
 
-    def test(self, count=-1,
+    def test(self, count=-1, sample_offset: int = None,
              trigger_judge_wait_time: float | None = None,
-             trigger_judge_timeout: int | None = None,
+             trigger_judge_timeout: float | None = None,
              do_error_max_count: int | None = None,
              do_error_handler_strategy: int | None = None):
         if self._status < 0:
@@ -106,19 +107,19 @@ class Acquisition(abc.ABC):
             self.resume()
         else:
             self._logger.debug('Start test mode.')
-            self._run(test=True, count=count,
+            self._run(test=True, count=count, sample_offset=sample_offset,
                       trigger_judge_wait_time=trigger_judge_wait_time,
                       trigger_judge_timeout=trigger_judge_timeout,
                       do_error_max_count=do_error_max_count,
                       do_error_handler_strategy=do_error_handler_strategy)
 
-    def test_sync(self, count=-1,
+    def test_sync(self, count=-1, sample_offset: int = None,
                   trigger_judge_wait_time: float | None = None,
-                  trigger_judge_timeout: int | None = None,
+                  trigger_judge_timeout: float | None = None,
                   do_error_max_count: int | None = None,
                   do_error_handler_strategy: int | None = None):
         try:
-            self._do_run(test=True, count=count,
+            self._do_run(test=True, count=count, sample_offset=sample_offset,
                          trigger_judge_wait_time=trigger_judge_wait_time,
                          trigger_judge_timeout=trigger_judge_timeout,
                          do_error_max_count=do_error_max_count,
@@ -142,22 +143,22 @@ class Acquisition(abc.ABC):
             self._run_thread_pause_event.set()
         self._status = self.STATUS_STOPPED
 
-    def _run(self, test: bool = True, count=1,
+    def _run(self, test: bool = True, count: int = 1, sample_offset: int = None,
              trigger_judge_wait_time: float | None = None,
-             trigger_judge_timeout: int | None = None,
+             trigger_judge_timeout: float | None = None,
              do_error_max_count: int | None = None,
              do_error_handler_strategy: int | None = None):
 
         self._run_thread_pause_event.set()
-        threading.Thread(target=self._do_run, kwargs={'test': test, 'count': count,
+        threading.Thread(target=self._do_run, kwargs={'test': test, 'count': count, 'sample_offset': sample_offset,
                                                       'trigger_judge_wait_time': trigger_judge_wait_time,
                                                       'trigger_judge_timeout': trigger_judge_timeout,
                                                       'do_error_max_count': do_error_max_count,
                                                       'do_error_handler_strategy': do_error_handler_strategy}).start()
 
-    def _do_run(self, test: bool = True, count: int = 1,
+    def _do_run(self, test: bool = True, count: int = 1, sample_offset: int = None,
                 trigger_judge_wait_time: float | None = None,
-                trigger_judge_timeout: int | None = None,
+                trigger_judge_timeout: float | None = None,
                 do_error_max_count: int | None = None,
                 do_error_handler_strategy: int | None = None):
 
@@ -172,6 +173,8 @@ class Acquisition(abc.ABC):
             self._status_changed()
 
         self.trace_count = count
+        if sample_offset is not None:
+            self.sample_offset = sample_offset
         if trigger_judge_wait_time is not None:
             self.trigger_judge_wait_time = trigger_judge_wait_time
         if trigger_judge_timeout is not None:
@@ -236,8 +239,8 @@ class Acquisition(abc.ABC):
                     break
                 self._logger.debug('Judge trigger status.')
                 if self._is_triggered():
-                    self._last_wave = self._get_waves(self.cracker.get_config_scrat_offset(),
-                                                      self.cracker.get_config_scrat_sample_len())
+                    self._last_wave = self._get_waves(self.sample_offset,
+                                                      self.cracker.get_current_config().scrat_sample_len)
                     if self._last_wave is not None:
                         self._logger.debug('Got wave: %s.', {k: v.shape for k, v in self._last_wave.items()})
                         # self._logger.debug('Got wave: ')
@@ -318,13 +321,7 @@ class Acquisition(abc.ABC):
         ...
 
     def pre_init(self):
-        self.sync_config()
-
-    def sync_config(self):
-        """
-        Synchronize config to device, when pure python environment is not needed.
-        """
-        ...
+        self.cracker.sync_config_to_cracker()
 
     @abc.abstractmethod
     def init(self):
@@ -337,7 +334,7 @@ class Acquisition(abc.ABC):
         ...
 
     def pre_do(self):
-        self.arm()
+        self.cracker.scrat_arm()
 
     @abc.abstractmethod
     def do(self):
@@ -354,14 +351,11 @@ class Acquisition(abc.ABC):
     def _post_do(self):
         ...
 
-    def arm(self):
-        ...
-
     def _is_triggered(self):
         return self.cracker.scrat_is_triggered()
 
     def _get_waves(self, offset: int, sample_count: int) -> typing.Dict[int, np.ndarray]:
-        enable_channels = self.cracker.get_config_scrat_enable_channels()
+        enable_channels = [k for k, v in self.cracker.get_current_config().scrat_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
             wave_dict[c] = self.cracker.scrat_get_analog_wave(c, offset, sample_count)

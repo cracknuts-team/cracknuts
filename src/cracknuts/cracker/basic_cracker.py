@@ -4,17 +4,21 @@ import typing
 import numpy as np
 
 from cracknuts.cracker import protocol
-from cracknuts.cracker.cracker import AbsCnpCracker, Commands
-
-
-class DefaultConfig:
-    uri: str = 'cnp://192.168.0.1:9981'
-    scart_enable_channel: typing.Dict[int, bool] = {1: True, 2: False}
-    scart_sample_len: int = 1024
-    cracker_nut_voltage: int = 3500
+from cracknuts.cracker.cracker import AbsCnpCracker, Commands, Config
 
 
 class CrackerS1(AbsCnpCracker):
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._default_config = Config(
+            scrat_analog_channel_enable={1: True, 2: False},
+            scrat_sample_len=1024,
+            cracker_nut_voltage=3500
+        )
+
+    def get_default_config(self) -> typing.Optional[Config]:
+        return self._default_config
 
     def get_id(self):
         return self.send_and_receive(protocol.build_send_message(Commands.GET_ID)).decode('ascii')

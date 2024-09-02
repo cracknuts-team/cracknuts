@@ -2,30 +2,28 @@ import typing
 
 import numpy as np
 
-from cracknuts.cracker.cracker import Cracker
+from cracknuts.cracker.cracker import Cracker, Config
 
 
 class StatefulCracker(Cracker):
 
     def __init__(self, cracker: Cracker):
         self._cracker = cracker
-        self._config: typing.Dict[str, typing.Any] = {}
+        self._config: Config = self._cracker.get_default_config()
 
-    def get_config_scrat_enable_channels(self) -> typing.List[int]:
-        enable_channel: dict[int, bool] = self._config.get('scart_enable_channel')
-        if enable_channel is None:
-            return [1]  # default 1 channel
-        return [k for k, v in enable_channel.items() if v]
-    
-    def get_config_scrat_offset(self) -> int:
-        # todo how to set offset 
-        return 0
-    
-    def get_config_scrat_sample_len(self):
-        if self._config.get('scart_sample_len') is None:
-            return 512
-        else:
-            return self._config.get('scart_sample_len')
+    def get_current_config(self) -> Config:
+        return self._config
+
+    def sync_config_to_cracker(self):
+        """
+        Sync config to cracker.
+        To prevent configuration inconsistencies between the host and the device,
+        so all configuration information needs to be written to the device.
+        User should call this function before `run` or `test`.
+        """
+        self._cracker.scrat_analog_channel_enable(self._config.scrat_analog_channel_enable)
+        self._cracker.cracker_nut_voltage(self._config.cracker_nut_voltage)
+        # todo need complete...
 
     def set_addr(self, ip, port) -> None:
         self._cracker.set_addr(ip, port)
@@ -67,9 +65,8 @@ class StatefulCracker(Cracker):
         return self._cracker.get_name()
 
     def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
-        # todo 同步配置信息
-        self._config['scart_enable_channel'] = enable
         self._cracker.scrat_analog_channel_enable(enable)
+        self._config.scrat_analog_channel_enable = enable
 
     def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
         self._cracker.scrat_analog_coupling(coupling)
@@ -103,7 +100,7 @@ class StatefulCracker(Cracker):
 
     def scrat_sample_len(self, length: int):
         self._cracker.scrat_sample_len(length)
-        self._config['scart_sample_len'] = length
+        self._config.scrat_sample_len = length
 
     def scrat_arm(self):
         self._cracker.scrat_arm()
@@ -122,9 +119,11 @@ class StatefulCracker(Cracker):
 
     def cracker_nut_enable(self, enable: int):
         self._cracker.cracker_nut_enable(enable)
+        self._config.nut_enable = enable
 
     def cracker_nut_voltage(self, voltage: int):
         self._cracker.cracker_nut_voltage(voltage)
+        self._config.cracker_nut_voltage = voltage
 
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         self._cracker.cracker_nut_interface(interface)
