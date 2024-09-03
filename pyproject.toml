@@ -20,6 +20,9 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
 
+[tool.ruff]
+exclude = ["demo"]
+
 #[tool.rye]
 #managed = true
 #dev-dependencies = []
