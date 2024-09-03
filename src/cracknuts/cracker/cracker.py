@@ -1,4 +1,5 @@
 import abc
+from dataclasses import dataclass
 import socket
 import struct
 import threading
@@ -13,6 +14,9 @@ from cracknuts.cracker import protocol
 
 
 class Cracker(typing.Protocol):
+
+    def get_default_config(self) -> typing.Optional['Config']:
+        ...
 
     def set_addr(self, ip, port) -> None:
         ...
@@ -110,6 +114,9 @@ class Cracker(typing.Protocol):
     def cracker_nut_voltage(self, voltage: int):
         ...
 
+    def cracker_nut_clock(self, clock: int):
+        ...
+
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         ...
 
@@ -205,6 +212,7 @@ class Commands:
 
     CRACKER_NUT_ENABLE = 0x0200
     CRACKER_NUT_VOLTAGE = 0x0201
+    CRACKER_NUT_CLOCK = 0x0202
     CRACKER_NUT_INTERFACE = 0x0210
     CRACKER_NUT_TIMEOUT = 0x0224
 
@@ -233,7 +241,35 @@ class Commands:
     PROTOCOL_DEFAULT_PORT = 9761
 
 
-class AbsCracker(ABC, Cracker):
+@dataclass
+class Config:
+
+    def __init__(self, cracker_nut_enable: bool = None, cracker_nut_voltage: int = None, cracker_nut_clock: int = None,
+                 scrat_analog_channel_enable: typing.Dict[int, bool] = None,
+                 scrat_sample_len: int = None):
+        self._binder: typing.Dict[str, callable] = {}
+        self.cracker_nut_enable: bool = cracker_nut_enable
+        self.cracker_nut_voltage: int = cracker_nut_voltage
+        self.cracker_nut_clock: int = cracker_nut_clock
+        self.scrat_analog_channel_enable: typing.Dict[int, bool] = scrat_analog_channel_enable
+        self.scrat_sample_len = scrat_sample_len
+
+    def __setattr__(self, key, value):
+        self.__dict__[key] = value
+        if '_binder' in self.__dict__ and (binder := self._binder.get(key)) is not None:
+            binder(value)
+
+    def bind(self, key: str, callback: callable):
+        """
+        Bind a callback which will be call when the key field is updated.
+        :param key: a filed name of class `Config`
+        :param callback:
+        :return:
+        """
+        self._binder[key] = callback
+
+
+class AbsCnpCracker(ABC, Cracker):
     """Cracker
     Cracker
     """
@@ -248,6 +284,10 @@ class AbsCracker(ABC, Cracker):
         self._socket: socket.socket | None = None
         self._connection_status = False
         self._channel_enable: dict = {0: False, 1: False, 2: False, 3: False, 4: False, 5: False, 6: False, 7: False}
+
+    @abc.abstractmethod
+    def get_default_config(self) -> typing.Optional[Config]:
+        ...
 
     def set_addr(self, ip, port) -> None:
         self._server_address = ip, port
@@ -460,6 +500,10 @@ class AbsCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def cracker_nut_voltage(self, voltage: int):
+        ...
+
+    @abc.abstractmethod
+    def cracker_nut_clock(self, clock: int):
         ...
 
     @abc.abstractmethod
