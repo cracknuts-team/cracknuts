@@ -1,7 +1,8 @@
 import socket
 
 from cracknuts.cracker import protocol
-from cracknuts.cracker.protocol import *
+from cracknuts.cracker.protocol import STATUS_OK, REQ_HEADER_SIZE, REQ_HEADER_FORMAT, RESP_HEADER_FORMAT
+import struct
 
 
 def handle_message(conn):
