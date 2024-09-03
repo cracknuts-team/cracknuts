@@ -19,10 +19,13 @@ class StatefulCracker(Cracker):
         Sync config to cracker.
         To prevent configuration inconsistencies between the host and the device,
         so all configuration information needs to be written to the device.
-        User should call this function before `run` or `test`.
+        User should call this function before get data from device.
         """
-        self._cracker.scrat_analog_channel_enable(self._config.scrat_analog_channel_enable)
         self._cracker.cracker_nut_voltage(self._config.cracker_nut_voltage)
+        self._cracker.cracker_nut_clock(self._config.cracker_nut_clock)
+        self._cracker.cracker_nut_enable(self._config.cracker_nut_enable)
+
+        self._cracker.scrat_analog_channel_enable(self._config.scrat_analog_channel_enable)
         # todo need complete...
 
     def set_addr(self, ip, port) -> None:
@@ -119,11 +122,15 @@ class StatefulCracker(Cracker):
 
     def cracker_nut_enable(self, enable: int):
         self._cracker.cracker_nut_enable(enable)
-        self._config.nut_enable = enable
+        self._config.cracker_nut_enable = enable
 
     def cracker_nut_voltage(self, voltage: int):
         self._cracker.cracker_nut_voltage(voltage)
         self._config.cracker_nut_voltage = voltage
+
+    def cracker_nut_clock(self, clock: int):
+        self._cracker.cracker_nut_clock(clock)
+        self._config.cracker_nut_clock = clock
 
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         self._cracker.cracker_nut_interface(interface)

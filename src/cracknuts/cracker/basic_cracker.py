@@ -12,9 +12,11 @@ class CrackerS1(AbsCnpCracker):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._default_config = Config(
+            nut_enable=False,
+            cracker_nut_voltage=3500,
+            nut_freq=8,
             scrat_analog_channel_enable={1: True, 2: False},
-            scrat_sample_len=1024,
-            cracker_nut_voltage=3500
+            scrat_sample_len=1024
         )
 
     def get_default_config(self) -> typing.Optional[Config]:
@@ -188,6 +190,11 @@ class CrackerS1(AbsCnpCracker):
         payload = struct.pack('>I', voltage)
         self._logger.debug('cracker_nut_voltage payload: %s', payload.hex())
         return self.send_with_command(Commands.CRACKER_NUT_VOLTAGE, payload)
+
+    def cracker_nut_clock(self, clock: int):
+        payload = struct.pack('>I', clock)
+        self._logger.debug('cracker_nut_clock payload: %s', payload.hex())
+        return self.send_with_command(Commands.CRACKER_NUT_CLOCK, payload)
 
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         payload = 0

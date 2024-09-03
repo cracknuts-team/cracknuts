@@ -26,7 +26,7 @@ class Acquisition(abc.ABC):
     DO_ERROR_HANDLER_STRATEGY_CONTINUE_UNTIL_MAX_ERROR_COUNT: int = 1
 
     def __init__(self, cracker: StatefulCracker, trace_count: int = 1, sample_offset: int = 0,
-                 trigger_judge_wait_time: float = 0.05, trigger_judge_timeout: int = 2000000,
+                 trigger_judge_wait_time: float = 0.05, trigger_judge_timeout: float = 1.0,
                  do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT, do_error_max_count: int = -1):
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
