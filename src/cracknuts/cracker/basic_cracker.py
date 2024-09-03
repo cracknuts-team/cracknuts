@@ -1,15 +1,26 @@
-"""
-Basic device
-"""
 import struct
 import typing
 
-from cracknuts.cracker import protocol
-from cracknuts.cracker.cracker import AbsCracker, Commands
 import numpy as np
 
+from cracknuts.cracker import protocol
+from cracknuts.cracker.cracker import AbsCnpCracker, Commands, Config
 
-class BasicCracker(AbsCracker):
+
+class CrackerS1(AbsCnpCracker):
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._default_config = Config(
+            nut_enable=False,
+            cracker_nut_voltage=3500,
+            nut_freq=8,
+            scrat_analog_channel_enable={1: True, 2: False},
+            scrat_sample_len=1024
+        )
+
+    def get_default_config(self) -> typing.Optional[Config]:
+        return self._default_config
 
     def get_id(self) -> str:
         res = self.send_and_receive(protocol.build_send_message(Commands.GET_ID))
@@ -181,6 +192,11 @@ class BasicCracker(AbsCracker):
         payload = struct.pack('>I', voltage)
         self._logger.debug('cracker_nut_voltage payload: %s', payload.hex())
         return self.send_with_command(Commands.CRACKER_NUT_VOLTAGE, payload)
+
+    def cracker_nut_clock(self, clock: int):
+        payload = struct.pack('>I', clock)
+        self._logger.debug('cracker_nut_clock payload: %s', payload.hex())
+        return self.send_with_command(Commands.CRACKER_NUT_CLOCK, payload)
 
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         payload = 0

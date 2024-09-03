@@ -362,12 +362,12 @@ def __(
 def __():
     import altair as alt
     import numpy as np
-    from cracknuts.cracker.basic_cracker import BasicCracker
+    from cracknuts.cracker.basic_cracker import CrackerS1
     from cracknuts.acquisition.acquisition import Acquisition
     import cracknuts.solver.trace as nt
     import cracknuts.logger as t_logger
     import logging
-    return Acquisition, BasicCracker, alt, logging, np, nt, t_logger
+    return Acquisition, CrackerS1, alt, logging, np, nt, t_logger
 
 
 if __name__ == "__main__":

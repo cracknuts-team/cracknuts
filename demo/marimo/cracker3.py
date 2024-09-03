@@ -21,7 +21,7 @@ def __():
     import marimo as mo
     import altair as alt
     import numpy as np
-    from cracknuts.cracker.basic_cracker import BasicCracker
+    from cracknuts.cracker.basic_cracker import CrackerS1
     from cracknuts.acquisition.acquisition import Acquisition
     import cracknuts.solver.trace as nt
     import cracknuts.logger as t_logger
@@ -29,7 +29,7 @@ def __():
     import time
     return (
         Acquisition,
-        BasicCracker,
+        CrackerS1,
         alt,
         logging,
         mo,

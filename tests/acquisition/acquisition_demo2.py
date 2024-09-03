@@ -3,10 +3,10 @@ import time
 
 from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition, AcquisitionBuilder
-from cracknuts.cracker.cracker import AbsCracker
-from cracknuts.cracker.basic_cracker import BasicCracker
+from cracknuts.cracker.cracker import AbsCnpCracker
+from cracknuts.cracker.basic_cracker import CrackerS1
 
-cracker = BasicCracker()
+cracker = CrackerS1()
 logger.set_level(logging.DEBUG, cracker)
 
 # 11 为效果好的板子
@@ -14,7 +14,7 @@ cracker.set_addr('192.168.0.13', 8080)
 cracker.connect()
 
 
-def init(c: AbsCracker):
+def init(c: AbsCnpCracker):
     c.cracker_nut_voltage(3300)
     time.sleep(1)
     c.cracker_nut_enable(1)
@@ -28,7 +28,7 @@ def init(c: AbsCracker):
     c.cracker_serial_data(l, set_key)
 
 
-def do(c: AbsCracker):
+def do(c: AbsCnpCracker):
     # enc
     # d = '01 02 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
     # l = '00 00 00 00 00 10 62 F6 79 BE 2B F0 D9 31 64 1E 03 9C A3 40 1B B2'
