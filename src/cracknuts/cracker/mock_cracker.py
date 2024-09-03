@@ -15,7 +15,7 @@ class MockCracker(Cracker):
         self._config = Config(
             cracker_nut_enable=False,
             cracker_nut_voltage=3500,
-            cracker_nut_clock=8,
+            cracker_nut_clock=62500,
             scrat_analog_channel_enable={1: True, 2: False},
             scrat_sample_len=1024
         )
