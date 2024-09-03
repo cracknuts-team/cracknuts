@@ -114,6 +114,9 @@ class Cracker(typing.Protocol):
     def cracker_nut_voltage(self, voltage: int):
         ...
 
+    def cracker_nut_clock(self, clock: int):
+        ...
+
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         ...
 
@@ -209,6 +212,7 @@ class Commands:
 
     CRACKER_NUT_ENABLE = 0x0200
     CRACKER_NUT_VOLTAGE = 0x0201
+    CRACKER_NUT_CLOCK = 0x0202
     CRACKER_NUT_INTERFACE = 0x0210
     CRACKER_NUT_TIMEOUT = 0x0224
 
@@ -240,14 +244,15 @@ class Commands:
 @dataclass
 class Config:
 
-    def __init__(self, nut_enable: bool = None, scrat_analog_channel_enable: typing.Dict[int, bool] = None,
-                 scrat_sample_len: int = None,
-                 cracker_nut_voltage: int = None):
+    def __init__(self, cracker_nut_enable: bool = None, cracker_nut_voltage: int = None, cracker_nut_clock: int = None,
+                 scrat_analog_channel_enable: typing.Dict[int, bool] = None,
+                 scrat_sample_len: int = None):
         self._binder: typing.Dict[str, callable] = {}
-        self.nut_enable: bool = nut_enable
+        self.cracker_nut_enable: bool = cracker_nut_enable
+        self.cracker_nut_voltage: int = cracker_nut_voltage
+        self.cracker_nut_clock: int = cracker_nut_clock
         self.scrat_analog_channel_enable: typing.Dict[int, bool] = scrat_analog_channel_enable
         self.scrat_sample_len = scrat_sample_len
-        self.cracker_nut_voltage = cracker_nut_voltage
 
     def __setattr__(self, key, value):
         self.__dict__[key] = value
@@ -495,6 +500,10 @@ class AbsCnpCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def cracker_nut_voltage(self, voltage: int):
+        ...
+
+    @abc.abstractmethod
+    def cracker_nut_clock(self, clock: int):
         ...
 
     @abc.abstractmethod

@@ -13,10 +13,11 @@ class MockCracker(Cracker):
     def __init__(self, server_address=None):
         super().__init__(server_address)
         self._config = Config(
-            nut_enable=False,
+            cracker_nut_enable=False,
+            cracker_nut_voltage=3500,
+            cracker_nut_clock=8,
             scrat_analog_channel_enable={1: True, 2: False},
-            scrat_sample_len=1024,
-            cracker_nut_voltage=3500
+            scrat_sample_len=1024
         )
         self._logger = logger.get_logger(MockCracker)
         logger.set_level(logging.INFO, MockCracker)
@@ -105,6 +106,9 @@ class MockCracker(Cracker):
 
     def cracker_nut_voltage(self, voltage: int):
         self._logger.info(f'set nut voltage: {voltage}')
+
+    def cracker_nut_clock(self, clock: int):
+        self._logger.info(f'set nut clock: {clock}')
 
     def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
         pass
