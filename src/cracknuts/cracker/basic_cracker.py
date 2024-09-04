@@ -48,7 +48,7 @@ class CrackerS1(AbsCnpCracker):
         if enable.get(8):
             payload |= 1 << 8
         payload = struct.pack(">I", payload)
-        self._logger.debug("Scrat analog_chanel_enable payload: %s", payload.hex())
+        self._logger.debug("Scrat analog_channel_enable payload: %s", payload.hex())
         return self.send_with_command(Commands.SCRAT_ANALOG_CHANNEL_ENABLE, payload)
 
     def scrat_analog_coupling(self, coupling: dict[int, int]):
