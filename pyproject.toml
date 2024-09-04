@@ -16,7 +16,7 @@ dependencies = [
     "zarr>=2.18.2",
 ]
 
-[optional-dependencies]
+[project.optional-dependencies]
 dev = [
     "ruff>=0.6.3",
     "typos~=1.24.4",
