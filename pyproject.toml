@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cracknuts"
-description = "A library for nut cracker device."
+description = "A library for cracknuts device."
 dynamic = ["version"]
 requires-python = ">=3.12"
 readme = "README.md"
@@ -19,7 +19,16 @@ dependencies = [
 [optional-dependencies]
 dev = [
     "ruff>=0.6.3",
-    "typos~=1.24.4"
+    "typos~=1.24.4",
+    "build~=1.2.1",
+]
+
+distribute = [
+    "twine~=5.1.1",
+]
+
+test = [
+    "pytest~=8.3.2",
 ]
 
 [tool.setuptools.dynamic]
@@ -36,7 +45,12 @@ extend-select = [
     "E",
     "W",
     "UP",
-    "MYPY003"
+]
+
+[tool.typos.files]
+extend-exclude = [
+    "demo",
+    "tests"
 ]
 
 #[tool.rye]

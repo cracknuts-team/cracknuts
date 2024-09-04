@@ -1,20 +1,22 @@
 # nutcracker
 
-## Installation
+A library for cracknuts device.  
 
-1. clone the project
-```sh
-$ git clone https://codeup.aliyun.com/667fc48e96794f5c6d920349/nutcracker.git
+## Install
+
+```shell
+pip install cracknuts
 ```
 
-2. install `rye` from [this link](https://rye.astral.sh/guide/installation/)
-3. install dependencies
-```sh
-$ cd nutcracker
-$ rye sync
+## Usage
+
+```python
+from cracknuts.cracker.mock_cracker import  MockCracker
+mc = MockCracker()
+mc.get_name()
 ```
 
-## run
-```sh
-$ marimo edit ./demo/marimo/trace_panel_2.py
-```
+It will print mock `cracker after` you execute the code above.  
+
+***More details will be available soon.***  
+

@@ -5,5 +5,6 @@ demo/data
 venv
 .venv
 outputs
+build
 
 **/__pycache__/**
