@@ -11,17 +11,33 @@ readme = "README.md"
 authors = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 maintainers = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 dependencies = [
-    "numpy<2",
-    "pandas>=2.2.2",
+    "numpy~=1.26.4",
+    "pandas~=2.2.2",
     "zarr>=2.18.2",
-    "requests>=2.32.3",
+]
+
+[optional-dependencies]
+dev = [
+    "ruff>=0.6.3",
+    "typos~=1.24.4"
 ]
 
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
 
 [tool.ruff]
-exclude = ["demo"]
+line-length = 120
+target-version = "py312"
+exclude = ["demo", "tests"]
+
+[tool.ruff.lint]
+extend-select = [
+    "F",
+    "E",
+    "W",
+    "UP",
+    "MYPY003"
+]
 
 #[tool.rye]
 #managed = true

@@ -1,14 +1,16 @@
 import logging
 from types import ModuleType
-from typing import Optional
 
 
 _LOG_LEVEL = logging.WARNING
-_LOG_FORMATTER = logging.Formatter('[%(levelname)s] %(asctime)s %(module)s.%(funcName)s:%(lineno)d %(message)s')
+_LOG_FORMATTER = logging.Formatter("[%(levelname)s] %(asctime)s %(module)s.%(funcName)s:%(lineno)d %(message)s")
 _LOGGERS: dict[str, logging.Logger] = {}
 
 
-def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleType | object  | None = None) -> None:
+def set_level(
+    level: str | int = logging.WARNING,
+    logger: str | type | ModuleType | object | None = None,
+) -> None:
     global _LOG_LEVEL
     if isinstance(level, str):
         level = level.upper()
@@ -23,7 +25,7 @@ def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleTyp
         elif level == "CRITICAL":
             _LOG_LEVEL = logging.CRITICAL
         else:
-            raise ValueError("Unrecognized log level %s" % level)
+            raise ValueError(f"Unrecognized log level {level}.")
     elif level not in [
         logging.DEBUG,
         logging.INFO,
@@ -31,7 +33,7 @@ def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleTyp
         logging.ERROR,
         logging.CRITICAL,
     ]:
-        raise ValueError("Unrecognized log level %s" % level)
+        raise ValueError(f"Unrecognized log level {level}.")
     else:
         _LOG_LEVEL = level
 
@@ -41,11 +43,11 @@ def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleTyp
         if isinstance(logger, ModuleType):
             logger = logger.__name__
         elif isinstance(logger, type):
-            logger = logger.__module__ + '.' + logger.__name__
+            logger = logger.__module__ + "." + logger.__name__
         elif isinstance(logger, str):
             logger = logger
         else:
-            logger = logger.__class__.__module__ + '.' + logger.__class__.__name__
+            logger = logger.__class__.__module__ + "." + logger.__class__.__name__
 
         _logger = _LOGGERS.get(logger)
 
@@ -56,15 +58,15 @@ def set_level(level: str | int = logging.WARNING, logger: str | type | ModuleTyp
         _logger.setLevel(_LOG_LEVEL)
 
 
-def get_logger(name: str | type | object | ModuleType, level: Optional[int] = None) -> logging.Logger:
+def get_logger(name: str | type | object | ModuleType, level: int | None = None) -> logging.Logger:
     if isinstance(name, ModuleType):
         name = name.__name__
     elif isinstance(name, type):
-        name = name.__module__ + '.' + name.__name__
+        name = name.__module__ + "." + name.__name__
     elif isinstance(name, str):
         name = name
     else:
-        name = name.__class__.__module__ + '.' + name.__class__.__name__
+        name = name.__class__.__module__ + "." + name.__class__.__name__
 
     if name in _LOGGERS:
         return _LOGGERS[name]
