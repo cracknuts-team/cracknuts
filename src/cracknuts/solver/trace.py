@@ -20,9 +20,9 @@ def down_sample(value: np.ndarray, mn, mx, down_count):
     sample_count = int((mx - mn) // ds)
 
     down_index = np.empty((sample_count, 2), dtype=np.int32)
-    down_index[:] = _index[:sample_count * ds:ds, np.newaxis]
+    down_index[:] = _index[: sample_count * ds : ds, np.newaxis]
 
-    _value = _value[:sample_count * ds].reshape((sample_count, ds))
+    _value = _value[: sample_count * ds].reshape((sample_count, ds))
     down_value = np.empty((sample_count, 2))
     down_value[:, 0] = _value.max(axis=1)
     down_value[:, 1] = _value.min(axis=1)
@@ -30,8 +30,15 @@ def down_sample(value: np.ndarray, mn, mx, down_count):
     return down_index.reshape(sample_count * 2), down_value.reshape(sample_count * 2)
 
 
-def get_traces_df_from_ndarray(traces: np.ndarray, trace_index_mn=None, trace_index_mx=None, mn=None, mx=None,
-                               down_count=500, trace_indexes=None):
+def get_traces_df_from_ndarray(
+    traces: np.ndarray,
+    trace_index_mn=None,
+    trace_index_mx=None,
+    mn=None,
+    mx=None,
+    down_count=500,
+    trace_indexes=None,
+):
     traces_dict = {}
     if not trace_indexes:
         trace_indexes = [t for t in range(trace_index_mn, trace_index_mx)]
@@ -42,27 +49,27 @@ def get_traces_df_from_ndarray(traces: np.ndarray, trace_index_mn=None, trace_in
         iv[:] = index, value
         traces_dict[i] = value
 
-    traces_dict['index'] = index
+    traces_dict["index"] = index
 
-    return pd.DataFrame(traces_dict).melt(id_vars='index', var_name='traces', value_name='value'), trace_indexes
+    return pd.DataFrame(traces_dict).melt(id_vars="index", var_name="traces", value_name="value"), trace_indexes
 
 
 def load_traces(path: str) -> tuple[str, Any, Any, Any, Any, Any | None]:
     if os.path.isdir(path):
         # load scarr data from zarr format file.
         scarr_data = zarr.open(path, "r")
-        traces_source = scarr_data['0/0/traces']
+        traces_source = scarr_data["0/0/traces"]
         trace_count = traces_source.shape[0]
         sample_count = traces_source.shape[1]
-        data = scarr_data['0/0/plaintext']
-        data_type = 'zarr'
+        data = scarr_data["0/0/plaintext"]
+        data_type = "zarr"
         origin_data = scarr_data
     else:
         # load newae data from npy format file.
         traces_source = np.load(path)
         trace_count = traces_source.shape[0]
         sample_count = traces_source.shape[1]
-        data_type = 'npy'
+        data_type = "npy"
         data = None
         origin_data = None
 
