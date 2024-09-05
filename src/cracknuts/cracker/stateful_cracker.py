@@ -1,3 +1,5 @@
+import typing
+
 import numpy as np
 
 from cracknuts.cracker.cracker import Cracker, Config
@@ -95,12 +97,24 @@ class StatefulCracker(Cracker):
     def scrat_analog_trigger_voltage(self, voltage: int):
         self._cracker.scrat_analog_trigger_voltage(voltage)
 
-    def scrat_trigger_delay(self, delay: int):
-        self._cracker.scrat_trigger_delay(delay)
+    def scrat_sample_delay(self, delay: int):
+        self._cracker.scrat_sample_delay(delay)
 
     def scrat_sample_len(self, length: int):
         self._cracker.scrat_sample_len(length)
         self._config.scrat_sample_len = length
+
+    def get_default_config(self) -> typing.Optional["Config"]:
+        return self._cracker.get_default_config()
+
+    def scrat_force(self):
+        self._cracker.scrat_force()
+
+    def scrat_sample_clock(self, clock: int):
+        self._cracker.scrat_sample_clock(clock)
+
+    def scrat_sample_phase(self, phase: int):
+        self._cracker.scrat_sample_phase(phase)
 
     def scrat_arm(self):
         self._cracker.scrat_arm()

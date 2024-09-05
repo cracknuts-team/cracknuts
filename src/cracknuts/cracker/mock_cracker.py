@@ -16,7 +16,7 @@ class MockCracker(Cracker):
             cracker_nut_voltage=3500,
             cracker_nut_clock=62500,
             scrat_analog_channel_enable={1: True, 2: False},
-            scrat_sample_len=1024,
+            cracker_scrat_sample_len=1024,
         )
         self._logger = logger.get_logger(MockCracker)
         logger.set_level(logging.INFO, MockCracker)
@@ -77,7 +77,7 @@ class MockCracker(Cracker):
     def scrat_analog_trigger_voltage(self, voltage: int):
         pass
 
-    def scrat_trigger_delay(self, delay: int):
+    def scrat_sample_delay(self, delay: int):
         pass
 
     def scrat_sample_len(self, length: int):

@@ -138,10 +138,10 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug("scrat_analog_trigger_voltage payload: %s", payload.hex())
         return self.send_with_command(Commands.SCRAT_ANALOG_TRIGGER_VOLTAGE, payload)
 
-    def scrat_trigger_delay(self, delay: int):
+    def scrat_sample_delay(self, delay: int):
         payload = struct.pack(">I", delay)
         self._logger.debug("scrat_trigger_delay payload: %s", payload.hex())
-        return self.send_with_command(Commands.SCRAT_TRIGGER_DELAY, payload)
+        return self.send_with_command(Commands.SCRAT_SAMPLE_DELAY, payload)
 
     def scrat_sample_len(self, length: int):
         payload = struct.pack(">I", length)
