@@ -1,12 +1,9 @@
-import typing
-
 import numpy as np
 
 from cracknuts.cracker.cracker import Cracker, Config
 
 
 class StatefulCracker(Cracker):
-
     def __init__(self, cracker: Cracker):
         self._cracker = cracker
         self._config: Config = self._cracker.get_default_config()
@@ -67,11 +64,11 @@ class StatefulCracker(Cracker):
     def get_name(self) -> str:
         return self._cracker.get_name()
 
-    def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
+    def scrat_analog_channel_enable(self, enable: dict[int, bool]):
         self._cracker.scrat_analog_channel_enable(enable)
         self._config.scrat_analog_channel_enable = enable
 
-    def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
+    def scrat_analog_coupling(self, coupling: dict[int, int]):
         self._cracker.scrat_analog_coupling(coupling)
 
     def scrat_analog_voltage(self, channel: int, voltage: int):
@@ -80,7 +77,7 @@ class StatefulCracker(Cracker):
     def scrat_analog_bias_voltage(self, channel: int, voltage: int):
         self._cracker.scrat_analog_bias_voltage(channel, voltage)
 
-    def scrat_digital_channel_enable(self, enable: typing.Dict[int, bool]):
+    def scrat_digital_channel_enable(self, enable: dict[int, bool]):
         self._cracker.scrat_digital_channel_enable(enable)
 
     def scrat_digital_voltage(self, voltage: int):
@@ -132,7 +129,7 @@ class StatefulCracker(Cracker):
         self._cracker.cracker_nut_clock(clock)
         self._config.cracker_nut_clock = clock
 
-    def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
+    def cracker_nut_interface(self, interface: dict[int, bool]):
         self._cracker.cracker_nut_interface(interface)
 
     def cracker_nut_timeout(self, timeout: int):

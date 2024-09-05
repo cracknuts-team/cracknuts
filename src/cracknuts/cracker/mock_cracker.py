@@ -9,20 +9,19 @@ from cracknuts.cracker.cracker import Cracker, Config
 
 
 class MockCracker(Cracker):
-
     def __init__(self, server_address=None):
         super().__init__(server_address)
         self._config = Config(
             cracker_nut_enable=False,
             cracker_nut_voltage=3500,
-            cracker_nut_clock=8,
+            cracker_nut_clock=62500,
             scrat_analog_channel_enable={1: True, 2: False},
-            scrat_sample_len=1024
+            scrat_sample_len=1024,
         )
         self._logger = logger.get_logger(MockCracker)
         logger.set_level(logging.INFO, MockCracker)
 
-    def get_default_config(self) -> typing.Optional['Config']:
+    def get_default_config(self) -> typing.Optional["Config"]:
         return self._config
 
     def connect(self):
@@ -34,8 +33,7 @@ class MockCracker(Cracker):
     def disconnect(self):
         return self
 
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None):
-        ...
+    def send_with_command(self, command: int | bytes, payload: str | bytes = None): ...
 
     def echo(self, payload: str) -> str:
         return super().echo(payload)
@@ -44,15 +42,15 @@ class MockCracker(Cracker):
         return super().echo_hex(payload)
 
     def get_id(self) -> str:
-        return '0001'
+        return "0001"
 
     def get_name(self) -> str:
-        return 'mock cracker'
+        return "mock cracker"
 
-    def scrat_analog_channel_enable(self, enable: typing.Dict[int, bool]):
+    def scrat_analog_channel_enable(self, enable: dict[int, bool]):
         pass
 
-    def scrat_analog_coupling(self, coupling: typing.Dict[int, int]):
+    def scrat_analog_coupling(self, coupling: dict[int, int]):
         pass
 
     def scrat_analog_voltage(self, channel: int, voltage: int):
@@ -61,7 +59,7 @@ class MockCracker(Cracker):
     def scrat_analog_bias_voltage(self, channel: int, voltage: int):
         pass
 
-    def scrat_digital_channel_enable(self, enable: typing.Dict[int, bool]):
+    def scrat_digital_channel_enable(self, enable: dict[int, bool]):
         pass
 
     def scrat_digital_voltage(self, voltage: int):
@@ -102,15 +100,15 @@ class MockCracker(Cracker):
         pass
 
     def cracker_nut_enable(self, enable: int):
-        self._logger.info(f'set nut enable: {enable}')
+        self._logger.info(f"set nut enable: {enable}")
 
     def cracker_nut_voltage(self, voltage: int):
-        self._logger.info(f'set nut voltage: {voltage}')
+        self._logger.info(f"set nut voltage: {voltage}")
 
     def cracker_nut_clock(self, clock: int):
-        self._logger.info(f'set nut clock: {clock}')
+        self._logger.info(f"set nut clock: {clock}")
 
-    def cracker_nut_interface(self, interface: typing.Dict[int, bool]):
+    def cracker_nut_interface(self, interface: dict[int, bool]):
         pass
 
     def cracker_nut_timeout(self, timeout: int):
