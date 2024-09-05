@@ -11,7 +11,7 @@ def get_bytes_matrix(b):
         header += f" {i:02X}"
     header += "  | ASCII"
 
-    content = ''
+    content = ""
 
     # 打印16进制矩阵和ASCII字符
     for line in range(lines):
@@ -35,8 +35,8 @@ def get_bytes_matrix(b):
         # 打印十六进制行
         content += f"{offset:08X}: {' '.join(hex_line)}  | {''.join(ascii_line)}\n"
 
-    return header + '\n' + content
+    return header + "\n" + content
 
 
 def get_hex(b: bytes):
-    return ' '.join(f'{byte:02x}' for byte in b)
+    return " ".join(f"{byte:02x}" for byte in b)

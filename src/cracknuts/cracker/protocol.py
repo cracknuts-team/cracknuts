@@ -1,8 +1,8 @@
 import struct
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"
 
-MAGIC_STR = b'AHCC'
+MAGIC_STR = b"AHCC"
 
 # ┌───────────────────────────────────────────┬───────┐
 # │--------------Request Header---------------│-------│
@@ -28,8 +28,8 @@ REQ_HEADER_SIZE = struct.calcsize(REQ_HEADER_FORMAT)
 RESP_HEADER_FORMAT = ">4sH1sHI"
 RESP_HEADER_SIZE = struct.calcsize(RESP_HEADER_FORMAT)
 
-DIRECTION_SEND = b'S'
-DIRECTION_RESPONSE = b'R'
+DIRECTION_SEND = b"S"
+DIRECTION_RESPONSE = b"R"
 
 # Status Code
 STATUS_OK = 0x0000
@@ -43,8 +43,15 @@ def version():
 
 
 def _build_message(direction: bytes, command: int, payload: bytes = None):
-    content = struct.pack(REQ_HEADER_FORMAT, MAGIC_STR, int(__version__.split('.')[0]), direction, command, 0,
-                          0 if payload is None else len(payload))
+    content = struct.pack(
+        REQ_HEADER_FORMAT,
+        MAGIC_STR,
+        int(__version__.split(".")[0]),
+        direction,
+        command,
+        0,
+        0 if payload is None else len(payload),
+    )
     if payload is not None:
         content += payload
 

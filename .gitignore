@@ -5,5 +5,8 @@ demo/data
 venv
 .venv
 outputs
+build
+.ruff_cache
+.pytest_cache
 
 **/__pycache__/**
