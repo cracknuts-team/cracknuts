@@ -68,6 +68,8 @@ class Cracker(typing.Protocol):
 
     def scrat_arm(self): ...
 
+    def scrat_force(self): ...
+
     def scrat_is_triggered(self): ...
 
     def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray: ...
@@ -153,6 +155,7 @@ class Commands:
     SCRAT_ARM = 0x0126
 
     SCRAT_IS_TRIGGERED = 0x0127
+    SCRAT_FORCE = 0X0129
 
     SCRAT_GET_ANALOG_WAVES = 0x0130
     SCRAT_GET_DIGITAL_WAVES = 0x0130
@@ -427,6 +430,9 @@ class AbsCnpCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def scrat_arm(self): ...
+
+    @abc.abstractmethod
+    def scrat_force(self): ...
 
     @abc.abstractmethod
     def scrat_is_triggered(self): ...
