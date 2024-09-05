@@ -8,13 +8,16 @@ description = "A library for cracknuts device."
 dynamic = ["version"]
 requires-python = ">=3.12"
 readme = "README.md"
+license = { file = "LICENSE" }
 authors = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 maintainers = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 dependencies = [
     "numpy~=1.26.4",
     "pandas~=2.2.2",
-    "zarr>=2.18.2",
 ]
+
+[project.urls]
+homepage = "https://cracknuts.io"
 
 [project.optional-dependencies]
 dev = [
