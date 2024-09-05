@@ -72,7 +72,7 @@ def test_scrat_analog_trigger_voltage():
 
 
 def test_scrat_trigger_delay():
-    assert basic_device.scrat_trigger_delay(1) is None
+    assert basic_device.scrat_sample_delay(1) is None
 
 
 def test_scrat_sample_len():

@@ -62,7 +62,7 @@ class Cracker(typing.Protocol):
 
     def scrat_analog_trigger_voltage(self, voltage: int): ...
 
-    def scrat_trigger_delay(self, delay: int): ...
+    def scrat_sample_delay(self, delay: int): ...
 
     def scrat_sample_len(self, length: int): ...
 
@@ -77,6 +77,10 @@ class Cracker(typing.Protocol):
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int): ...
 
     def scrat_analog_gain(self, gain: int): ...
+
+    def scrat_sample_clock(self, clock: int): ...
+
+    def scrat_sample_phase(self, phase: int): ...
 
     def cracker_nut_enable(self, enable: int): ...
 
@@ -137,6 +141,9 @@ class Commands:
     SCRAT_ANALOG_BIAS_VOLTAGE = 0x0103
     SCRAT_ANALOG_GAIN = 0x0104
 
+    SCRAT_SAMPLE_CLOCK = 0x0105
+    SCRAT_SAMPLE_PHASE = 0x0106
+
     SCRAT_DIGITAL_CHANNEL_ENABLE = 0x0110
     SCRAT_DIGITAL_VOLTAGE = 0x0111
 
@@ -147,7 +154,7 @@ class Commands:
 
     SCRAT_ANALOG_TRIGGER_VOLTAGE = 0x0123
 
-    SCRAT_TRIGGER_DELAY = 0x0124
+    SCRAT_SAMPLE_DELAY = 0x0124
 
     SCRAT_SAMPLE_LENGTH = 0x0125
     SCRAT_SAMPLE_RATE = 0x0128
@@ -199,14 +206,20 @@ class Config:
         cracker_nut_voltage: int = None,
         cracker_nut_clock: int = None,
         scrat_analog_channel_enable: dict[int, bool] = None,
-        scrat_sample_len: int = None,
+        cracker_scrat_sample_len: int = None,
+        cracker_scrat_sample_delay: int = None,
+        cracker_scrat_sample_phase: int = None,
+        cracker_scrat_sample_clock: int = None,
     ):
         self._binder: dict[str, callable] = {}
         self.cracker_nut_enable: bool = cracker_nut_enable
         self.cracker_nut_voltage: int = cracker_nut_voltage
         self.cracker_nut_clock: int = cracker_nut_clock
+        self.cracker_scrat_sample_len = cracker_scrat_sample_len
+        self.cracker_scrat_sample_delay = cracker_scrat_sample_delay
+        self.cracker_scrat_sample_phase = cracker_scrat_sample_phase
+        self.cracker_scrat_sample_clock = cracker_scrat_sample_clock
         self.scrat_analog_channel_enable: dict[int, bool] = scrat_analog_channel_enable
-        self.scrat_sample_len = scrat_sample_len
 
     def __setattr__(self, key, value):
         self.__dict__[key] = value
@@ -237,16 +250,7 @@ class AbsCnpCracker(ABC, Cracker):
         self._server_address = server_address
         self._socket: socket.socket | None = None
         self._connection_status = False
-        self._channel_enable: dict = {
-            0: False,
-            1: False,
-            2: False,
-            3: False,
-            4: False,
-            5: False,
-            6: False,
-            7: False,
-        }
+        self._channel_enable: dict = {0: False, 1: False,}
 
     @abc.abstractmethod
     def get_default_config(self) -> Config | None: ...
@@ -423,7 +427,7 @@ class AbsCnpCracker(ABC, Cracker):
     def scrat_analog_trigger_voltage(self, voltage: int): ...
 
     @abc.abstractmethod
-    def scrat_trigger_delay(self, delay: int): ...
+    def scrat_sample_delay(self, delay: int): ...
 
     @abc.abstractmethod
     def scrat_sample_len(self, length: int): ...
@@ -445,6 +449,12 @@ class AbsCnpCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def scrat_analog_gain(self, gain: int): ...
+
+    @abc.abstractmethod
+    def scrat_sample_clock(self, clock: int): ...
+
+    @abc.abstractmethod
+    def scrat_sample_phase(self, phase: int): ...
 
     @abc.abstractmethod
     def cracker_nut_enable(self, enable: int): ...
