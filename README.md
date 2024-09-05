@@ -1,4 +1,4 @@
-# nutcracker
+# Cracknuts
 
 A library for cracknuts device.  
 
