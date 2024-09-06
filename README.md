@@ -19,4 +19,3 @@ mc.get_name()
 It will print mock `cracker after` you execute the code above.  
 
 ***More details will be available soon.***  
-

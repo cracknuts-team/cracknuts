@@ -162,7 +162,7 @@ class Commands:
     SCRAT_ARM = 0x0126
 
     SCRAT_IS_TRIGGERED = 0x0127
-    SCRAT_FORCE = 0X0129
+    SCRAT_FORCE = 0x0129
 
     SCRAT_GET_ANALOG_WAVES = 0x0130
     SCRAT_GET_DIGITAL_WAVES = 0x0130
@@ -250,7 +250,10 @@ class AbsCnpCracker(ABC, Cracker):
         self._server_address = server_address
         self._socket: socket.socket | None = None
         self._connection_status = False
-        self._channel_enable: dict = {0: False, 1: False,}
+        self._channel_enable: dict = {
+            0: False,
+            1: False,
+        }
 
     @abc.abstractmethod
     def get_default_config(self) -> Config | None: ...
