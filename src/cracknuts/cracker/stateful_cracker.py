@@ -21,7 +21,7 @@ class StatefulCracker(Cracker):
         User should call this function before get data from device.
         """
         self._cracker.cracker_nut_voltage(self._config.cracker_nut_voltage)
-        self._cracker.cracker_nut_clock(self._config.cracker_nut_clock)
+        # self._cracker.cracker_nut_clock(self._config.cracker_nut_clock)
         self._cracker.cracker_nut_enable(self._config.cracker_nut_enable)
 
         self._cracker.scrat_analog_channel_enable(self._config.scrat_analog_channel_enable)
