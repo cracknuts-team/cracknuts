@@ -305,3 +305,18 @@ class CrackerS1(AbsCnpCracker):
         payload += data
         self._logger.debug("cracker_can_data payload: %s", payload.hex())
         return self.send_with_command(Commands.CRACKER_CA_DATA, payload)
+
+    def scrat_force(self):
+        payload = None
+        self._logger.debug("scrat_force payload: %s", payload)
+        return self.send_with_command(Commands.SCRAT_FORCE, payload)
+
+    def scrat_sample_clock(self, clock: int):
+        payload = struct.pack(">I", clock)
+        self._logger.debug("scrat_sample_clock payload: %s", payload.hex())
+        return self.send_with_command(Commands.SCRAT_SAMPLE_CLOCK, payload)
+
+    def scrat_sample_phase(self, phase: int):
+        payload = struct.pack(">I", phase)
+        self._logger.debug("scrat_sample_phase payload: %s", payload.hex())
+        return self.send_with_command(Commands.SCRAT_SAMPLE_PHASE, payload)
