@@ -356,7 +356,8 @@ class AbsCnpCracker(ABC, Cracker):
 
             if length == 0:
                 return None
-            resp_payload = self._socket.recv(length)
+            # resp_payload = self._socket.recv(length)
+            resp_payload = self.recv(length)
             self._logger.debug(
                 "Receive payload from %s: \n%s",
                 self._server_address,
@@ -368,6 +369,27 @@ class AbsCnpCracker(ABC, Cracker):
             return None
         finally:
             self._command_lock.release()
+
+    # def recv(self, length):
+    #     c = length // 1024
+    #     r = length % 1024
+    #     resp_payload = b''
+    #     for _ in range(c):
+    #         resp_payload += self._socket.recv(length)
+    #
+    #     resp_payload += self._socket.recv(r)
+    #
+    #     return resp_payload
+
+    def recv(self, length):
+
+        resp_payload = b''
+        while (received_len :=len(resp_payload)) < length:
+            for_receive_len = length - received_len
+            resp_payload += self._socket.recv(for_receive_len)
+
+        return resp_payload
+
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None):
         if isinstance(payload, str):
