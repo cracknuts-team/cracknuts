@@ -10,11 +10,8 @@ class CrackerS1(AbsCnpCracker):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._default_config = Config(
-            nut_enable=False,
             cracker_nut_voltage=3500,
-            nut_freq=8,
             scrat_analog_channel_enable={1: True, 2: False},
-            scrat_sample_len=1024,
         )
 
     def get_default_config(self) -> Config | None:
@@ -166,7 +163,7 @@ class CrackerS1(AbsCnpCracker):
         if wave_bytes is None:
             return np.array([[]])
         else:
-            wave = struct.unpack(f">{sample_count}H", wave_bytes)
+            wave = struct.unpack(f">{sample_count}h", wave_bytes)
             return np.array(wave, dtype=np.int32)
 
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
