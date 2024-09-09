@@ -2,6 +2,8 @@ import struct
 
 __version__ = "1.0.0"
 
+DEFAULT_PORT = 9881
+
 MAGIC_STR = b"AHCC"
 
 # ┌───────────────────────────────────────────┬───────┐

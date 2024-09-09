@@ -1,166 +1,79 @@
-import logging
+import socket
+import struct
+import sys
 import time
-import typing
-
-import numpy as np
 
 from cracknuts import logger
-from cracknuts.cracker.cracker import Cracker, Config
+from cracknuts.cracker import protocol, cracker
+from cracknuts.utils import hex_util
+
+_handler_dict = {}
 
 
-class MockCracker(Cracker):
-    def __init__(self, server_address=None):
-        super().__init__(server_address)
-        self._config = Config(
-            cracker_nut_enable=False,
-            cracker_nut_voltage=3500,
-            cracker_nut_clock=62500,
-            scrat_analog_channel_enable={1: True, 2: False},
-            cracker_scrat_sample_len=1024,
-        )
+def _handler(command: int, has_payload: bool = True):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if not has_payload:
+                del kwargs["payload"]
+            return func(*args, **kwargs)
+
+        _handler_dict[command] = wrapper
+        return wrapper
+
+    return decorator
+
+
+class MockCracker:
+    def __init__(self):
         self._logger = logger.get_logger(MockCracker)
-        logger.set_level(logging.INFO, MockCracker)
+        self._handler_dict = {}
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.bind(("", protocol.DEFAULT_PORT))
+        self._server_socket.listen()
+        self._logger.debug("MockCracker initialized")
+        self._start_server()
 
-    def get_default_config(self) -> typing.Optional["Config"]:
-        return self._config
+    def _start_server(self):
+        while True:
+            time.sleep(0.01)
+            try:
+                conn, addr = self._server_socket.accept()
+                self._logger.debug(f"Get client request from {addr}.")
 
-    def connect(self):
-        return self
+                while True:
+                    time.sleep(0.01)
+                    try:
+                        header_data = conn.recv(protocol.RESP_HEADER_SIZE)
+                        if not header_data:
+                            continue
+                        magic, version, direction, command, rfu, length = struct.unpack(
+                            protocol.REQ_HEADER_FORMAT, header_data
+                        )
+                        self._logger.debug(
+                            f"Received header: Magic={magic}, Version={version}, Direction={direction}, "
+                            f"Command={command}, Length={length}"
+                        )
 
-    def get_connection_status(self) -> bool:
-        return True
+                        payload_data = conn.recv(length)
 
-    def disconnect(self):
-        return self
+                        self._logger.debug(f"Received payload length: {len(payload_data)}")
+                        self._logger.debug(f"Received payload\n: {hex_util.get_bytes_matrix(payload_data)}")
 
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None): ...
+                        self._handler_dict.get(command, None)(self, payload=payload_data)
+                    except OSError as e:
+                        self._logger.error(e.args)
+                        conn.sendall(f"Error: {e.args[0]}".encode())
+                        continue
+                    except struct.error as e:
+                        self._logger.error(e)
+                        conn.sendall(f"Format error: {e.args[0]}\n".encode())
+                        continue
+                    except KeyboardInterrupt:
+                        sys.exit(0)
+            except KeyboardInterrupt:
+                print(111111)
+                sys.exit(0)
 
-    def echo(self, payload: str) -> str:
-        return super().echo(payload)
-
-    def echo_hex(self, payload: str) -> str:
-        return super().echo_hex(payload)
-
-    def get_id(self) -> str:
-        return "0001"
-
-    def get_name(self) -> str:
-        return "mock cracker"
-
-    def scrat_analog_channel_enable(self, enable: dict[int, bool]):
-        pass
-
-    def scrat_analog_coupling(self, coupling: dict[int, int]):
-        pass
-
-    def scrat_analog_voltage(self, channel: int, voltage: int):
-        pass
-
-    def scrat_analog_bias_voltage(self, channel: int, voltage: int):
-        pass
-
-    def scrat_digital_channel_enable(self, enable: dict[int, bool]):
-        pass
-
-    def scrat_digital_voltage(self, voltage: int):
-        pass
-
-    def scrat_trigger_mode(self, source: int, stop: int):
-        pass
-
-    def scrat_analog_trigger_source(self, channel: int):
-        pass
-
-    def scrat_digital_trigger_source(self, channel: int):
-        pass
-
-    def scrat_analog_trigger_voltage(self, voltage: int):
-        pass
-
-    def scrat_sample_delay(self, delay: int):
-        pass
-
-    def scrat_sample_len(self, length: int):
-        pass
-
-    def scrat_arm(self):
-        pass
-
-    def scrat_is_triggered(self):
-        time.sleep(0.05)
-        return True
-
-    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
-        return np.array([np.random.randint(1, 100) for i in range(sample_count)])
-
-    def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
-        pass
-
-    def scrat_analog_gain(self, gain: int):
-        pass
-
-    def cracker_nut_enable(self, enable: int):
-        self._logger.info(f"set nut enable: {enable}")
-
-    def cracker_nut_voltage(self, voltage: int):
-        self._logger.info(f"set nut voltage: {voltage}")
-
-    def cracker_nut_clock(self, clock: int):
-        self._logger.info(f"set nut clock: {clock}")
-
-    def cracker_nut_interface(self, interface: dict[int, bool]):
-        pass
-
-    def cracker_nut_timeout(self, timeout: int):
-        pass
-
-    def cracker_serial_baud(self, baud: int):
-        pass
-
-    def cracker_serial_width(self, width: int):
-        pass
-
-    def cracker_serial_stop(self, stop: int):
-        pass
-
-    def cracker_serial_odd_eve(self, odd_eve: int):
-        pass
-
-    def cracker_serial_data(self, expect_len: int, data: bytes):
-        pass
-
-    def cracker_spi_cpol(self, cpol: int):
-        pass
-
-    def cracker_spi_cpha(self, cpha: int):
-        pass
-
-    def cracker_spi_data_len(self, cpha: int):
-        pass
-
-    def cracker_spi_freq(self, freq: int):
-        pass
-
-    def cracker_spi_timeout(self, timeout: int):
-        pass
-
-    def cracker_spi_data(self, expect_len: int, data: bytes):
-        pass
-
-    def cracker_i2c_freq(self, freq: int):
-        pass
-
-    def cracker_i2c_timeout(self, timeout: int):
-        pass
-
-    def cracker_i2c_data(self, expect_len: int, data: bytes):
-        pass
-
-    def cracker_can_freq(self, freq: int):
-        pass
-
-    def cracker_can_timeout(self, timeout: int):
-        pass
-
-    def cracker_can_data(self, expect_len: int, data: bytes):
-        pass
+    @_handler(cracker.Commands.GET_ID, has_payload=False)
+    def get_id(self, payload: bytes) -> bytes:
+        return b"mock_001"
