@@ -1,41 +1,37 @@
 def get_bytes_matrix(b):
-    # 每行显示的字节数
-    BYTES_PER_LINE = 16
+    summary = f"========  >>>>>>>> total length: {len(b)}"
 
-    # 计算总行数
-    lines = (len(b) + BYTES_PER_LINE - 1) // BYTES_PER_LINE
+    bytes_per_line = 16
 
-    # 打印16进制头部
+    lines = (len(b) + bytes_per_line - 1) // bytes_per_line
+
     header = "         "
-    for i in range(BYTES_PER_LINE):
+    for i in range(bytes_per_line):
         header += f" {i:02X}"
     header += "  | ASCII"
 
     content = ""
 
-    # 打印16进制矩阵和ASCII字符
     for line in range(lines):
-        offset = line * BYTES_PER_LINE
+        offset = line * bytes_per_line
         hex_line = []
         ascii_line = []
 
-        for i in range(offset, min(len(b), offset + BYTES_PER_LINE)):
+        for i in range(offset, min(len(b), offset + bytes_per_line)):
             byte = b[i]
             hex_line.append(f"{byte:02X}")
-            if 32 <= byte <= 126:  # 只打印可打印的ASCII字符
+            if 32 <= byte <= 126:
                 ascii_line.append(chr(byte))
             else:
                 ascii_line.append(".")
 
-        # 补齐不足16个字节的情况
-        while len(hex_line) < BYTES_PER_LINE:
+        while len(hex_line) < bytes_per_line:
             hex_line.append("  ")
             ascii_line.append(" ")
 
-        # 打印十六进制行
         content += f"{offset:08X}: {' '.join(hex_line)}  | {''.join(ascii_line)}\n"
 
-    return header + "\n" + content
+    return summary + "\n" + header + "\n" + content
 
 
 def get_hex(b: bytes):

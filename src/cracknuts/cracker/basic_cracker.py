@@ -22,7 +22,11 @@ class CrackerS1(AbsCnpCracker):
         return res.decode("ascii") if res is not None else None
 
     def get_name(self) -> str:
-        res = self.send_and_receive(protocol.build_send_message(Commands.GET_ID))
+        res = self.send_and_receive(protocol.build_send_message(Commands.GET_NAME))
+        return res.decode("ascii") if res is not None else None
+
+    def get_version(self) -> str:
+        res = self.send_and_receive(protocol.build_send_message(Commands.GET_VERSION))
         return res.decode("ascii") if res is not None else None
 
     def scrat_analog_channel_enable(self, enable: dict[int, bool]):

@@ -42,6 +42,8 @@ class Cracker(typing.Protocol):
 
     def get_name(self) -> str: ...
 
+    def get_version(self) -> str: ...
+
     def scrat_analog_channel_enable(self, enable: dict[int, bool]): ...
 
     def scrat_analog_coupling(self, coupling: dict[int, int]): ...
@@ -134,6 +136,7 @@ class Commands:
 
     GET_ID = 0x0001
     GET_NAME = 0x0002
+    GET_VERSION = 0x0003
 
     SCRAT_ANALOG_CHANNEL_ENABLE = 0x0100
     SCRAT_ANALOG_COUPLING = 0x0101
@@ -341,13 +344,13 @@ class AbsCnpCracker(ABC, Cracker):
                 hex_util.get_bytes_matrix(message),
             )
             self._socket.sendall(message)
-            resp_header = self._socket.recv(protocol.RESP_HEADER_SIZE)
+            resp_header = self._socket.recv(protocol.RES_HEADER_SIZE)
             self._logger.debug(
                 "Get response header from %s: \n%s",
                 self._server_address,
                 hex_util.get_bytes_matrix(resp_header),
             )
-            magic, version, direction, status, length = struct.unpack(protocol.RESP_HEADER_FORMAT, resp_header)
+            magic, version, direction, status, length = struct.unpack(protocol.RES_HEADER_FORMAT, resp_header)
             self._logger.debug(
                 "Receive header from %s: %s",
                 self._server_address,
@@ -356,7 +359,7 @@ class AbsCnpCracker(ABC, Cracker):
 
             if length == 0:
                 return None
-            resp_payload = self._socket.recv(length)
+            resp_payload = self._recv(length)
             self._logger.debug(
                 "Receive payload from %s: \n%s",
                 self._server_address,
@@ -368,6 +371,14 @@ class AbsCnpCracker(ABC, Cracker):
             return None
         finally:
             self._command_lock.release()
+
+    def _recv(self, length):
+        resp_payload = b""
+        while (received_len := len(resp_payload)) < length:
+            for_receive_len = length - received_len
+            resp_payload += self._socket.recv(for_receive_len)
+
+        return resp_payload
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None):
         if isinstance(payload, str):
@@ -398,6 +409,9 @@ class AbsCnpCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def get_name(self) -> str: ...
+
+    def get_version(self) -> str:
+        return super().get_version()
 
     @abc.abstractmethod
     def scrat_analog_channel_enable(self, enable: dict[int, bool]): ...

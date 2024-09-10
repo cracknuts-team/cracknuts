@@ -27,8 +27,8 @@ REQ_HEADER_SIZE = struct.calcsize(REQ_HEADER_FORMAT)
 # │'AHCC'│   1   │   'R'   │      │      │       │
 # └──────────────────────────────────────┴───────┘
 
-RESP_HEADER_FORMAT = ">4sH1sHI"
-RESP_HEADER_SIZE = struct.calcsize(RESP_HEADER_FORMAT)
+RES_HEADER_FORMAT = ">4sH1sHI"
+RES_HEADER_SIZE = struct.calcsize(RES_HEADER_FORMAT)
 
 DIRECTION_SEND = b"S"
 DIRECTION_RESPONSE = b"R"
@@ -44,12 +44,12 @@ def version():
     return __version__
 
 
-def _build_message(direction: bytes, command: int, payload: bytes = None):
+def _build_req_message(command: int, payload: bytes = None):
     content = struct.pack(
         REQ_HEADER_FORMAT,
         MAGIC_STR,
         int(__version__.split(".")[0]),
-        direction,
+        DIRECTION_SEND,
         command,
         0,
         0 if payload is None else len(payload),
@@ -60,9 +60,24 @@ def _build_message(direction: bytes, command: int, payload: bytes = None):
     return content
 
 
+def _build_res_message(status: int, payload: bytes = None):
+    content = struct.pack(
+        RES_HEADER_FORMAT,
+        MAGIC_STR,
+        int(__version__.split(".")[0]),
+        DIRECTION_RESPONSE,
+        status,
+        0 if payload is None else len(payload),
+    )
+    if payload is not None:
+        content += payload
+
+    return content
+
+
 def build_send_message(command: int, payload: bytes = None):
-    return _build_message(DIRECTION_SEND, command, payload)
+    return _build_req_message(command, payload)
 
 
 def build_response_message(status: int, payload: bytes = None):
-    return _build_message(DIRECTION_RESPONSE, status, payload)
+    return _build_res_message(status, payload)

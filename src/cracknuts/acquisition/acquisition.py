@@ -297,7 +297,9 @@ class Acquisition(abc.ABC):
                 if self._is_triggered():
                     self._last_wave = self._get_waves(
                         self.sample_offset,
-                        self.cracker.get_current_config().cracker_scrat_sample_len,
+                        #  todo find why config is None.
+                        # self.cracker.get_current_config().cracker_scrat_sample_len,
+                        4096,
                     )
                     if self._last_wave is not None:
                         self._logger.debug(
