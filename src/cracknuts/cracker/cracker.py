@@ -337,12 +337,9 @@ class AbsCnpCracker(ABC, Cracker):
         try:
             self._command_lock.acquire()
             if not self.get_connection_status():
-                self.connect()
-            self._logger.debug(
-                "Send message to %s: \n%s",
-                self._server_address,
-                hex_util.get_bytes_matrix(message),
-            )
+                self._logger.error("Cracker is not connected.")
+                return None
+            self._logger.debug(f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(message)}")
             self._socket.sendall(message)
             resp_header = self._socket.recv(protocol.RES_HEADER_SIZE)
             self._logger.debug(
