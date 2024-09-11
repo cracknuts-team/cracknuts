@@ -107,7 +107,7 @@ class StatefulCracker(Cracker):
         return self._cracker.scrat_sample_delay(delay)
 
     def scrat_sample_len(self, length: int):
-        self._config.scrat_sample_len = length
+        self._config.cracker_scrat_sample_len = length
         return self._cracker.scrat_sample_len(length)
 
     def get_default_config(self) -> typing.Optional["Config"]:
