@@ -299,7 +299,7 @@ class Acquisition(abc.ABC):
                         self.sample_offset,
                         #  todo find why config is None.
                         # self.cracker.get_current_config().cracker_scrat_sample_len,
-                        4096,
+                        1024,
                     )
                     if self._last_wave is not None:
                         self._logger.debug(
