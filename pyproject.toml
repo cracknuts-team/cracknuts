@@ -34,6 +34,10 @@ test = [
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
 
+[project.scripts]
+cracknuts = "cracknuts.__main__:main"
+
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"

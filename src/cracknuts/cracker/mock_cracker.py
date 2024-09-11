@@ -1,11 +1,11 @@
 import logging
-import time
-
-import numpy as np
 import socket
 import struct
 import sys
 import threading
+import time
+
+import numpy as np
 
 from cracknuts import logger
 from cracknuts.cracker import protocol, cracker
@@ -28,11 +28,11 @@ def _handler(command: int, has_payload: bool = True):
 
 
 class MockCracker:
-    def __init__(self):
-        self._logger = logger.get_logger(MockCracker)
+    def __init__(self, host: str = "127.0.0.1", port: int = protocol.DEFAULT_PORT, logging_level=logging.WARNING):
+        self._logger = logger.get_logger(MockCracker, logging_level)
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.settimeout(1)
-        self._server_socket.bind(("", protocol.DEFAULT_PORT))
+        self._server_socket.bind((host, port))
         self._server_socket.listen()
         self._logger.debug("MockCracker initialized")
 
@@ -88,7 +88,6 @@ class MockCracker:
                     self._logger.debug(f"Received payload:\n{hex_util.get_bytes_matrix(payload_data)}")
                 if command not in _handler_dict:
                     self._logger.warning(f'Get command not supported: 0x{format(command, '04x')}')
-                    self._logger.error(_handler_dict)
                     unsupported_res = self._unsupported(command)
                     self._logger.debug(f"Send unsupported:\n{hex_util.get_bytes_matrix(unsupported_res)}")
                     conn.sendall(unsupported_res)
@@ -129,7 +128,6 @@ class MockCracker:
 
     @_handler(cracker.Commands.SCRAT_GET_ANALOG_WAVES)
     def scrat_get_analog_wave(self, payload: bytes) -> bytes:
-        time.sleep(0.05)  # Simulate device I/O operations.
         channel, offset, sample_count = struct.unpack(">BII", payload)
         return struct.pack(f">{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
 
@@ -137,6 +135,9 @@ class MockCracker:
     def scrat_is_trigger(self, payload: bytes) -> bytes:
         time.sleep(0.05)  # Simulate device I/O operations.
         return struct.pack(">?", True)
+
+    @_handler(cracker.Commands.SCRAT_FORCE, has_payload=False)
+    def scrat_force(self) -> bytes: ...
 
 
 if __name__ == "__main__":
