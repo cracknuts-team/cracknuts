@@ -14,6 +14,7 @@ maintainers = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 dependencies = [
     "numpy~=1.26.4",
     "pandas~=2.2.2",
+    "click~=8.1.7",
 ]
 
 [project.urls]
