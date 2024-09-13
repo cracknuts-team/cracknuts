@@ -287,7 +287,7 @@ class AbsCnpCracker(ABC, Cracker):
         try:
             if not self._socket:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self._socket.settimeout(5)
+                self._socket.settimeout(30)
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
@@ -324,6 +324,15 @@ class AbsCnpCracker(ABC, Cracker):
         :return: True or False
         """
         return self._connection_status
+    
+    def recv(self, length):
+
+        resp_payload = b''
+        while (received_len := len(resp_payload)) < length:
+            for_receive_len = length - received_len
+            resp_payload += self._socket.recv(for_receive_len)
+
+        return resp_payload
 
     def send_and_receive(self, message) -> None | bytes:
         """
@@ -356,7 +365,7 @@ class AbsCnpCracker(ABC, Cracker):
 
             if length == 0:
                 return None
-            resp_payload = self._socket.recv(length)
+            resp_payload = self.recv(length)
             self._logger.debug(
                 "Receive payload from %s: \n%s",
                 self._server_address,
