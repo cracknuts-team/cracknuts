@@ -294,10 +294,11 @@ class Acquisition(abc.ABC):
                     )
                     break
                 self._logger.debug("Judge trigger status.")
-                if self._is_triggered():
+                # if self._is_triggered():
+                if True:
                     self._last_wave = self._get_waves(
-                        self.sample_offset,
-                        self.cracker.get_current_config().cracker_scrat_sample_len,
+                        0,
+                        2048,
                     )
                     if self._last_wave is not None:
                         self._logger.debug(
