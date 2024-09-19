@@ -1,34 +1,33 @@
 def get_bytes_matrix(data):
-    # 每行打印16个字节
+    hex_matrix = ""
+
     bytes_per_line = 16
 
-    # 显示字节总长度
-    print(f"Total bytes: {len(data)}")
-    print()
+    hex_matrix += f"Total bytes: {len(data)}\n"
 
-    # 打印header行
-
-    print("          00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F   01234567 89ABCDEF")
-    print("          ------------------------------------------------- -------------------")
+    hex_matrix += "          00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F   01234567 89ABCDEF\n"
+    hex_matrix += "          ------------------------------------------------- -------------------\n"
 
     for i in range(0, len(data), bytes_per_line):
-        # 获取当前行的字节
         chunk = data[i : i + bytes_per_line]
 
-        # 打印偏移量
-        print(f"{i:08X}: ", end="")
+        hex_matrix_line = ""
 
-        # 打印16进制值,每8个字节之间增加一个空格
+        hex_matrix_line += f"{i:08X}: "
+
         hex_values = " ".join([f"{byte:02X}" for byte in chunk[:8]])
         hex_values += "  " if len(chunk) > 8 else ""
         hex_values += " ".join([f"{byte:02X}" for byte in chunk[8:]])
-        print(f"{hex_values:<49}", end="")
+        hex_matrix_line += f"{hex_values:<49}"
 
-        # 打印ASCII字符,每8个字符之间增加一个空格
         ascii_values = "".join([chr(byte) if 32 <= byte <= 126 else "." for byte in chunk[:8]])
         ascii_values += " " if len(chunk) > 8 else ""
         ascii_values += "".join([chr(byte) if 32 <= byte <= 126 else "." for byte in chunk[8:]])
-        print(f"| {ascii_values} |")
+        hex_matrix_line += f"| {ascii_values:<17} |"
+
+        hex_matrix += hex_matrix_line + "\n"
+
+    return hex_matrix
 
 
 def get_hex(b: bytes):
