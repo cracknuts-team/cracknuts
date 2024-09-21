@@ -158,7 +158,8 @@ class CrackerS1(AbsCnpCracker):
     def scrat_is_triggered(self):
         payload = None
         self._logger.debug("scrat_is_triggered payload: %s", payload)
-        return self.send_with_command(Commands.SCRAT_IS_TRIGGERED, payload)
+        status, _ = self.send_with_command_recv_status(Commands.SCRAT_IS_TRIGGERED, payload)
+        return status
 
     def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int):
         payload = struct.pack(">BII", channel, offset, sample_count)

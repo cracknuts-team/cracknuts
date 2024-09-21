@@ -1,10 +1,10 @@
 import abc
-from dataclasses import dataclass
 import socket
 import struct
 import threading
 import typing
 from abc import ABC
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -32,7 +32,11 @@ class Cracker(typing.Protocol):
 
     def send_and_receive(self, message) -> None | bytes: ...
 
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None): ...
+    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes]: ...
+
+    def send_with_command(self, command: int | bytes, payload: str | bytes = None) -> bytes: ...
+
+    def send_with_command_recv_status(self, command: int | bytes, payload: str | bytes = None) -> tuple[int, bytes]: ...
 
     def echo(self, payload: str) -> str: ...
 
@@ -329,6 +333,10 @@ class AbsCnpCracker(ABC, Cracker):
         return self._connection_status
 
     def send_and_receive(self, message) -> None | bytes:
+        _, res = self.send_and_receive_with_status(message)
+        return res
+
+    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes]:
         """
         Send message to socket
         :param message:
@@ -362,7 +370,7 @@ class AbsCnpCracker(ABC, Cracker):
                 self._server_address,
                 hex_util.get_bytes_matrix(resp_payload),
             )
-            return resp_payload
+            return status, resp_payload
         except OSError as e:
             self._logger.error("Send message failed: %s, and msg: %s", e, message)
             return None
@@ -377,10 +385,15 @@ class AbsCnpCracker(ABC, Cracker):
 
         return resp_payload
 
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None):
+    def send_with_command(self, command: int | bytes, payload: str | bytes = None) -> bytes:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
         return self.send_and_receive(protocol.build_send_message(command, payload))
+
+    def send_with_command_recv_status(self, command: int | bytes, payload: str | bytes = None) -> tuple[int, bytes]:
+        if isinstance(payload, str):
+            payload = bytes.fromhex(payload)
+        return self.send_and_receive_with_status(protocol.build_send_message(command, payload))
 
     def echo(self, payload: str) -> str:
         """

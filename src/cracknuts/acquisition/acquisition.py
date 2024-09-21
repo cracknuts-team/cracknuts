@@ -28,6 +28,7 @@ class Acquisition(abc.ABC):
         self,
         cracker: StatefulCracker,
         trace_count: int = 1,
+        sample_length: int = 1024,
         sample_offset: int = 0,
         trigger_judge_wait_time: float = 0.05,
         trigger_judge_timeout: float = 1.0,
@@ -42,6 +43,7 @@ class Acquisition(abc.ABC):
 
         self.cracker: StatefulCracker = cracker
         self.trace_count: int = trace_count
+        self.sample_length = sample_length
         self.sample_offset: int = sample_offset
         self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
         self.trigger_judge_timeout: float = trigger_judge_timeout  # second
@@ -76,6 +78,7 @@ class Acquisition(abc.ABC):
     def run(
         self,
         count: int = 1,
+        sample_length: int = None,
         sample_offset: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
@@ -88,6 +91,7 @@ class Acquisition(abc.ABC):
             self._run(
                 test=False,
                 count=count,
+                sample_length=sample_length,
                 sample_offset=sample_offset,
                 trigger_judge_wait_time=trigger_judge_wait_time,
                 trigger_judge_timeout=trigger_judge_timeout,
@@ -98,6 +102,7 @@ class Acquisition(abc.ABC):
     def run_sync(
         self,
         count=1,
+        sample_length: int = None,
         sample_offset: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
@@ -108,6 +113,7 @@ class Acquisition(abc.ABC):
             self._do_run(
                 test=False,
                 count=count,
+                sample_length=sample_length,
                 sample_offset=sample_offset,
                 trigger_judge_wait_time=trigger_judge_wait_time,
                 trigger_judge_timeout=trigger_judge_timeout,
@@ -122,6 +128,7 @@ class Acquisition(abc.ABC):
     def test(
         self,
         count=-1,
+        sample_length: int = None,
         sample_offset: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
@@ -136,6 +143,7 @@ class Acquisition(abc.ABC):
             self._run(
                 test=True,
                 count=count,
+                sample_length=sample_length,
                 sample_offset=sample_offset,
                 trigger_judge_wait_time=trigger_judge_wait_time,
                 trigger_judge_timeout=trigger_judge_timeout,
@@ -146,6 +154,7 @@ class Acquisition(abc.ABC):
     def test_sync(
         self,
         count=-1,
+        sample_length: int = None,
         sample_offset: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
@@ -156,6 +165,7 @@ class Acquisition(abc.ABC):
             self._do_run(
                 test=True,
                 count=count,
+                sample_length=sample_length,
                 sample_offset=sample_offset,
                 trigger_judge_wait_time=trigger_judge_wait_time,
                 trigger_judge_timeout=trigger_judge_timeout,
@@ -185,6 +195,7 @@ class Acquisition(abc.ABC):
         self,
         test: bool = True,
         count: int = 1,
+        sample_length: int = None,
         sample_offset: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
@@ -197,6 +208,7 @@ class Acquisition(abc.ABC):
             kwargs={
                 "test": test,
                 "count": count,
+                "sample_length": sample_length,
                 "sample_offset": sample_offset,
                 "trigger_judge_wait_time": trigger_judge_wait_time,
                 "trigger_judge_timeout": trigger_judge_timeout,
@@ -209,6 +221,7 @@ class Acquisition(abc.ABC):
         self,
         test: bool = True,
         count: int = 1,
+        sample_length: int = 1024,
         sample_offset: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
@@ -226,6 +239,8 @@ class Acquisition(abc.ABC):
             self._status_changed()
 
         self.trace_count = count
+        if sample_length is not None:
+            self.sample_length = sample_length
         if sample_offset is not None:
             self.sample_offset = sample_offset
         if trigger_judge_wait_time is not None:
@@ -296,10 +311,7 @@ class Acquisition(abc.ABC):
                 self._logger.debug("Judge trigger status.")
                 # if self._is_triggered():
                 if True:
-                    self._last_wave = self._get_waves(
-                        0,
-                        2048,
-                    )
+                    self._last_wave = self._get_waves(self.sample_offset, self.sample_length)
                     if self._last_wave is not None:
                         self._logger.debug(
                             "Got wave: %s.",
