@@ -137,9 +137,9 @@ class MockCracker:
         return struct.pack(f">{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
 
     @_handler(cracker.Commands.SCRAT_IS_TRIGGERED)
-    def scrat_is_trigger(self, payload: bytes) -> bytes:
+    def scrat_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
         time.sleep(0.05)  # Simulate device I/O operations.
-        return struct.pack(">?", True)
+        return protocol.STATUS_OK, None
 
     @_handler(cracker.Commands.SCRAT_FORCE, has_payload=False)
     def scrat_force(self) -> bytes: ...
