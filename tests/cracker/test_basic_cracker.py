@@ -3,7 +3,7 @@ import logging
 from cracknuts.cracker.basic_cracker import CrackerS1
 from cracknuts.logger import set_level
 
-basic_device = CrackerS1(server_address=('192.168.0.13', 8080))
+basic_device = CrackerS1(server_address=('localhost', 9881))
 
 
 def setup_function():
@@ -84,7 +84,7 @@ def test_scrat_arm():
 
 
 def test_scrat_is_triggered():
-    assert basic_device.scrat_is_triggered() is None
+    assert basic_device.scrat_is_triggered() is not None
 
 
 def test_scrat_get_analog_wave():

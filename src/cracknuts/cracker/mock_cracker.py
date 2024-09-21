@@ -28,7 +28,7 @@ def _handler(command: int, has_payload: bool = True):
 
 
 class MockCracker:
-    def __init__(self, host: str = "127.0.0.1", port: int = protocol.DEFAULT_PORT, logging_level=logging.WARNING):
+    def __init__(self, host: str = "127.0.0.1", port: int = protocol.DEFAULT_PORT, logging_level=logging.INFO):
         self._logger = logger.get_logger(MockCracker, logging_level)
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.settimeout(1)
@@ -38,6 +38,7 @@ class MockCracker:
 
     def start(self):
         try:
+            print(f"MockCracker listen on {self._server_socket.getsockname()}")
             self._start_accept()
         except KeyboardInterrupt:
             sys.exit(0)
@@ -92,8 +93,12 @@ class MockCracker:
                     self._logger.debug(f"Send unsupported:\n{hex_util.get_bytes_matrix(unsupported_res)}")
                     conn.sendall(unsupported_res)
                     continue
-                res_payload = _handler_dict.get(command, None)(self, payload=payload_data)
-                res = protocol.build_response_message(protocol.STATUS_OK, res_payload)
+                func_res = _handler_dict.get(command, None)(self, payload=payload_data)
+                if type(func_res) is tuple:
+                    status, res_payload = func_res
+                else:
+                    status, res_payload = protocol.STATUS_OK, func_res
+                res = protocol.build_response_message(status, res_payload)
                 self._logger.debug(f"Sending:\n{hex_util.get_bytes_matrix(res)}")
                 conn.sendall(res)
             except TimeoutError:
