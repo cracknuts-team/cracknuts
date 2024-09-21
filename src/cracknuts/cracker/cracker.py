@@ -32,7 +32,7 @@ class Cracker(typing.Protocol):
 
     def send_and_receive(self, message) -> None | bytes: ...
 
-    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes]: ...
+    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes | None]: ...
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None) -> bytes: ...
 
@@ -336,7 +336,7 @@ class AbsCnpCracker(ABC, Cracker):
         _, res = self.send_and_receive_with_status(message)
         return res
 
-    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes]:
+    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes | None]:
         """
         Send message to socket
         :param message:
@@ -363,7 +363,7 @@ class AbsCnpCracker(ABC, Cracker):
             )
 
             if length == 0:
-                return None
+                return status, None
             resp_payload = self._recv(length)
             self._logger.debug(
                 "Receive payload from %s: \n%s",

@@ -54,7 +54,7 @@ class StatefulCracker(Cracker):
     def send_and_receive(self, message) -> None | bytes:
         return self._cracker.send_and_receive(message)
 
-    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes]:
+    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes | None]:
         return self._cracker.send_and_receive_with_status(message)
 
     def send_with_command(self, command: int | bytes, payload: str | bytes = None):
