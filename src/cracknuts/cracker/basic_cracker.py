@@ -169,7 +169,7 @@ class CrackerS1(AbsCnpCracker):
         if wave_bytes is None:
             return np.array([[]])
         else:
-            wave = struct.unpack(f">{sample_count}h", wave_bytes)
+            wave = struct.unpack(f"{sample_count}h", wave_bytes)
             return np.array(wave, dtype=np.int32)
 
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
