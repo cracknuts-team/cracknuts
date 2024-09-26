@@ -179,8 +179,8 @@ class CrackerS1(AbsCnpCracker):
         wave = struct.unpack(f">{sample_count}I", wave_bytes)
         return np.array(wave, dtype=np.uint16)
 
-    def scrat_analog_gain(self, gain):
-        payload = struct.pack(">B", gain)
+    def scrat_analog_gain(self, channel: int, gain: int):
+        payload = struct.pack(">BB", channel, gain)
         self._logger.debug("scrat_analog_gain payload: %s", payload.hex())
         return self.send_with_command(Commands.SCRAT_ANALOG_GAIN, payload)
 

@@ -137,8 +137,8 @@ class StatefulCracker(Cracker):
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
         return self._cracker.scrat_get_digital_wave(channel, offset, sample_count)
 
-    def scrat_analog_gain(self, gain: int):
-        return self._cracker.scrat_analog_gain(gain)
+    def scrat_analog_gain(self, channel: int, gain: int):
+        return self._cracker.scrat_analog_gain(channel, gain)
 
     def cracker_nut_enable(self, enable: int):
         self._config.cracker_nut_enable = enable
