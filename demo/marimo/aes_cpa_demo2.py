@@ -1,7 +1,7 @@
 import marimo
 
-__generated_with = "0.7.14"
-app = marimo.App(width="medium")
+__generated_with = "0.8.20"
+app = marimo.App(width="full")
 
 
 @app.cell
@@ -166,7 +166,7 @@ def __(container2, engine2):
     container2.run()
     results2 = container2.engine.get_result()
     engine2.get_candidate()
-    return results2,
+    return (results2,)
 
 
 @app.cell
@@ -445,7 +445,7 @@ def __(intermedia_data, np, traces):
 def __(traces):
     #曲线数
     trace_count = traces.shape[0]
-    return trace_count,
+    return (trace_count,)
 
 
 @app.cell
@@ -862,7 +862,7 @@ def __(
 @app.cell
 def __(get_select_file_trace_attr, mo):
     trace_select = mo.ui.file_browser(multiple=False, on_change=get_select_file_trace_attr)
-    return trace_select,
+    return (trace_select,)
 
 
 @app.cell
@@ -870,7 +870,7 @@ def __(get_selected_sample_count, get_selected_trace_count, mo):
     select_trace_attr = mo.md(f'''
     Trace count: {get_selected_trace_count()}   Sample count: {get_selected_sample_count()}
     ''')
-    return select_trace_attr,
+    return (select_trace_attr,)
 
 
 if __name__ == "__main__":

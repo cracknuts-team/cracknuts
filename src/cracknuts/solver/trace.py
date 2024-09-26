@@ -1,9 +1,72 @@
 import os
+from datetime import datetime
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import zarr
+
+
+class TraceDataSetMetadata:
+    def __init__(self):
+        self.create_time: datetime = datetime.now()
+        self.cracknuts: str = "Unknown"
+        self.cracker: str = "Unknown"
+        self.nuts: str = "Unknown"
+        self.trace_count: int = 0
+        self.sample_count: int = 0
+
+
+class TraceDataset:
+    def __init__(self):
+        self._metadata = TraceDataSetMetadata()
+        self.data: bytes | None = None
+        self.traces: np.ndarray | None = None
+
+    def load_from_numpy_data_file(self, path: str, transpose=False) -> "TraceDataset":
+        """
+        Load traces from numpy data file.
+        :param path: file path.
+        :param transpose: if axes 0 is not represent trace and axes 1 is not represent trace data(sample)
+        """
+        self.traces = np.load(path)
+        if transpose:
+            self.traces = self.traces.T
+            sample_count, trace_count = self.traces.shape
+        else:
+            trace_count, sample_count = self.traces.shape
+
+        self._metadata.trace_count = trace_count
+        self._metadata.sample_count = sample_count
+
+        return self
+
+    def load_from_zarr(self, path: str, structure: str = "scarr"):
+        if structure == "scarr":
+            self.load_from_scarr(path)
+        # todo other
+
+    def load_from_scarr(self, path: str):
+        scarr_data = zarr.open(path, "r")
+        self.traces = scarr_data["0/0/traces"]
+        trace_count = self.traces.shape[0]
+        sample_count = self.traces.shape[1]
+        data = scarr_data["0/0/plaintext"]
+
+        self._metadata.trace_count = trace_count
+        self._metadata.sample_count = sample_count
+        self.data = data
+
+    def load_from_hdf5(self, path: str): ...
+
+    def add_trace(self, trace: np.ndarray): ...
+
+    def add_data(self, data: bytes): ...  # todo maybe should name to set_data ?
+
+    def update_metadata_environment_info(self, cracknuts: str, cracker: str, nuts: str): ...
+
+    def get_metadata(self) -> TraceDataSetMetadata:
+        return self._metadata
 
 
 def down_sample(value: np.ndarray, mn, mx, down_count):
