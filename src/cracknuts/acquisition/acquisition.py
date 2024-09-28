@@ -474,7 +474,7 @@ class AcquisitionBuilder:
             self._do_function = do_function
         return self
 
-    def build(self):
+    def build(self, **kwargs):
         if self._cracker is None:
             raise ValueError("No cracker")
 
@@ -487,4 +487,4 @@ class AcquisitionBuilder:
             def do(self):
                 builder_self._do_function(self.cracker)
 
-        return AnonymousAcquisition(builder_self._cracker)
+        return AnonymousAcquisition(builder_self._cracker, **kwargs)
