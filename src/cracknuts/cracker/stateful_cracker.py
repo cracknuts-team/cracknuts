@@ -51,14 +51,11 @@ class StatefulCracker(Cracker):
     def get_connection_status(self) -> bool:
         return self._cracker.get_connection_status()
 
-    def send_and_receive(self, message) -> None | bytes:
+    def send_and_receive(self, message) -> tuple[int, bytes]:
         return self._cracker.send_and_receive(message)
 
-    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes | None]:
-        return self._cracker.send_and_receive_with_status(message)
-
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None):
-        return self._cracker.send_with_command(command, payload)
+    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes = None) -> tuple[int, bytes | None]:
+        return self._cracker.send_with_command(command, rfu, payload)
 
     def echo(self, payload: str) -> str:
         return self._cracker.echo(payload)
@@ -131,7 +128,7 @@ class StatefulCracker(Cracker):
     def scrat_is_triggered(self):
         return self._cracker.scrat_is_triggered()
 
-    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
+    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
         return self._cracker.scrat_get_analog_wave(channel, offset, sample_count)
 
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):

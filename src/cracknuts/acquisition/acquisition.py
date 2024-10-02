@@ -424,7 +424,7 @@ class Acquisition(abc.ABC):
         enable_channels = [k for k, v in self.cracker.get_current_config().scrat_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
-            wave_dict[c] = self.cracker.scrat_get_analog_wave(c, offset, sample_count)
+            status, wave_dict[c] = self.cracker.scrat_get_analog_wave(c, offset, sample_count)
         return wave_dict
 
     def _save_wave(self): ...
