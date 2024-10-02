@@ -30,23 +30,19 @@ class Cracker(typing.Protocol):
 
     def get_connection_status(self) -> bool: ...
 
-    def send_and_receive(self, message) -> None | bytes: ...
+    def send_and_receive(self, message) -> tuple[int, bytes]: ...
 
-    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes | None]: ...
-
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None) -> bytes: ...
-
-    def send_with_command_recv_status(self, command: int | bytes, payload: str | bytes = None) -> tuple[int, bytes]: ...
+    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes = None) -> tuple[int, bytes]: ...
 
     def echo(self, payload: str) -> str: ...
 
     def echo_hex(self, payload: str) -> str: ...
 
-    def get_id(self) -> str: ...
+    def get_id(self) -> str | None: ...
 
-    def get_name(self) -> str: ...
+    def get_name(self) -> str | None: ...
 
-    def get_version(self) -> str: ...
+    def get_version(self) -> str | None: ...
 
     def scrat_analog_channel_enable(self, enable: dict[int, bool]): ...
 
@@ -78,11 +74,13 @@ class Cracker(typing.Protocol):
 
     def scrat_is_triggered(self): ...
 
-    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray: ...
+    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]: ...
 
     def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int): ...
 
     def scrat_analog_gain(self, channel: int, gain: int): ...
+
+    def scrat_analog_gain_raw(self, channel: int, gain: int): ...
 
     def scrat_sample_clock(self, clock: int): ...
 
@@ -91,6 +89,8 @@ class Cracker(typing.Protocol):
     def cracker_nut_enable(self, enable: int): ...
 
     def cracker_nut_voltage(self, voltage: int): ...
+
+    def cracker_nut_voltage_raw(self, voltage: int): ...
 
     def cracker_nut_clock(self, clock: int): ...
 
@@ -147,6 +147,7 @@ class Commands:
     SCRAT_ANALOG_VOLTAGE = 0x0102
     SCRAT_ANALOG_BIAS_VOLTAGE = 0x0103
     SCRAT_ANALOG_GAIN = 0x0104
+    SCRAT_ANALOG_GAIN_RAW = 0x0107
 
     SCRAT_SAMPLE_CLOCK = 0x0105
     SCRAT_SAMPLE_PHASE = 0x0106
@@ -176,6 +177,7 @@ class Commands:
 
     CRACKER_NUT_ENABLE = 0x0200
     CRACKER_NUT_VOLTAGE = 0x0201
+    CRACKER_NUT_VOLTAGE_RAW = 0x0203
     CRACKER_NUT_CLOCK = 0x0202
     CRACKER_NUT_INTERFACE = 0x0210
     CRACKER_NUT_TIMEOUT = 0x0224
@@ -200,9 +202,6 @@ class Commands:
     CRACKER_CAN_FREQ = 0x0250
     CRACKER_CAN_TIMEOUT = 0x0254
     CRACKER_CA_DATA = 0x025A
-
-    PROTOCOL_PREFIX = "cnp"
-    PROTOCOL_DEFAULT_PORT = 9761
 
 
 @dataclass
@@ -276,7 +275,7 @@ class AbsCnpCracker(ABC, Cracker):
         if ":" in uri:
             host, port = uri.split(":")
         else:
-            host, port = uri, Commands.PROTOCOL_DEFAULT_PORT
+            host, port = uri, protocol.DEFAULT_PORT
 
         self._server_address = host, int(port)
 
@@ -332,11 +331,7 @@ class AbsCnpCracker(ABC, Cracker):
         """
         return self._connection_status
 
-    def send_and_receive(self, message) -> None | bytes:
-        _, res = self.send_and_receive_with_status(message)
-        return res
-
-    def send_and_receive_with_status(self, message) -> None | tuple[int, bytes | None]:
+    def send_and_receive(self, message) -> tuple[int, bytes | None]:
         """
         Send message to socket
         :param message:
@@ -346,7 +341,7 @@ class AbsCnpCracker(ABC, Cracker):
             self._command_lock.acquire()
             if not self.get_connection_status():
                 self._logger.error("Cracker is not connected.")
-                return None
+                return protocol.STATUS_ERROR, None
             self._logger.debug(f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(message)}")
             self._socket.sendall(message)
             resp_header = self._socket.recv(protocol.RES_HEADER_SIZE)
@@ -361,7 +356,8 @@ class AbsCnpCracker(ABC, Cracker):
                 self._server_address,
                 (magic, version, direction, status, length),
             )
-
+            if status >= protocol.STATUS_ERROR:
+                self._logger.error(f"Receive status error: {status}")
             if length == 0:
                 return status, None
             resp_payload = self._recv(length)
@@ -373,7 +369,7 @@ class AbsCnpCracker(ABC, Cracker):
             return status, resp_payload
         except OSError as e:
             self._logger.error("Send message failed: %s, and msg: %s", e, message)
-            return None
+            return protocol.STATUS_ERROR, None
         finally:
             self._command_lock.release()
 
@@ -385,15 +381,10 @@ class AbsCnpCracker(ABC, Cracker):
 
         return resp_payload
 
-    def send_with_command(self, command: int | bytes, payload: str | bytes = None) -> bytes:
+    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes = None) -> tuple[int, bytes]:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
-        return self.send_and_receive(protocol.build_send_message(command, payload))
-
-    def send_with_command_recv_status(self, command: int | bytes, payload: str | bytes = None) -> tuple[int, bytes]:
-        if isinstance(payload, str):
-            payload = bytes.fromhex(payload)
-        return self.send_and_receive_with_status(protocol.build_send_message(command, payload))
+        return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
 
     def echo(self, payload: str) -> str:
         """
@@ -415,12 +406,12 @@ class AbsCnpCracker(ABC, Cracker):
         return res
 
     @abc.abstractmethod
-    def get_id(self) -> str: ...
+    def get_id(self) -> str | None: ...
 
     @abc.abstractmethod
-    def get_name(self) -> str: ...
+    def get_name(self) -> str | None: ...
 
-    def get_version(self) -> str:
+    def get_version(self) -> str | None:
         return super().get_version()
 
     @abc.abstractmethod
@@ -478,6 +469,9 @@ class AbsCnpCracker(ABC, Cracker):
     def scrat_analog_gain(self, channel: int, gain: int): ...
 
     @abc.abstractmethod
+    def scrat_analog_gain_raw(self, channel: int, gain: int): ...
+
+    @abc.abstractmethod
     def scrat_sample_clock(self, clock: int): ...
 
     @abc.abstractmethod
@@ -488,6 +482,9 @@ class AbsCnpCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def cracker_nut_voltage(self, voltage: int): ...
+
+    @abc.abstractmethod
+    def cracker_nut_voltage_raw(self, voltage: int): ...
 
     @abc.abstractmethod
     def cracker_nut_clock(self, clock: int): ...
