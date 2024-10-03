@@ -153,6 +153,9 @@ class MockCracker:
     @_handler(cracker.Commands.OSC_ANALOG_CHANNEL_ENABLE, has_payload=False)
     def osc_analog_channel_enable(self) -> bytes: ...
 
+    @_handler(cracker.Commands.NUT_CLOCK, has_payload=False)
+    def nut_clock(self) -> bytes: ...
+
 
 if __name__ == "__main__":
     mock_cracker = MockCracker()
