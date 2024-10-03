@@ -305,19 +305,19 @@ def __(
 
 
     def set_nut_enable(enable):
-        basic_cracker.cracker_nut_enable(enable)
+        basic_cracker.nut_enable(enable)
 
 
     def set_nut_voltage(voltage):
-        basic_cracker.cracker_nut_voltage(int(voltage * 1000))
+        basic_cracker.nut_voltage(int(voltage * 1000))
 
 
     def set_nut_interface(interface):
-        basic_cracker.cracker_nut_interface(interface)
+        basic_cracker.nut_interface(interface)
 
 
     def set_nut_timeout(timeout):
-        basic_cracker.cracker_nut_timeout(timeout)
+        basic_cracker.nut_timeout(timeout)
 
 
     def set_serial_baud(baud):

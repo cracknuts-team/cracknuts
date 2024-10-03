@@ -21,13 +21,13 @@ class StatefulCracker(Cracker):
         User should call this function before get data from device.
         """
         if self._config.cracker_nut_voltage is not None:
-            self._cracker.cracker_nut_voltage(self._config.cracker_nut_voltage)
+            self._cracker.nut_voltage(self._config.cracker_nut_voltage)
         if self._config.cracker_nut_clock is not None:
-            self._cracker.cracker_nut_clock(self._config.cracker_nut_clock)
+            self._cracker.nut_clock(self._config.cracker_nut_clock)
         if self._config.cracker_nut_enable is not None:
-            self._cracker.cracker_nut_enable(self._config.cracker_nut_enable)
+            self._cracker.nut_enable(self._config.cracker_nut_enable)
         if self._config.scrat_analog_channel_enable is not None:
-            self._cracker.scrat_analog_channel_enable(self._config.scrat_analog_channel_enable)
+            self._cracker.osc_analog_channel_enable(self._config.scrat_analog_channel_enable)
         # todo need complete...
 
     def set_addr(self, ip, port) -> None:
@@ -72,88 +72,88 @@ class StatefulCracker(Cracker):
     def get_version(self) -> str:
         return self._cracker.get_version()
 
-    def scrat_analog_channel_enable(self, enable: dict[int, bool]):
+    def osc_analog_channel_enable(self, enable: dict[int, bool]):
         self._config.scrat_analog_channel_enable = enable
-        return self._cracker.scrat_analog_channel_enable(enable)
+        return self._cracker.osc_analog_channel_enable(enable)
 
-    def scrat_analog_coupling(self, coupling: dict[int, int]):
-        return self._cracker.scrat_analog_coupling(coupling)
+    def osc_analog_coupling(self, coupling: dict[int, int]):
+        return self._cracker.osc_analog_coupling(coupling)
 
-    def scrat_analog_voltage(self, channel: int, voltage: int):
-        return self._cracker.scrat_analog_voltage(channel, voltage)
+    def osc_analog_voltage(self, channel: int, voltage: int):
+        return self._cracker.osc_analog_voltage(channel, voltage)
 
-    def scrat_analog_bias_voltage(self, channel: int, voltage: int):
-        return self._cracker.scrat_analog_bias_voltage(channel, voltage)
+    def osc_analog_bias_voltage(self, channel: int, voltage: int):
+        return self._cracker.osc_analog_bias_voltage(channel, voltage)
 
-    def scrat_digital_channel_enable(self, enable: dict[int, bool]):
-        return self._cracker.scrat_digital_channel_enable(enable)
+    def osc_digital_channel_enable(self, enable: dict[int, bool]):
+        return self._cracker.osc_digital_channel_enable(enable)
 
-    def scrat_digital_voltage(self, voltage: int):
-        return self._cracker.scrat_digital_voltage(voltage)
+    def osc_digital_voltage(self, voltage: int):
+        return self._cracker.osc_digital_voltage(voltage)
 
-    def scrat_trigger_mode(self, source: int, stop: int):
-        return self._cracker.scrat_trigger_mode(source, stop)
+    def osc_trigger_mode(self, source: int, stop: int):
+        return self._cracker.osc_trigger_mode(source, stop)
 
-    def scrat_analog_trigger_source(self, channel: int):
-        return self._cracker.scrat_analog_trigger_source(channel)
+    def osc_analog_trigger_source(self, channel: int):
+        return self._cracker.osc_analog_trigger_source(channel)
 
-    def scrat_digital_trigger_source(self, channel: int):
-        return self._cracker.scrat_digital_trigger_source(channel)
+    def osc_digital_trigger_source(self, channel: int):
+        return self._cracker.osc_digital_trigger_source(channel)
 
-    def scrat_analog_trigger_voltage(self, voltage: int):
-        return self._cracker.scrat_analog_trigger_voltage(voltage)
+    def osc_analog_trigger_voltage(self, voltage: int):
+        return self._cracker.osc_analog_trigger_voltage(voltage)
 
-    def scrat_sample_delay(self, delay: int):
-        return self._cracker.scrat_sample_delay(delay)
+    def osc_sample_delay(self, delay: int):
+        return self._cracker.osc_sample_delay(delay)
 
-    def scrat_sample_len(self, length: int):
+    def osc_sample_len(self, length: int):
         self._config.cracker_scrat_sample_len = length
-        return self._cracker.scrat_sample_len(length)
+        return self._cracker.osc_sample_len(length)
 
     def get_default_config(self) -> typing.Optional["Config"]:
         return self._cracker.get_default_config()
 
-    def scrat_force(self):
-        return self._cracker.scrat_force()
+    def osc_force(self):
+        return self._cracker.osc_force()
 
-    def scrat_sample_clock(self, clock: int):
-        return self._cracker.scrat_sample_clock(clock)
+    def osc_sample_clock(self, clock: int):
+        return self._cracker.osc_sample_clock(clock)
 
-    def scrat_sample_phase(self, phase: int):
-        return self._cracker.scrat_sample_phase(phase)
+    def osc_sample_phase(self, phase: int):
+        return self._cracker.osc_sample_phase(phase)
 
-    def scrat_arm(self):
-        return self._cracker.scrat_arm()
+    def osc_arm(self):
+        return self._cracker.osc_arm()
 
-    def scrat_is_triggered(self):
-        return self._cracker.scrat_is_triggered()
+    def osc_is_triggered(self):
+        return self._cracker.osc_is_triggered()
 
-    def scrat_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
-        return self._cracker.scrat_get_analog_wave(channel, offset, sample_count)
+    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
+        return self._cracker.osc_get_analog_wave(channel, offset, sample_count)
 
-    def scrat_get_digital_wave(self, channel: int, offset: int, sample_count: int):
-        return self._cracker.scrat_get_digital_wave(channel, offset, sample_count)
+    def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int):
+        return self._cracker.osc_get_digital_wave(channel, offset, sample_count)
 
-    def scrat_analog_gain(self, channel: int, gain: int):
-        return self._cracker.scrat_analog_gain(channel, gain)
+    def osc_analog_gain(self, channel: int, gain: int):
+        return self._cracker.osc_analog_gain(channel, gain)
 
-    def cracker_nut_enable(self, enable: int):
+    def nut_enable(self, enable: int):
         self._config.cracker_nut_enable = enable
-        return self._cracker.cracker_nut_enable(enable)
+        return self._cracker.nut_enable(enable)
 
-    def cracker_nut_voltage(self, voltage: int):
+    def nut_voltage(self, voltage: int):
         self._config.cracker_nut_voltage = voltage
-        return self._cracker.cracker_nut_voltage(voltage)
+        return self._cracker.nut_voltage(voltage)
 
-    def cracker_nut_clock(self, clock: int):
+    def nut_clock(self, clock: int):
         self._config.cracker_nut_clock = clock
-        return self._cracker.cracker_nut_clock(clock)
+        return self._cracker.nut_clock(clock)
 
-    def cracker_nut_interface(self, interface: dict[int, bool]):
-        return self._cracker.cracker_nut_interface(interface)
+    def nut_interface(self, interface: dict[int, bool]):
+        return self._cracker.nut_interface(interface)
 
-    def cracker_nut_timeout(self, timeout: int):
-        return self._cracker.cracker_nut_timeout(timeout)
+    def nut_timeout(self, timeout: int):
+        return self._cracker.nut_timeout(timeout)
 
     def cracker_serial_baud(self, baud: int):
         return self._cracker.cracker_serial_baud(baud)

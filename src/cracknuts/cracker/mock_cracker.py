@@ -131,18 +131,27 @@ class MockCracker:
     def get_version(self) -> bytes:
         return b"0.1.0(adc:0.1.0,hardware:0.1.0)"
 
-    @_handler(cracker.Commands.SCRAT_GET_ANALOG_WAVES)
-    def scrat_get_analog_wave(self, payload: bytes) -> bytes:
+    @_handler(cracker.Commands.OSC_GET_ANALOG_WAVES)
+    def osc_get_analog_wave(self, payload: bytes) -> bytes:
         channel, offset, sample_count = struct.unpack(">BII", payload)
         return struct.pack(f">{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
 
-    @_handler(cracker.Commands.SCRAT_IS_TRIGGERED)
-    def scrat_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
+    @_handler(cracker.Commands.OSC_IS_TRIGGERED)
+    def osc_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
         time.sleep(0.05)  # Simulate device I/O operations.
         return protocol.STATUS_OK, None
 
-    @_handler(cracker.Commands.SCRAT_FORCE, has_payload=False)
-    def scrat_force(self) -> bytes: ...
+    @_handler(cracker.Commands.OSC_FORCE, has_payload=False)
+    def osc_force(self) -> bytes: ...
+
+    @_handler(cracker.Commands.OSC_ARM, has_payload=False)
+    def osc_arm(self) -> bytes: ...
+
+    @_handler(cracker.Commands.NUT_VOLTAGE, has_payload=False)
+    def nut_voltage(self) -> bytes: ...
+
+    @_handler(cracker.Commands.OSC_ANALOG_CHANNEL_ENABLE, has_payload=False)
+    def osc_analog_channel_enable(self) -> bytes: ...
 
 
 if __name__ == "__main__":
