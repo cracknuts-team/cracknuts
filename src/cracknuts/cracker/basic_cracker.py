@@ -10,9 +10,9 @@ class CrackerS1(AbsCnpCracker):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._default_config = Config(
-            cracker_nut_voltage=3500,
-            scrat_analog_channel_enable={1: True, 2: False},
-            cracker_scrat_sample_len=1024,
+            nut_voltage=3500,
+            osc_analog_channel_enable={1: True, 2: False},
+            osc_sample_len=1024,
         )
 
     def get_default_config(self) -> Config | None:
