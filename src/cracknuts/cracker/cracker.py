@@ -208,24 +208,24 @@ class Commands:
 class Config:
     def __init__(
         self,
-        cracker_nut_enable: bool = None,
-        cracker_nut_voltage: int = None,
-        cracker_nut_clock: int = None,
-        scrat_analog_channel_enable: dict[int, bool] = None,
-        cracker_scrat_sample_len: int = None,
-        cracker_scrat_sample_delay: int = None,
-        cracker_scrat_sample_phase: int = None,
-        cracker_scrat_sample_clock: int = None,
+        nut_enable: bool = None,
+        nut_voltage: int = None,
+        nut_clock: int = None,
+        osc_analog_channel_enable: dict[int, bool] = None,
+        osc_sample_len: int = None,
+        osc_sample_delay: int = None,
+        osc_sample_phase: int = None,
+        osc_sample_clock: int = None,
     ):
         self._binder: dict[str, callable] = {}
-        self.cracker_nut_enable: bool = cracker_nut_enable
-        self.cracker_nut_voltage: int = cracker_nut_voltage
-        self.cracker_nut_clock: int = cracker_nut_clock
-        self.cracker_scrat_sample_len = cracker_scrat_sample_len
-        self.cracker_scrat_sample_delay = cracker_scrat_sample_delay
-        self.cracker_scrat_sample_phase = cracker_scrat_sample_phase
-        self.cracker_scrat_sample_clock = cracker_scrat_sample_clock
-        self.scrat_analog_channel_enable: dict[int, bool] = scrat_analog_channel_enable
+        self.nut_enable: bool = nut_enable
+        self.nut_voltage: int = nut_voltage
+        self.nut_clock: int = nut_clock
+        self.osc_sample_len = osc_sample_len
+        self.osc_sample_delay = osc_sample_delay
+        self.osc_sample_phase = osc_sample_phase
+        self.osc_sample_clock = osc_sample_clock
+        self.osc_analog_channel_enable: dict[int, bool] = osc_analog_channel_enable
 
     def __setattr__(self, key, value):
         self.__dict__[key] = value
@@ -460,7 +460,7 @@ class AbsCnpCracker(ABC, Cracker):
     def osc_is_triggered(self): ...
 
     @abc.abstractmethod
-    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray: ...
+    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]: ...
 
     @abc.abstractmethod
     def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int): ...
