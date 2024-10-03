@@ -352,20 +352,21 @@ class AbsCnpCracker(ABC, Cracker):
             )
             magic, version, direction, status, length = struct.unpack(protocol.RES_HEADER_FORMAT, resp_header)
             self._logger.debug(
-                "Receive header from %s: %s",
-                self._server_address,
-                (magic, version, direction, status, length),
+                f"Receive header from {self._server_address}: {magic}, {version}, {direction}, {status:02X}, {length}"
             )
             if status >= protocol.STATUS_ERROR:
-                self._logger.error(f"Receive status error: {status}")
+                self._logger.error(f"Receive status error: {status:02X}")
             if length == 0:
                 return status, None
             resp_payload = self._recv(length)
-            self._logger.debug(
-                "Receive payload from %s: \n%s",
-                self._server_address,
-                hex_util.get_bytes_matrix(resp_payload),
-            )
+            if status >= protocol.STATUS_ERROR:
+                self._logger.error(
+                    "Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                )
+            else:
+                self._logger.debug(
+                    "Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                )
             return status, resp_payload
         except OSError as e:
             self._logger.error("Send message failed: %s, and msg: %s", e, message)
