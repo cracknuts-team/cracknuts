@@ -63,9 +63,9 @@ def __(
     time,
 ):
     def init(c: AbsCracker):
-        c.cracker_nut_voltage(3300)
+        c.nut_voltage(3300)
         time.sleep(1)
-        c.cracker_nut_enable(1)
+        c.nut_enable(1)
         time.sleep(2)
         # aes
         # key = '01 00 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
@@ -127,22 +127,22 @@ def __(
 
     def set_nut_enable(enable):
         if basic_cracker.get_connection_status():
-            basic_cracker.cracker_nut_enable(enable)
+            basic_cracker.nut_enable(enable)
         else:
             print(f'set_nut_enable {enable}')
 
     def set_nut_voltage(voltage):
         set_nut_voltage_state(voltage)
         if basic_cracker.get_connection_status():
-            basic_cracker.cracker_nut_voltage(int(voltage * 1000))
+            basic_cracker.nut_voltage(int(voltage * 1000))
 
     def set_nut_interface(interface):
         if basic_cracker.get_connection_status():
-            basic_cracker.cracker_nut_interface(interface)
+            basic_cracker.nut_interface(interface)
 
     def set_nut_timeout(timeout):
         if basic_cracker.get_connection_status():
-            basic_cracker.cracker_nut_timeout(timeout)
+            basic_cracker.nut_timeout(timeout)
 
     def set_serial_baud(baud):
         if basic_cracker.get_connection_status():

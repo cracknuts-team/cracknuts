@@ -13,8 +13,8 @@ class SimpleTestAcq(Acquisition):
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
         while self._status != 0 and self.trace_count - trace_index != 0:
-            cracker.scrat_force()
-            cracker.scrat_is_triggered()
+            cracker.osc_force()
+            cracker.osc_is_triggered()
             self._last_wave = self._get_waves(
                 self.sample_offset,
                 self.cracker.get_current_config().scrat_sample_len,
@@ -24,7 +24,7 @@ class SimpleTestAcq(Acquisition):
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
     def pre_do(self):
-        self.cracker.scrat_force()
+        self.cracker.osc_force()
 
     def init(self):
         pass
@@ -41,7 +41,7 @@ cracker = StatefulCracker(cracker_s1)
 
 cracker.set_uri('cnp://192.168.0.10:8080')
 cracker.connect()
-cracker.scrat_sample_len(sample_len)
+cracker.osc_sample_len(sample_len)
 
 acq = SimpleTestAcq(cracker)
 acq.run(count=trace_count)

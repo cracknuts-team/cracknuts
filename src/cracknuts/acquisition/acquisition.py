@@ -402,7 +402,7 @@ class Acquisition(abc.ABC):
     def transfer(self): ...
 
     def pre_do(self):
-        self.cracker.scrat_arm()
+        self.cracker.osc_arm()
 
     @abc.abstractmethod
     def do(self): ...
@@ -418,13 +418,13 @@ class Acquisition(abc.ABC):
     def _post_do(self): ...
 
     def _is_triggered(self):
-        return self.cracker.scrat_is_triggered()
+        return self.cracker.osc_is_triggered()
 
     def _get_waves(self, offset: int, sample_count: int) -> dict[int, np.ndarray]:
         enable_channels = [k for k, v in self.cracker.get_current_config().scrat_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
-            status, wave_dict[c] = self.cracker.scrat_get_analog_wave(c, offset, sample_count)
+            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_count)
         return wave_dict
 
     def _save_wave(self): ...

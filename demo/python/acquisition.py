@@ -15,9 +15,9 @@ cracker.connect()
 
 
 def init(c: AbsCnpCracker):
-    c.cracker_nut_voltage(3300)
+    c.nut_voltage(3300)
     time.sleep(1)
-    c.cracker_nut_enable(1)
+    c.nut_enable(1)
     time.sleep(2)
 
     # set_key = '01 00 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
