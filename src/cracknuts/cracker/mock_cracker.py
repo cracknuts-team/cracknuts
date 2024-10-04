@@ -144,7 +144,7 @@ class MockCracker:
     @_handler(cracker.Commands.OSC_FORCE, has_payload=False)
     def osc_force(self) -> bytes: ...
 
-    @_handler(cracker.Commands.OSC_ARM, has_payload=False)
+    @_handler(cracker.Commands.OSC_SINGLE, has_payload=False)
     def osc_arm(self) -> bytes: ...
 
     @_handler(cracker.Commands.NUT_VOLTAGE, has_payload=False)

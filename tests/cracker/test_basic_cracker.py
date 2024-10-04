@@ -28,59 +28,59 @@ def test_get_name():
 
 
 def test_scrat_analog_channel_enable():
-    assert basic_device.osc_analog_channel_enable({1: True}) is None
+    assert basic_device.osc_set_analog_channel_enable({1: True}) is None
 
 
 def test_scrat_analog_coupling():
-    assert basic_device.osc_analog_coupling({1: 1}) is None
+    assert basic_device.osc_set_analog_coupling({1: 1}) is None
 
 
 def test_scrat_analog_voltage():
-    assert basic_device.osc_analog_voltage(1, 1) is None
+    assert basic_device.osc_set_analog_voltage(1, 1) is None
 
 
 def test_scrat_analog_bias_voltage():
-    assert basic_device.osc_analog_bias_voltage(1, 1) is None
+    assert basic_device.osc_set_analog_bias_voltage(1, 1) is None
 
 
 def test_scrat_analog_gain():
-    assert basic_device.osc_analog_gain(1) is None
+    assert basic_device.osc_set_analog_gain(1) is None
 
 
 def test_scrat_digital_channel_enable():
-    assert basic_device.osc_digital_channel_enable({1: True}) is None
+    assert basic_device.osc_set_digital_channel_enable({1: True}) is None
 
 
 def test_scrat_digital_voltage():
-    assert basic_device.osc_digital_voltage(1) is None
+    assert basic_device.osc_set_digital_voltage(1) is None
 
 
 def test_scrat_trigger_mode():
-    assert basic_device.osc_trigger_mode(1, 1) is None
+    assert basic_device.osc_set_trigger_mode(1, 1) is None
 
 
 def test_scrat_analog_trigger_source():
-    assert basic_device.osc_analog_trigger_source(1) is None
+    assert basic_device.osc_set_analog_trigger_source(1) is None
 
 
 def test_scrat_digital_trigger_source():
-    assert basic_device.osc_digital_trigger_source(1) is None
+    assert basic_device.osc_set_digital_trigger_source(1) is None
 
 
 def test_scrat_analog_trigger_voltage():
-    assert basic_device.osc_analog_trigger_voltage(1) is None
+    assert basic_device.osc_set_analog_trigger_voltage(1) is None
 
 
 def test_scrat_trigger_delay():
-    assert basic_device.osc_sample_delay(1) is None
+    assert basic_device.osc_set_sample_delay(1) is None
 
 
 def test_scrat_sample_len():
-    assert basic_device.osc_sample_len(1) is None
+    assert basic_device.osc_set_sample_len(1) is None
 
 
 def test_scrat_arm():
-    assert basic_device.osc_arm() is None
+    assert basic_device.osc_single() is None
 
 
 def test_scrat_is_triggered():

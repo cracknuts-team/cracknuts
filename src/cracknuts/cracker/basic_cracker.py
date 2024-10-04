@@ -30,7 +30,7 @@ class CrackerS1(AbsCnpCracker):
         _, res = self.send_and_receive(protocol.build_send_message(Commands.GET_VERSION))
         return res.decode("ascii") if res is not None else None
 
-    def osc_analog_channel_enable(self, enable: dict[int, bool]):
+    def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
         self._channel_enable = enable
         payload = 0
         if enable.get(0):
@@ -55,7 +55,7 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"Scrat analog_channel_enable payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
 
-    def osc_analog_coupling(self, coupling: dict[int, int]):
+    def osc_set_analog_coupling(self, coupling: dict[int, int]):
         payload = 0
         if coupling.get(0):
             payload |= 1
@@ -81,17 +81,17 @@ class CrackerS1(AbsCnpCracker):
 
         return self.send_with_command(Commands.OSC_ANALOG_COUPLING, payload=payload)
 
-    def osc_analog_voltage(self, channel: int, voltage: int):
+    def osc_set_analog_voltage(self, channel: int, voltage: int):
         payload = struct.pack(">BI", channel, voltage)
         self._logger.debug(f"scrat_analog_coupling payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_VOLTAGE, payload=payload)
 
-    def osc_analog_bias_voltage(self, channel: int, voltage: int):
+    def osc_set_analog_bias_voltage(self, channel: int, voltage: int):
         payload = struct.pack(">BI", channel, voltage)
         self._logger.debug(f"scrat_analog_bias_voltage payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_BIAS_VOLTAGE, payload=payload)
 
-    def osc_digital_channel_enable(self, enable: dict[int, bool]):
+    def osc_set_digital_channel_enable(self, enable: dict[int, bool]):
         payload = 0
         if enable.get(0):
             payload |= 1
@@ -115,27 +115,27 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"scrat_digital_channel_enable payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_DIGITAL_CHANNEL_ENABLE, payload=payload)
 
-    def osc_digital_voltage(self, voltage: int):
+    def osc_set_digital_voltage(self, voltage: int):
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"scrat_digital_voltage payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_DIGITAL_VOLTAGE, payload=payload)
 
-    def osc_trigger_mode(self, source: int, stop: int):
+    def osc_set_trigger_mode(self, source: int, stop: int):
         payload = struct.pack(">II", source, stop)
         self._logger.debug(f"scrat_trigger_mode payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_TRIGGER_MODE, payload=payload)
 
-    def osc_analog_trigger_source(self, channel: int):
+    def osc_set_analog_trigger_source(self, channel: int):
         payload = struct.pack(">B", channel)
         self._logger.debug(f"scrat_analog_trigger_source payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_TRIGGER_SOURCE, payload=payload)
 
-    def osc_digital_trigger_source(self, channel: int):
+    def osc_set_digital_trigger_source(self, channel: int):
         payload = struct.pack(">B", channel)
         self._logger.debug(f"scrat_digital_trigger_source payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_DIGITAL_TRIGGER_SOURCE, payload=payload)
 
-    def osc_analog_trigger_voltage(self, voltage: int):
+    def osc_set_analog_trigger_voltage(self, voltage: int):
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"scrat_analog_trigger_voltage payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_TRIGGER_VOLTAGE, payload=payload)
@@ -150,10 +150,10 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"osc_sample_len payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_SAMPLE_LENGTH, payload=payload)
 
-    def osc_arm(self):
+    def osc_single(self):
         payload = None
         self._logger.debug("scrat_sample_len payload: %s", payload=payload)
-        return self.send_with_command(Commands.OSC_ARM, payload=payload)
+        return self.send_with_command(Commands.OSC_SINGLE, payload=payload)
 
     def osc_is_triggered(self):
         payload = None
@@ -179,12 +179,12 @@ class CrackerS1(AbsCnpCracker):
         wave = struct.unpack(f">{sample_count}I", wave_bytes)
         return status, np.array(wave, dtype=np.uint16)
 
-    def osc_analog_gain(self, channel: int, gain: int):
+    def osc_set_analog_gain(self, channel: int, gain: int):
         payload = struct.pack(">BB", channel, gain)
         self._logger.debug(f"scrat_analog_gain payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_GAIN, payload=payload)
 
-    def osc_analog_gain_raw(self, channel: int, gain: int):
+    def osc_set_analog_gain_raw(self, channel: int, gain: int):
         payload = struct.pack(">BB", channel, gain)
         self._logger.debug(f"scrat_analog_gain payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_GAIN_RAW, payload=payload)
@@ -324,7 +324,7 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"scrat_force payload: {payload}")
         return self.send_with_command(Commands.OSC_FORCE, payload=payload)
 
-    def osc_sample_clock(self, clock: int):
+    def osc_set_sample_clock(self, clock: int):
         payload = struct.pack(">I", clock)
         self._logger.debug(f"scrat_sample_clock payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_SAMPLE_CLOCK, payload=payload)
