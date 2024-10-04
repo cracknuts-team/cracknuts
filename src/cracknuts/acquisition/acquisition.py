@@ -402,7 +402,7 @@ class Acquisition(abc.ABC):
     def transfer(self): ...
 
     def pre_do(self):
-        self.cracker.osc_arm()
+        self.cracker.osc_single()
 
     @abc.abstractmethod
     def do(self): ...

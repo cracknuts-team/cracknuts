@@ -27,7 +27,7 @@ class StatefulCracker(Cracker):
         if self._config.nut_enable is not None:
             self._cracker.nut_enable(self._config.nut_enable)
         if self._config.osc_analog_channel_enable is not None:
-            self._cracker.osc_analog_channel_enable(self._config.osc_analog_channel_enable)
+            self._cracker.osc_set_analog_channel_enable(self._config.osc_analog_channel_enable)
         # todo need complete...
 
     def set_addr(self, ip, port) -> None:
@@ -72,43 +72,43 @@ class StatefulCracker(Cracker):
     def get_version(self) -> str:
         return self._cracker.get_version()
 
-    def osc_analog_channel_enable(self, enable: dict[int, bool]):
+    def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
         self._config.osc_analog_channel_enable = enable
-        return self._cracker.osc_analog_channel_enable(enable)
+        return self._cracker.osc_set_analog_channel_enable(enable)
 
-    def osc_analog_coupling(self, coupling: dict[int, int]):
-        return self._cracker.osc_analog_coupling(coupling)
+    def osc_set_analog_coupling(self, coupling: dict[int, int]):
+        return self._cracker.osc_set_analog_coupling(coupling)
 
-    def osc_analog_voltage(self, channel: int, voltage: int):
-        return self._cracker.osc_analog_voltage(channel, voltage)
+    def osc_set_analog_voltage(self, channel: int, voltage: int):
+        return self._cracker.osc_set_analog_voltage(channel, voltage)
 
-    def osc_analog_bias_voltage(self, channel: int, voltage: int):
-        return self._cracker.osc_analog_bias_voltage(channel, voltage)
+    def osc_set_analog_bias_voltage(self, channel: int, voltage: int):
+        return self._cracker.osc_set_analog_bias_voltage(channel, voltage)
 
-    def osc_digital_channel_enable(self, enable: dict[int, bool]):
-        return self._cracker.osc_digital_channel_enable(enable)
+    def osc_set_digital_channel_enable(self, enable: dict[int, bool]):
+        return self._cracker.osc_set_digital_channel_enable(enable)
 
-    def osc_digital_voltage(self, voltage: int):
-        return self._cracker.osc_digital_voltage(voltage)
+    def osc_set_digital_voltage(self, voltage: int):
+        return self._cracker.osc_set_digital_voltage(voltage)
 
-    def osc_trigger_mode(self, source: int, stop: int):
-        return self._cracker.osc_trigger_mode(source, stop)
+    def osc_set_trigger_mode(self, source: int, stop: int):
+        return self._cracker.osc_set_trigger_mode(source, stop)
 
-    def osc_analog_trigger_source(self, channel: int):
-        return self._cracker.osc_analog_trigger_source(channel)
+    def osc_set_analog_trigger_source(self, channel: int):
+        return self._cracker.osc_set_analog_trigger_source(channel)
 
-    def osc_digital_trigger_source(self, channel: int):
-        return self._cracker.osc_digital_trigger_source(channel)
+    def osc_set_digital_trigger_source(self, channel: int):
+        return self._cracker.osc_set_digital_trigger_source(channel)
 
-    def osc_analog_trigger_voltage(self, voltage: int):
-        return self._cracker.osc_analog_trigger_voltage(voltage)
+    def osc_set_analog_trigger_voltage(self, voltage: int):
+        return self._cracker.osc_set_analog_trigger_voltage(voltage)
 
-    def osc_sample_delay(self, delay: int):
-        return self._cracker.osc_sample_delay(delay)
+    def osc_set_sample_delay(self, delay: int):
+        return self._cracker.osc_set_sample_delay(delay)
 
-    def osc_sample_len(self, length: int):
+    def osc_set_sample_len(self, length: int):
         self._config.osc_sample_len = length
-        return self._cracker.osc_sample_len(length)
+        return self._cracker.osc_set_sample_len(length)
 
     def get_default_config(self) -> typing.Optional["Config"]:
         return self._cracker.get_default_config()
@@ -116,14 +116,14 @@ class StatefulCracker(Cracker):
     def osc_force(self):
         return self._cracker.osc_force()
 
-    def osc_sample_clock(self, clock: int):
-        return self._cracker.osc_sample_clock(clock)
+    def osc_set_sample_clock(self, clock: int):
+        return self._cracker.osc_set_sample_clock(clock)
 
     def osc_sample_phase(self, phase: int):
         return self._cracker.osc_sample_phase(phase)
 
-    def osc_arm(self):
-        return self._cracker.osc_arm()
+    def osc_single(self):
+        return self._cracker.osc_single()
 
     def osc_is_triggered(self):
         return self._cracker.osc_is_triggered()
@@ -134,8 +134,8 @@ class StatefulCracker(Cracker):
     def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int):
         return self._cracker.osc_get_digital_wave(channel, offset, sample_count)
 
-    def osc_analog_gain(self, channel: int, gain: int):
-        return self._cracker.osc_analog_gain(channel, gain)
+    def osc_set_analog_gain(self, channel: int, gain: int):
+        return self._cracker.osc_set_analog_gain(channel, gain)
 
     def nut_enable(self, enable: int):
         self._config.cracker_nut_enable = enable
