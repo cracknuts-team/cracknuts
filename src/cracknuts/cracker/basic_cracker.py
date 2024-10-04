@@ -140,14 +140,14 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"scrat_analog_trigger_voltage payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_TRIGGER_VOLTAGE, payload=payload)
 
-    def osc_sample_delay(self, delay: int):
-        payload = struct.pack(">I", delay)
-        self._logger.debug(f"scrat_trigger_delay payload: {payload.hex()}")
+    def osc_set_sample_delay(self, delay: int):
+        payload = struct.pack(">i", delay)
+        self._logger.debug(f"osc_sample_delay payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_SAMPLE_DELAY, payload=payload)
 
-    def osc_sample_len(self, length: int):
+    def osc_set_sample_len(self, length: int):
         payload = struct.pack(">I", length)
-        self._logger.debug(f"scrat_sample_len payload: {payload.hex()}")
+        self._logger.debug(f"osc_sample_len payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_SAMPLE_LENGTH, payload=payload)
 
     def osc_arm(self):
