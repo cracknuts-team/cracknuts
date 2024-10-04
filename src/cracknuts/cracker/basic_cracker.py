@@ -329,7 +329,7 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"scrat_sample_clock payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_SAMPLE_CLOCK, payload=payload)
 
-    def osc_sample_phase(self, phase: int):
+    def osc_set_sample_phase(self, phase: int):
         payload = struct.pack(">I", phase)
         self._logger.debug(f"scrat_sample_phase payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_SAMPLE_PHASE, payload=payload)
