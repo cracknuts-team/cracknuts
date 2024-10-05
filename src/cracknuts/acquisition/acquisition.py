@@ -1,4 +1,6 @@
 import abc
+import datetime
+import os.path
 import threading
 import time
 import typing
@@ -7,6 +9,7 @@ import numpy as np
 
 from cracknuts import logger
 from cracknuts.cracker.stateful_cracker import StatefulCracker
+from cracknuts.solver.trace import TraceDataset
 
 
 class AcqProgress:
@@ -84,6 +87,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
+        file_format: str | None = None,
     ):
         if self._status < 0:
             self.resume()
@@ -97,6 +101,7 @@ class Acquisition(abc.ABC):
                 trigger_judge_timeout=trigger_judge_timeout,
                 do_error_max_count=do_error_max_count,
                 do_error_handler_strategy=do_error_handler_strategy,
+                file_format=file_format,
             )
 
     def run_sync(
@@ -108,6 +113,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
+        file_format: str | None = None,
     ):
         try:
             self._do_run(
@@ -119,6 +125,7 @@ class Acquisition(abc.ABC):
                 trigger_judge_timeout=trigger_judge_timeout,
                 do_error_max_count=do_error_max_count,
                 do_error_handler_strategy=do_error_handler_strategy,
+                file_format=file_format,
             )
             self._logger.debug("stop by timeout.")
         except KeyboardInterrupt:
@@ -201,6 +208,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
+        file_format: str | None = None,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -214,6 +222,7 @@ class Acquisition(abc.ABC):
                 "trigger_judge_timeout": trigger_judge_timeout,
                 "do_error_max_count": do_error_max_count,
                 "do_error_handler_strategy": do_error_handler_strategy,
+                "file_format": file_format,
             },
         ).start()
 
@@ -227,6 +236,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
+        file_format: str | None = None,
     ):
         if self._status > 0:
             raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
@@ -257,23 +267,39 @@ class Acquisition(abc.ABC):
         except Exception as e:
             self._logger.error("Initialization error: %s", e.args)
             return
-        self._save_dataset()
         self._post_init()
-        self._loop()
+        dataset = self._loop(not test)
         self._pre_finish()
         self._finish()
-        if not test:
-            self.save_data()
+        if not test and dataset is not None:
+            trace_dir = "./traces"
+            if not os.path.exists(trace_dir):
+                os.makedirs(trace_dir)
+            # todo add save to zarr.
+            if file_format == "zarr":
+                ...  # todo
+            elif file_format == "npy":
+                dataset.save_as_numpy_file(
+                    os.path.join(trace_dir, datetime.datetime.now().strftime("%Y%m%d%H%M%S") + ".npy")
+                )
+            else:
+                self._logger.warning(f"Unsupported file format: {file_format}")
         self._post_finish()
 
     def _status_changed(self):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self):
+    def _loop(self, keep_in_memory: bool = True):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
+
+        if keep_in_memory:
+            dataset = TraceDataset(backend="npy", shape=(self.trace_count, self.sample_length))
+        else:
+            dataset = None
+
         while self._status != 0 and self.trace_count - trace_index != 0:
             if self._status < 0:
                 self._status_changed()
@@ -326,13 +352,16 @@ class Acquisition(abc.ABC):
                     break
 
                 time.sleep(self.trigger_judge_wait_time)
-            self._save_wave()
+            if dataset is not None:
+                dataset.add_trace(self._last_wave[1])  # todo support channel
             self._post_do()
             trace_index += 1
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
         self._status = self.STATUS_STOPPED
         self._status_changed()
+
+        return dataset
 
     def _progress_changed(self, progress: "AcqProgress"):
         for listener in self._on_run_progress_changed_listeners:
@@ -426,8 +455,6 @@ class Acquisition(abc.ABC):
         for c in enable_channels:
             status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_count)
         return wave_dict
-
-    def _save_wave(self): ...
 
     def save_data(self, data_type: str = "zarr"):
         """

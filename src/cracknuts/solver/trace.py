@@ -18,10 +18,12 @@ class TraceDataSetMetadata:
 
 
 class TraceDataset:
-    def __init__(self):
+    def __init__(self, shape: tuple[int, int] = None):
+        self.shape: tuple[int, int] = shape
         self._metadata = TraceDataSetMetadata()
         self.data: bytes | None = None
-        self.traces: np.ndarray | None = None
+        self.traces: np.ndarray | None = np.empty(shape=shape) if shape is not None else None
+        self._current_create_index: int = 0
 
     def load_from_numpy_data_file(self, path: str, transpose=False) -> "TraceDataset":
         """
@@ -59,7 +61,11 @@ class TraceDataset:
 
     def load_from_hdf5(self, path: str): ...
 
-    def add_trace(self, trace: np.ndarray): ...
+    def add_trace(self, trace: np.ndarray, index: int = None):
+        if index is None:
+            index = self._current_create_index
+            self._current_create_index += 1
+        self.traces[index:] = trace
 
     def add_data(self, data: bytes): ...  # todo maybe should name to set_data ?
 
@@ -67,6 +73,11 @@ class TraceDataset:
 
     def get_metadata(self) -> TraceDataSetMetadata:
         return self._metadata
+
+    def save_as_numpy_file(self, path):
+        np.save(path, self.traces)
+
+    def save_as_zarr(self, path): ...  # todo
 
 
 def down_sample(value: np.ndarray, mn, mx, down_count):
