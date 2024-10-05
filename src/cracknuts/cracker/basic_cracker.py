@@ -152,7 +152,7 @@ class CrackerS1(AbsCnpCracker):
 
     def osc_single(self):
         payload = None
-        self._logger.debug("scrat_sample_len payload: %s", payload=payload)
+        self._logger.debug("scrat_sample_len payload: %s", payload)
         return self.send_with_command(Commands.OSC_SINGLE, payload=payload)
 
     def osc_is_triggered(self):
