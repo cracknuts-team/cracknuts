@@ -20,14 +20,15 @@ class StatefulCracker(Cracker):
         so all configuration information needs to be written to the device.
         User should call this function before get data from device.
         """
-        if self._config.nut_voltage is not None:
-            self._cracker.nut_voltage(self._config.nut_voltage)
-        if self._config.nut_clock is not None:
-            self._cracker.nut_clock(self._config.nut_clock)
-        if self._config.nut_enable is not None:
-            self._cracker.nut_enable(self._config.nut_enable)
-        if self._config.osc_analog_channel_enable is not None:
-            self._cracker.osc_set_analog_channel_enable(self._config.osc_analog_channel_enable)
+        # if self._config.nut_voltage is not None:
+        #     self._cracker.nut_voltage(self._config.nut_voltage)
+        # if self._config.nut_clock is not None:
+        #     self._cracker.nut_clock(self._config.nut_clock)
+        # if self._config.nut_enable is not None:
+        #     self._cracker.nut_enable(self._config.nut_enable)
+        # if self._config.osc_analog_channel_enable is not None:
+        #     self._cracker.osc_set_analog_channel_enable(self._config.osc_analog_channel_enable)
+        ...  # comment for test.
         # todo need complete...
 
     def set_addr(self, ip, port) -> None:
