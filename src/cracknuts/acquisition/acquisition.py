@@ -296,7 +296,7 @@ class Acquisition(abc.ABC):
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
         if keep_in_memory:
-            dataset = TraceDataset(backend="npy", shape=(self.trace_count, self.sample_length))
+            dataset = TraceDataset(shape=(self.trace_count, self.sample_length))
         else:
             dataset = None
 
