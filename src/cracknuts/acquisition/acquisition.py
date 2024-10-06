@@ -33,6 +33,7 @@ class Acquisition(abc.ABC):
         trace_count: int = 1,
         sample_length: int = 1024,
         sample_offset: int = 0,
+        data_length: int = 0,
         trigger_judge_wait_time: float = 0.05,
         trigger_judge_timeout: float = 1.0,
         do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
@@ -48,6 +49,7 @@ class Acquisition(abc.ABC):
         self.trace_count: int = trace_count
         self.sample_length = sample_length
         self.sample_offset: int = sample_offset
+        self.data_length: int = data_length
         self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
         self.trigger_judge_timeout: float = trigger_judge_timeout  # second
         self.do_error_handler_strategy: int = do_error_handler_strategy
@@ -83,6 +85,7 @@ class Acquisition(abc.ABC):
         count: int = 1,
         sample_length: int = None,
         sample_offset: int = None,
+        data_length: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -97,6 +100,7 @@ class Acquisition(abc.ABC):
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
+                data_length=data_length,
                 trigger_judge_wait_time=trigger_judge_wait_time,
                 trigger_judge_timeout=trigger_judge_timeout,
                 do_error_max_count=do_error_max_count,
@@ -204,6 +208,7 @@ class Acquisition(abc.ABC):
         count: int = 1,
         sample_length: int = None,
         sample_offset: int = None,
+        data_length: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -218,6 +223,7 @@ class Acquisition(abc.ABC):
                 "count": count,
                 "sample_length": sample_length,
                 "sample_offset": sample_offset,
+                "data_length": data_length,
                 "trigger_judge_wait_time": trigger_judge_wait_time,
                 "trigger_judge_timeout": trigger_judge_timeout,
                 "do_error_max_count": do_error_max_count,
@@ -232,6 +238,7 @@ class Acquisition(abc.ABC):
         count: int = 1,
         sample_length: int = 1024,
         sample_offset: int = None,
+        data_length: int = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -253,6 +260,8 @@ class Acquisition(abc.ABC):
             self.sample_length = sample_length
         if sample_offset is not None:
             self.sample_offset = sample_offset
+        if data_length is not None:
+            self.data_length = data_length
         if trigger_judge_wait_time is not None:
             self.trigger_judge_wait_time = trigger_judge_wait_time
         if trigger_judge_timeout is not None:
@@ -272,16 +281,14 @@ class Acquisition(abc.ABC):
         self._pre_finish()
         self._finish()
         if not test and dataset is not None:
-            trace_dir = "./traces"
+            trace_dir = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             if not os.path.exists(trace_dir):
                 os.makedirs(trace_dir)
             # todo add save to zarr.
             if file_format == "zarr":
                 ...  # todo
             elif file_format == "npy":
-                dataset.save_as_numpy_file(
-                    os.path.join(trace_dir, datetime.datetime.now().strftime("%Y%m%d%H%M%S") + ".npy")
-                )
+                dataset.save_as_numpy_file(trace_dir)
             else:
                 self._logger.warning(f"Unsupported file format: {file_format}")
         self._post_finish()
@@ -296,7 +303,7 @@ class Acquisition(abc.ABC):
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
         if keep_in_memory:
-            dataset = TraceDataset(shape=(self.trace_count, self.sample_length))
+            dataset = TraceDataset(shape=(self.trace_count, self.sample_length), data_length=self.data_length)
         else:
             dataset = None
 
@@ -309,7 +316,7 @@ class Acquisition(abc.ABC):
             self.pre_do()
             start = time.time()
             try:
-                self.do()
+                data = self.do()
             except Exception as e:
                 self._logger.error("Do error: %s", e.args)
                 do_error_count += 1
@@ -354,6 +361,7 @@ class Acquisition(abc.ABC):
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None:
                 dataset.add_trace(self._last_wave[1])  # todo support channel
+                dataset.add_data(data)
             self._post_do()
             trace_index += 1
             self._current_trace_count = trace_index
@@ -512,6 +520,6 @@ class AcquisitionBuilder:
                 builder_self._init_function(self.cracker)
 
             def do(self):
-                builder_self._do_function(self.cracker)
+                return builder_self._do_function(self.cracker)
 
         return AnonymousAcquisition(builder_self._cracker, **kwargs)

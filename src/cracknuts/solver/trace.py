@@ -18,12 +18,15 @@ class TraceDataSetMetadata:
 
 
 class TraceDataset:
-    def __init__(self, shape: tuple[int, int] = None):
+    def __init__(self, shape: tuple[int, int] = None, data_length: int = None):
         self.shape: tuple[int, int] = shape
         self._metadata = TraceDataSetMetadata()
-        self.data: bytes | None = None
+        self.data: np.ndarray | None = (
+            np.empty(shape=shape[0], dtype=np.dtype((np.void, data_length))) if data_length is not None else None
+        )
         self.traces: np.ndarray | None = np.empty(shape=shape) if shape is not None else None
-        self._current_create_index: int = 0
+        self._current_create_trace_index: int = 0
+        self._current_create_data_index: int = 0
 
     def load_from_numpy_data_file(self, path: str, transpose=False) -> "TraceDataset":
         """
@@ -63,11 +66,15 @@ class TraceDataset:
 
     def add_trace(self, trace: np.ndarray, index: int = None):
         if index is None:
-            index = self._current_create_index
-            self._current_create_index += 1
+            index = self._current_create_trace_index
+            self._current_create_trace_index += 1
         self.traces[index:] = trace
 
-    def add_data(self, data: bytes): ...  # todo maybe should name to set_data ?
+    def add_data(self, data: bytes, index: int = None):
+        if index is None:
+            index = self._current_create_data_index
+            self._current_create_data_index += 1
+        self.data[index:] = data
 
     def update_metadata_environment_info(self, cracknuts: str, cracker: str, nuts: str): ...
 
@@ -75,7 +82,8 @@ class TraceDataset:
         return self._metadata
 
     def save_as_numpy_file(self, path):
-        np.save(path, self.traces)
+        np.save(os.path.join(path, "trace.npy"), self.traces)
+        np.save(os.path.join(path, "data.npy"), self.data)
 
     def save_as_zarr(self, path): ...  # todo
 
