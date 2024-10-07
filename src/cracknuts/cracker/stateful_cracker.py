@@ -146,6 +146,12 @@ class StatefulCracker(Cracker):
         self._config.cracker_nut_voltage = voltage
         return self._cracker.nut_voltage(voltage)
 
+    def osc_set_analog_gain_raw(self, channel: int, gain: int):
+        return self._cracker.osc_set_analog_gain_raw(channel, gain)
+
+    def nut_voltage_raw(self, voltage: int):
+        return self._cracker.nut_voltage_raw(voltage)
+
     def nut_clock(self, clock: int):
         self._config.cracker_nut_clock = clock
         return self._cracker.nut_clock(clock)
