@@ -200,7 +200,7 @@ class CrackerS1(AbsCnpCracker):
         return self.send_with_command(Commands.NUT_VOLTAGE, payload=payload)
 
     def nut_voltage_raw(self, voltage: int):
-        payload = struct.pack(">I", voltage)
+        payload = struct.pack(">B", voltage)
         self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
         return self.send_with_command(Commands.NUT_VOLTAGE_RAW, payload=payload)
 
