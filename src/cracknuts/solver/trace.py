@@ -1,32 +1,166 @@
+import abc
 import os
+from ctypes import windll
 from datetime import datetime
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import zarr
+from numpy.core.fromnumeric import shape
+from numpy.core.records import ndarray
 
 
-class TraceDataSetMetadata:
-    def __init__(self):
-        self.create_time: datetime = datetime.now()
-        self.cracknuts: str = "Unknown"
-        self.cracker: str = "Unknown"
-        self.nuts: str = "Unknown"
-        self.trace_count: int = 0
-        self.sample_count: int = 0
+class TraceDatasetMetadata:
+    def __init__(
+            self,
+            create_time: datetime = None,
+            version: str = None,
+            trace_count: int = None,
+            sample_count: int = None,
+            data_length: int = None
+    ):
+        self.create_time: datetime = datetime.now() if create_time is None else create_time
+        self.version: str = "Unknown" if version is None else version
+        self.trace_count: int = trace_count
+        self.sample_count: int = sample_count
+        self.data_length: int = data_length
 
 
-class TraceDataset:
-    def __init__(self, shape: tuple[int, int] = None, data_length: int = None):
-        self.shape: tuple[int, int] = shape
-        self._metadata = TraceDataSetMetadata()
-        self.data: np.ndarray | None = (
-            np.empty(shape=shape[0], dtype=np.dtype((np.void, data_length))) if data_length is not None else None
-        )
-        self.traces: np.ndarray | None = np.empty(shape=shape) if shape is not None else None
-        self._current_create_trace_index: int = 0
-        self._current_create_data_index: int = 0
+class TraceDataset(abc.ABC):
+
+
+    @abc.abstractmethod
+    def get_trace_data_ndarray(self) -> tuple[np.ndarray, np.ndarray]: ...
+
+    @classmethod
+    @abc.abstractmethod
+    def load(cls, path: str, **kwargs) -> 'TraceDataset':
+        ...
+
+    @classmethod
+    @abc.abstractmethod
+    def new(cls, path: str, trace_count: int, sample_count: int, data_length: int, **kwargs) -> 'TraceDataset':
+        ...
+
+    @abc.abstractmethod
+    def dump(self, path: str = None, **kwargs):
+        ...
+
+    @abc.abstractmethod
+    def set_trace(self, index: int, trace: np.ndarray, data: np.ndarray):
+        ...
+
+    @abc.abstractmethod
+    def get_trace_by_indexes(self, *indexes) -> tuple[np.ndarray, np.ndarray] | None:
+        ...
+
+    @abc.abstractmethod
+    def get_trace_by_range(self, index_start, index_end) -> tuple[np.ndarray, np.ndarray] | None:
+        ...
+
+
+class ScarrTraceDataset(TraceDataset):
+    _group_path = "/0/0"
+    _traces_path = "traces"
+    _data_path = "plaintext"
+
+    def __init__(self, zarr_path: str, write: bool = False,
+                 trace_count: int = None,
+                 sample_count: int = None,
+                 data_length: int = None,
+                 zarr_kwargs: dict = None,
+                 zarr_trace_group_kwargs: dict = None,
+                 zarr_data_group_kwargs: dict = None,
+                 ):
+        self._zarr_path = zarr_path
+        self._trace_count = trace_count
+        self._sample_count = sample_count
+        self._data_length = data_length
+
+        if zarr_kwargs is None:
+            zarr_kwargs = {}
+        if zarr_trace_group_kwargs is None:
+            zarr_trace_group_kwargs = {}
+        if zarr_data_group_kwargs is None:
+            zarr_data_group_kwargs = {}
+
+        mode = zarr_kwargs.pop("mode", "w" if write else "r")
+        self._zarr_data = zarr.open(zarr_path, mode=mode, **zarr_kwargs)
+
+        if write:
+            default_group = self._zarr_data.create_group(self._group_path)  # todo multiple channel support ?
+            self._trace_array = default_group.create(
+                self._traces_path,
+                shape=(self._trace_count, self._sample_count),
+                dtype=np.uint16,
+                **zarr_trace_group_kwargs)
+            self._data_array = default_group.create(
+                self._data_path,
+                shape=(self._trace_count, self._data_length),
+                dtype=np.uint8,
+                **zarr_data_group_kwargs)
+        else:
+            self._trace_array = self._zarr_data[self._group_path + "/" + self._traces_path]
+            self._data_array = self._zarr_data[self._group_path + "/" + self._data_path]
+
+    @classmethod
+    def load(cls, path: str, **kwargs) -> 'TraceDataset':
+        kwargs["mode"] = "r"
+        return cls(path, zarr_kwargs=kwargs)
+
+    @classmethod
+    def new(cls, path: str, trace_count: int, sample_count: int, data_length: int, **kwargs) -> 'TraceDataset':
+        kwargs["mode"] = "w"
+        return cls(path, write=True, trace_count=trace_count, sample_count=sample_count, data_length=data_length,
+                   zarr_kwargs=kwargs)
+
+    def dump(self, path: str = None, **kwargs):
+        if path != self._zarr_path:
+            zarr.copy_store(self._zarr_data, zarr.open(path, mode="w"))
+
+    def set_trace(self, index: int, trace: np.ndarray, data: np.ndarray):
+        if index not in range(0, self._trace_count):
+            raise ValueError("Index out of range")
+        self._trace_array[index] = trace
+        self._data_array[index] = np.frombuffer(data, dtype=np.uint8)
+
+    def get_trace_data_ndarray(self) -> tuple[np.ndarray, np.ndarray]:
+        return self._trace_array, self._data_array
+
+    def get_trace_by_indexes(self, *indexes) -> tuple[np.ndarray, np.ndarray] | None:
+        return self._trace_array[[i for i in indexes]], self._data_array[[i for i in indexes]]
+
+    def get_trace_by_range(self, index_start, index_end) -> tuple[np.ndarray, np.ndarray] | None:
+        return self._trace_array[index_start:index_end], self._data_array[index_start:index_end]
+
+
+class NumpyTraceDataset:
+
+    def __init__(
+            self,
+            create_time: datetime = None,
+            version: str = None,
+            trace_count: int = None,
+            sample_count: int = None,
+            data_length: int = None
+    ):
+        self._metadata = TraceDatasetMetadata(create_time, version, trace_count, sample_count, data_length)
+        self._data_array: np.ndarray | None
+        self._trace_array: np.ndarray | None = None
+
+        if self._metadata.trace_count is not None and self._metadata.sample_count is not None:
+            self._trace_array = np.zeros((self._metadata.trace_count, self._metadata.sample_count))
+            if self._metadata.data_length is not None:
+                self._data_array = np.zeros(shape=self._metadata.trace_count,
+                                            dtype=np.dtype((np.void, self._metadata.data_length)))
+        else:
+            self._trace_array: np.ndarray | None = None
+            self._data_array: np.ndarray | None = None
+
+    def add_trace(self, index: int, trace: np.ndarray, data: bytes):
+        self._trace_array[index:] = trace
+        self._data_array[index:] = data
 
     def load_from_numpy_data_file(self, path: str, transpose=False) -> "TraceDataset":
         """
@@ -62,7 +196,8 @@ class TraceDataset:
         self._metadata.sample_count = sample_count
         self.data = data
 
-    def load_from_hdf5(self, path: str): ...
+    def load_from_hdf5(self, path: str):
+        ...
 
     def add_trace(self, trace: np.ndarray, index: int = None):
         if index is None:
@@ -76,83 +211,15 @@ class TraceDataset:
             self._current_create_data_index += 1
         self.data[index:] = data
 
-    def update_metadata_environment_info(self, cracknuts: str, cracker: str, nuts: str): ...
+    def update_metadata_environment_info(self, cracknuts: str, cracker: str, nuts: str):
+        ...
 
-    def get_metadata(self) -> TraceDataSetMetadata:
+    def get_metadata(self) -> TraceDatasetMetadata:
         return self._metadata
 
     def save_as_numpy_file(self, path):
         np.save(os.path.join(path, "trace.npy"), self.traces)
         np.save(os.path.join(path, "data.npy"), self.data)
 
-    def save_as_zarr(self, path): ...  # todo
-
-
-def down_sample(value: np.ndarray, mn, mx, down_count):
-    mn = max(0, mn)
-    mx = min(value.shape[0], mx)
-
-    _value = value[mn:mx]
-    _index = np.arange(mn, mx).astype(np.int32)
-
-    ds = int(max(1, int(mx - mn) / down_count))
-
-    if ds == 1:
-        return _index, _value
-    sample_count = int((mx - mn) // ds)
-
-    down_index = np.empty((sample_count, 2), dtype=np.int32)
-    down_index[:] = _index[: sample_count * ds : ds, np.newaxis]
-
-    _value = _value[: sample_count * ds].reshape((sample_count, ds))
-    down_value = np.empty((sample_count, 2))
-    down_value[:, 0] = _value.max(axis=1)
-    down_value[:, 1] = _value.min(axis=1)
-
-    return down_index.reshape(sample_count * 2), down_value.reshape(sample_count * 2)
-
-
-def get_traces_df_from_ndarray(
-    traces: np.ndarray,
-    trace_index_mn=None,
-    trace_index_mx=None,
-    mn=None,
-    mx=None,
-    down_count=500,
-    trace_indexes=None,
-):
-    traces_dict = {}
-    if not trace_indexes:
-        trace_indexes = [t for t in range(trace_index_mn, trace_index_mx)]
-    index = None
-    for i in trace_indexes:
-        index, value = down_sample(traces[i, :], mn, mx, down_count)
-        iv = np.empty((2, len(index)))
-        iv[:] = index, value
-        traces_dict[i] = value
-
-    traces_dict["index"] = index
-
-    return pd.DataFrame(traces_dict).melt(id_vars="index", var_name="traces", value_name="value"), trace_indexes
-
-
-def load_traces(path: str) -> tuple[str, Any, Any, Any, Any, Any | None]:
-    if os.path.isdir(path):
-        # load scarr data from zarr format file.
-        scarr_data = zarr.open(path, "r")
-        traces_source = scarr_data["0/0/traces"]
-        trace_count = traces_source.shape[0]
-        sample_count = traces_source.shape[1]
-        data = scarr_data["0/0/plaintext"]
-        data_type = "zarr"
-        origin_data = scarr_data
-    else:
-        # load newae data from npy format file.
-        traces_source = np.load(path)
-        trace_count = traces_source.shape[0]
-        sample_count = traces_source.shape[1]
-        data_type = "npy"
-        data = None
-        origin_data = None
-
-    return data_type, traces_source, trace_count, sample_count, data, origin_data
+    def save_as_zarr(self, path):
+        ...  # todo
