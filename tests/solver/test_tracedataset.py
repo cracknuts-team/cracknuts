@@ -21,7 +21,16 @@ def test_trace_dataset_create():
 
 def test_trace_dataset_read():
     ds = ScarrTraceDataset.load("d:\\z.zarr")
-    print(ds.get_trace_by_range(1,2,3)[0].shape)
-    print(ds.get_trace_by_indexes(0,2,3)[0].shape)
     print(ds.get_origin_data()["0/0/traces"].info)
     print(ds.get_origin_data()["0/0/traces"][0].shape)
+
+
+def test_trace_dataset_data_slice():
+    ds = ScarrTraceDataset.load("d:\\z.zarr")
+    print()
+    print(type(ds.data[1][1]))
+    print(type(ds.data[1,1]))
+    print(type(ds.data[1]))
+    print(type(ds.data[[0,1]]))
+    print(type(ds.data[[0,1]][9:11]))
+    print(type(ds.data[[0,1]][[9,11]]))
