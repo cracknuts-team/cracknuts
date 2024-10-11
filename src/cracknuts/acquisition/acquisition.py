@@ -1,6 +1,5 @@
 import abc
 import datetime
-import os.path
 import threading
 import time
 import typing
@@ -9,7 +8,7 @@ import numpy as np
 
 from cracknuts import logger
 from cracknuts.cracker.stateful_cracker import StatefulCracker
-from cracknuts.solver.trace import TraceDataset
+from cracknuts.solver.trace import ScarrTraceDataset, NumpyTraceDataset
 
 
 class AcqProgress:
@@ -277,33 +276,41 @@ class Acquisition(abc.ABC):
             self._logger.error("Initialization error: %s", e.args)
             return
         self._post_init()
-        dataset = self._loop(not test)
+        dataset_path = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        self._loop(not test, dataset_path, file_format)
         self._pre_finish()
         self._finish()
-        if not test and dataset is not None:
-            trace_dir = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            if not os.path.exists(trace_dir):
-                os.makedirs(trace_dir)
-            # todo add save to zarr.
-            if file_format == "zarr":
-                ...  # todo
-            elif file_format == "npy":
-                dataset.save_as_numpy_file(trace_dir)
-            else:
-                self._logger.warning(f"Unsupported file format: {file_format}")
+        # if not test and dataset is not None:
+        #     trace_dir = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        #     if not os.path.exists(trace_dir):
+        #         os.makedirs(trace_dir)
+        #     # todo add save to zarr.
+        #     if file_format == "zarr":
+        #         ...  # todo
+        #     elif file_format == "npy":
+        #         dataset.save_as_numpy_file(trace_dir)
+        #     else:
+        #         self._logger.warning(f"Unsupported file format: {file_format}")
         self._post_finish()
 
     def _status_changed(self):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, keep_in_memory: bool = True):
+    def _loop(self, persistent: bool = True, dataset_path: str = None, file_format: str = None):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
-        if keep_in_memory:
-            dataset = TraceDataset(shape=(self.trace_count, self.sample_length), data_length=self.data_length)
+        if persistent:
+            if file_format == "scarr":
+                dataset = ScarrTraceDataset.new(
+                    dataset_path, 1, self.trace_count, self.sample_length, self.data_length
+                )  # todo channel
+            elif file_format == "numpy":
+                dataset = NumpyTraceDataset.new()  # todo m,
+            else:
+                self._logger.warning(f"Unsupported file format: {file_format}")
         else:
             dataset = None
 
@@ -360,16 +367,14 @@ class Acquisition(abc.ABC):
 
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None:
-                dataset.add_trace(self._last_wave[1])  # todo support channel
-                dataset.add_data(data)
+                dataset.set_trace(0, trace_index, self._last_wave[1], data)
+                # dataset.set_trace(1, trace_index, self._last_wave[2], data)  # todo second channel
             self._post_do()
             trace_index += 1
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
         self._status = self.STATUS_STOPPED
         self._status_changed()
-
-        return dataset
 
     def _progress_changed(self, progress: "AcqProgress"):
         for listener in self._on_run_progress_changed_listeners:
