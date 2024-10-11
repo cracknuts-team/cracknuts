@@ -89,7 +89,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = None,
+        file_format: str | None = "scarr",
     ):
         if self._status < 0:
             self.resume()
@@ -116,7 +116,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = None,
+        file_format: str | None = "scarr",
     ):
         try:
             self._do_run(
@@ -212,7 +212,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = None,
+        file_format: str | None = "scarr",
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -242,7 +242,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = None,
+        file_format: str | None = "scarr",
     ):
         if self._status > 0:
             raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
@@ -297,18 +297,31 @@ class Acquisition(abc.ABC):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, persistent: bool = True, dataset_path: str = None, file_format: str = None):
+    def _loop(self, persistent: bool = True, dataset_path: str = None, file_format: str = "scarr"):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
+        cracker_version = self.cracker.get_version()
         if persistent:
             if file_format == "scarr":
                 dataset = ScarrTraceDataset.new(
-                    dataset_path, 1, self.trace_count, self.sample_length, self.data_length
+                    dataset_path + ".zarr",
+                    1,
+                    self.trace_count,
+                    self.sample_length,
+                    self.data_length,
+                    version=f"({cracker_version}, {cracker_version})",
                 )  # todo channel
             elif file_format == "numpy":
-                dataset = NumpyTraceDataset.new()  # todo m,
+                dataset = NumpyTraceDataset.new(
+                    dataset_path + ".tds",
+                    1,
+                    self.trace_count,
+                    self.sample_length,
+                    self.data_length,
+                    version=f"({cracker_version}, {cracker_version})",
+                )  # todo channel
             else:
                 self._logger.warning(f"Unsupported file format: {file_format}")
         else:
@@ -373,6 +386,9 @@ class Acquisition(abc.ABC):
             trace_index += 1
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
+
+        if dataset is not None:
+            dataset.dump()
         self._status = self.STATUS_STOPPED
         self._status_changed()
 

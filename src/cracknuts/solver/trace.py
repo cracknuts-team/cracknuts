@@ -217,7 +217,7 @@ class ScarrTraceDataset(TraceDataset):
         )
 
     def dump(self, path: str = None, **kwargs):
-        if path != self._zarr_path:
+        if path is not None and path != self._zarr_path:
             zarr.copy_store(self._zarr_data, zarr.open(path, mode="w"))
 
     def set_trace(self, channel_index: int, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
@@ -374,8 +374,6 @@ class NumpyTraceDataset(TraceDataset):
 
         array_size = len(shape)
 
-        print(array_size)
-
         if array_size == 1:
             channel_count = 1
             trace_count = 1
@@ -391,8 +389,6 @@ class NumpyTraceDataset(TraceDataset):
             trace_count = shape[1]
             sample_count = shape[2]
             data_length = data.shape[2] if data is not None else 0
-
-        print(channel_count, trace_count, sample_count, data_length)
 
         ds = cls(
             create_empty=True,
@@ -411,8 +407,6 @@ class NumpyTraceDataset(TraceDataset):
             for c in range(shape[0]):
                 for t in range(shape[1]):
                     ds.set_trace(c, t, trace[c, t], data[c, t] if data is not None else None)
-
-        print(ds.channel_count, ds.trace_count, ds.sample_count, ds.data_length)
 
         return ds
 
