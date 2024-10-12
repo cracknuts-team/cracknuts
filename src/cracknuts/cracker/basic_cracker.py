@@ -222,7 +222,6 @@ class CrackerS1(AbsCnpCracker):
 
         payload = struct.pack(">I", payload)
         self._logger.debug(f"cracker_nut_interface payload: {payload.hex()}")
-        print(self._logger.name)
         return self.send_with_command(Commands.NUT_INTERFACE, payload=payload)
 
     def nut_timeout(self, timeout: int):
