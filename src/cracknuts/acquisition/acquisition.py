@@ -29,7 +29,7 @@ class Acquisition(abc.ABC):
     def __init__(
         self,
         cracker: StatefulCracker,
-        trace_count: int = 1,
+        trace_count: int = 1000,
         sample_length: int = 1024,
         sample_offset: int = 0,
         data_length: int = 0,
@@ -37,6 +37,8 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float = 1.0,
         do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
         do_error_max_count: int = -1,
+        file_format: str = "scarr",
+        file_path: str = "auto",
     ):
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
@@ -53,6 +55,8 @@ class Acquisition(abc.ABC):
         self.trigger_judge_timeout: float = trigger_judge_timeout  # second
         self.do_error_handler_strategy: int = do_error_handler_strategy
         self.do_error_max_count: int = do_error_max_count  # -1 never exit
+        self.file_format: str = file_format
+        self.file_path: str = file_path
 
         self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
@@ -90,6 +94,7 @@ class Acquisition(abc.ABC):
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
+        file_path: str | None = "auto",
     ):
         if self._status < 0:
             self.resume()
@@ -105,6 +110,7 @@ class Acquisition(abc.ABC):
                 do_error_max_count=do_error_max_count,
                 do_error_handler_strategy=do_error_handler_strategy,
                 file_format=file_format,
+                file_path=file_path,
             )
 
     def run_sync(
@@ -213,6 +219,7 @@ class Acquisition(abc.ABC):
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
+        file_path: str | None = "auto",
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -228,6 +235,7 @@ class Acquisition(abc.ABC):
                 "do_error_max_count": do_error_max_count,
                 "do_error_handler_strategy": do_error_handler_strategy,
                 "file_format": file_format,
+                "file_path": file_path,
             },
         ).start()
 
@@ -243,6 +251,7 @@ class Acquisition(abc.ABC):
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
+        file_path: str | None = "auto",
     ):
         if self._status > 0:
             raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
@@ -269,6 +278,10 @@ class Acquisition(abc.ABC):
             self.do_error_max_count = do_error_max_count
         if do_error_handler_strategy is not None:
             self.do_error_handler_strategy = do_error_handler_strategy
+        if file_format is not None:
+            self.file_format = file_format
+        if file_path is not None:
+            self.file_path = file_path
         self.pre_init()
         try:
             self.init()
@@ -276,37 +289,32 @@ class Acquisition(abc.ABC):
             self._logger.error("Initialization error: %s", e.args)
             return
         self._post_init()
-        dataset_path = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        self._loop(not test, dataset_path, file_format)
+        self._loop(not test, self.file_path, self.file_format)
         self._pre_finish()
         self._finish()
-        # if not test and dataset is not None:
-        #     trace_dir = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        #     if not os.path.exists(trace_dir):
-        #         os.makedirs(trace_dir)
-        #     # todo add save to zarr.
-        #     if file_format == "zarr":
-        #         ...  # todo
-        #     elif file_format == "npy":
-        #         dataset.save_as_numpy_file(trace_dir)
-        #     else:
-        #         self._logger.warning(f"Unsupported file format: {file_format}")
         self._post_finish()
 
     def _status_changed(self):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, persistent: bool = True, dataset_path: str = None, file_format: str = "scarr"):
+    def _loop(self, persistent: bool = True, file_path: str = None, file_format: str = "scarr"):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
         cracker_version = self.cracker.get_version()
         if persistent:
+            if file_path is None or file_path == "auto":
+                file_path = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+                if file_format == "scarr":
+                    file_path += ".zarr"
+                elif file_format == "numpy":
+                    file_path += ".npy"
+
             if file_format == "scarr":
                 dataset = ScarrTraceDataset.new(
-                    dataset_path + ".zarr",
+                    file_path,
                     1,
                     self.trace_count,
                     self.sample_length,
@@ -315,7 +323,7 @@ class Acquisition(abc.ABC):
                 )  # todo channel
             elif file_format == "numpy":
                 dataset = NumpyTraceDataset.new(
-                    dataset_path + ".tds",
+                    file_path,
                     1,
                     self.trace_count,
                     self.sample_length,
