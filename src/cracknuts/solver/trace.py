@@ -162,7 +162,7 @@ class ScarrTraceDataset(TraceDataset):
                 channel_group.create(
                     self._ARRAY_TRACES_PATH,
                     shape=(self._trace_count, self._sample_count),
-                    dtype=np.uint16,
+                    dtype=np.int16,
                     **zarr_trace_group_kwargs,
                 )
                 channel_group.create(
@@ -312,7 +312,7 @@ class NumpyTraceDataset(TraceDataset):
 
         if create_empty:
             self._trace_array: np.ndarray = np.zeros(
-                shape=(self._channel_count, self._trace_count, self._sample_count), dtype=np.uint16
+                shape=(self._channel_count, self._trace_count, self._sample_count), dtype=np.int16
             )
             self._data_array: np.ndarray = np.zeros(
                 shape=(self._channel_count, self._trace_count, self._data_length), dtype=np.uint8
