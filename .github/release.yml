@@ -19,7 +19,8 @@ changelog:
       labels:
         - "chore"
     - title: "All"
-      labels: "*"
+      labels:
+        - "bugfix"
 
   exclude:
     labels:
