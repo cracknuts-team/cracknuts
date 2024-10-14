@@ -1,0 +1,35 @@
+#    - feat：新功能（feature）
+#    - fix：修复 bug
+#    - docs：修改文档
+#    - style：代码格式修改（不影响功能）
+#    - refactor：重构代码（不引入新功能或修复 bug）
+#    - test：添加测试
+#    - chore：杂项更改（如构建工具、配置文件）
+
+changelog:
+  categories:
+    - title: "New Features"
+      labels:
+        - "feat"
+    - title: "Bug Fixes"
+      labels:
+        - "bug"
+        - "fix"
+    - title: "Others"
+      labels:
+        - "chore"
+
+  exclude:
+    labels:
+      - "test"
+      - "docs"
+      - "style"
+      - "refactor"
+
+  change-template: '- {{change.title}} (#{{change.number}}) by @{{change.author}}'
+
+  contribution-template: |
+    感谢以下贡献者的贡献：  
+    {{#contributors}}  
+      - @{{login}}  
+    {{/contributors}}
