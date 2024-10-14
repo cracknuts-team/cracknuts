@@ -247,13 +247,16 @@ class AbsCnpCracker(ABC, Cracker):
     Cracker
     """
 
-    def __init__(self, server_address=None):
+    def __init__(self, address: tuple | str | None = None):
         """
-        :param server_address: Cracker device address (ip, port)
+        :param address: Cracker device address (ip, port) or "cnp://xxx:xx"
         """
         self._command_lock = threading.Lock()
         self._logger = logger.get_logger(self)
-        self._server_address = server_address
+        if isinstance(address, tuple):
+            self._server_address = address
+        elif isinstance(address, str):
+            self.set_uri(address)
         self._socket: socket.socket | None = None
         self._connection_status = False
         self._channel_enable: dict = {
