@@ -18,6 +18,8 @@ changelog:
     - title: "Others"
       labels:
         - "chore"
+    - title: "All"
+      labels: "*"
 
   exclude:
     labels:
