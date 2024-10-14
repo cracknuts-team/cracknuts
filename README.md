@@ -8,14 +8,13 @@ A library for cracknuts device.
 pip install cracknuts
 ```
 
-## Usage
+And then execute the following script. A successful output of the version number indicates a successful installation.
 
 ```python
-from cracknuts.cracker.mock_cracker import  MockCracker
-mc = MockCracker()
-mc.get_name()
+import cracknuts
+cracknuts.version()
 ```
 
-It will print mock `cracker after` you execute the code above.  
+## Usage
 
 ***More details will be available soon.***  
