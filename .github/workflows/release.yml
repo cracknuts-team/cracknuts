@@ -30,7 +30,7 @@ jobs:
         ls dist/  # 检查构建产物
 
     - name: Upload to GitHub Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: dist/*  # 上传 dist 文件夹下的所有构建产物
       env:
