@@ -294,6 +294,9 @@ class AbsCnpCracker(ABC, Cracker):
             if not self._socket:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self._socket.settimeout(5)
+            if self._connection_status:
+                self._logger.debug("Already connected, reuse.")
+                return
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
