@@ -30,6 +30,20 @@ class CrackerS1(AbsCnpCracker):
         _, res = self.send_and_receive(protocol.build_send_message(Commands.GET_VERSION))
         return res.decode("ascii") if res is not None else None
 
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
+        payload = struct.pack(">ii", base_address, offset)
+        self._logger.debug(f"cracker_read_register payload: {payload.hex()}")
+        return self.send_with_command(Commands.CRACKER_READ_REGISTER, payload=payload)
+
+    def cracker_write_register(self, base_address: int, offset: int, data: int | str) -> tuple[int, bytes]:
+        if isinstance(data, str):
+            if data.startswith("0x") or data.startswith("0X"):
+                data = data[2:]
+            data = bytes.fromhex(data)
+        payload = struct.pack(">iiI", base_address, offset, data)
+        self._logger.debug(f"cracker_write_register payload: {payload.hex()}")
+        return self.send_with_command(Commands.CRACKER_WRITE_REGISTER, payload=payload)
+
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
         self._channel_enable = enable
         payload = 0

@@ -44,6 +44,23 @@ class Cracker(typing.Protocol):
 
     def get_version(self) -> str | None: ...
 
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
+        """Read register
+        :param base_address: the base address of the register
+        :param offset: the offset of the register
+        :return: the result of reading the register
+        """
+        ...
+
+    def cracker_write_register(self, base_address: int, offset: int, data) -> tuple[int, bytes]:
+        """Write register
+        :param base_address: the base address of the register
+        :param offset: the offset of the register
+        :param data: the data to be written
+        :return: the result of writing the register
+        """
+        ...
+
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]): ...
 
     def osc_set_analog_coupling(self, coupling: dict[int, int]): ...
@@ -141,6 +158,9 @@ class Commands:
     GET_ID = 0x0001
     GET_NAME = 0x0002
     GET_VERSION = 0x0003
+
+    CRACKER_READ_REGISTER = 0x0004
+    CRACKER_WRITE_REGISTER = 0x0005
 
     OSC_ANALOG_CHANNEL_ENABLE = 0x0100
     OSC_ANALOG_COUPLING = 0x0101
@@ -420,6 +440,12 @@ class AbsCnpCracker(ABC, Cracker):
 
     def get_version(self) -> str | None:
         return super().get_version()
+
+    @abc.abstractmethod
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]: ...
+
+    @abc.abstractmethod
+    def cracker_write_register(self, base_address: int, offset: int, data) -> tuple[int, bytes]: ...
 
     @abc.abstractmethod
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]): ...
