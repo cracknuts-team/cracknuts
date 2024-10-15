@@ -123,11 +123,23 @@ class StatefulCracker(Cracker):
     def osc_force(self):
         return self._cracker.osc_force()
 
-    def osc_set_sample_clock(self, clock: int):
-        return self._cracker.osc_set_sample_clock(clock)
+    def osc_set_clock_base_freq_mul_div(self, mult_int: int, mult_fra: int, div: int):
+        return self._cracker.osc_set_clock_base_freq_mul_div(mult_int, mult_fra, div)
+
+    def osc_set_sample_divisor(self, div_int: int, div_frac: int):
+        return self._cracker.osc_set_sample_divisor(div_int, div_frac)
 
     def osc_set_sample_phase(self, phase: int):
         return self._cracker.osc_set_sample_phase(phase)
+
+    def set_clock_nut_divisor(self, div: int):
+        return self._cracker.set_clock_nut_divisor(div)
+
+    # def osc_set_sample_clock(self, clock: int):
+    #     return self._cracker.osc_set_sample_clock(clock)
+    #
+    # def osc_set_sample_phase(self, phase: int):
+    #     return self._cracker.osc_set_sample_phase(phase)
 
     def osc_single(self):
         return self._cracker.osc_single()
