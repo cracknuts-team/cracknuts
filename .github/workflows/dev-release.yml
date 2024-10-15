@@ -15,6 +15,9 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+          # get tag history for version number
+          fetch-depth: 0
 
     - name: Update version.
       run: |
@@ -22,7 +25,6 @@ jobs:
         n_commits=`git rev-list $(git describe --tags --abbrev=0)..HEAD --count`
         dev_version="${incremented_version}.dev${n_commits}"
         sed -i "s/__version__ = \".*\"/__version__ = \"$dev_version\"/" src/cracknuts/__init__.py
-        grep '__version__ = ' src/cracknuts/__init__.py
 
     - name: Set up Python
       uses: actions/setup-python@v5
