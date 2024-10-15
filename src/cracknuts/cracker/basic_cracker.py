@@ -337,12 +337,34 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"scrat_force payload: {payload}")
         return self.send_with_command(Commands.OSC_FORCE, payload=payload)
 
-    def osc_set_sample_clock(self, clock: int):
-        payload = struct.pack(">I", clock)
-        self._logger.debug(f"scrat_sample_clock payload: {payload.hex()}")
-        return self.send_with_command(Commands.OSC_SAMPLE_CLOCK, payload=payload)
+    def osc_set_clock_base_freq_mul_div(self, mult_int: int, mult_fra: int, div: int):
+        payload = struct.pack(">BHB", mult_int, mult_fra, div)
+        self._logger.debug(f"osc_set_clock_base_freq_mul_div payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_CLOCK_BASE_FREQ_MUL_DIV, payload=payload)
+
+    def osc_set_sample_divisor(self, div_int: int, div_frac: int):
+        payload = struct.pack(">BH", div_int, div_frac)
+        self._logger.debug(f"osc_set_sample_divisor payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_CLOCK_SAMPLE_DIVISOR, payload=payload)
 
     def osc_set_sample_phase(self, phase: int):
         payload = struct.pack(">I", phase)
-        self._logger.debug(f"scrat_sample_phase payload: {payload.hex()}")
-        return self.send_with_command(Commands.OSC_SAMPLE_PHASE, payload=payload)
+        self._logger.debug(f"osc_set_sample_phase payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_CLOCK_SAMPLE_PHASE, payload=payload)
+
+    def set_clock_nut_divisor(self, div: int):
+        payload = struct.pack(">B", div)
+        self._logger.debug(f"set_clock_nut_divisor payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_CLOCK_NUT_DIVISOR, payload=payload)
+
+    # def osc_set_sample_clock(self, clock: int):
+    #     # payload = struct.pack(">I", clock)
+    #     # self._logger.debug(f"scrat_sample_clock payload: {payload.hex()}")
+    #     # return self.send_with_command(Commands.OSC_SAMPLE_CLOCK, payload=payload)
+    #     ...
+    #
+    # def osc_set_sample_phase(self, phase: int):
+    #     # payload = struct.pack(">I", phase)
+    #     # self._logger.debug(f"scrat_sample_phase payload: {payload.hex()}")
+    #     # return self.send_with_command(Commands.OSC_SAMPLE_PHASE, payload=payload)
+    #     ...
