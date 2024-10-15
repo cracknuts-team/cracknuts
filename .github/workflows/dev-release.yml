@@ -23,6 +23,10 @@ jobs:
       run: |
         incremented_version=`grep '__version__ = ' src/cracknuts/__init__.py | awk '{print $3}' | awk -F. '{printf "%d.%d.%d\n", $1, $2, $3+1}'`
         n_commits=`git rev-list $(git describe --tags --abbrev=0)..HEAD --count`
+        if [ "$n_commits" -eq 0 ]; then
+          echo "No new commits since the last tag. Terminating the action."
+          exit 0
+        fi
         dev_version="${incremented_version}.dev${n_commits}"
         sed -i "s/__version__ = \".*\"/__version__ = \"$dev_version\"/" src/cracknuts/__init__.py
 
