@@ -387,11 +387,11 @@ class AbsCnpCracker(ABC, Cracker):
             resp_payload = self._recv(length)
             if status >= protocol.STATUS_ERROR:
                 self._logger.error(
-                    "Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                    f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
                 )
             else:
                 self._logger.debug(
-                    "Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                    f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
                 )
             return status, resp_payload
         except OSError as e:
