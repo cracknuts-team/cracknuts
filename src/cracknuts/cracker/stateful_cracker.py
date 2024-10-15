@@ -73,6 +73,12 @@ class StatefulCracker(Cracker):
     def get_version(self) -> str:
         return self._cracker.get_version()
 
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
+        return self._cracker.cracker_read_register(base_address, offset)
+
+    def cracker_write_register(self, base_address: int, offset: int, data) -> tuple[int, bytes]:
+        return self._cracker.cracker_write_register(base_address, offset, data)
+
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
         self._config.osc_analog_channel_enable = enable
         return self._cracker.osc_set_analog_channel_enable(enable)
