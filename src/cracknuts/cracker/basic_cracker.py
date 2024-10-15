@@ -31,7 +31,7 @@ class CrackerS1(AbsCnpCracker):
         return res.decode("ascii") if res is not None else None
 
     def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
-        payload = struct.pack(">ii", base_address, offset)
+        payload = struct.pack(">II", base_address, offset)
         self._logger.debug(f"cracker_read_register payload: {payload.hex()}")
         return self.send_with_command(Commands.CRACKER_READ_REGISTER, payload=payload)
 
@@ -40,7 +40,7 @@ class CrackerS1(AbsCnpCracker):
             if data.startswith("0x") or data.startswith("0X"):
                 data = data[2:]
             data = bytes.fromhex(data)
-        payload = struct.pack(">iiI", base_address, offset, data)
+        payload = struct.pack(">III", base_address, offset, data)
         self._logger.debug(f"cracker_write_register payload: {payload.hex()}")
         return self.send_with_command(Commands.CRACKER_WRITE_REGISTER, payload=payload)
 
