@@ -1,0 +1,53 @@
+name: Release Build and Upload
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.12.1
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update version.
+      run: |
+        incremented_version=`grep '__version__ = ' src/cracknuts/__init__.py | awk '{print $3}' | awk -F. '{printf "%d.%d.%d\n", $1, $2, $3+1}'`
+        n_commits=`git rev-list $(git describe --tags --abbrev=0)..HEAD --count`
+        dev_version="${incremented_version}.dev${n_commits}"
+        sed -i "s/__version__ = \".*\"/__version__ = \"$dev_version\"/" src/cracknuts/__init__.py
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+        pip install twine
+
+    - name: Build the project
+      run: |
+        python -m build
+
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload to pypi
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{secrets.PYPI_TOKEN}}
+      run: |
+        python -m twine upload dist/* --non-interactive
