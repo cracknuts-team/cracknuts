@@ -388,7 +388,7 @@ class Acquisition(abc.ABC):
 
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None:
-                dataset.set_trace(0, trace_index, self._last_wave[1], data)
+                dataset.set_trace(0, trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
                 # dataset.set_trace(1, trace_index, self._last_wave[2], data)  # todo second channel
             self._post_do()
             trace_index += 1
@@ -545,10 +545,13 @@ class AcquisitionBuilder:
         builder_self = self
 
         class AnonymousAcquisition(Acquisition):
+            def __init__(self, *ana_args, **ana_kwargs):
+                super().__init__(*ana_args, **ana_kwargs)
+
             def init(self):
                 builder_self._init_function(self.cracker)
 
             def do(self):
                 return builder_self._do_function(self.cracker)
 
-        return AnonymousAcquisition(builder_self._cracker, **kwargs)
+        return AnonymousAcquisition(self._cracker, **kwargs)
