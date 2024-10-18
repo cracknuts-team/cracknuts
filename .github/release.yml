@@ -1,0 +1,26 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: 'Breaking Changes'
+      labels:
+        - 'breaking'
+    - title: 'Features'
+      labels:
+        - 'enhancement'
+        - 'feat'
+    - title: 'Bug Fixes'
+      labels:
+        - 'bug'
+        - 'bugfix'
+        - 'fix'
+    - title: 'Deprecated'
+      labels:
+        - 'deprecation'
+    - title: 'Dependencies'
+      labels:
+        - 'dependencies'
+    - title: 'Other Changes'
+      labels:
+        - "*"
