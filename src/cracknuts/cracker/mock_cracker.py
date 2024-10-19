@@ -79,6 +79,7 @@ class MockCracker:
                     conn.sendall(err_res)
                     continue
 
+                self._logger.info(f"Received command: 0x{command:02X}")
                 self._logger.debug(
                     f"Received header: Magic={magic}, Version={version}, Direction={direction}, "
                     f"Command={command}, Length={length}"
