@@ -1,4 +1,4 @@
-name: Dev release Build and Upload
+name: DevRelease
 
 on:
   push:
