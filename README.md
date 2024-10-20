@@ -1,10 +1,8 @@
-# Cracknuts
-
-<p align="center">
-  <img src="./docs/static/logo.svg">
+<p style="text-align: center">
+  <img src="./docs/static/logo.svg" alt=""/>
 </p>
 
-A library for cracknuts device.  
+A library for `cracknuts` device.  
 
 ## Install
 
