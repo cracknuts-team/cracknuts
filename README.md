@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/static/logo.svg" alt=""/>
+  <img src="https://github.com/cracknuts-team/cracknuts/blob/main/docs/static/logo.svg" alt=""/>
 </p>
 
 <p align="center">
