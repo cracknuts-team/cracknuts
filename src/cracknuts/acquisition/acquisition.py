@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import abc
 import datetime
 import threading
@@ -12,7 +14,7 @@ from cracknuts.solver.trace import ScarrTraceDataset, NumpyTraceDataset
 
 
 class AcqProgress:
-    def __init__(self, finished, total):
+    def __init__(self, finished: int, total: int):
         self.finished: int = finished
         self.total: int = total
 
@@ -58,7 +60,7 @@ class Acquisition(abc.ABC):
         self.file_format: str = file_format
         self.file_path: str = file_path
 
-        self._on_wave_loaded_callback: typing.Callable[[np.ndarray], None] | None = None
+        self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
 
@@ -80,15 +82,15 @@ class Acquisition(abc.ABC):
     def on_run_progress_changed(self, callback: typing.Callable[[dict], None]) -> None:
         self._on_run_progress_changed_listeners.append(callback)
 
-    def on_wave_loaded(self, callback: typing.Callable[[np.ndarray], None]) -> None:
+    def on_wave_loaded(self, callback: typing.Callable[[typing.Any], None]) -> None:
         self._on_wave_loaded_callback = callback
 
     def run(
         self,
         count: int = 1,
-        sample_length: int = None,
-        sample_offset: int = None,
-        data_length: int = None,
+        sample_length: int = 1024,
+        sample_offset: int = 0,
+        data_length: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -116,8 +118,8 @@ class Acquisition(abc.ABC):
     def run_sync(
         self,
         count=1,
-        sample_length: int = None,
-        sample_offset: int = None,
+        sample_length: int = 1024,
+        sample_offset: int = 0,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -144,8 +146,8 @@ class Acquisition(abc.ABC):
     def test(
         self,
         count=-1,
-        sample_length: int = None,
-        sample_offset: int = None,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -170,8 +172,8 @@ class Acquisition(abc.ABC):
     def test_sync(
         self,
         count=-1,
-        sample_length: int = None,
-        sample_offset: int = None,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -211,9 +213,9 @@ class Acquisition(abc.ABC):
         self,
         test: bool = True,
         count: int = 1,
-        sample_length: int = None,
-        sample_offset: int = None,
-        data_length: int = None,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        data_length: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -243,9 +245,9 @@ class Acquisition(abc.ABC):
         self,
         test: bool = True,
         count: int = 1,
-        sample_length: int = 1024,
-        sample_offset: int = None,
-        data_length: int = None,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        data_length: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -298,7 +300,7 @@ class Acquisition(abc.ABC):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, persistent: bool = True, file_path: str = None, file_format: str = "scarr"):
+    def _loop(self, persistent: bool = True, file_path: str | None = None, file_format: str = "scarr"):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
@@ -387,7 +389,7 @@ class Acquisition(abc.ABC):
                     break
 
                 time.sleep(self.trigger_judge_wait_time)
-            if dataset is not None:
+            if dataset is not None and self._last_wave is not None:
                 dataset.set_trace(0, trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
                 # dataset.set_trace(1, trace_index, self._last_wave[2], data)  # todo second channel
             self._post_do()
@@ -487,7 +489,10 @@ class Acquisition(abc.ABC):
         return self.cracker.osc_is_triggered()
 
     def _get_waves(self, offset: int, sample_count: int) -> dict[int, np.ndarray]:
-        enable_channels = [k for k, v in self.cracker.get_current_config().osc_analog_channel_enable.items() if v]
+        config = self.cracker.get_current_config()
+        if config.osc_analog_channel_enable is None:
+            raise Exception("Channel info can't be none.")
+        enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
             status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_count)
@@ -510,7 +515,7 @@ class Acquisition(abc.ABC):
     def _finish(self):
         pass
 
-    def get_last_wave(self) -> dict[int, np.ndarray]:
+    def get_last_wave(self) -> dict[int, np.ndarray] | None:
         return self._last_wave
 
     @staticmethod
@@ -529,12 +534,12 @@ class AcquisitionBuilder:
         return self
 
     def init(self, init_function: typing.Callable[[StatefulCracker], None]):
-        if init_function:
+        if init_function is not None:
             self._init_function = init_function
         return self
 
     def do(self, do_function: typing.Callable[[StatefulCracker], None]):
-        if do_function:
+        if do_function is not None:
             self._do_function = do_function
         return self
 
