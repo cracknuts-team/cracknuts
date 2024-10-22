@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import struct
 
 __version__ = "1.0.0"
@@ -44,7 +46,7 @@ def version():
     return __version__
 
 
-def _build_req_message(command: int, rfu: int = 0, payload: bytes = None):
+def _build_req_message(command: int, rfu: int = 0, payload: bytes | None = None):
     content = struct.pack(
         REQ_HEADER_FORMAT,
         MAGIC_STR,
@@ -60,7 +62,7 @@ def _build_req_message(command: int, rfu: int = 0, payload: bytes = None):
     return content
 
 
-def _build_res_message(status: int, payload: bytes = None):
+def _build_res_message(status: int, payload: bytes | None = None):
     content = struct.pack(
         RES_HEADER_FORMAT,
         MAGIC_STR,
@@ -75,9 +77,9 @@ def _build_res_message(status: int, payload: bytes = None):
     return content
 
 
-def build_send_message(command: int, rfu: int = 0, payload: bytes = None):
+def build_send_message(command: int, rfu: int = 0, payload: bytes | None = None):
     return _build_req_message(command, rfu, payload)
 
 
-def build_response_message(status: int, payload: bytes = None):
+def build_response_message(status: int, payload: bytes | None = None):
     return _build_res_message(status, payload)

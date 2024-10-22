@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import struct
 
 import numpy as np
@@ -15,7 +17,7 @@ class CrackerS1(AbsCnpCracker):
             osc_sample_len=1024,
         )
 
-    def get_default_config(self) -> Config | None:
+    def get_default_config(self) -> Config:
         return self._default_config
 
     def get_id(self) -> str | None:
@@ -30,67 +32,69 @@ class CrackerS1(AbsCnpCracker):
         _, res = self.send_and_receive(protocol.build_send_message(Commands.GET_VERSION))
         return res.decode("ascii") if res is not None else None
 
-    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         payload = struct.pack(">II", base_address, offset)
         self._logger.debug(f"cracker_read_register payload: {payload.hex()}")
         return self.send_with_command(Commands.CRACKER_READ_REGISTER, payload=payload)
 
-    def cracker_write_register(self, base_address: int, offset: int, data: int | str) -> tuple[int, bytes]:
+    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]:
         if isinstance(data, str):
             if data.startswith("0x") or data.startswith("0X"):
                 data = data[2:]
             data = bytes.fromhex(data)
-        payload = struct.pack(">III", base_address, offset, data)
+        if isinstance(data, int):
+            data = data.to_bytes()
+        payload = struct.pack(">III", base_address, offset) + data
         self._logger.debug(f"cracker_write_register payload: {payload.hex()}")
         return self.send_with_command(Commands.CRACKER_WRITE_REGISTER, payload=payload)
 
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
         self._channel_enable = enable
-        payload = 0
+        mask = 0
         if enable.get(0):
-            payload |= 1
+            mask |= 1
         if enable.get(1):
-            payload |= 1 << 1
+            mask |= 1 << 1
         if enable.get(2):
-            payload |= 1 << 2
+            mask |= 1 << 2
         if enable.get(3):
-            payload |= 1 << 3
+            mask |= 1 << 3
         if enable.get(4):
-            payload |= 1 << 4
+            mask |= 1 << 4
         if enable.get(5):
-            payload |= 1 << 5
+            mask |= 1 << 5
         if enable.get(6):
-            payload |= 1 << 6
+            mask |= 1 << 6
         if enable.get(7):
-            payload |= 1 << 7
+            mask |= 1 << 7
         if enable.get(8):
-            payload |= 1 << 8
-        payload = struct.pack(">I", payload)
+            mask |= 1 << 8
+        payload = struct.pack(">I", mask)
         self._logger.debug(f"Scrat analog_channel_enable payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
 
     def osc_set_analog_coupling(self, coupling: dict[int, int]):
-        payload = 0
+        enable = 0
         if coupling.get(0):
-            payload |= 1
+            enable |= 1
         if coupling.get(1):
-            payload |= 1 << 1
+            enable |= 1 << 1
         if coupling.get(2):
-            payload |= 1 << 2
+            enable |= 1 << 2
         if coupling.get(3):
-            payload |= 1 << 3
+            enable |= 1 << 3
         if coupling.get(4):
-            payload |= 1 << 4
+            enable |= 1 << 4
         if coupling.get(5):
-            payload |= 1 << 5
+            enable |= 1 << 5
         if coupling.get(6):
-            payload |= 1 << 6
+            enable |= 1 << 6
         if coupling.get(7):
-            payload |= 1 << 7
+            enable |= 1 << 7
         if coupling.get(8):
-            payload |= 1 << 8
+            enable |= 1 << 8
 
-        payload = struct.pack(">I", payload)
+        payload = struct.pack(">I", enable)
         self._logger.debug(f"scrat_analog_coupling payload: {payload.hex()}")
 
         return self.send_with_command(Commands.OSC_ANALOG_COUPLING, payload=payload)
@@ -106,26 +110,26 @@ class CrackerS1(AbsCnpCracker):
         return self.send_with_command(Commands.OSC_ANALOG_BIAS_VOLTAGE, payload=payload)
 
     def osc_set_digital_channel_enable(self, enable: dict[int, bool]):
-        payload = 0
+        mask = 0
         if enable.get(0):
-            payload |= 1
+            mask |= 1
         if enable.get(1):
-            payload |= 1 << 1
+            mask |= 1 << 1
         if enable.get(2):
-            payload |= 1 << 2
+            mask |= 1 << 2
         if enable.get(3):
-            payload |= 1 << 3
+            mask |= 1 << 3
         if enable.get(4):
-            payload |= 1 << 4
+            mask |= 1 << 4
         if enable.get(5):
-            payload |= 1 << 5
+            mask |= 1 << 5
         if enable.get(6):
-            payload |= 1 << 6
+            mask |= 1 << 6
         if enable.get(7):
-            payload |= 1 << 7
+            mask |= 1 << 7
         if enable.get(8):
-            payload |= 1 << 8
-        payload = struct.pack(">I", payload)
+            mask |= 1 << 8
+        payload = struct.pack(">I", mask)
         self._logger.debug(f"scrat_digital_channel_enable payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_DIGITAL_CHANNEL_ENABLE, payload=payload)
 
@@ -179,19 +183,22 @@ class CrackerS1(AbsCnpCracker):
         payload = struct.pack(">BII", channel, offset, sample_count)
         self._logger.debug(f"scrat_get_analog_wave payload: {payload.hex()}")
         status, wave_bytes = self.send_with_command(Commands.OSC_GET_ANALOG_WAVES, payload=payload)
-        self._logger.debug(f"scrat_get_analog_wave wave_bytes: {wave_bytes.hex()}")
+        self._logger.debug(f"scrat_get_analog_wave wave_bytes: {wave_bytes.hex() if wave_bytes is not None else None}")
         if wave_bytes is None:
-            return status, np.array([[]])
+            return status, np.array([])
         else:
             wave = struct.unpack(f"{sample_count}h", wave_bytes)
-            return status, np.array(wave, dtype=np.int32)
+            return status, np.array(wave, dtype=np.int16)
 
     def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int):
         payload = struct.pack(">BII", channel, offset, sample_count)
         self._logger.debug(f"scrat_get_digital_wave payload: {payload.hex()}")
         status, wave_bytes = self.send_with_command(Commands.OSC_GET_ANALOG_WAVES, payload=payload)
-        wave = struct.unpack(f">{sample_count}I", wave_bytes)
-        return status, np.array(wave, dtype=np.int16)
+        if status > protocol.STATUS_ERROR or wave_bytes is None:
+            return status, np.array([])
+        else:
+            wave = struct.unpack(f">{sample_count}I", wave_bytes)
+            return status, np.array(wave, dtype=np.int16)
 
     def osc_set_analog_gain(self, channel: int, gain: int):
         payload = struct.pack(">BB", channel, gain)
@@ -223,18 +230,18 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")
         return self.send_with_command(Commands.NUT_CLOCK, payload=payload)
 
-    def nut_interface(self, interface: dict[int, bool]):
-        payload = 0
+    def nut_interface(self, interface: dict[int, bool]): # type: ignore
+        mask: int = 0
         if interface.get(0):
-            payload |= 1
+            mask |= 1
         if interface.get(1):
-            payload |= 1 << 1
+            mask |= 1 << 1
         if interface.get(2):
-            payload |= 1 << 2
+            mask |= 1 << 2
         if interface.get(3):
-            payload |= 1 << 3
+            mask |= 1 << 3
 
-        payload = struct.pack(">I", payload)
+        payload = struct.pack(">I", mask)
         self._logger.debug(f"cracker_nut_interface payload: {payload.hex()}")
         return self.send_with_command(Commands.NUT_INTERFACE, payload=payload)
 

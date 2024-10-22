@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import abc
 import socket
 import struct
@@ -14,7 +16,7 @@ from cracknuts.cracker import protocol
 
 
 class Cracker(typing.Protocol):
-    def get_default_config(self) -> typing.Optional["Config"]: ...
+    def get_default_config(self) -> "Config": ...
 
     def set_addr(self, ip, port) -> None: ...
 
@@ -30,9 +32,9 @@ class Cracker(typing.Protocol):
 
     def get_connection_status(self) -> bool: ...
 
-    def send_and_receive(self, message) -> tuple[int, bytes]: ...
+    def send_and_receive(self, message) -> tuple[int, bytes | None]: ...
 
-    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes = None) -> tuple[int, bytes]: ...
+    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes | None = None) -> tuple[int, bytes | None]: ...
 
     def echo(self, payload: str) -> str: ...
 
@@ -44,7 +46,7 @@ class Cracker(typing.Protocol):
 
     def get_version(self) -> str | None: ...
 
-    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """Read register
         :param base_address: the base address of the register
         :param offset: the offset of the register
@@ -52,7 +54,7 @@ class Cracker(typing.Protocol):
         """
         ...
 
-    def cracker_write_register(self, base_address: int, offset: int, data) -> tuple[int, bytes]:
+    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]:
         """Write register
         :param base_address: the base address of the register
         :param offset: the offset of the register
@@ -240,31 +242,31 @@ class Commands:
 class Config:
     def __init__(
         self,
-        nut_enable: bool = None,
-        nut_voltage: int = None,
-        nut_clock: int = None,
-        osc_analog_channel_enable: dict[int, bool] = None,
-        osc_sample_len: int = None,
-        osc_sample_delay: int = None,
-        osc_sample_phase: int = None,
-        osc_sample_clock: int = None,
+        nut_enable: bool | None = None,
+        nut_voltage: int | None = None,
+        nut_clock: int | None = None,
+        osc_analog_channel_enable: dict[int, bool] | None = None,
+        osc_sample_len: int | None = None,
+        osc_sample_delay: int | None = None,
+        osc_sample_phase: int | None = None,
+        osc_sample_clock: int | None = None,
     ):
-        self._binder: dict[str, callable] = {}
-        self.nut_enable: bool = nut_enable
-        self.nut_voltage: int = nut_voltage
-        self.nut_clock: int = nut_clock
-        self.osc_sample_len = osc_sample_len
-        self.osc_sample_delay = osc_sample_delay
-        self.osc_sample_phase = osc_sample_phase
-        self.osc_sample_clock = osc_sample_clock
-        self.osc_analog_channel_enable: dict[int, bool] = osc_analog_channel_enable
+        self._binder: dict[str, typing.Callable] = {}
+        self.nut_enable: bool | None = nut_enable
+        self.nut_voltage: int | None = nut_voltage
+        self.nut_clock: int | None = nut_clock
+        self.osc_sample_len: int | None = osc_sample_len
+        self.osc_sample_delay: int | None = osc_sample_delay
+        self.osc_sample_phase: int | None = osc_sample_phase
+        self.osc_sample_clock: int | None = osc_sample_clock
+        self.osc_analog_channel_enable: dict[int, bool]  | None = osc_analog_channel_enable
 
     def __setattr__(self, key, value):
         self.__dict__[key] = value
         if "_binder" in self.__dict__ and (binder := self._binder.get(key)) is not None:
             binder(value)
 
-    def bind(self, key: str, callback: callable):
+    def bind(self, key: str, callback: typing.Callable):
         """
         Bind a callback which will be call when the key field is updated.
         :param key: a filed name of class `Config`
@@ -297,7 +299,7 @@ class AbsCnpCracker(ABC, Cracker):
         }
 
     @abc.abstractmethod
-    def get_default_config(self) -> Config | None: ...
+    def get_default_config(self) -> Config: ...
 
     def set_addr(self, ip, port) -> None:
         self._server_address = ip, port
@@ -310,7 +312,7 @@ class AbsCnpCracker(ABC, Cracker):
         if ":" in uri:
             host, port = uri.split(":")
         else:
-            host, port = uri, protocol.DEFAULT_PORT
+            host, port = uri, protocol.DEFAULT_PORT # type: ignore
 
         self._server_address = host, int(port)
 
@@ -375,6 +377,9 @@ class AbsCnpCracker(ABC, Cracker):
         :param message:
         :return:
         """
+        if self._socket is None:
+            self._logger.error("Cracker not connected")
+            return protocol.STATUS_ERROR, None
         try:
             self._command_lock.acquire()
             if not self.get_connection_status():
@@ -420,7 +425,7 @@ class AbsCnpCracker(ABC, Cracker):
 
         return resp_payload
 
-    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes = None) -> tuple[int, bytes]:
+    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes | None = None) -> tuple[int, bytes | None]:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
         return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
@@ -429,20 +434,26 @@ class AbsCnpCracker(ABC, Cracker):
         """
         length <= 1024
         """
-        self._socket.sendall(payload.encode("ascii"))
-        res = self._socket.recv(1024).decode("ascii")
-        self._logger.debug(f"Get response: {res}")
-        return res
+        if self._socket is not None:
+            self._socket.sendall(payload.encode("ascii"))
+            res = self._socket.recv(1024).decode("ascii")
+            self._logger.debug(f"Get response: {res}")
+            return res
+        else:
+            return "Cracker not connected."
 
     def echo_hex(self, payload: str) -> str:
         """
         length <= 1024
         """
-        payload = bytes.fromhex(payload)
-        self._socket.sendall(payload)
-        res = self._socket.recv(1024).hex()
-        self._logger.debug(f"Get response: {res}")
-        return res
+        if self._socket is not None:
+            content = bytes.fromhex(payload)
+            self._socket.sendall(content)
+            res = self._socket.recv(1024).hex()
+            self._logger.debug(f"Get response: {res}")
+            return res
+        else:
+            return "Cracker not connected."
 
     @abc.abstractmethod
     def get_id(self) -> str | None: ...
@@ -450,14 +461,14 @@ class AbsCnpCracker(ABC, Cracker):
     @abc.abstractmethod
     def get_name(self) -> str | None: ...
 
-    def get_version(self) -> str | None:
-        return super().get_version()
+    @abc.abstractmethod
+    def get_version(self) -> str | None: ...
 
     @abc.abstractmethod
-    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]: ...
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]: ...
 
     @abc.abstractmethod
-    def cracker_write_register(self, base_address: int, offset: int, data) -> tuple[int, bytes]: ...
+    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]: ...
 
     @abc.abstractmethod
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]): ...

@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import typing
 
 import numpy as np
@@ -52,10 +54,10 @@ class StatefulCracker(Cracker):
     def get_connection_status(self) -> bool:
         return self._cracker.get_connection_status()
 
-    def send_and_receive(self, message) -> tuple[int, bytes]:
+    def send_and_receive(self, message) -> tuple[int, bytes | None]:
         return self._cracker.send_and_receive(message)
 
-    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes = None) -> tuple[int, bytes | None]:
+    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes | None = None) -> tuple[int, bytes | None]:
         return self._cracker.send_with_command(command, rfu, payload)
 
     def echo(self, payload: str) -> str:
@@ -64,19 +66,19 @@ class StatefulCracker(Cracker):
     def echo_hex(self, payload: str) -> str:
         return self._cracker.echo_hex(payload)
 
-    def get_id(self) -> str:
+    def get_id(self) -> str | None:
         return self._cracker.get_id()
 
-    def get_name(self) -> str:
+    def get_name(self) -> str | None:
         return self._cracker.get_name()
 
-    def get_version(self) -> str:
+    def get_version(self) -> str | None:
         return self._cracker.get_version()
 
-    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes]:
+    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         return self._cracker.cracker_read_register(base_address, offset)
 
-    def cracker_write_register(self, base_address: int, offset: int, data) -> tuple[int, bytes]:
+    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]:
         return self._cracker.cracker_write_register(base_address, offset, data)
 
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
@@ -117,7 +119,7 @@ class StatefulCracker(Cracker):
         self._config.osc_sample_len = length
         return self._cracker.osc_set_sample_len(length)
 
-    def get_default_config(self) -> typing.Optional["Config"]:
+    def get_default_config(self) -> Config:
         return self._cracker.get_default_config()
 
     def osc_force(self):

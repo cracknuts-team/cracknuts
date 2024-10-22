@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import abc
 import json
 import os.path
@@ -5,15 +7,15 @@ import time
 import typing
 
 import numpy as np
-import zarr
+import zarr # type: ignore
 
 from cracknuts import logger
 
 
 class TraceDatasetData:
-    def __init__(self, level: int = 0, index: tuple = None, get_trace_data: typing.Callable[[any, any], tuple] = None):
+    def __init__(self, get_trace_data: typing.Callable[[typing.Any, typing.Any], tuple], level: int = 0, index: tuple | None = None):
         self._level: int = level
-        self._index: tuple = index
+        self._index: tuple | None = index
         self._get_trace_data = get_trace_data
 
     def __getitem__(self, index):
@@ -23,18 +25,18 @@ class TraceDatasetData:
         level = len(index) + self._level
         index = index if self._index is None else (*self._index, *index)
         if level < 2:
-            return TraceDatasetData(level, index, self._get_trace_data)
+            return TraceDatasetData(self._get_trace_data, level, index)
         else:
             return self._get_trace_data(*index)
 
 
 class TraceDataset(abc.ABC):
-    _channel_count: int
-    _trace_count: int
-    _sample_count: int
-    _data_length: int
-    _create_time: int
-    _version: str
+    _channel_count: int | None
+    _trace_count: int | None
+    _sample_count: int | None
+    _data_length: int | None
+    _create_time: int | None
+    _version: str | None
 
     @abc.abstractmethod
     def get_origin_data(self): ...
@@ -50,7 +52,7 @@ class TraceDataset(abc.ABC):
     ) -> "TraceDataset": ...
 
     @abc.abstractmethod
-    def dump(self, path: str = None, **kwargs): ...
+    def dump(self, path: str | None = None, **kwargs): ...
 
     @abc.abstractmethod
     def set_trace(self, channel_index: int, trace_index: int, trace: np.ndarray, data: np.ndarray | None): ...
@@ -63,6 +65,8 @@ class TraceDataset(abc.ABC):
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]: ...
 
     def _parse_slice(self, channel_slice, trace_slice) -> tuple[list, list]:
+        if self._channel_count is None:
+            raise Exception("Channel count is not set")
         if isinstance(channel_slice, slice):
             start, stop, step = channel_slice.indices(self._channel_count)
             channel_indexes = [i for i in range(start, stop, step)]
@@ -71,8 +75,10 @@ class TraceDataset(abc.ABC):
         elif isinstance(channel_slice, list):
             channel_indexes = channel_slice
         else:
-            channel_indexes = None
+            raise ValueError("channel_slice is not a slice or list")
 
+        if self._trace_count is None:
+            raise Exception("Trace count is not set")
         if isinstance(trace_slice, slice):
             start, stop, step = trace_slice.indices(self._trace_count)
             trace_indexes = [i for i in range(start, stop, step)]
@@ -81,7 +87,7 @@ class TraceDataset(abc.ABC):
         elif isinstance(trace_slice, list):
             trace_indexes = trace_slice
         else:
-            trace_indexes = None
+            raise ValueError("trace_slice is not a slice or list")
 
         return channel_indexes, trace_indexes
 
@@ -116,33 +122,23 @@ class ScarrTraceDataset(TraceDataset):
         self,
         zarr_path: str,
         create_empty: bool = False,
-        channel_count: int = None,
-        trace_count: int = None,
-        sample_count: int = None,
-        data_length: int = None,
-        zarr_kwargs: dict = None,
-        zarr_trace_group_kwargs: dict = None,
-        zarr_data_group_kwargs: dict = None,
-        create_time: int = None,
-        version: str = None,
+        channel_count: int | None = None,
+        trace_count: int | None = None,
+        sample_count: int | None = None,
+        data_length: int | None = None,
+        zarr_kwargs: dict | None = None,
+        zarr_trace_group_kwargs: dict | None = None,
+        zarr_data_group_kwargs: dict | None = None,
+        create_time: int | None = None,
+        version: str | None = None,
     ):
-        if create_empty:
-            if channel_count is None or trace_count is None or sample_count is None or data_length is None:
-                raise ValueError(
-                    "channel_count and trace_count and sample_count and data_length "
-                    "must be specified when in write mode."
-                )
-        else:
-            if zarr_path is None:
-                raise ValueError("The zarr_path must be specified when in non-write mode.")
-
         self._zarr_path: str = zarr_path
-        self._channel_count: int = channel_count
-        self._trace_count: int = trace_count
-        self._sample_count: int = sample_count
-        self._data_length: int = data_length
-        self._create_time: int = create_time
-        self._version: str = version
+        self._channel_count: int | None = channel_count
+        self._trace_count: int | None = trace_count
+        self._sample_count: int | None = sample_count
+        self._data_length: int | None = data_length
+        self._create_time: int | None = create_time
+        self._version: str | None = version
 
         if zarr_kwargs is None:
             zarr_kwargs = {}
@@ -155,6 +151,11 @@ class ScarrTraceDataset(TraceDataset):
         self._zarr_data = zarr.open(zarr_path, mode=mode, **zarr_kwargs)
 
         if create_empty:
+            if self._channel_count is None or self._trace_count is None or self._sample_count is None or self._data_length is None:
+                raise ValueError(
+                    "channel_count and trace_count and sample_count and data_length "
+                    "must be specified when in write mode."
+                )
             self._create_time = int(time.time())
             group_root = self._zarr_data.create_group(self._GROUP_ROOT_PATH)
             for i in range(self._channel_count):
@@ -180,6 +181,8 @@ class ScarrTraceDataset(TraceDataset):
                 "version": self._version,
             }
         else:
+            if self._zarr_path is None:
+                raise ValueError("The zarr_path must be specified when in non-write mode.")
             metadata = self._zarr_data.attrs[self._ATTR_METADATA_KEY]
             self._create_time = metadata.get("create_time")
             self._channel_count = metadata.get("channel_count")
@@ -216,11 +219,13 @@ class ScarrTraceDataset(TraceDataset):
             zarr_kwargs=kwargs,
         )
 
-    def dump(self, path: str = None, **kwargs):
+    def dump(self, path: str | None = None, **kwargs):
         if path is not None and path != self._zarr_path:
             zarr.copy_store(self._zarr_data, zarr.open(path, mode="w"))
 
     def set_trace(self, channel_index: int, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
+        if self._trace_count is None or self._channel_count is None:
+            raise Exception("Channel or trace count must has not specified.")
         if channel_index not in range(0, self._channel_count):
             raise ValueError("channel index out range")
         if trace_index not in range(0, self._trace_count):
@@ -245,7 +250,7 @@ class ScarrTraceDataset(TraceDataset):
             self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[index_start:index_end],
         )
 
-    def _get_under_root(self, *paths: any):
+    def _get_under_root(self, *paths: typing.Any):
         paths = self._GROUP_ROOT_PATH, *paths
         return self._zarr_data["/".join(str(path) for path in paths)]
 
@@ -272,67 +277,70 @@ class NumpyTraceDataset(TraceDataset):
 
     def __init__(
         self,
-        npy_trace_path: str = None,
-        npy_data_path: str = None,
-        npy_metadata_path: str = None,
+        npy_trace_path: str | None = None,
+        npy_data_path: str | None = None,
+        npy_metadata_path: str | None = None,
         create_empty: bool = False,
-        channel_count: int = None,
-        trace_count: int = None,
-        sample_count: int = None,
-        data_length: int = None,
-        create_time: int = None,
-        version: str = None,
+        channel_count: int | None = None,
+        trace_count: int | None = None,
+        sample_count: int | None = None,
+        data_length: int | None = None,
+        create_time: int | None = None,
+        version: str | None = None,
     ):
         self._logger = logger.get_logger(NumpyTraceDataset)
 
+        self._npy_trace_path: str | None = npy_trace_path
+        self._npy_data_path: str | None = npy_data_path
+        self._npy_metadata_path: str | None = npy_metadata_path
+
+        self._channel_count: int | None = channel_count
+        self._trace_count: int | None = trace_count
+        self._sample_count: int | None = sample_count
+        self._data_length: int | None = data_length
+        self._create_time: int | None = create_time
+        self._version: str | None = version
+
+        self._trace_array: np.ndarray
+        self._data_array: np.ndarray
+
         if create_empty:
-            if channel_count is None or trace_count is None or sample_count is None or data_length is None:
+            if self._channel_count is None or self._trace_count is None or self._sample_count is None or self._data_length is None:
                 raise ValueError(
                     "channel_count and trace_count and sample_count and data_length "
                     "must be specified when in write mode."
                 )
-        else:
-            if npy_trace_path is None:
-                raise ValueError("The npy_trace_path must be specified when in non-write mode.")
-            elif npy_data_path is None or npy_metadata_path is None:
-                self._logger.warning(
-                    "npy_data_path or npy_metadata_path is not specified, data or metadata info will be not load."
-                )
-
-        self._npy_trace_path: str = npy_trace_path
-        self._npy_data_path: str = npy_data_path
-        self._npy_metadata_path: str = npy_metadata_path
-
-        self._channel_count: int = channel_count
-        self._trace_count: int = trace_count
-        self._sample_count: int = sample_count
-        self._data_length: int = data_length
-        self._create_time: int = create_time
-        self._version: str = version
-
-        if create_empty:
-            self._trace_array: np.ndarray = np.zeros(
+            self._trace_array = np.zeros(
                 shape=(self._channel_count, self._trace_count, self._sample_count), dtype=np.int16
             )
-            self._data_array: np.ndarray = np.zeros(
+            self._data_array = np.zeros(
                 shape=(self._channel_count, self._trace_count, self._data_length), dtype=np.uint8
             )
             self._create_time = int(time.time())
 
         else:
-            self._data_array: np.ndarray = np.load(self._npy_data_path)
-            self._trace_array: np.ndarray = np.load(self._npy_trace_path)
-            self._load_metadata()
+            if self._npy_trace_path is None:
+                raise ValueError("The npy_trace_path must be specified when in non-write mode.")
+
+            self._trace_array = np.load(self._npy_trace_path)
+
+            if self._npy_data_path is None or self._npy_metadata_path is None:
+                self._logger.warning(
+                    "npy_data_path or npy_metadata_path is not specified, data or metadata info will be not load."
+                )
+            else:
+                self._data_array = np.load(self._npy_data_path)
+                self._load_metadata()
 
     def _load_metadata(self):
         with open(self._npy_metadata_path) as f:
             metadata = json.load(f)
-            self._channel_count: int = metadata.get("channel_count")
-            self._trace_count: int = metadata.get("trace_count")
-            self._sample_count: int = metadata.get("sample_count")
-            self._data_length: int = metadata.get("data_length")
-            self._create_time: int = metadata.get("create_time")
-            self._version: str = metadata.get("version")
+            self._channel_count: int | None = metadata.get("channel_count")
+            self._trace_count: int | None = metadata.get("trace_count")
+            self._sample_count: int | None = metadata.get("sample_count")
+            self._data_length: int | None = metadata.get("data_length")
+            self._create_time: int | None = metadata.get("create_time")
+            self._version: str | None = metadata.get("version")
 
     def _dump_metadata(self):
         with open(self._npy_metadata_path, "w") as f:
@@ -361,7 +369,7 @@ class NumpyTraceDataset(TraceDataset):
         )
 
     @classmethod
-    def load_from_numpy_array(cls, trace: np.ndarray, data: np.ndarray = None):
+    def load_from_numpy_array(cls, trace: np.ndarray, data: np.ndarray | None = None):
         channel_count = None
         trace_count = None
         sample_count = None
@@ -443,10 +451,13 @@ class NumpyTraceDataset(TraceDataset):
             **kwargs,
         )
 
-    def dump(self, path: str = None, **kwargs):
-        np.save(self._npy_trace_path, self._trace_array)
-        np.save(self._npy_data_path, self._data_array)
-        self._dump_metadata()
+    def dump(self, path: str | None = None, **kwargs):
+        if self._npy_trace_path is None or self._npy_data_path is None:
+            raise Exception("trace and metadata path must not be None.")
+        else:
+            np.save(self._npy_trace_path, self._trace_array)
+            np.save(self._npy_data_path, self._data_array)
+            self._dump_metadata()
 
     def set_trace(self, channel_index: int, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
         self._trace_array[channel_index, trace_index, :] = trace

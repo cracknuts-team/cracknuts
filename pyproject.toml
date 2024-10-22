@@ -58,20 +58,3 @@ extend-exclude = [
     "demo",
     "tests"
 ]
-
-#[tool.rye]
-#managed = true
-#dev-dependencies = []
-#
-#[tool.hatch.metadata]
-#allow-direct-references = true
-#
-#[tool.hatch.build.targets.wheel]
-#packages = ["src/cracknuts"]
-#
-#[[tool.rye.sources]]
-#name = "default"
-#url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-#
-#[tool.rye.workspace]
-#members = ["scarr"]

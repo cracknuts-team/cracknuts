@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 def get_bytes_matrix(data):
     hex_matrix = ""
 
