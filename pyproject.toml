@@ -18,6 +18,11 @@ dependencies = [
     "zarr~=2.18.2",
 ]
 
+[project.optional-dependencies]
+panel = [
+    "cracknuts-panel~=0.0.6"
+]
+
 [project.urls]
 homepage = "https://cracknuts.io"
 
