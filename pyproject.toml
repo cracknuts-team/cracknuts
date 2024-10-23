@@ -15,30 +15,29 @@ dependencies = [
     "numpy~=1.26.4",
     "pandas~=2.2.2",
     "click~=8.1.7",
-    "zarr~=2.18.2"
+    "zarr~=2.18.2",
 ]
 
 [project.urls]
 homepage = "https://cracknuts.io"
 
-[project.optional-dependencies]
-dev = [
-    "ruff>=0.6.3",
-    "typos~=1.24.4",
-    "build~=1.2.1",
-    "pre-commit~=3.8.0",
-]
+[project.scripts]
+cracknuts = "cracknuts.__main__:main"
 
-test = [
-    "pytest~=8.3.2",
-]
 
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
 
-[project.scripts]
-cracknuts = "cracknuts.__main__:main"
 
+[tool.pdm.dev-dependencies]
+dev = [
+    "typos~=1.24.4",
+    "build~=1.2.1",
+    "pre-commit~=3.8.0",
+    "pytest~=8.3.2",
+    "ruff~=0.7",
+    "mypy~=1.13",
+]
 
 [tool.ruff]
 line-length = 120
