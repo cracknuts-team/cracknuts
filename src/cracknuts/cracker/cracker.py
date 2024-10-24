@@ -34,7 +34,9 @@ class Cracker(typing.Protocol):
 
     def send_and_receive(self, message) -> tuple[int, bytes | None]: ...
 
-    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes | None = None) -> tuple[int, bytes | None]: ...
+    def send_with_command(
+        self, command: int, rfu: int = 0, payload: str | bytes | None = None
+    ) -> tuple[int, bytes | None]: ...
 
     def echo(self, payload: str) -> str: ...
 
@@ -54,7 +56,9 @@ class Cracker(typing.Protocol):
         """
         ...
 
-    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]:
+    def cracker_write_register(
+        self, base_address: int, offset: int, data: bytes | int | str
+    ) -> tuple[int, bytes | None]:
         """Write register
         :param base_address: the base address of the register
         :param offset: the offset of the register
@@ -90,6 +94,10 @@ class Cracker(typing.Protocol):
     def osc_set_clock_base_freq_mul_div(self, mult_int: int, mult_fra: int, div: int): ...
 
     def osc_set_sample_divisor(self, div_int: int, div_frac: int): ...
+
+    def osc_set_clock_update(self) -> tuple[int, bytes | None]: ...
+
+    def osc_set_clock_simple(self, nut_clk: int, mult: int, phase: int) -> tuple[int, bytes | None]: ...
 
     def osc_set_sample_phase(self, phase: int): ...
 
@@ -182,6 +190,8 @@ class Commands:
     OSC_CLOCK_SAMPLE_DIVISOR = 0x0107
     OSC_CLOCK_SAMPLE_PHASE = 0x0108
     OSC_CLOCK_NUT_DIVISOR = 0x0109
+    OSC_CLOCK_UPDATE = 0x10A
+    OSC_CLOCK_SIMPLE = 0x10B
 
     # OSC_SAMPLE_CLOCK = 0x0105
     # OSC_SAMPLE_PHASE = 0x0106
@@ -259,7 +269,7 @@ class Config:
         self.osc_sample_delay: int | None = osc_sample_delay
         self.osc_sample_phase: int | None = osc_sample_phase
         self.osc_sample_clock: int | None = osc_sample_clock
-        self.osc_analog_channel_enable: dict[int, bool]  | None = osc_analog_channel_enable
+        self.osc_analog_channel_enable: dict[int, bool] | None = osc_analog_channel_enable
 
     def __setattr__(self, key, value):
         self.__dict__[key] = value
@@ -312,7 +322,7 @@ class AbsCnpCracker(ABC, Cracker):
         if ":" in uri:
             host, port = uri.split(":")
         else:
-            host, port = uri, protocol.DEFAULT_PORT # type: ignore
+            host, port = uri, protocol.DEFAULT_PORT  # type: ignore
 
         self._server_address = host, int(port)
 
@@ -425,7 +435,9 @@ class AbsCnpCracker(ABC, Cracker):
 
         return resp_payload
 
-    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes | None = None) -> tuple[int, bytes | None]:
+    def send_with_command(
+        self, command: int, rfu: int = 0, payload: str | bytes | None = None
+    ) -> tuple[int, bytes | None]:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
         return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
@@ -468,7 +480,9 @@ class AbsCnpCracker(ABC, Cracker):
     def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]: ...
 
     @abc.abstractmethod
-    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]: ...
+    def cracker_write_register(
+        self, base_address: int, offset: int, data: bytes | int | str
+    ) -> tuple[int, bytes | None]: ...
 
     @abc.abstractmethod
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]): ...
@@ -538,6 +552,12 @@ class AbsCnpCracker(ABC, Cracker):
 
     @abc.abstractmethod
     def set_clock_nut_divisor(self, div: int): ...
+
+    @abc.abstractmethod
+    def osc_set_clock_update(self) -> tuple[int, bytes | None]: ...
+
+    @abc.abstractmethod
+    def osc_set_clock_simple(self, nut_clk: int, mult: int, phase: int) -> tuple[int, bytes | None]: ...
 
     # @abc.abstractmethod
     # def osc_set_sample_clock(self, clock: int): ...
