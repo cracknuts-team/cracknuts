@@ -7,13 +7,18 @@ import time
 import typing
 
 import numpy as np
-import zarr # type: ignore
+import zarr  # type: ignore
 
 from cracknuts import logger
 
 
 class TraceDatasetData:
-    def __init__(self, get_trace_data: typing.Callable[[typing.Any, typing.Any], tuple], level: int = 0, index: tuple | None = None):
+    def __init__(
+        self,
+        get_trace_data: typing.Callable[[typing.Any, typing.Any], tuple],
+        level: int = 0,
+        index: tuple | None = None,
+    ):
         self._level: int = level
         self._index: tuple | None = index
         self._get_trace_data = get_trace_data
@@ -151,7 +156,12 @@ class ScarrTraceDataset(TraceDataset):
         self._zarr_data = zarr.open(zarr_path, mode=mode, **zarr_kwargs)
 
         if create_empty:
-            if self._channel_count is None or self._trace_count is None or self._sample_count is None or self._data_length is None:
+            if (
+                self._channel_count is None
+                or self._trace_count is None
+                or self._sample_count is None
+                or self._data_length is None
+            ):
                 raise ValueError(
                     "channel_count and trace_count and sample_count and data_length "
                     "must be specified when in write mode."
@@ -305,7 +315,12 @@ class NumpyTraceDataset(TraceDataset):
         self._data_array: np.ndarray
 
         if create_empty:
-            if self._channel_count is None or self._trace_count is None or self._sample_count is None or self._data_length is None:
+            if (
+                self._channel_count is None
+                or self._trace_count is None
+                or self._sample_count is None
+                or self._data_length is None
+            ):
                 raise ValueError(
                     "channel_count and trace_count and sample_count and data_length "
                     "must be specified when in write mode."
