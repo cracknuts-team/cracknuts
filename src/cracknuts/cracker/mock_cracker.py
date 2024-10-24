@@ -145,19 +145,19 @@ class MockCracker:
         return protocol.STATUS_OK, None
 
     @_handler(cracker.Commands.OSC_FORCE, has_payload=False)
-    def osc_force(self) -> bytes: ... # type: ignore
+    def osc_force(self) -> bytes: ...  # type: ignore
 
     @_handler(cracker.Commands.OSC_SINGLE, has_payload=False)
-    def osc_arm(self) -> bytes: ... # type: ignore
+    def osc_arm(self) -> bytes: ...  # type: ignore
 
     @_handler(cracker.Commands.NUT_VOLTAGE, has_payload=False)
-    def nut_voltage(self) -> bytes: ... # type: ignore
+    def nut_voltage(self) -> bytes: ...  # type: ignore
 
     @_handler(cracker.Commands.OSC_ANALOG_CHANNEL_ENABLE, has_payload=False)
-    def osc_analog_channel_enable(self) -> bytes: ... # type: ignore
+    def osc_analog_channel_enable(self) -> bytes: ...  # type: ignore
 
     @_handler(cracker.Commands.NUT_CLOCK, has_payload=False)
-    def nut_clock(self) -> bytes: ... # type: ignore
+    def nut_clock(self) -> bytes: ...  # type: ignore
 
 
 if __name__ == "__main__":
