@@ -37,7 +37,9 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"cracker_read_register payload: {payload.hex()}")
         return self.send_with_command(Commands.CRACKER_READ_REGISTER, payload=payload)
 
-    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]:
+    def cracker_write_register(
+        self, base_address: int, offset: int, data: bytes | int | str
+    ) -> tuple[int, bytes | None]:
         if isinstance(data, str):
             if data.startswith("0x") or data.startswith("0X"):
                 data = data[2:]
@@ -230,7 +232,7 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")
         return self.send_with_command(Commands.NUT_CLOCK, payload=payload)
 
-    def nut_interface(self, interface: dict[int, bool]): # type: ignore
+    def nut_interface(self, interface: dict[int, bool]):  # type: ignore
         mask: int = 0
         if interface.get(0):
             mask |= 1
@@ -353,6 +355,19 @@ class CrackerS1(AbsCnpCracker):
         payload = struct.pack(">BH", div_int, div_frac)
         self._logger.debug(f"osc_set_sample_divisor payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_CLOCK_SAMPLE_DIVISOR, payload=payload)
+
+    def osc_set_clock_update(self) -> tuple[int, bytes | None]:
+        self._logger.debug(f"osc_set_clock_update payload: {None}")
+        return self.send_with_command(Commands.OSC_CLOCK_UPDATE, payload=None)
+
+    def osc_set_clock_simple(self, nut_clk: int, mult: int, phase: int) -> tuple[int, bytes | None]:
+        if not 1 <= nut_clk <= 32:
+            raise ValueError("nut_clk must be between 1 and 32")
+        if nut_clk * mult > 32:
+            raise ValueError("nut_clk * mult must be less than 32")
+        payload = struct.pack(">BBI", nut_clk, mult, phase * 1000)
+        self._logger.debug(f"osc_set_clock_simple payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_CLOCK_SIMPLE, payload=payload)
 
     def osc_set_sample_phase(self, phase: int):
         payload = struct.pack(">I", phase)

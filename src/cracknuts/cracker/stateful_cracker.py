@@ -1,7 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-import typing
-
 import numpy as np
 
 from cracknuts.cracker.cracker import Cracker, Config
@@ -57,7 +55,9 @@ class StatefulCracker(Cracker):
     def send_and_receive(self, message) -> tuple[int, bytes | None]:
         return self._cracker.send_and_receive(message)
 
-    def send_with_command(self, command: int, rfu: int = 0, payload: str | bytes | None = None) -> tuple[int, bytes | None]:
+    def send_with_command(
+        self, command: int, rfu: int = 0, payload: str | bytes | None = None
+    ) -> tuple[int, bytes | None]:
         return self._cracker.send_with_command(command, rfu, payload)
 
     def echo(self, payload: str) -> str:
@@ -78,7 +78,9 @@ class StatefulCracker(Cracker):
     def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         return self._cracker.cracker_read_register(base_address, offset)
 
-    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, bytes | None]:
+    def cracker_write_register(
+        self, base_address: int, offset: int, data: bytes | int | str
+    ) -> tuple[int, bytes | None]:
         return self._cracker.cracker_write_register(base_address, offset, data)
 
     def osc_set_analog_channel_enable(self, enable: dict[int, bool]):
@@ -136,6 +138,12 @@ class StatefulCracker(Cracker):
 
     def set_clock_nut_divisor(self, div: int):
         return self._cracker.set_clock_nut_divisor(div)
+
+    def osc_set_clock_update(self) -> tuple[int, bytes | None]:
+        return self._cracker.osc_set_clock_update()
+
+    def osc_set_clock_simple(self, nut_clk: int, mult: int, phase: int) -> tuple[int, bytes | None]:
+        return self._cracker.osc_set_clock_simple(nut_clk, mult, phase)
 
     # def osc_set_sample_clock(self, clock: int):
     #     return self._cracker.osc_set_sample_clock(clock)
