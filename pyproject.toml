@@ -33,16 +33,6 @@ cracknuts = "cracknuts.__main__:main"
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
 
-[tool.pdm.dev-dependencies]
-dev = [
-    "typos~=1.24.4",
-    "build~=1.2.1",
-    "pre-commit~=3.8.0",
-    "pytest~=8.3.2",
-    "ruff~=0.7",
-    "mypy~=1.13",
-]
-
 [tool.ruff]
 line-length = 120
 target-version = "py312"
