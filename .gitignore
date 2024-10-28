@@ -10,3 +10,4 @@ build
 .pytest_cache
 
 **/__pycache__/**
+src/cracknuts/bin

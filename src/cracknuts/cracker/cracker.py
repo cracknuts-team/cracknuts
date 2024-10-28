@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import os
 import socket
 import struct
 import threading
@@ -10,9 +11,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
+import cracknuts
 import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
+from cracknuts.cracker.operator import Operator
 
 
 class Cracker(typing.Protocol):
@@ -24,7 +27,7 @@ class Cracker(typing.Protocol):
 
     def get_uri(self): ...
 
-    def connect(self): ...
+    def connect(self, bin_server_path: str | None, bin_bitstream_path: str | None, operator_port: int = None): ...
 
     def disconnect(self): ...
 
@@ -332,11 +335,15 @@ class AbsCnpCracker(ABC, Cracker):
         else:
             return f"cnp://{self._server_address[0]}:{self._server_address[1]}"
 
-    def connect(self):
+    def connect(
+        self, bin_server_path: str | None = None, bin_bitstream_path: str | None = None, operator_port: int = None
+    ):
         """
         Connect to Cracker device.
         :return: Cracker self.
         """
+        self._update_cracker_bin(bin_server_path, bin_bitstream_path, operator_port)
+
         try:
             if not self._socket:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -350,6 +357,45 @@ class AbsCnpCracker(ABC, Cracker):
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
             self._connection_status = False
+
+    def _update_cracker_bin(
+        self, bin_server_path: str | None = None, bin_bitstream_path: str | None = None, operator_port: int = None
+    ):
+        if operator_port is None:
+            operator_port = protocol.DEFAULT_OPERATOR_PORT
+        operator = Operator(self._server_address[0], operator_port)
+        operator.connect()
+
+        if operator.get_status():
+            operator.disconnect()
+            return
+
+        bin_path = os.path.join(cracknuts.__file__, "bin")
+        if bin_server_path is None:
+            bin_server_path = os.path.join(bin_path, "server")
+        if bin_bitstream_path is None:
+            bin_bitstream_path = os.path.join(bin_path, "bitstream")
+
+        if not os.path.exists(bin_server_path):
+            raise FileNotFoundError(f"Server binary file not found: {bin_server_path}")
+
+        if not os.path.exists(bin_bitstream_path):
+            raise FileNotFoundError(f"Bitstream file not found: {bin_bitstream_path}")
+
+        bin_server = open(bin_server_path, "rb").read()
+        bin_bitstream = open(bin_bitstream_path, "rb").read()
+
+        try:
+            if not operator.update_server(bin_server):
+                raise Exception("Failed to update cracker server")
+            if not operator.update_bitstream(bin_bitstream):
+                raise Exception("Failed to update cracker bitstream")
+            if not operator.start_server():
+                raise Exception("Failed to start cracker server")
+            if not operator.get_status():
+                raise Exception("Failed to update and start cracker")
+        finally:
+            operator.disconnect()
 
     def disconnect(self):
         """

@@ -1,17 +1,13 @@
-# Copyright 2024 CrackNuts. All rights reserved.
-
 import logging
 import socket
 import struct
 import sys
 import threading
-import time
-
-import numpy as np
 
 from cracknuts import logger
-from cracknuts.cracker import protocol, cracker
+from cracknuts.cracker import protocol, operator
 from cracknuts.utils import hex_util
+
 
 _handler_dict = {}
 
@@ -29,9 +25,10 @@ def _handler(command: int, has_payload: bool = True):
     return decorator
 
 
-class MockCracker:
-    def __init__(self, host: str = "127.0.0.1", port: int = protocol.DEFAULT_PORT, logging_level=logging.INFO):
-        self._logger = logger.get_logger(MockCracker, logging_level)
+class MockOperator:
+    def __init__(self, host: str = "127.0.0.1", port: int = protocol.DEFAULT_OPERATOR_PORT, logging_level=logging.INFO):
+        self._running = False
+        self._logger = logger.get_logger(self, logging_level)
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.settimeout(1)
         self._server_socket.bind((host, port))
@@ -40,13 +37,17 @@ class MockCracker:
 
     def start(self):
         try:
-            print(f"MockCracker listen on {self._server_socket.getsockname()}")
+            self._running = True
             self._start_accept()
         except KeyboardInterrupt:
+            self._logger.debug("exist by keyboard interrupt...")
             sys.exit(0)
 
+    def stop(self):
+        self._running = False
+
     def _start_accept(self):
-        while True:
+        while self._running:
             try:
                 conn, addr = self._server_socket.accept()
                 conn.settimeout(5)
@@ -55,12 +56,9 @@ class MockCracker:
                 # self._handle(conn)
             except TimeoutError:
                 continue
-            except KeyboardInterrupt:
-                self._logger.debug("exist by keyboard interrupt.")
-                sys.exit(0)
 
     def _handle(self, conn):
-        while True:
+        while self._running:
             try:
                 header_data = conn.recv(protocol.REQ_HEADER_SIZE)
                 if not header_data:
@@ -122,45 +120,22 @@ class MockCracker:
             protocol.STATUS_UNSUPPORTED, f'Command [0x{format(command, '04x')}] not supported'.encode()
         )
 
-    @_handler(cracker.Commands.GET_ID, has_payload=False)
-    def get_id(self) -> bytes:
-        return b"mock_001"
+    @_handler(operator.Commands.GET_STATUS, has_payload=False)
+    def get_status(self) -> bytes:
+        return b"\x01"
 
-    @_handler(cracker.Commands.GET_NAME, has_payload=False)
-    def get_name(self) -> bytes:
-        return b"MOCK 001"
+    @_handler(operator.Commands.START_SERVER, has_payload=False)
+    def start_server(self) -> bytes:
+        return b""
 
-    @_handler(cracker.Commands.GET_VERSION, has_payload=False)
-    def get_version(self) -> bytes:
-        return b"0.1.0(adc:0.1.0,hardware:0.1.0)"
+    @_handler(operator.Commands.STOP_SERVER, has_payload=False)
+    def stop_server(self) -> bytes:
+        return b""
 
-    @_handler(cracker.Commands.OSC_GET_ANALOG_WAVES)
-    def osc_get_analog_wave(self, payload: bytes) -> bytes:
-        channel, offset, sample_count = struct.unpack(">BII", payload)
-        return struct.pack(f">{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
+    @_handler(operator.Commands.UPDATE_SERVER)
+    def update_server(self, payload: bytes) -> bytes:
+        return b""
 
-    @_handler(cracker.Commands.OSC_IS_TRIGGERED)
-    def osc_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
-        time.sleep(0.05)  # Simulate device I/O operations.
-        return protocol.STATUS_OK, None
-
-    @_handler(cracker.Commands.OSC_FORCE, has_payload=False)
-    def osc_force(self) -> bytes: ...  # type: ignore
-
-    @_handler(cracker.Commands.OSC_SINGLE, has_payload=False)
-    def osc_arm(self) -> bytes: ...  # type: ignore
-
-    @_handler(cracker.Commands.NUT_VOLTAGE, has_payload=False)
-    def nut_voltage(self) -> bytes: ...  # type: ignore
-
-    @_handler(cracker.Commands.OSC_ANALOG_CHANNEL_ENABLE, has_payload=False)
-    def osc_analog_channel_enable(self) -> bytes: ...  # type: ignore
-
-    @_handler(cracker.Commands.NUT_CLOCK, has_payload=False)
-    def nut_clock(self) -> bytes: ...  # type: ignore
-
-
-if __name__ == "__main__":
-    mock_cracker = MockCracker()
-    logger.set_level(logging.DEBUG, mock_cracker)
-    mock_cracker.start()
+    @_handler(operator.Commands.UPDATE_BITSTREAM)
+    def update_bitstream(self, payload: bytes) -> bytes:
+        return b""

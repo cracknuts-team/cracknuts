@@ -3,7 +3,7 @@ import logging
 from cracknuts.cracker.basic_cracker import CrackerS1
 from cracknuts.logger import set_level
 
-basic_device = CrackerS1(server_address=('localhost', 9881))
+basic_device = CrackerS1(address=('127.0.0.1', 9761))
 
 
 def setup_function():
