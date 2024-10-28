@@ -3,7 +3,7 @@ import logging
 from cracknuts.cracker.operator import Operator
 from cracknuts.logger import set_level
 
-operator = Operator('192.168.0.10', 9999)
+operator = Operator('127.0.0.1', 9760)
 
 
 def setup_function():

@@ -6,6 +6,8 @@ __version__ = "1.0.0"
 
 DEFAULT_PORT = 9761
 
+DEFAULT_OPERATOR_PORT = 9760
+
 MAGIC_STR = b"CRAK"
 
 # ┌───────────────────────────────────────────┬───────┐
