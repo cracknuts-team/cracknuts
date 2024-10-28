@@ -36,6 +36,19 @@ class Operator:
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
 
+    def disconnect(self):
+        """
+        Disconnect Cracker device.
+        :return: Cracker self.
+        """
+        try:
+            if self._socket:
+                self._socket.close()
+            self._socket = None
+            self._logger.info(f"Disconnect from {self._server_address}")
+        except OSError as e:
+            self._logger.error("Disconnection failed: %s", e)
+
     def start_server(self):
         status, res = self.send_and_receive(protocol.build_send_message(Commands.START_SERVER))
         self._logger.debug(f"Receive status: {status} and res: {res}")
