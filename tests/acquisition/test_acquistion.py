@@ -3,7 +3,7 @@ import time
 
 from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition
-from cracknuts.cracker.mock_cracker import MockCracker
+from cracknuts.mock.mock_cracker import MockCracker
 from cracknuts.cracker.stateful_cracker import StatefulCracker
 
 cracker = MockCracker()
