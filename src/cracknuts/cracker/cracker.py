@@ -342,7 +342,9 @@ class AbsCnpCracker(ABC, Cracker):
         Connect to Cracker device.
         :return: Cracker self.
         """
-        self._update_cracker_bin(bin_server_path, bin_bitstream_path, operator_port)
+
+        # the bin_server and bin_bitstream is unavailable now.
+        # self._update_cracker_bin(bin_server_path, bin_bitstream_path, operator_port)
 
         try:
             if not self._socket:
