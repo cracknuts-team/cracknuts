@@ -29,9 +29,16 @@ homepage = "https://cracknuts.io"
 [project.scripts]
 cracknuts = "cracknuts.__main__:main"
 
+[tool.setuptools]
+packages = ["cracknuts"]
+package-dir = {"" = "src"}
+include-package-data = true
 
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
+
+[tool.setuptools.package-data]
+"cracknuts" = ["template/*"]
 
 [tool.ruff]
 line-length = 120
