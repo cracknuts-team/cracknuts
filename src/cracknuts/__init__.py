@@ -1,6 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 
 
 def version():
