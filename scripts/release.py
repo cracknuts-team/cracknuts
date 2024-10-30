@@ -7,7 +7,7 @@ import sys
 
 
 def update_version(file_path, bump_type):
-    with open(file_path, 'r') as file:
+    with open(file_path) as file:
         content = file.read()
 
     match = re.search(r'__version__\s*=\s*"([0-9]+)\.([0-9]+)\.([0-9]+)"', content)
@@ -32,7 +32,7 @@ def update_version(file_path, bump_type):
     new_version = f"{major}.{minor}.{patch}"
 
     new_content = re.sub(r'__version__\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+"', f'__version__ = "{new_version}"', content)
-    with open(file_path, 'w') as file:
+    with open(file_path, "w") as file:
         file.write(new_content)
 
     print(f"Updated version to {new_version}")
