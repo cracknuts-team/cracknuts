@@ -67,7 +67,7 @@ def main(args):
     git_commit_and_tag(file_path, new_version, root_path)
 
 
-FILE_PATH = "src/cracknuts_panel/__init__.py"
+FILE_PATH = "src/cracknuts/__init__.py"
 
 if __name__ == "__main__":
     main(sys.argv)
