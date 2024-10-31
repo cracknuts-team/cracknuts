@@ -1,7 +1,9 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
+import urllib.request
+import xml.etree.ElementTree as et
 import logging
-
+from packaging import version
 import click
 
 import cracknuts
@@ -10,10 +12,12 @@ from cracknuts.cracker import protocol
 
 try:
     from cracknuts_panel import __main__ as cp_main
+    import cracknuts_panel
 
     has_cracknuts_panel = True
 except ImportError:
     cp_main = None
+    cracknuts_panel = None
     has_cracknuts_panel = False
 
 
@@ -45,6 +49,7 @@ def start_mock_cracker(
     operator_port: int = protocol.DEFAULT_OPERATOR_PORT,
     logging_level: str | int = logging.INFO,
 ):
+    _update_check()
     mock.start(host, port, operator_port, logging_level)
 
 
@@ -66,7 +71,36 @@ if has_cracknuts_panel:
         required=True,
     )
     def create_jupyter_notebook(template: str, new_ipynb_name: str):
+        _update_check()
         cp_main.create_jupyter_notebook(template, new_ipynb_name)
+
+
+def _update_check():
+    cracknuts_version_list_url = "https://pypi.org/rss/project/cracknuts/releases.xml"
+    _do_update_check("cracknuts", cracknuts_version_list_url, cracknuts.__version__)
+    if has_cracknuts_panel:
+        cracknuts_panel_version_list_url = "https://pypi.org/rss/project/cracknuts-panel/releases.xml"
+        _do_update_check("cracknuts-panel", cracknuts_panel_version_list_url, cracknuts_panel.__version__)
+
+
+def _do_update_check(name, url, current_version):
+    res = urllib.request.urlopen(url)
+    content = res.read().decode("utf-8")
+    root = et.fromstring(content)
+    latest = root.find("./channel/item")
+
+    latest_version = version.parse(latest.find("title").text)
+    current_version = version.parse(current_version)
+
+    if latest_version > current_version:
+        RED = "\033[31m"
+        GREEN = "\033[32m"
+        RESET = "\033[0m"
+        print(
+            f"A new release of {name} is available: "
+            f"{RED}{current_version}{RESET} -> {GREEN}{latest_version}{RESET}\r\n"
+            f"To update, run: python.exe -m pip install --upgrade {name}\r\n"
+        )
 
 
 if __name__ == "__main__":
