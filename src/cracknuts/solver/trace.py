@@ -131,6 +131,7 @@ class ScarrTraceDataset(TraceDataset):
         trace_count: int | None = None,
         sample_count: int | None = None,
         data_length: int | None = None,
+        trace_dtype: np.dtype = np.int16,
         zarr_kwargs: dict | None = None,
         zarr_trace_group_kwargs: dict | None = None,
         zarr_data_group_kwargs: dict | None = None,
@@ -173,7 +174,7 @@ class ScarrTraceDataset(TraceDataset):
                 channel_group.create(
                     self._ARRAY_TRACES_PATH,
                     shape=(self._trace_count, self._sample_count),
-                    dtype=np.int16,
+                    dtype=trace_dtype,
                     **zarr_trace_group_kwargs,
                 )
                 channel_group.create(
@@ -294,6 +295,7 @@ class NumpyTraceDataset(TraceDataset):
         channel_count: int | None = None,
         trace_count: int | None = None,
         sample_count: int | None = None,
+        trace_dtype: np.dtype = np.int16,
         data_length: int | None = None,
         create_time: int | None = None,
         version: str | None = None,
@@ -326,7 +328,7 @@ class NumpyTraceDataset(TraceDataset):
                     "must be specified when in write mode."
                 )
             self._trace_array = np.zeros(
-                shape=(self._channel_count, self._trace_count, self._sample_count), dtype=np.int16
+                shape=(self._channel_count, self._trace_count, self._sample_count), dtype=trace_dtype
             )
             self._data_array = np.zeros(
                 shape=(self._channel_count, self._trace_count, self._data_length), dtype=np.uint8
@@ -419,6 +421,7 @@ class NumpyTraceDataset(TraceDataset):
             trace_count=trace_count,
             sample_count=sample_count,
             data_length=data_length,
+            trace_dtype=trace.dtype,
         )
 
         if array_size == 1:
