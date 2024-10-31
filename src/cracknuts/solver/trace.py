@@ -242,7 +242,8 @@ class ScarrTraceDataset(TraceDataset):
         if trace_index not in range(0, self._trace_count):
             raise ValueError("trace, index out of range")
         self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
-        self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[trace_index] = data
+        if self._data_length != 0 and data is not None:
+            self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[trace_index] = data
 
     def get_origin_data(self):
         return self._zarr_data
@@ -479,7 +480,7 @@ class NumpyTraceDataset(TraceDataset):
 
     def set_trace(self, channel_index: int, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
         self._trace_array[channel_index, trace_index, :] = trace
-        if data is not None:
+        if self._data_length != 0 and data is not None:
             self._data_array[channel_index, trace_index, :] = data
 
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]:
