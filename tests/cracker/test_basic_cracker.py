@@ -1,14 +1,21 @@
 import logging
 
+import cracknuts.cracker.cracker
+from cracknuts.cracker import protocol
 from cracknuts.cracker.basic_cracker import CrackerS1
 from cracknuts.logger import set_level
 
-basic_device = CrackerS1(address=('127.0.0.1', 9761))
+basic_device = CrackerS1(address=('192.168.0.10', 9761))
+# basic_device = CrackerS1(address=('localhost', 9761))
 
 
 def setup_function():
     set_level(logging.DEBUG, basic_device)
     basic_device.connect()
+
+
+def test_connection_with_update_bin():
+    basic_device.get_name()
 
 
 def test_echo():
@@ -71,20 +78,26 @@ def test_scrat_analog_trigger_voltage():
     assert basic_device.osc_set_analog_trigger_voltage(1) is None
 
 
+# Commands.OSC_SAMPLE_DELAY
 def test_scrat_trigger_delay():
-    assert basic_device.osc_set_sample_delay(1) is None
+    status, res = basic_device.osc_set_sample_delay(1)
+    assert status is protocol.STATUS_OK and res is None
 
 
+# cracknuts.cracker.cracker.Commands.OSC_SAMPLE_LENGTH
 def test_scrat_sample_len():
-    assert basic_device.osc_set_sample_len(1) is None
+    status, res = basic_device.osc_set_sample_len(1)
+    assert status is protocol.STATUS_OK and res is None
 
 
 def test_scrat_arm():
-    assert basic_device.osc_single() is None
+    status, res = basic_device.osc_single()
+    assert status is protocol.STATUS_OK and res is None
 
 
 def test_scrat_is_triggered():
-    assert basic_device.osc_is_triggered() is not None
+    status, res = basic_device.osc_is_triggered()
+    assert status is protocol.STATUS_OK and res is not None
 
 
 def test_scrat_get_analog_wave():
@@ -100,11 +113,24 @@ def test_cracker_nut_enable():
 
 
 def test_cracker_nut_disable():
-    assert basic_device.nut_enable(0) is None
+    assert basic_device.nut_enable(0) is not None
 
 
 def test_cracker_nut_voltage():
-    assert basic_device.nut_voltage(3300) is None
+    assert basic_device.nut_voltage(3300) is not None
+
+
+def test_cracker_nut_voltage_raw():
+    assert basic_device.nut_voltage_raw(2) is not None
+
+
+def test_cracker_nut_gain_raw():
+    assert basic_device.osc_set_analog_gain_raw(1, 2) is not None
+
+
+# cracknuts.cracker.cracker.Commands.OSC_ANALOG_GAIN
+def test_cracker_nut_gain():
+    assert basic_device.osc_set_analog_gain_raw(1, 2) is not None
 
 
 def test_cracker_nut_interface():

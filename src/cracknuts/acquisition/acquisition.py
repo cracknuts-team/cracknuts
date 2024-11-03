@@ -285,11 +285,7 @@ class Acquisition(abc.ABC):
         if file_path is not None:
             self.file_path = file_path
         self.pre_init()
-        try:
-            self.init()
-        except Exception as e:
-            self._logger.error("Initialization error: %s", e.args)
-            return
+        self.init()
         self._post_init()
         self._loop(not test, self.file_path, self.file_format)
         self._pre_finish()

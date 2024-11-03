@@ -2,12 +2,14 @@
 
 import abc
 import os
+import re
 import socket
 import struct
 import threading
 import typing
 from abc import ABC
 from dataclasses import dataclass
+from packaging.version import Version
 
 import numpy as np
 
@@ -27,7 +29,10 @@ class Cracker(typing.Protocol):
 
     def get_uri(self): ...
 
-    def connect(self, bin_server_path: str | None, bin_bitstream_path: str | None, operator_port: int = None): ...
+    def connect(
+        self,
+        update_bin: bool = True,
+    ): ...
 
     def disconnect(self): ...
 
@@ -294,7 +299,13 @@ class AbsCnpCracker(ABC, Cracker):
     Cracker
     """
 
-    def __init__(self, address: tuple | str | None = None):
+    def __init__(
+        self,
+        address: tuple | str | None = None,
+        bin_server_path: str | None = None,
+        bin_bitstream_path: str | None = None,
+        operator_port: int = None,
+    ):
         """
         :param address: Cracker device address (ip, port) or "cnp://xxx:xx"
         """
@@ -310,6 +321,9 @@ class AbsCnpCracker(ABC, Cracker):
             0: False,
             1: False,
         }
+        self._bin_server_path = bin_server_path
+        self._bin_bitstream_path = bin_bitstream_path
+        self._operator_port = operator_port
 
     @abc.abstractmethod
     def get_default_config(self) -> Config: ...
@@ -335,16 +349,13 @@ class AbsCnpCracker(ABC, Cracker):
         else:
             return f"cnp://{self._server_address[0]}:{self._server_address[1]}"
 
-    def connect(
-        self, bin_server_path: str | None = None, bin_bitstream_path: str | None = None, operator_port: int = None
-    ):
+    def connect(self, update_bin: bool = True):
         """
         Connect to Cracker device.
         :return: Cracker self.
         """
-
-        # the bin_server and bin_bitstream is unavailable now.
-        # self._update_cracker_bin(bin_server_path, bin_bitstream_path, operator_port)
+        if update_bin:
+            self._update_cracker_bin(self._bin_server_path, self._bin_bitstream_path, self._operator_port)
 
         try:
             if not self._socket:
@@ -361,7 +372,12 @@ class AbsCnpCracker(ABC, Cracker):
             self._connection_status = False
 
     def _update_cracker_bin(
-        self, bin_server_path: str | None = None, bin_bitstream_path: str | None = None, operator_port: int = None
+        self,
+        bin_server_path: str | None = None,
+        bin_bitstream_path: str | None = None,
+        operator_port: int = None,
+        server_version: str = None,
+        bitstream_version: str = None,
     ):
         if operator_port is None:
             operator_port = protocol.DEFAULT_OPERATOR_PORT
@@ -372,11 +388,18 @@ class AbsCnpCracker(ABC, Cracker):
             operator.disconnect()
             return
 
+        hardware_model = operator.get_hardware_model()
+
         bin_path = os.path.join(cracknuts.__file__, "bin")
-        if bin_server_path is None:
-            bin_server_path = os.path.join(bin_path, "server")
-        if bin_bitstream_path is None:
-            bin_bitstream_path = os.path.join(bin_path, "bitstream")
+        user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", ".bin")
+        current_bin_path = os.path.join(os.getcwd(), ".bin")
+
+        if bin_server_path is None or bin_bitstream_path is None:
+            server_bin_dict, bitstream_bin_dict = self._find_bin_files(bin_path, user_home_bin_path, current_bin_path)
+            if bin_server_path is None:
+                bin_server_path = self._get_version_file_path(server_bin_dict, hardware_model, server_version)
+            if bin_bitstream_path is None:
+                bin_bitstream_path = self._get_version_file_path(bitstream_bin_dict, hardware_model, bitstream_version)
 
         if not os.path.exists(bin_server_path):
             raise FileNotFoundError(f"Server binary file not found: {bin_server_path}")
@@ -398,6 +421,44 @@ class AbsCnpCracker(ABC, Cracker):
                 raise Exception("Failed to update and start cracker")
         finally:
             operator.disconnect()
+
+    @staticmethod
+    def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str:
+        dict_by_hardware = bin_dict.get(hardware_model, None)
+        if dict_by_hardware is None:
+            raise Exception(f"can't find bin file for hardware model: {hardware_model}.")
+        if version is None:
+            sorted_version = sorted(dict_by_hardware.keys(), key=Version)
+            version = sorted_version[-1]
+        return dict_by_hardware.get(version, None)
+
+    @staticmethod
+    def _find_bin_files(*bin_paths: str) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
+        server_path_pattern = r"server-(?P<hardware>.+?)-(?P<firmware>.+?)"
+        bitstream_path_pattern = r"bitstream-(?P<hardware>.+?)-(?P<firmware>.+?).bit.bin"
+
+        server_bin_dict = {}
+        bitstream_bin_dict = {}
+
+        for bin_path in bin_paths:
+            if os.path.exists(bin_path):
+                for filename in os.listdir(bin_path):
+                    server_match = re.search(server_path_pattern, filename)
+                    if server_match:
+                        server_hardware_version = server_match.group("hardware")
+                        server_firmware_version = server_match.group("firmware")
+                        server_hardware_dict = server_bin_dict.get(server_hardware_version, {})
+                        server_hardware_dict[server_firmware_version] = os.path.join(bin_path, filename)
+                        server_bin_dict[server_hardware_version] = server_hardware_dict
+                    bitstream_match = re.search(bitstream_path_pattern, filename)
+                    if bitstream_match:
+                        bitstream_hardware_version = bitstream_match.group("hardware")
+                        bitstream_firmware_version = bitstream_match.group("firmware")
+                        bitstream_hardware_dict = bitstream_bin_dict.get(bitstream_hardware_version, {})
+                        bitstream_hardware_dict[bitstream_firmware_version] = os.path.join(bin_path, filename)
+                        bitstream_bin_dict[bitstream_hardware_version] = bitstream_hardware_dict
+
+        return server_bin_dict, bitstream_bin_dict
 
     def disconnect(self):
         """
