@@ -177,9 +177,8 @@ class CrackerS1(AbsCnpCracker):
 
     def osc_is_triggered(self):
         payload = None
-        self._logger.debug("scrat_is_triggered payload: %s", payload=payload)
-        status, _ = self.send_with_command(Commands.OSC_IS_TRIGGERED, payload=payload)
-        return status
+        self._logger.debug(f"scrat_is_triggered payload: {payload}")
+        return self.send_with_command(Commands.OSC_IS_TRIGGERED, payload=payload)
 
     def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
         payload = struct.pack(">BII", channel, offset, sample_count)
