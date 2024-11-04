@@ -27,6 +27,9 @@ cracknuts = "cracknuts.__main__:main"
 [tool.setuptools.dynamic]
 version = { attr = "cracknuts.__version__" }
 
+[tool.setuptools.package-data]
+"cracknuts" = ["bin/*"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
