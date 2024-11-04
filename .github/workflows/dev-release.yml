@@ -42,6 +42,7 @@ jobs:
           echo "No asset found matching the criteria."
           exit 1
         fi
+        mkdir -p $GITHUB_WORKSPACE/src/cracknuts/bin
         curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
         -o "$GITHUB_WORKSPACE/src/cracknuts/bin/${{ steps.get_release_from_rs-linux-app.outputs.asset_name }}" \
         "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}"
