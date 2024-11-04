@@ -27,7 +27,7 @@ jobs:
         
         latest_release=$(echo "$response" | jq -r '.[] | select(.prerelease == false and .draft == false) | .tag_name' | sort -V | tail -n 1)
 
-        asset_url=$(echo "$response" | jq -r --arg tag "$latest_release" '.[] | select(.tag_name == $tag) | .assets[] | select(.name | startswith("server-")) | .url')
+        asset_url=$(echo "$response" | jq -r --arg tag "$latest_release" '.[] | select(.tag_name == $tag) | .assets[] | select(.name | startswith("server-")) | .browser_download_url')
         asset_name=$(echo "$response" | jq -r --arg tag "$latest_release" '.[] | select(.tag_name == $tag) | .assets[] | select(.name | startswith("server-")) | .name')
 
         echo "Latest release tag: $latest_release"
