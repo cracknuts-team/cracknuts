@@ -34,16 +34,17 @@ jobs:
         echo "Asset URL: $asset_url"
         echo "Asset Name: $asset_name"
         echo "::set-output name=asset_url::$asset_url"
+        echo "::set-output name=asset_name::$asset_name"
 
     - name: Download latest asset from rs-linux-app
       run: |
-        if [ -z "${{ steps.get_release.outputs.asset_url }}" ]; then
+        if [ -z "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}" ]; then
           echo "No asset found matching the criteria."
           exit 1
         fi
         curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-        -o "$GITHUB_WORKSPACE/src/cracknuts/bin/${{ steps.get_release.outputs.asset_name }}" \
-        "${{ steps.get_release.outputs.asset_url }}"
+        -o "$GITHUB_WORKSPACE/src/cracknuts/bin/${{ steps.get_release_from_rs-linux-app.outputs.asset_name }}" \
+        "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}"
 
     - name: Update version.
       run: |
