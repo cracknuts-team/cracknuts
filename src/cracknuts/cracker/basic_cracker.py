@@ -45,8 +45,8 @@ class CrackerS1(AbsCnpCracker):
                 data = data[2:]
             data = bytes.fromhex(data)
         if isinstance(data, int):
-            data = data.to_bytes()
-        payload = struct.pack(">III", base_address, offset) + data
+            data = struct.pack(">I", data)
+        payload = struct.pack(">II", base_address, offset) + data
         self._logger.debug(f"cracker_write_register payload: {payload.hex()}")
         return self.send_with_command(Commands.CRACKER_WRITE_REGISTER, payload=payload)
 
