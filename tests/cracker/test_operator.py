@@ -3,12 +3,12 @@ import logging
 from cracknuts.cracker.operator import Operator
 from cracknuts.logger import set_level
 
-operator = Operator('192.168.0.10', 9760)
-# operator = Operator('localhost', 9760)
+# operator = Operator('192.168.0.10', 9760)
+operator = Operator('localhost', 9760)
 
 
 def setup_function():
-    set_level(logging.DEBUG, operator)
+    set_level(logging.INFO, operator)
     operator.connect()
 
 
@@ -38,7 +38,7 @@ def test_update_server():
 
 
 def test_update_bitstream():
-    with open("D:\\work\\ahcc\\M_NutTop_241027_v7_ok.bit.bin", mode="rb") as f:
+    with open("D:\\project\\cracknuts_jupyter\\Nuts\.bin\\bitstream-cracker_s1_v0.2-0.0.2.bit.bin", mode="rb") as f:
         status = operator.update_bitstream(f.read())
         print(status)
         assert isinstance(status, bool)
