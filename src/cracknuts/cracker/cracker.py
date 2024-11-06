@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import logging
 import os
 import re
 import socket
@@ -504,18 +505,22 @@ class AbsCnpCracker(ABC, Cracker):
             if not self.get_connection_status():
                 self._logger.error("Cracker is not connected.")
                 return protocol.STATUS_ERROR, None
-            self._logger.debug(f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(message)}")
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(message)}")
             self._socket.sendall(message)
             resp_header = self._socket.recv(protocol.RES_HEADER_SIZE)
-            self._logger.debug(
-                "Get response header from %s: \n%s",
-                self._server_address,
-                hex_util.get_bytes_matrix(resp_header),
-            )
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(
+                    "Get response header from %s: \n%s",
+                    self._server_address,
+                    hex_util.get_bytes_matrix(resp_header),
+                )
             magic, version, direction, status, length = struct.unpack(protocol.RES_HEADER_FORMAT, resp_header)
-            self._logger.debug(
-                f"Receive header from {self._server_address}: {magic}, {version}, {direction}, {status:02X}, {length}"
-            )
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(
+                    f"Receive header from {self._server_address}: "
+                    f"{magic}, {version}, {direction}, {status:02X}, {length}"
+                )
             if status >= protocol.STATUS_ERROR:
                 self._logger.error(f"Receive status error: {status:02X}")
             if length == 0:
@@ -526,9 +531,10 @@ class AbsCnpCracker(ABC, Cracker):
                     f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
                 )
             else:
-                self._logger.debug(
-                    f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
-                )
+                if self._logger.isEnabledFor(logging.DEBUG):
+                    self._logger.debug(
+                        f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                    )
             return status, resp_payload
         except OSError as e:
             self._logger.error("Send message failed: %s, and msg: %s", e, message)
@@ -558,7 +564,8 @@ class AbsCnpCracker(ABC, Cracker):
         if self._socket is not None:
             self._socket.sendall(payload.encode("ascii"))
             res = self._socket.recv(1024).decode("ascii")
-            self._logger.debug(f"Get response: {res}")
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(f"Get response: {res}")
             return res
         else:
             return "Cracker not connected."
@@ -571,7 +578,8 @@ class AbsCnpCracker(ABC, Cracker):
             content = bytes.fromhex(payload)
             self._socket.sendall(content)
             res = self._socket.recv(1024).hex()
-            self._logger.debug(f"Get response: {res}")
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(f"Get response: {res}")
             return res
         else:
             return "Cracker not connected."
