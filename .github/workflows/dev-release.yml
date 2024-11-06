@@ -3,7 +3,7 @@ name: DevRelease
 on:
   push:
     branches:
-      - "**"
+      - "main"
 
 jobs:
   build:
