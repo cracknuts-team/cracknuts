@@ -5,13 +5,13 @@ from cracknuts.cracker import protocol
 from cracknuts.cracker.basic_cracker import CrackerS1
 from cracknuts.logger import set_level
 
-basic_device = CrackerS1(address=('192.168.0.10', 9761))
-# basic_device = CrackerS1(address=('localhost', 9761))
+# basic_device = CrackerS1(address=('192.168.0.10', 9761))
+basic_device = CrackerS1(address=('localhost', 9761))
 
 
 def setup_function():
     set_level(logging.DEBUG, basic_device)
-    basic_device.connect()
+    basic_device.connect(update_bin=False)
 
 
 def test_connection_with_update_bin():
@@ -243,6 +243,10 @@ def test_multiple_echo():
     print(basic_device.get_id())
     print(basic_device.get_name())
     basic_device.disconnect()
+
+
+def test_write_register():
+    basic_device.cracker_write_register(0x43c00000,0x200, 0x2705)
 
 
 if __name__ == '__main__':
