@@ -16,6 +16,7 @@ dependencies = [
     "pandas~=2.2.2",
     "click~=8.1.7",
     "zarr~=2.18.2",
+    "packaging~=24.1"
 ]
 
 [project.urls]
