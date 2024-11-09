@@ -299,12 +299,10 @@ class Config:
     def dump_to_json(self) -> str:
         return json.dumps({k: v for k, v in self.__dict__.items() if k != "_binder"})
 
-    @classmethod
-    def load_from_json(cls, json_str: str) -> "Config":
-        instance = cls()
+    def load_from_json(self, json_str: str) -> "Config":
         for k, v in json.loads(json_str).items():
-            instance.__dict__[k] = v
-        return instance
+            self.__dict__[k] = v
+        return self
 
 
 class AbsCnpCracker(ABC, Cracker):
