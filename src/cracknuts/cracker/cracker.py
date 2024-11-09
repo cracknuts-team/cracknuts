@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import json
 import logging
 import os
 import re
@@ -9,10 +10,9 @@ import struct
 import threading
 import typing
 from abc import ABC
-from dataclasses import dataclass
-from packaging.version import Version
 
 import numpy as np
+from packaging.version import Version
 
 import cracknuts
 import cracknuts.utils.hex_util as hex_util
@@ -257,7 +257,6 @@ class Commands:
     CRACKER_CA_DATA = 0x025A
 
 
-@dataclass
 class Config:
     def __init__(
         self,
@@ -293,6 +292,19 @@ class Config:
         :return:
         """
         self._binder[key] = callback
+
+    def __str__(self):
+        return f"Config({", ".join([f"{k}: {v}" for k, v in self.__dict__.items()])})"
+
+    def dump_to_json(self) -> str:
+        return json.dumps({k: v for k, v in self.__dict__.items() if k != "_binder"})
+
+    @classmethod
+    def load_from_json(cls, json_str: str) -> "Config":
+        instance = cls()
+        for k, v in json.loads(json_str).items():
+            instance.__dict__[k] = v
+        return instance
 
 
 class AbsCnpCracker(ABC, Cracker):
