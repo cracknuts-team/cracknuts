@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 from types import MethodType
 
+
 from cracknuts.cracker.cracker import Cracker, Config
 
 
@@ -23,6 +24,35 @@ class StatefulCracker(Cracker):
 
     def get_current_config(self) -> Config:
         return self._config
+
+    def dump_config(self, path=None) -> str | None:
+        """
+        Dump the current config to a JSON file if a path is specified, or to a JSON string if no path is specified.
+
+        :param path: the path to the JSON file
+        :return: the content of JSON string or None if no path is specified.
+        """
+        config_json = self._config.dump_to_json()
+        if path is None:
+            return config_json
+        else:
+            with open(path, "w") as f:
+                f.write(config_json)
+
+    def load_config_from_file(self, path) -> None:
+        """
+        Load config from a JSON file.
+        :param path: the path to the JSON file
+        """
+        with open(path) as f:
+            self.load_config_from_json(f.readlines())
+
+    def load_config_from_str(self, json_str) -> None:
+        """
+        Load config from a JSON string.
+        :param json_str: the JSON string
+        """
+        self._config.load_from_json(json_str)
 
     def sync_config_to_cracker(self):
         """

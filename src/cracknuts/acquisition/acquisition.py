@@ -2,6 +2,7 @@
 
 import abc
 import datetime
+import json
 import threading
 import time
 import typing
@@ -513,6 +514,49 @@ class Acquisition(abc.ABC):
 
     def get_last_wave(self) -> dict[int, np.ndarray] | None:
         return self._last_wave
+
+    def dump_config(self, path: str = None) -> str | None:
+        """
+        Dump the current config to a JSON file if a path is specified, or to a JSON string if no path is specified.
+        :param path: the path to the JSON file
+        :return: the content of JSON string or None if no path is specified.
+        """
+        config = {
+            "trace_count": self.trace_count,
+            "sample_length": self.sample_length,
+            "sample_offset": self.sample_offset,
+            "trigger_judge_timeout": self.trigger_judge_timeout,
+            "trigger_judge_wait_time": self.trigger_judge_wait_time,
+            "do_error_max_count": self.do_error_max_count,
+            "trace_file_path": self.file_path,
+        }
+        if path is None:
+            return json.dumps(config)
+        else:
+            with open(path, "w") as f:
+                json.dump(config, f)
+
+    def load_config_from_file(self, path: str) -> None:
+        """
+        Load config from a JSON file
+        :param path: the path to the JSON file
+        """
+        with open(path) as f:
+            self.load_config_from_str(json.load(f))
+
+    def load_config_from_str(self, json_str: str) -> None:
+        """
+        Load config from a JSON string
+        :param json_str: the JSON string
+        """
+        config = json.loads(json_str)
+        self.trace_count = config["trace_count"]
+        self.sample_length = config["sample_length"]
+        self.sample_offset = config["sample_offset"]
+        self.trigger_judge_timeout = config["trigger_judge_timeout"]
+        self.trigger_judge_wait_time = config["trigger_judge_wait_time"]
+        self.do_error_max_count = config["do_error_max_count"]
+        self.file_path = config["trace_file_path"]
 
     @staticmethod
     def builder():

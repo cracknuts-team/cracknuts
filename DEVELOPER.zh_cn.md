@@ -37,6 +37,10 @@ python -m build
 
 日志logger在类中的必须是`包路径+名称`
 
+## docstring规范
+
+reStructuredText（reST）
+
 ## 提交注释规范
 
 1. 基本结构： 通常采用如下格式：
