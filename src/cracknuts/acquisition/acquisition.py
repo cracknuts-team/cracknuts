@@ -3,6 +3,7 @@
 import abc
 import datetime
 import json
+import struct
 import threading
 import time
 import typing
@@ -369,8 +370,7 @@ class Acquisition(abc.ABC):
                     )
                     break
                 self._logger.debug("Judge trigger status.")
-                # if self._is_triggered():
-                if True:
+                if self._is_triggered():
                     self._last_wave = self._get_waves(self.sample_offset, self.sample_length)
                     if self._last_wave is not None:
                         self._logger.debug(
@@ -483,7 +483,9 @@ class Acquisition(abc.ABC):
     def _post_do(self): ...
 
     def _is_triggered(self):
-        return self.cracker.osc_is_triggered()
+        status, res = self.cracker.osc_is_triggered()
+        res_code = int.from_bytes(res, "big")
+        return res_code == 4
 
     def _get_waves(self, offset: int, sample_count: int) -> dict[int, np.ndarray]:
         config = self.cracker.get_current_config()
