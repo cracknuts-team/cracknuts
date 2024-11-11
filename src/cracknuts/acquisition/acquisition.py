@@ -305,6 +305,7 @@ class Acquisition(abc.ABC):
 
         cracker_version = self.cracker.get_version()
         if persistent:
+            channel_count = len(self.cracker.get_current_config().osc_analog_channel_enable.keys())
             if file_path is None or file_path == "auto":
                 file_path = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
                 if file_format == "scarr":
@@ -315,7 +316,7 @@ class Acquisition(abc.ABC):
             if file_format == "scarr":
                 dataset = ScarrTraceDataset.new(
                     file_path,
-                    1,
+                    channel_count,
                     self.trace_count,
                     self.sample_length,
                     self.data_length,
@@ -324,14 +325,15 @@ class Acquisition(abc.ABC):
             elif file_format == "numpy":
                 dataset = NumpyTraceDataset.new(
                     file_path,
-                    1,
+                    channel_count,
                     self.trace_count,
                     self.sample_length,
                     self.data_length,
                     version=f"({cracker_version}, {cracker_version})",
                 )  # todo channel
             else:
-                self._logger.warning(f"Unsupported file format: {file_format}")
+                self._logger.error(f"Unsupported file format: {file_format}")
+                return
         else:
             dataset = None
 
@@ -350,6 +352,7 @@ class Acquisition(abc.ABC):
                 do_error_count += 1
                 if self.do_error_handler_strategy == self.DO_ERROR_HANDLER_STRATEGY_EXIT:
                     self._logger.error("Exit with do error")
+                    break
                 elif do_error_count > self.do_error_max_count:
                     self._logger.error(
                         f"Exit with do function get error count: {do_error_count} is grate than do_error_max_count"
@@ -387,8 +390,10 @@ class Acquisition(abc.ABC):
 
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None and self._last_wave is not None:
-                dataset.set_trace(0, trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
-                # dataset.set_trace(1, trace_index, self._last_wave[2], data)  # todo second channel
+                if 1 in self._last_wave.keys():
+                    dataset.set_trace(0, trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
+                elif 2 in self._last_wave.keys():
+                    dataset.set_trace(1, trace_index, self._last_wave[2], np.frombuffer(data, dtype=np.uint8))
             self._post_do()
             trace_index += 1
             self._current_trace_count = trace_index
@@ -496,14 +501,6 @@ class Acquisition(abc.ABC):
         for c in enable_channels:
             status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_count)
         return wave_dict
-
-    def save_data(self, data_type: str = "zarr"):
-        """
-        Save wave, key and other info to acquisition dataset file.
-        """
-        # if data_type == 'zarr':
-        #     zarr.create()
-        ...
 
     def _pre_finish(self): ...
 
