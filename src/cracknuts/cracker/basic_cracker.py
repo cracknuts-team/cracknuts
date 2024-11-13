@@ -140,13 +140,13 @@ class CrackerS1(AbsCnpCracker):
         self._logger.debug(f"scrat_digital_voltage payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_DIGITAL_VOLTAGE, payload=payload)
 
-    def osc_set_trigger_mode(self, source: int, stop: int):
-        payload = struct.pack(">II", source, stop)
+    def osc_set_trigger_mode(self, mode: int):
+        payload = struct.pack(">B", mode)
         self._logger.debug(f"scrat_trigger_mode payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_TRIGGER_MODE, payload=payload)
 
-    def osc_set_analog_trigger_source(self, channel: int):
-        payload = struct.pack(">B", channel)
+    def osc_set_analog_trigger_source(self, source: int):
+        payload = struct.pack(">B", source)
         self._logger.debug(f"scrat_analog_trigger_source payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_ANALOG_TRIGGER_SOURCE, payload=payload)
 
@@ -154,6 +154,28 @@ class CrackerS1(AbsCnpCracker):
         payload = struct.pack(">B", channel)
         self._logger.debug(f"scrat_digital_trigger_source payload: {payload.hex()}")
         return self.send_with_command(Commands.OSC_DIGITAL_TRIGGER_SOURCE, payload=payload)
+
+    def osc_set_trigger_edge(self, edge: int | str):
+        if isinstance(edge, str):
+            if edge == "up":
+                edge = 0
+            elif edge == "down":
+                edge = 1
+            elif edge == "either":
+                edge = 2
+            else:
+                raise ValueError(f"Unknown edge type: {edge}")
+        elif isinstance(edge, int):
+            if edge not in (0, 1, 2):
+                raise ValueError(f"Unknown edge type: {edge}")
+        payload = struct.pack(">B", edge)
+        self._logger.debug(f"scrat_analog_trigger_edge payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_TRIGGER_EDGE, payload=payload)
+
+    def osc_set_trigger_edge_level(self, edge_level: int):
+        payload = struct.pack(">H", edge_level)
+        self._logger.debug(f"scrat_analog_trigger_edge_level payload: {payload.hex()}")
+        return self.send_with_command(Commands.OSC_TRIGGER_EDGE_LEVEL, payload=payload)
 
     def osc_set_analog_trigger_voltage(self, voltage: int):
         payload = struct.pack(">I", voltage)
