@@ -13,7 +13,7 @@ class CrackerS1(AbsCnpCracker):
         super().__init__(*args, **kwargs)
         self._default_config = Config(
             nut_voltage=3500,
-            osc_analog_channel_enable={1: True, 2: False},
+            osc_analog_channel_enable={1: False, 2: True},
             osc_sample_len=1024,
         )
 
