@@ -3,7 +3,6 @@
 import abc
 import datetime
 import json
-import struct
 import threading
 import time
 import typing
@@ -34,7 +33,7 @@ class Acquisition(abc.ABC):
         self,
         cracker: StatefulCracker,
         trace_count: int = 1000,
-        sample_length: int = 1024,
+        sample_length: int = -1,
         sample_offset: int = 0,
         data_length: int = 0,
         trigger_judge_wait_time: float = 0.05,
@@ -44,6 +43,10 @@ class Acquisition(abc.ABC):
         file_format: str = "scarr",
         file_path: str = "auto",
     ):
+        """
+        :param sample_length: the sample length to be acquired,
+                              it will set to `cracker.current_count().sample_len` if it is -1
+        """
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
         self._status: int = self.STATUS_STOPPED
@@ -492,14 +495,16 @@ class Acquisition(abc.ABC):
         res_code = int.from_bytes(res, "big")
         return res_code == 4
 
-    def _get_waves(self, offset: int, sample_count: int) -> dict[int, np.ndarray]:
+    def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
+        if sample_length == -1:
+            sample_length = self.cracker.get_current_config().osc_sample_len
         config = self.cracker.get_current_config()
         if config.osc_analog_channel_enable is None:
             raise Exception("Channel info can't be none.")
         enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
-            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_count)
+            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
         return wave_dict
 
     def _pre_finish(self): ...
