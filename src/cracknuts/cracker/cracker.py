@@ -22,6 +22,8 @@ from cracknuts.cracker.operator import Operator
 
 
 class Cracker(typing.Protocol):
+    """Interface of Cracker classes."""
+
     def get_default_config(self) -> "Config": ...
 
     def set_addr(self, ip, port) -> None: ...
@@ -45,7 +47,17 @@ class Cracker(typing.Protocol):
 
     def send_with_command(
         self, command: int, rfu: int = 0, payload: str | bytes | None = None
-    ) -> tuple[int, bytes | None]: ...
+    ) -> tuple[int, bytes | None]:
+        """Send payload with command
+
+        :param command:  the command to send.
+        :type command: int
+        :param rfu:       the RFU to send.
+        :type rfu: int
+        :param payload: the payload to send.
+        :type payload: bytes | None
+        """
+        ...
 
     def echo(self, payload: str) -> str: ...
 
@@ -55,10 +67,13 @@ class Cracker(typing.Protocol):
 
     def get_name(self) -> str | None: ...
 
-    def get_version(self) -> str | None: ...
+    def get_version(self) -> str | None:
+        """Get cracker version"""
+        ...
 
     def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """Read register
+
         :param base_address: the base address of the register
         :param offset: the offset of the register
         :return: the result of reading the register
@@ -69,6 +84,7 @@ class Cracker(typing.Protocol):
         self, base_address: int, offset: int, data: bytes | int | str
     ) -> tuple[int, bytes | None]:
         """Write register
+
         :param base_address: the base address of the register
         :param offset: the offset of the register
         :param data: the data to be written
@@ -313,9 +329,7 @@ class Config:
 
 
 class AbsCnpCracker(ABC, Cracker):
-    """Cracker
-    Cracker
-    """
+    """Abstract cnp protocol supported Cracker"""
 
     def __init__(
         self,
