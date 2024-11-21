@@ -34,7 +34,7 @@ version = { attr = "cracknuts.__version__" }
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-exclude = ["demo", "tests"]
+exclude = ["demo", "tests", "docs"]
 
 [tool.ruff.lint]
 extend-select = [

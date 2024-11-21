@@ -11,3 +11,4 @@ build
 
 **/__pycache__/**
 src/cracknuts/bin
+docs/api/build
