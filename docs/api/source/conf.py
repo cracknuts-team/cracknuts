@@ -36,6 +36,8 @@ html_title = "API Documentation"
 html_theme = "sphinxawesome_theme"
 html_static_path = ["_static"]
 
+html_favicon = '../../static/favicon.ico'
+
 html_theme_options = {
     "logo_light": "../../static/logo2.svg",
     "logo_dark": "../../static/logo2.svg",
