@@ -6,6 +6,11 @@ from cracknuts.cracker.cracker import Cracker, Config
 
 
 class StatefulCracker(Cracker):
+    """
+    Proxy of the `Cracker` class. It saves the configuration of `Cracker` after executing the `config operate command`.
+
+    """
+
     def __getattribute__(self, name):
         # todo 这里需要规范cracker的方法名称和配置的key名称，以便可以直接进行配置信息存储
         attr = super().__getattribute__(name)
@@ -23,6 +28,12 @@ class StatefulCracker(Cracker):
         self._config: Config = self._cracker.get_default_config()
 
     def get_current_config(self) -> Config:
+        """
+        Get current configuration of `Cracker`.
+
+        :return: Current configuration of `Cracker`.
+        :rtype: Config
+        """
         return self._config
 
     def dump_config(self, path=None) -> str | None:
@@ -42,6 +53,7 @@ class StatefulCracker(Cracker):
     def load_config_from_file(self, path) -> None:
         """
         Load config from a JSON file.
+
         :param path: the path to the JSON file
         """
         with open(path) as f:
@@ -50,6 +62,7 @@ class StatefulCracker(Cracker):
     def load_config_from_str(self, json_str) -> None:
         """
         Load config from a JSON string.
+
         :param json_str: the JSON string
         """
         self._config.load_from_json(json_str)
@@ -57,9 +70,12 @@ class StatefulCracker(Cracker):
     def sync_config_to_cracker(self):
         """
         Sync config to cracker.
+
         To prevent configuration inconsistencies between the host and the device,
         so all configuration information needs to be written to the device.
         User should call this function before get data from device.
+
+        NOTE: This function is currently ignored and will be resumed after all Cracker functions are completed.
         """
         # if self._config.nut_voltage is not None:
         #     self._cracker.nut_voltage(self._config.nut_voltage)

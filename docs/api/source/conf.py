@@ -6,10 +6,20 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import cracknuts
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("../../../src/cracknuts"))  # 修改为你的项目路径
+sys.path.insert(1, ".")
+
+print(sys.path)
+
 project = "CrackNuts"
 copyright = "2024, CrackNuts"
 author = "CrackNuts"
-release = "0.1.0"
+release = cracknuts.version()
+version = release
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -45,8 +55,3 @@ html_theme_options = {
         "CrackNuts": "/",
     },
 }
-
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath("../../../src/cracknuts"))  # 修改为你的项目路径
