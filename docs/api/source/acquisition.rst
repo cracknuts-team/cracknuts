@@ -1,7 +1,7 @@
 Acquisition
 ===========
 
-`Acquisition` 管理波形数据的采集流程。
+`Acquisition` is responsible for managing the process of waveform data acquisition.
 
 Acquisition
 -----------
