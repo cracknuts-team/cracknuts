@@ -324,6 +324,8 @@ class Config:
 
     def load_from_json(self, json_str: str) -> "Config":
         for k, v in json.loads(json_str).items():
+            if k == "osc_analog_channel_enable":
+                v = {int(_k): v for _k, _v in v.items()}
             self.__dict__[k] = v
         return self
 
