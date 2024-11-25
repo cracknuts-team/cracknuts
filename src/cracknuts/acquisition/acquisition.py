@@ -309,6 +309,11 @@ class Acquisition(abc.ABC):
         cracker_version = self.cracker.get_version()
         if persistent:
             channel_count = len(self.cracker.get_current_config().osc_analog_channel_enable.keys())
+            if self.sample_length == -1:
+                sample_length = self.cracker.get_current_config().osc_sample_len
+            else:
+                sample_length = self.sample_length
+
             if file_path is None or file_path == "auto":
                 file_path = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
                 if file_format == "scarr":
@@ -321,7 +326,7 @@ class Acquisition(abc.ABC):
                     file_path,
                     channel_count,
                     self.trace_count,
-                    self.sample_length,
+                    sample_length,
                     self.data_length,
                     version=f"({cracker_version}, {cracker_version})",
                 )  # todo channel
@@ -330,7 +335,7 @@ class Acquisition(abc.ABC):
                     file_path,
                     channel_count,
                     self.trace_count,
-                    self.sample_length,
+                    sample_length,
                     self.data_length,
                     version=f"({cracker_version}, {cracker_version})",
                 )  # todo channel
