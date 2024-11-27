@@ -11,13 +11,13 @@ import cracknuts.mock as mock
 from cracknuts.cracker import protocol
 
 try:
-    from cracknuts_panel import __main__ as cp_main
-    import cracknuts_panel
+    from cracknuts.jupyter import __main__ as cp_main
+    import cracknuts.jupyter
 
     has_cracknuts_panel = True
 except ImportError:
     cp_main = None
-    cracknuts_panel = None
+    cracknuts.jupyter = None
     has_cracknuts_panel = False
 
 
@@ -49,7 +49,7 @@ def start_mock_cracker(
     operator_port: int = protocol.DEFAULT_OPERATOR_PORT,
     logging_level: str | int = logging.INFO,
 ):
-    _update_check()
+    # _update_check()
     mock.start(host, port, operator_port, logging_level)
 
 
@@ -80,7 +80,7 @@ def _update_check():
     _do_update_check("cracknuts", cracknuts_version_list_url, cracknuts.__version__)
     if has_cracknuts_panel:
         cracknuts_panel_version_list_url = "https://pypi.org/rss/project/cracknuts-panel/releases.xml"
-        _do_update_check("cracknuts-panel", cracknuts_panel_version_list_url, cracknuts_panel.__version__)
+        _do_update_check("cracknuts-panel", cracknuts_panel_version_list_url, cracknuts.jupyter.__version__)
 
 
 def _do_update_check(name, url, current_version):
