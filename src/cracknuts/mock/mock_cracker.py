@@ -144,7 +144,7 @@ class MockCracker:
     @_handler(cracker.Commands.OSC_IS_TRIGGERED)
     def osc_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
         time.sleep(0.05)  # Simulate device I/O operations.
-        return protocol.STATUS_OK, int.to_bytes(4, 4, 'big')
+        return protocol.STATUS_OK, int.to_bytes(4, 4, "big")
 
     @_handler(cracker.Commands.OSC_FORCE, has_payload=False)
     def osc_force(self) -> bytes: ...  # type: ignore
@@ -160,3 +160,6 @@ class MockCracker:
 
     @_handler(cracker.Commands.NUT_CLOCK, has_payload=False)
     def nut_clock(self) -> bytes: ...  # type: ignore
+
+    @_handler(cracker.Commands.OSC_SAMPLE_LENGTH, has_payload=False)
+    def osc_sample_len(self) -> bytes: ...

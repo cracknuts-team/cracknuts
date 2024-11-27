@@ -1,8 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-__version__ = "0.0.18"
-
-
 from cracknuts.acquisition import Acquisition
 from cracknuts.cracker.stateful_cracker import StatefulCracker
 
@@ -11,10 +8,6 @@ from cracknuts.jupyter.cracker_panel import CrackerPanelWidget
 from cracknuts.jupyter.cracknuts_panel import CracknutsPanelWidget
 from cracknuts.jupyter.trace_analysis_panel import TraceAnalysisPanelWidget
 from cracknuts.jupyter.trace_panel import TraceMonitorPanelWidget
-
-
-def version():
-    return __version__
 
 
 def display_cracknuts_panel(acq: Acquisition):
