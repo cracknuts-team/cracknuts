@@ -13,10 +13,17 @@ authors = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 maintainers = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 dependencies = [
     "numpy~=1.26.4",
-    "pandas~=2.2.2",
     "click~=8.1.7",
     "zarr~=2.18.2",
-    "packaging~=24.1"
+    "packaging~=24.1",
+]
+
+[project.optional-dependencies]
+jupyter = [
+    "jupyter~=1.1.1",
+    "anywidget~=0.9.13",
+    "traitlets~=5.14.3",
+    "ipynbname==2024.1.0.0",
 ]
 
 [project.urls]
@@ -29,7 +36,7 @@ cracknuts = "cracknuts.__main__:main"
 version = { attr = "cracknuts.__version__" }
 
 [tool.setuptools.package-data]
-"cracknuts" = ["bin/*"]
+"cracknuts" = ["bin/*", "jupyter/static/*", "template/**/*"]
 
 [tool.ruff]
 line-length = 120

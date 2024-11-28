@@ -4,16 +4,13 @@ on:
   push:
     branches:
       - "main"
-
 jobs:
   build:
     if: "!startsWith(github.event.head_commit.message, 'release:')"
     runs-on: ubuntu-latest
-
     steps:
     - name: Cancel Previous Runs
       uses: styfle/cancel-workflow-action@0.12.1
-
     - name: Checkout code
       uses: actions/checkout@v4
       with:
@@ -36,7 +33,6 @@ jobs:
         echo "Asset Name: $asset_name"
         echo "::set-output name=asset_url::$asset_url"
         echo "::set-output name=asset_name::$asset_name"
-
     - name: Download latest asset from rs-linux-app
       run: |
         if [ -z "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}" ]; then
@@ -47,7 +43,6 @@ jobs:
         curl -L -H "Authorization: token ${{ secrets.FETCH_RELEASE_FROM_RS_LINUX_APP }}" \
         -o "$GITHUB_WORKSPACE/src/cracknuts/bin/${{ steps.get_release_from_rs-linux-app.outputs.asset_name }}" \
         "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}"
-
     - name: Update version.
       run: |
         incremented_version=`grep '__version__ = ' src/cracknuts/__init__.py | awk '{print $3}' | awk -F. '{printf "%d.%d.%d\n", $1, $2, $3+1}'`
@@ -58,23 +53,30 @@ jobs:
         fi
         dev_version="${incremented_version}.dev${n_commits}"
         sed -i "s/__version__ = \".*\"/__version__ = \"$dev_version\"/" src/cracknuts/__init__.py
-
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install node dependencies
+      run: |
+        cd jupyter_frontend
+        npm install
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install build
         pip install twine
-
+    - name: Build jupyter frontend
+      run: |
+        cd jupyter_frontend
+        npm run clean-build
     - name: Build the project
       run: |
         python -m build
-
-    - name: Upload to pypi
+    - name: Upload to test pypi
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{secrets.TESTPYPI_TOKEN}}

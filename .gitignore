@@ -12,3 +12,6 @@ build
 **/__pycache__/**
 src/cracknuts/bin
 docs/api/build
+node_modules
+src/cracknuts/jupyter/static/*
+.ipynb_checkpoints
