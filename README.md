@@ -12,11 +12,11 @@ A library for `cracknuts` device.
 
 ## Install
 
-Just run `pip install cracknuts` or run `pip install cracknuts[jupyter]` if you are developing in [Jupyter]<https://jupyter.org/>.
+Just run `pip install cracknuts` or run `pip install cracknuts[jupyter]` if you are developing in [Jupyter](https://jupyter.org/).
 
 Then run `cracknuts --version`, and it will print the version of `cracknuts`.
 Congratulations, the installation was successful, and you can now start using `CrackNuts` for research and learning.
 
 ## Usage
 
-Visit [CrackNuts]<https://cracknuts.io> More details.  
+Visit [CrackNuts](https://cracknuts.io) More details.  
