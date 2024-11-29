@@ -386,10 +386,11 @@ class AbsCnpCracker(ABC, Cracker):
     def connect(self, update_bin: bool = True):
         """
         Connect to Cracker device.
-        :return: Cracker self.
         """
-        if update_bin:
-            self._update_cracker_bin(self._bin_server_path, self._bin_bitstream_path, self._operator_port)
+        if update_bin and not self._update_cracker_bin(
+            self._bin_server_path, self._bin_bitstream_path, self._operator_port
+        ):
+            return
 
         try:
             if not self._socket:
@@ -397,7 +398,7 @@ class AbsCnpCracker(ABC, Cracker):
                 self._socket.settimeout(5)
             if self._connection_status:
                 self._logger.debug("Already connected, reuse.")
-                return
+                return self
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
@@ -412,15 +413,17 @@ class AbsCnpCracker(ABC, Cracker):
         operator_port: int = None,
         server_version: str = None,
         bitstream_version: str = None,
-    ):
+    ) -> bool:
         if operator_port is None:
             operator_port = protocol.DEFAULT_OPERATOR_PORT
         operator = Operator(self._server_address[0], operator_port)
-        operator.connect()
+
+        if not operator.connect():
+            return False
 
         if operator.get_status():
             operator.disconnect()
-            return
+            return True
 
         hardware_model = operator.get_hardware_model()
 
@@ -435,32 +438,40 @@ class AbsCnpCracker(ABC, Cracker):
             if bin_bitstream_path is None:
                 bin_bitstream_path = self._get_version_file_path(bitstream_bin_dict, hardware_model, bitstream_version)
 
-        if not os.path.exists(bin_server_path):
-            raise FileNotFoundError(f"Server binary file not found: {bin_server_path}")
+        if bin_server_path is None or not os.path.exists(bin_server_path):
+            self._logger.error(
+                f"Server binary file not found for hardware: {hardware_model} and server_version: {server_version}."
+            )
+            return False
 
-        if not os.path.exists(bin_bitstream_path):
-            raise FileNotFoundError(f"Bitstream file not found: {bin_bitstream_path}")
+        if bin_bitstream_path is None or not os.path.exists(bin_bitstream_path):
+            self._logger.error(
+                f"Bitstream file not found for hardware: {hardware_model} and bitstream_version: {bitstream_version}"
+            )
+            return False
 
         bin_server = open(bin_server_path, "rb").read()
         bin_bitstream = open(bin_bitstream_path, "rb").read()
 
         try:
-            if not operator.update_server(bin_server):
-                raise Exception("Failed to update cracker server")
-            if not operator.update_bitstream(bin_bitstream):
-                raise Exception("Failed to update cracker bitstream")
-            if not operator.start_server():
-                raise Exception("Failed to start cracker server")
-            if not operator.get_status():
-                raise Exception("Failed to update and start cracker")
+            return (
+                operator.update_server(bin_server)
+                and operator.update_bitstream(bin_bitstream)
+                and operator.get_status()
+            )
+        except OSError as e:
+            self._logger.error("Do update cracker bin failed: %s", e)
+            return False
         finally:
             operator.disconnect()
 
-    @staticmethod
-    def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str:
+    def _get_version_file_path(
+        self, bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str
+    ) -> str | None:
         dict_by_hardware = bin_dict.get(hardware_model, None)
         if dict_by_hardware is None:
-            raise Exception(f"can't find bin file for hardware model: {hardware_model}.")
+            self._logger.error(f"bin file dict is none: {hardware_model}.")
+            return None
         if version is None:
             sorted_version = sorted(dict_by_hardware.keys(), key=Version)
             version = sorted_version[-1]
