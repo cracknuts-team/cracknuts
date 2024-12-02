@@ -4,8 +4,7 @@ import json
 import os
 import pathlib
 import typing
-
-import ipynbname
+import sys
 
 from cracknuts.cracker.stateful_cracker import StatefulCracker
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
@@ -69,7 +68,7 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
         """
         current_config_path = self._get_current_config_path()
 
-        if os.path.exists(current_config_path):
+        if current_config_path is not None and os.path.exists(current_config_path):
             with open(current_config_path) as f:
                 try:
                     config = json.load(f)
@@ -82,6 +81,18 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
                 self.cracker.load_config_from_str(config_info)
                 self.cracker.set_uri(connection_info)
                 self.acquisition.load_config_from_str(acquisition_info)
+        else:
+            self._logger.warning("Current config path is None or is no exist, current config will be ignored.")
 
     def _get_current_config_path(self):
-        return os.path.join(os.path.dirname(ipynbname.path()), "." + ipynbname.name() + ".cncfg")
+        global_vars = sys.modules["__main__"].__dict__
+
+        ipynb_path = None
+
+        if "__vsc_ipynb_file__" in global_vars:
+            ipynb_path = global_vars["__vsc_ipynb_file__"]
+        elif "__session__" in global_vars:
+            ipynb_path = global_vars["__session__"]
+
+        if ipynb_path is not None:
+            return os.path.join(os.path.dirname(ipynb_path), "." + os.path.basename(ipynb_path) + ".cncfg")
