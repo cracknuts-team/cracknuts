@@ -9,5 +9,5 @@ await esbuild.build({
   define: {
     "process.env.NODE_ENV": "\"production\""
   },
-  logLevel: "info"
+  logLevel: "info",
 }).catch(() => process.exit(1));
