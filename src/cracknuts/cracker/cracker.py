@@ -428,11 +428,14 @@ class AbsCnpCracker(ABC, Cracker):
         hardware_model = operator.get_hardware_model()
 
         bin_path = os.path.join(cracknuts.__file__, "bin")
-        user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", ".bin")
+        user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "bin")
         current_bin_path = os.path.join(os.getcwd(), ".bin")
 
         if bin_server_path is None or bin_bitstream_path is None:
             server_bin_dict, bitstream_bin_dict = self._find_bin_files(bin_path, user_home_bin_path, current_bin_path)
+            self._logger.debug(
+                f"Find bin server_bin_dict: {server_bin_dict} and bitstream_bin_dict: {bitstream_bin_dict}"
+            )
             if bin_server_path is None:
                 bin_server_path = self._get_version_file_path(server_bin_dict, hardware_model, server_version)
             if bin_bitstream_path is None:
@@ -450,6 +453,8 @@ class AbsCnpCracker(ABC, Cracker):
             )
             return False
 
+        self._logger.debug(f"Get bit_server file at {bin_server_path}.")
+        self._logger.debug(f"Get bin_bitstream file at {bin_bitstream_path}.")
         bin_server = open(bin_server_path, "rb").read()
         bin_bitstream = open(bin_bitstream_path, "rb").read()
 
