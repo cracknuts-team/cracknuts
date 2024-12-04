@@ -84,7 +84,8 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
         else:
             self._logger.warning("Current config path is None or is no exist, current config will be ignored.")
 
-    def _get_current_config_path(self):
+    @staticmethod
+    def _get_current_config_path():
         global_vars = sys.modules["__main__"].__dict__
 
         ipynb_path = None
@@ -95,4 +96,4 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
             ipynb_path = global_vars["__session__"]
 
         if ipynb_path is not None:
-            return os.path.join(os.path.dirname(ipynb_path), "." + os.path.basename(ipynb_path) + ".cncfg")
+            return os.path.join(os.path.dirname(ipynb_path), "." + os.path.basename(ipynb_path)[:-6] + ".cncfg")
