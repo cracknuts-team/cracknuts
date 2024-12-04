@@ -71,7 +71,7 @@ class _Acquisition(Acquisition):
 
     def init(self):
         if self._init is not None:
-            return self._init()
+            return self._init(self.cracker)
 
     def do(self):
         if self._do is not None:
