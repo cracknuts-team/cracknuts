@@ -16,7 +16,7 @@ class StatefulCracker(Cracker):
         attr = super().__getattribute__(name)
 
         if isinstance(attr, MethodType):
-            if name in object.__getattribute__(self, "__class__").__dict__:
+            if name in StatefulCracker.__dict__:
                 return attr
             else:
                 cracker = super().__getattribute__("_cracker")
