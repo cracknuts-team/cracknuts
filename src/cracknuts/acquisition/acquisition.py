@@ -5,6 +5,7 @@ import datetime
 import json
 import threading
 import time
+import traceback
 import typing
 
 import numpy as np
@@ -356,7 +357,7 @@ class Acquisition(abc.ABC):
             try:
                 data = self.do()
             except Exception as e:
-                self._logger.error("Do error: %s", e.args)
+                self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
                 do_error_count += 1
                 if self.do_error_handler_strategy == self.DO_ERROR_HANDLER_STRATEGY_EXIT:
                     self._logger.error("Exit with do error")
