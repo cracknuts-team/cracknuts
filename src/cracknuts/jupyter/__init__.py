@@ -46,4 +46,5 @@ __all__ = [
     "display_trace_analysis_panel",
     "display_acquisition_panel",
     "display_cracker_panel",
+    "display_trace_monitor_panel",
 ]
