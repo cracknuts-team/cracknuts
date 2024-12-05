@@ -76,6 +76,8 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         # osc
         self.osc_analog_channel_a_enable = self.cracker.get_current_config().osc_analog_channel_enable.get(1, False)
         self.osc_analog_channel_b_enable = self.cracker.get_current_config().osc_analog_channel_enable.get(2, True)
+        self.osc_analog_channel_a_gain = self.cracker.get_current_config().osc_analog_gain.get(1, 1)
+        self.osc_analog_channel_b_gain = self.cracker.get_current_config().osc_analog_gain.get(2, 1)
 
         self._observe = True
 
