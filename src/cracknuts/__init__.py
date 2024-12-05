@@ -8,12 +8,7 @@ from cracknuts.acquisition import Acquisition
 from cracknuts.cracker.basic_cracker import CrackerS1
 from cracknuts.cracker.cracker import Cracker
 from cracknuts.cracker.stateful_cracker import StatefulCracker
-from cracknuts.jupyter import (
-    display_cracknuts_panel,
-    display_acquisition_panel,
-    display_cracker_panel,
-    display_trace_monitor_panel,
-)
+from cracknuts import jupyter
 
 try:
     from IPython.display import display
@@ -35,12 +30,22 @@ def new_acquisition(
     return _Acquisition(cracker, init, do)
 
 
-def new_trace_monitor(acq: Acquisition):
-    return display_trace_monitor_panel(acq)
+if display is not None:
+
+    def monitor_panel(acq: Acquisition):
+        return jupyter.display_trace_monitor_panel(acq)
 
 
-def new_cracknuts(acq: Acquisition):
-    return _CrackNuts(acq)
+if display is not None:
+
+    def panel(acq: Acquisition):
+        return jupyter.display_cracknuts_panel(acq)
+
+
+if display is not None:
+
+    def trace_analysis_panel():
+        return jupyter.display_trace_analysis_panel()
 
 
 class _Cracker(StatefulCracker):
@@ -58,7 +63,7 @@ class _Cracker(StatefulCracker):
     if display is not None:
 
         def _ipython_display_(self):
-            display(display_cracker_panel(self))
+            display(jupyter.display_cracker_panel(self))
 
 
 class _Acquisition(Acquisition):
@@ -80,14 +85,4 @@ class _Acquisition(Acquisition):
     if display is not None:
 
         def _ipython_display_(self):
-            display(display_acquisition_panel(self))
-
-
-class _CrackNuts:
-    def __init__(self, acq: Acquisition):
-        self._acq = acq
-
-    if display is not None:
-
-        def _ipython_display_(self):
-            display(display_cracknuts_panel(self._acq))
+            display(jupyter.display_acquisition_panel(self))
