@@ -57,7 +57,7 @@ class StatefulCracker(Cracker):
         :param path: the path to the JSON file
         """
         with open(path) as f:
-            self.load_config_from_json(f.readlines())
+            self.load_config_from_str(f.readlines())
 
     def load_config_from_str(self, json_str) -> None:
         """
@@ -107,3 +107,9 @@ class StatefulCracker(Cracker):
     def nut_clock(self, clock: int):
         self._config.cracker_nut_clock = clock
         return self._cracker.nut_clock(clock)
+
+    def osc_set_analog_gain(self, channel: int, gain: int):
+        if self._config.osc_analog_gain is None:
+            self._config.osc_analog_gain = {}
+        self._config.osc_analog_gain[channel] = gain
+        return self._cracker.osc_set_analog_gain(channel, gain)

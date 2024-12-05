@@ -291,6 +291,7 @@ class Config:
         osc_sample_delay: int | None = None,
         osc_sample_phase: int | None = None,
         osc_sample_clock: int | None = None,
+        osc_analog_gain: dict[int, int] | None = None,
     ):
         self._binder: dict[str, typing.Callable] = {}
         self.nut_enable: bool | None = nut_enable
@@ -301,6 +302,7 @@ class Config:
         self.osc_sample_phase: int | None = osc_sample_phase
         self.osc_sample_clock: int | None = osc_sample_clock
         self.osc_analog_channel_enable: dict[int, bool] | None = osc_analog_channel_enable
+        self.osc_analog_gain: dict[int, int] | None = osc_analog_gain
 
     def __setattr__(self, key, value):
         self.__dict__[key] = value
@@ -324,7 +326,7 @@ class Config:
 
     def load_from_json(self, json_str: str) -> "Config":
         for k, v in json.loads(json_str).items():
-            if k == "osc_analog_channel_enable":
+            if k in ("osc_analog_channel_enable", "osc_analog_gain"):
                 v = {int(_k): _v for _k, _v in v.items()}
             self.__dict__[k] = v
         return self
@@ -398,7 +400,7 @@ class AbsCnpCracker(ABC, Cracker):
                 self._socket.settimeout(5)
             if self._connection_status:
                 self._logger.debug("Already connected, reuse.")
-                return self
+                return
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
