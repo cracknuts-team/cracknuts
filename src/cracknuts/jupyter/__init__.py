@@ -1,7 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
+from cracknuts import CommonCracker
 from cracknuts.acquisition import Acquisition
-from cracknuts.cracker.stateful_cracker import StatefulCracker
 
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
 from cracknuts.jupyter.cracker_panel import CrackerPanelWidget
@@ -34,7 +34,7 @@ def display_acquisition_panel(acq: Acquisition):
     return acqw
 
 
-def display_cracker_panel(cracker: StatefulCracker):
+def display_cracker_panel(cracker: CommonCracker):
     cpw = CrackerPanelWidget(cracker=cracker)
     cpw.sync_config()
     cpw.bind()

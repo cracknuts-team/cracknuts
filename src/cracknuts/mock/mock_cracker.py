@@ -124,42 +124,42 @@ class MockCracker:
             protocol.STATUS_UNSUPPORTED, f'Command [0x{format(command, '04x')}] not supported'.encode()
         )
 
-    @_handler(cracker.Commands.GET_ID, has_payload=False)
+    @_handler(cracker.CommonCommands.GET_ID, has_payload=False)
     def get_id(self) -> bytes:
         return b"mock_001"
 
-    @_handler(cracker.Commands.GET_NAME, has_payload=False)
+    @_handler(cracker.CommonCommands.GET_NAME, has_payload=False)
     def get_name(self) -> bytes:
         return b"MOCK 001"
 
-    @_handler(cracker.Commands.GET_VERSION, has_payload=False)
+    @_handler(cracker.CommonCommands.GET_VERSION, has_payload=False)
     def get_version(self) -> bytes:
         return b"0.1.0(adc:0.1.0,hardware:0.1.0)"
 
-    @_handler(cracker.Commands.OSC_GET_ANALOG_WAVES)
+    @_handler(cracker.CommonCommands.OSC_GET_ANALOG_WAVES)
     def osc_get_analog_wave(self, payload: bytes) -> bytes:
         channel, offset, sample_count = struct.unpack(">BII", payload)
         return struct.pack(f">{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
 
-    @_handler(cracker.Commands.OSC_IS_TRIGGERED)
+    @_handler(cracker.CommonCommands.OSC_IS_TRIGGERED)
     def osc_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
         time.sleep(0.05)  # Simulate device I/O operations.
         return protocol.STATUS_OK, int.to_bytes(4, 4, "big")
 
-    @_handler(cracker.Commands.OSC_FORCE, has_payload=False)
+    @_handler(cracker.CommonCommands.OSC_FORCE, has_payload=False)
     def osc_force(self) -> bytes: ...  # type: ignore
 
-    @_handler(cracker.Commands.OSC_SINGLE, has_payload=False)
+    @_handler(cracker.CommonCommands.OSC_SINGLE, has_payload=False)
     def osc_arm(self) -> bytes: ...  # type: ignore
 
-    @_handler(cracker.Commands.NUT_VOLTAGE, has_payload=False)
+    @_handler(cracker.CommonCommands.NUT_VOLTAGE, has_payload=False)
     def nut_voltage(self) -> bytes: ...  # type: ignore
 
-    @_handler(cracker.Commands.OSC_ANALOG_CHANNEL_ENABLE, has_payload=False)
+    @_handler(cracker.CommonCommands.OSC_ANALOG_CHANNEL_ENABLE, has_payload=False)
     def osc_analog_channel_enable(self) -> bytes: ...  # type: ignore
 
-    @_handler(cracker.Commands.NUT_CLOCK, has_payload=False)
+    @_handler(cracker.CommonCommands.NUT_CLOCK, has_payload=False)
     def nut_clock(self) -> bytes: ...  # type: ignore
 
-    @_handler(cracker.Commands.OSC_SAMPLE_LENGTH, has_payload=False)
+    @_handler(cracker.CommonCommands.OSC_SAMPLE_LENGTH, has_payload=False)
     def osc_sample_len(self) -> bytes: ...

@@ -2,7 +2,7 @@ import logging
 
 import cracknuts.cracker.cracker
 from cracknuts.cracker import protocol
-from cracknuts.cracker.basic_cracker import CrackerS1
+from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.logger import set_level
 
 # basic_device = CrackerS1(address=('192.168.0.10', 9761))

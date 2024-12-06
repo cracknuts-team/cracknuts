@@ -2,30 +2,39 @@
 
 __version__ = "0.3.3"
 
+import sys
+import typing
 from collections.abc import Callable
 
 from cracknuts.acquisition import Acquisition
-from cracknuts.cracker.basic_cracker import CrackerS1
-from cracknuts.cracker.cracker import Cracker
-from cracknuts.cracker.stateful_cracker import StatefulCracker
+from cracknuts.cracker.cracker import CommonCracker, CommonConfig
+from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts import jupyter
 
 try:
     from IPython.display import display
+
+    if "ipykernel" not in sys.modules:
+        display = None
 except ImportError:
     display = None
+
+
+T = typing.TypeVar("T", bound=CommonConfig)
 
 
 def version():
     return __version__
 
 
-def new_cracker(address: tuple | str | None = None, module: type | None = None):
+def new_cracker(address: tuple | str | None = None, module: type[T] | None = None):
     return _Cracker(address, module)
 
 
 def new_acquisition(
-    cracker: Cracker, init: Callable[[Cracker], None] | None = None, do: Callable[[Cracker], None] | None = None
+    cracker: CommonCracker,
+    init: Callable[[CommonCracker], None] | None = None,
+    do: Callable[[CommonCracker], None] | None = None,
 ) -> Acquisition:
     return _Acquisition(cracker, init, do)
 
@@ -48,17 +57,15 @@ if display is not None:
         return jupyter.display_trace_analysis_panel()
 
 
-class _Cracker(StatefulCracker):
-    def __init__(self, address: tuple | str | None = None, module: type | None = None):
+class _Cracker(CommonCracker[T]):
+    def get_default_config(self) -> T:
+        return self._cracker.get_default_config()
+
+    def __init__(self, address: tuple | str | None = None, module: type[T] | None = None):
         if module is None:
             module = CrackerS1
-        super().__init__(module(address))
-
-    def __getattribute__(self, name):
-        if name in ["_ipython_display_"]:
-            return object.__getattribute__(self, name)
-        else:
-            return super().__getattribute__(name)
+        self._cracker = module()
+        super().__init__(address)
 
     if display is not None:
 
@@ -67,9 +74,9 @@ class _Cracker(StatefulCracker):
 
 
 class _Acquisition(Acquisition):
-    def __init__(self, cracker: Cracker, init: Callable[[Cracker], None], do: Callable[[Cracker], None]):
-        if not isinstance(cracker, StatefulCracker):
-            cracker = StatefulCracker(cracker)
+    def __init__(
+        self, cracker: CommonCracker, init: Callable[[CommonCracker], None], do: Callable[[CommonCracker], None]
+    ):
         super().__init__(cracker)
         self._init = init
         self._do = do
@@ -86,3 +93,19 @@ class _Acquisition(Acquisition):
 
         def _ipython_display_(self):
             display(jupyter.display_acquisition_panel(self))
+
+
+class _CrackNuts:
+    def __init__(self):
+        self._cracker = None
+        self._acquisition = None
+
+    def cracker(self, address: tuple | str | None = None, module: type[T] | None = None) -> "_CrackNuts":
+        self._cracker = _Cracker(address, module)
+        return self
+
+    def acquisition(
+        self, init: Callable[[CommonCracker], None] | None = None, do: Callable[[CommonCracker], None] | None = None
+    ) -> "_CrackNuts":
+        self._acquisition = _Acquisition(self._cracker, init, do)
+        return self

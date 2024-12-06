@@ -1,8 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 from types import MethodType
 
-
-from cracknuts.cracker.cracker import Cracker, Config
+from cracknuts.cracker.cracker import Cracker, CommonConfig
 
 
 class StatefulCracker(Cracker):
@@ -25,14 +24,44 @@ class StatefulCracker(Cracker):
 
     def __init__(self, cracker: Cracker):
         self._cracker = cracker
-        self._config: Config = self._cracker.get_default_config()
+        self._config: CommonConfig = self._cracker.get_default_config()
 
-    def get_current_config(self) -> Config:
+    #
+    def __str__(self):
+        if not self.get_connection_status():
+            return "Disconnected"
+        info = f"=== Model: {self.get_id()}\t Name: {self.get_name()} \t Version: {self.get_version()} ==="
+        config = "\n\t".join(
+            [f"{k}: {v}" for k, v in self.get_current_config().__dict__.items() if not k.startswith("_")]
+        )
+        return info + "\n\nConfiguration:\n\t" + config
+
+    def __repr__(self):
+        return self.__str__()
+
+    def connect(self, update_bin: bool = True, sync_config: bool = True):
+        """
+        Override connection, add sync config logic.
+        NOTE: Currently, the sync is from the host computer to the device,
+              but it should be synchronized from the device to the host computer in the future.
+
+        :param update_bin: whether the firmware needs to be updated.
+        :param sync_config: whether the config needs to be synced.
+        :return: None
+        """
+        self._cracker.connect(update_bin)
+        if sync_config:
+            self.sync_config_to_cracker()
+
+    def get_current_config(self) -> CommonConfig:
         """
         Get current configuration of `Cracker`.
+        Note: Currently, the configuration returned is recorded on the host computer,
+              not the ACTUAL configuration of the device.
+        In the future, it should be synchronized from the device to the host computer.
 
         :return: Current configuration of `Cracker`.
-        :rtype: Config
+        :rtype: CommonConfig
         """
         return self._config
 
