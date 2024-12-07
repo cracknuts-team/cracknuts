@@ -27,8 +27,20 @@ def version():
     return __version__
 
 
-def new_cracker(address: tuple | str | None = None, module: type[T] | None = None):
-    return _Cracker(address, module)
+def new_cracker(
+    address: tuple | str | None = None,
+    bin_server_path: str | None = None,
+    bin_bitstream_path: str | None = None,
+    operator_port: int = None,
+    module: type[T] | None = None,
+):
+    kwargs = {
+        "address": address,
+        "bin_server_path": bin_server_path,
+        "bin_bitstream_path": bin_bitstream_path,
+        "operator_port": operator_port,
+    }
+    return _Cracker(module, **kwargs)
 
 
 def new_acquisition(
@@ -61,11 +73,11 @@ class _Cracker(CommonCracker[T]):
     def get_default_config(self) -> T:
         return self._cracker.get_default_config()
 
-    def __init__(self, address: tuple | str | None = None, module: type[T] | None = None):
+    def __init__(self, module: type[T] | None = None, **kwargs):
         if module is None:
             module = CrackerS1
         self._cracker = module()
-        super().__init__(address)
+        super().__init__(**kwargs)
 
     if display is not None:
 

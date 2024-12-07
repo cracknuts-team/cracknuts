@@ -14,7 +14,7 @@ class CrackerS1Config(CommonConfig):
         self.osc_analog_gain = {1: 50, 2: 50}
         self.osc_sample_len = 1024
         self.osc_sample_delay = 0
-        self.osc_sample_clock = 62500
+        self.osc_sample_clock = 62.5
         self.osc_sample_phase = 0
         self.osc_analog_trigger_source = 0
         self.osc_trigger_mode = 0
