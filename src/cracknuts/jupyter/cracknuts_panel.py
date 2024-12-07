@@ -6,7 +6,7 @@ import pathlib
 import typing
 import sys
 
-from cracknuts.cracker.stateful_cracker import StatefulCracker
+from cracknuts import CommonCracker
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
 from cracknuts.jupyter.cracker_panel import CrackerPanelWidget
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
@@ -20,7 +20,7 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if "acquisition" not in kwargs:
             raise ValueError("acquisition must be provided")
-        kwargs["cracker"]: StatefulCracker = kwargs["acquisition"].cracker
+        kwargs["cracker"]: CommonCracker = kwargs["acquisition"].cracker
         super().__init__(*args, **kwargs)
         self._load_current_path_config()
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
