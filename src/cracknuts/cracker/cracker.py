@@ -252,13 +252,23 @@ class BaseCracker(ABC, typing.Generic[T]):
                 port = None
             return f"cnp://{self._server_address[0]}{"" if port is None else f":{port}"}"
 
-    def connect(self, update_bin: bool = True, force_update_bin: bool = False):
+    def connect(
+        self,
+        update_bin: bool = True,
+        force_update_bin: bool = False,
+        bin_server_path: str | None = None,
+        bin_bitstream_path: str | None = None,
+    ):
         """
         Connect to Cracker device.
         """
+        if bin_server_path is None:
+            bin_server_path = self._bin_server_path
+        if bin_bitstream_path is None:
+            bin_bitstream_path = self._bin_bitstream_path
 
         if update_bin and not self._update_cracker_bin(
-            force_update_bin, self._bin_server_path, self._bin_bitstream_path, self._operator_port
+            force_update_bin, bin_server_path, bin_bitstream_path, self._operator_port
         ):
             return
 
@@ -898,9 +908,6 @@ class CommonCracker(BaseCracker[T], ABC):
         else:
             self._config.osc_sample_phase = phase
 
-    # def osc_set_sample_clock(self, clock: int):
-    #     ...
-
     def nut_set_enable(self, enable: int | bool):
         if isinstance(enable, bool):
             enable = 1 if enable else 0
@@ -966,110 +973,193 @@ class CommonCracker(BaseCracker[T], ABC):
         else:
             self._config.osc_clock_divisor = div
 
-    def _spi_transceive(self, data: bytes | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool):
+    def _spi_transceive(self, data: bytes | str | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool):
+        if isinstance(data, str):
+            data = bytes.fromhex(data)
         payload = struct.pack(">?IH?", is_delay, delay, rx_count, is_trigger)
         if data is not None:
             payload += data
         self._logger.debug(f"_spi_transceive payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.SPI_TRANSCEIVE, payload=payload)
+        status, res = self.send_with_command(CommonCommands.SPI_TRANSCEIVE, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
-    def spi_transmit(self, data: bytes, is_trigger: bool = False):
-        return self._spi_transceive(data, is_delay=True, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger)
+    def spi_transmit(self, data: bytes | str, is_trigger: bool = False):
+        return self._spi_transceive(data, is_delay=False, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger)
 
     def spi_receive(self, rx_count: int, is_trigger: bool = False):
-        return self._spi_transceive(None, is_delay=True, delay=1_000_000_000, rx_count=rx_count, is_trigger=is_trigger)
+        return self._spi_transceive(None, is_delay=False, delay=1_000_000_000, rx_count=rx_count, is_trigger=is_trigger)
 
-    def spi_transmit_delay_receive(self, data: bytes, delay: int, rx_count: int, is_trigger: bool = False):
+    def spi_transmit_delay_receive(self, data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False):
         return self._spi_transceive(data, is_delay=True, delay=delay, rx_count=rx_count, is_trigger=is_trigger)
 
-    def spi_transceive(self, data: bytes, rx_count: int, is_trigger: bool = False):
+    def spi_transceive(self, data: bytes | str, rx_count: int, is_trigger: bool = False):
         return self._spi_transceive(data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
 
     def cracker_serial_baud(self, baud: int):
         payload = struct.pack(">I", baud)
         self._logger.debug(f"cracker_serial_baud payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SERIAL_BAUD, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SERIAL_BAUD, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_serial_width(self, width: int):
         payload = struct.pack(">B", width)
         self._logger.debug(f"cracker_serial_width payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SERIAL_WIDTH, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SERIAL_WIDTH, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_serial_stop(self, stop: int):
         payload = struct.pack(">B", stop)
         self._logger.debug(f"cracker_serial_stop payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SERIAL_STOP, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SERIAL_STOP, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_serial_odd_eve(self, odd_eve: int):
         payload = struct.pack(">B", odd_eve)
         self._logger.debug(f"cracker_serial_odd_eve payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SERIAL_ODD_EVE, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SERIAL_ODD_EVE, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
-    def cracker_serial_data(self, expect_len: int, data: bytes):
+    def cracker_serial_data(self, expect_len: int, data: bytes | str):
+        if isinstance(data, str):
+            data = bytes.fromhex(data)
         payload = struct.pack(">I", expect_len)
         payload += data
         self._logger.debug(f"cracker_serial_data payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SERIAL_DATA, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SERIAL_DATA, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_spi_cpol(self, cpol: int):
         payload = struct.pack(">B", cpol)
         self._logger.debug(f"cracker_spi_cpol payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SPI_CPOL, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SPI_CPOL, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_spi_cpha(self, cpha: int):
         payload = struct.pack(">B", cpha)
         self._logger.debug(f"cracker_spi_cpha payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SPI_CPHA, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SPI_CPHA, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_spi_data_len(self, length: int):
         payload = struct.pack(">B", length)
         self._logger.debug(f"cracker_spi_data_len payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SPI_DATA_LEN, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SPI_DATA_LEN, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_spi_freq(self, freq: int):
         payload = struct.pack(">B", freq)
         self._logger.debug(f"cracker_spi_freq payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SPI_FREQ, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SPI_FREQ, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_spi_timeout(self, timeout: int):
         payload = struct.pack(">B", timeout)
         self._logger.debug(f"cracker_spi_timeout payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SPI_TIMEOUT, payload=payload)
-
-    # def cracker_spi_data(self, expect_len: int, data: bytes):
-    #     payload = struct.pack(">I", expect_len)
-    #     payload += data
-    #     self._logger.debug(f"cracker_spi_data payload: {payload.hex()}")
-    #     return self.send_with_command(CommonCommands.CRACKER_SPI_DATA, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_SPI_TIMEOUT, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_i2c_freq(self, freq: int):
         payload = struct.pack(">B", freq)
         self._logger.debug(f"cracker_i2c_freq payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_I2C_FREQ, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_I2C_FREQ, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_i2c_timeout(self, timeout: int):
         payload = struct.pack(">B", timeout)
         self._logger.debug(f"cracker_i2c_timeout payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_I2C_TIMEOUT, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_I2C_TIMEOUT, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_i2c_data(self, expect_len: int, data: bytes):
         payload = struct.pack(">I", expect_len)
         payload += data
         self._logger.debug(f"cracker_i2c_data payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_I2C_DATA, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_I2C_DATA, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_can_freq(self, freq: int):
         payload = struct.pack(">B", freq)
         self._logger.debug(f"cracker_can_freq payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_CAN_FREQ, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_CAN_FREQ, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_can_timeout(self, timeout: int):
         payload = struct.pack(">B", timeout)
         self._logger.debug(f"cracker_can_timeout payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_CAN_TIMEOUT, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_CAN_TIMEOUT, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
 
     def cracker_can_data(self, expect_len: int, data: bytes):
         payload = struct.pack(">I", expect_len)
         payload += data
         self._logger.debug(f"cracker_can_data payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_CA_DATA, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_CA_DATA, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
