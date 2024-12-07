@@ -46,9 +46,6 @@ class CommonCommands:
     OSC_CLOCK_UPDATE = 0x10A
     OSC_CLOCK_SIMPLE = 0x10B
 
-    # OSC_SAMPLE_CLOCK = 0x0105
-    # OSC_SAMPLE_PHASE = 0x0106
-
     OSC_DIGITAL_CHANNEL_ENABLE = 0x0110
     OSC_DIGITAL_VOLTAGE = 0x0111
 
@@ -112,8 +109,6 @@ class CommonConfig:
 
         self._binder: dict[str, typing.Callable] = {}
 
-        self.osc_sample_clock: int | None = None
-
         self.osc_analog_channel_enable: dict[int, bool] = {}
         self.osc_analog_coupling: dict[int, int] = {}
         self.osc_analog_voltage: dict[int, int] = {}
@@ -126,6 +121,7 @@ class CommonConfig:
         self.osc_analog_trigger_edge_level: int | None = None
         self.osc_sample_delay: int | None = None
         self.osc_sample_len: int | None = None
+        self.osc_sample_rate: int | None = None
         self.osc_analog_gain: dict[int, int] = {}
         self.osc_analog_gain_raw: dict[int, int] = {}
         self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
@@ -772,12 +768,25 @@ class CommonCracker(BaseCracker[T], ABC):
 
     def osc_set_sample_len(self, length: int):
         payload = struct.pack(">I", length)
-        self._logger.debug(f"osc_sample_len payload: {payload.hex()}")
+        self._logger.debug(f"osc_set_sample_len payload: {payload.hex()}")
         status, res = self.send_with_command(CommonCommands.OSC_SAMPLE_LENGTH, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
             self._config.osc_sample_len = length
+
+    def osc_set_sample_rate(self, rate: int):
+        """
+        Set osc sample rate
+        :param rate: The sample rate in kHz
+        """
+        payload = struct.pack(">I", rate)
+        self._logger.debug(f"osc_set_sample_rate payload: {payload.hex()}")
+        status, res = self.send_with_command(CommonCommands.OSC_SAMPLE_RATE, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+        else:
+            self._config.osc_sample_rate = rate
 
     def osc_single(self):
         payload = None
@@ -896,9 +905,6 @@ class CommonCracker(BaseCracker[T], ABC):
         else:
             self._config.osc_sample_phase = phase
 
-    # def osc_set_sample_clock(self, clock: int):
-    #     ...
-
     def nut_set_enable(self, enable: int | bool):
         if isinstance(enable, bool):
             enable = 1 if enable else 0
@@ -929,6 +935,11 @@ class CommonCracker(BaseCracker[T], ABC):
             self._config.nut_voltage_raw = voltage
 
     def nut_set_clock(self, clock: int):
+        """
+        Set nut clock.
+        :param clock: The clock of the nut in kHz
+        :type clock: int
+        """
         payload = struct.pack(">I", clock)
         self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")
         status, res = self.send_with_command(CommonCommands.NUT_CLOCK, payload=payload)
