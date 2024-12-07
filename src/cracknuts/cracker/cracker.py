@@ -82,6 +82,8 @@ class CommonCommands:
     NUT_INTERFACE = 0x0210
     NUT_TIMEOUT = 0x0224
 
+    SPI_TRANSCEIVE = 0x023C
+
     CRACKER_SERIAL_BAUD = 0x0220
     CRACKER_SERIAL_WIDTH = 0x0221
     CRACKER_SERIAL_STOP = 0x0222
@@ -964,6 +966,25 @@ class CommonCracker(BaseCracker[T], ABC):
         else:
             self._config.osc_clock_divisor = div
 
+    def _spi_transceive(self, data: bytes | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool):
+        payload = struct.pack(">?IH?", is_delay, delay, rx_count, is_trigger)
+        if data is not None:
+            payload += data
+        self._logger.debug(f"_spi_transceive payload: {payload.hex()}")
+        return self.send_with_command(CommonCommands.SPI_TRANSCEIVE, payload=payload)
+
+    def spi_transmit(self, data: bytes, is_trigger: bool = False):
+        return self._spi_transceive(data, is_delay=True, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger)
+
+    def spi_receive(self, rx_count: int, is_trigger: bool = False):
+        return self._spi_transceive(None, is_delay=True, delay=1_000_000_000, rx_count=rx_count, is_trigger=is_trigger)
+
+    def spi_transmit_delay_receive(self, data: bytes, delay: int, rx_count: int, is_trigger: bool = False):
+        return self._spi_transceive(data, is_delay=True, delay=delay, rx_count=rx_count, is_trigger=is_trigger)
+
+    def spi_transceive(self, data: bytes, rx_count: int, is_trigger: bool = False):
+        return self._spi_transceive(data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
+
     def cracker_serial_baud(self, baud: int):
         payload = struct.pack(">I", baud)
         self._logger.debug(f"cracker_serial_baud payload: {payload.hex()}")
@@ -1015,11 +1036,11 @@ class CommonCracker(BaseCracker[T], ABC):
         self._logger.debug(f"cracker_spi_timeout payload: {payload.hex()}")
         return self.send_with_command(CommonCommands.CRACKER_SPI_TIMEOUT, payload=payload)
 
-    def cracker_spi_data(self, expect_len: int, data: bytes):
-        payload = struct.pack(">I", expect_len)
-        payload += data
-        self._logger.debug(f"cracker_spi_data payload: {payload.hex()}")
-        return self.send_with_command(CommonCommands.CRACKER_SPI_DATA, payload=payload)
+    # def cracker_spi_data(self, expect_len: int, data: bytes):
+    #     payload = struct.pack(">I", expect_len)
+    #     payload += data
+    #     self._logger.debug(f"cracker_spi_data payload: {payload.hex()}")
+    #     return self.send_with_command(CommonCommands.CRACKER_SPI_DATA, payload=payload)
 
     def cracker_i2c_freq(self, freq: int):
         payload = struct.pack(">B", freq)
