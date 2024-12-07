@@ -106,6 +106,10 @@ class CommonCommands:
 
 class CommonConfig:
     def __init__(self):
+        """
+        For specific devices, users need to set default values and extend configuration items by inheriting this class.
+        """
+
         self._binder: dict[str, typing.Callable] = {}
 
         self.osc_sample_clock: int | None = None
@@ -116,6 +120,7 @@ class CommonConfig:
         self.osc_analog_bias_voltage: dict[int, int] = {}
         self.osc_digital_voltage: int | None = None
         self.osc_trigger_mode: int | None = None
+        self.osc_analog_trigger_source: int | None = None
         self.osc_digital_trigger_source: int | None = None
         self.osc_analog_trigger_edge: int | None = None
         self.osc_analog_trigger_edge_level: int | None = None
@@ -158,13 +163,30 @@ class CommonConfig:
         return self.__str__()
 
     def dump_to_json(self) -> str:
+        """
+        Dump the configuration to a JSON string.
+
+        """
         return json.dumps({k: v for k, v in self.__dict__.items() if k != "_binder"})
 
     def load_from_json(self, json_str: str) -> "CommonConfig":
+        """
+        Load configuration from a JSON string. If a value in the JSON string is null, it will be skipped,
+        and the default configuration will be used.
+
+        """
         for k, v in json.loads(json_str).items():
-            if k in ("osc_analog_channel_enable", "osc_analog_gain"):
+            if k in (
+                "osc_analog_channel_enable",
+                "osc_analog_coupling",
+                "osc_analog_voltage",
+                "osc_analog_bias_voltage",
+                "osc_analog_gain",
+                "osc_analog_gain_raw",
+            ):
                 v = {int(_k): _v for _k, _v in v.items()}
-            self.__dict__[k] = v
+            if v is not None:
+                self.__dict__[k] = v
         return self
 
 
@@ -228,13 +250,13 @@ class BaseCracker(ABC, typing.Generic[T]):
                 port = None
             return f"cnp://{self._server_address[0]}{"" if port is None else f":{port}"}"
 
-    def connect(self, update_bin: bool = True):
+    def connect(self, update_bin: bool = True, force_update_bin: bool = False):
         """
         Connect to Cracker device.
         """
 
         if update_bin and not self._update_cracker_bin(
-            self._bin_server_path, self._bin_bitstream_path, self._operator_port
+            force_update_bin, self._bin_server_path, self._bin_bitstream_path, self._operator_port
         ):
             return
 
@@ -254,6 +276,7 @@ class BaseCracker(ABC, typing.Generic[T]):
 
     def _update_cracker_bin(
         self,
+        force_update: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
         operator_port: int = None,
@@ -267,7 +290,7 @@ class BaseCracker(ABC, typing.Generic[T]):
         if not operator.connect():
             return False
 
-        if operator.get_status():
+        if not force_update and operator.get_status():
             operator.disconnect()
             return True
 
@@ -876,7 +899,9 @@ class CommonCracker(BaseCracker[T], ABC):
     # def osc_set_sample_clock(self, clock: int):
     #     ...
 
-    def nut_set_enable(self, enable: int):
+    def nut_set_enable(self, enable: int | bool):
+        if isinstance(enable, bool):
+            enable = 1 if enable else 0
         payload = struct.pack(">B", enable)
         self._logger.debug(f"cracker_nut_enable payload: {payload.hex()}")
         status, res = self.send_with_command(CommonCommands.NUT_ENABLE, payload=payload)
@@ -885,7 +910,7 @@ class CommonCracker(BaseCracker[T], ABC):
         else:
             self._config.nut_enable = enable
 
-    def nut_set_voltage(self, voltage):
+    def nut_set_voltage(self, voltage: int):
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(CommonCommands.NUT_VOLTAGE, payload=payload)
