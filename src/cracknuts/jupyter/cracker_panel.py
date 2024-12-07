@@ -6,8 +6,7 @@ from typing import Any
 
 from traitlets import traitlets
 
-from cracknuts import logger
-from cracknuts.cracker.stateful_cracker import StatefulCracker
+from cracknuts import logger, CommonCracker
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
 
@@ -51,9 +50,9 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         super().__init__(*args, **kwargs)
         self._logger = logger.get_logger(self)
         self._observe: bool = True
-        self.cracker: StatefulCracker | None = None
-        if "cracker" in kwargs and isinstance(kwargs["cracker"], StatefulCracker):
-            self.cracker: StatefulCracker = kwargs["cracker"]
+        self.cracker: CommonCracker | None = None
+        if "cracker" in kwargs and isinstance(kwargs["cracker"], CommonCracker):
+            self.cracker: CommonCracker = kwargs["cracker"]
         if self.cracker is None:
             raise ValueError("cracker is required")
         self.reg_msg_handler("connectButton", "onClick", self.msg_connection_button_on_click)
@@ -62,22 +61,34 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         """
         Sync cracker current to panel(Jupyter widget UI)
         """
-        config = self.cracker.get_current_config()
+        # connection
         self._observe = False
         if self.cracker.get_uri() is not None:
             self.uri = self.cracker.get_uri()
+
+        current_config = self.cracker.get_current_config()
+
         # nut
-        if config.nut_enable is not None:
-            self.nut_enable = config.nut_enable
-        if config.nut_voltage is not None:
-            self.nut_voltage = config.nut_voltage
-        if config.nut_clock is not None:
-            self.nut_clock = config.nut_clock / 1000
+        if current_config.nut_enable is not None:
+            self.nut_enable = current_config.nut_enable
+        if current_config.nut_voltage is not None:
+            self.nut_voltage = current_config.nut_voltage
+        if current_config.nut_clock is not None:
+            self.nut_clock = current_config.nut_clock / 1000
+
         # osc
-        self.osc_analog_channel_a_enable = self.cracker.get_current_config().osc_analog_channel_enable.get(1, False)
-        self.osc_analog_channel_b_enable = self.cracker.get_current_config().osc_analog_channel_enable.get(2, True)
-        self.osc_analog_channel_a_gain = self.cracker.get_current_config().osc_analog_gain.get(1, 1)
-        self.osc_analog_channel_b_gain = self.cracker.get_current_config().osc_analog_gain.get(2, 1)
+        self.osc_analog_channel_a_enable = current_config.osc_analog_channel_enable.get(1, False)
+        self.osc_analog_channel_b_enable = current_config.osc_analog_channel_enable.get(2, True)
+        self.osc_analog_channel_a_gain = current_config.osc_analog_gain.get(1, 1)
+        self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(2, 1)
+        self.osc_sample_len = current_config.osc_sample_len
+        self.osc_sample_delay = current_config.osc_sample_delay
+        self.osc_sample_clock = current_config.osc_sample_clock
+        self.osc_sample_phase = current_config.osc_sample_phase
+        self.osc_trigger_source = current_config.osc_analog_trigger_source
+        self.osc_trigger_mode = current_config.osc_trigger_mode
+        self.osc_trigger_edge = current_config.osc_analog_trigger_edge
+        self.osc_trigger_edge_level = current_config.osc_analog_trigger_edge_level
 
         self._observe = True
 
@@ -116,17 +127,17 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_enable")
     @observe_interceptor
     def nut_enable_change(self, change):
-        self.cracker.nut_enable(1 if change.get("new") else 0)
+        self.cracker.nut_set_enable(1 if change.get("new") else 0)
 
     @traitlets.observe("nut_voltage")
     @observe_interceptor
     def nut_voltage_change(self, change):
-        self.cracker.nut_voltage(change.get("new"))
+        self.cracker.nut_set_voltage(change.get("new"))
 
     @traitlets.observe("nut_clock")
     @observe_interceptor
     def _nut_clock_change(self, change):
-        self.cracker.nut_clock(int(change.get("new") * 1000))
+        self.cracker.nut_set_clock(int(change.get("new") * 1000))
 
     @traitlets.observe("osc_sample_phase")
     @observe_interceptor
@@ -146,17 +157,18 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("osc_sample_clock")
     @observe_interceptor
     def osc_sample_clock_change(self, change):
-        self.cracker.osc_set_sample_clock(int(change.get("new") * 1000))
+        ...
+        # self.cracker.osc_set_sample_clock(int(change.get("new") * 1000))
 
     @traitlets.observe("osc_analog_channel_a_enable")
     @observe_interceptor
     def osc_analog_channel_a_enable_changed(self, change):
-        self.cracker.osc_set_analog_channel_enable({1: change.get("new"), 2: self.osc_analog_channel_b_enable})
+        self.cracker.osc_set_analog_channel_enable(1, change.get("new"))
 
     @traitlets.observe("osc_analog_channel_b_enable")
     @observe_interceptor
     def osc_analog_channel_b_enable_changed(self, change):
-        self.cracker.osc_set_analog_channel_enable({1: self.osc_analog_channel_a_enable, 2: change.get("new")})
+        self.cracker.osc_set_analog_channel_enable(2, change.get("new"))
 
     @traitlets.observe("osc_trigger_source")
     @observe_interceptor

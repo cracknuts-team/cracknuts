@@ -11,7 +11,7 @@ import typing
 import numpy as np
 
 from cracknuts import logger
-from cracknuts.cracker.stateful_cracker import StatefulCracker
+from cracknuts.cracker.cracker import CommonCracker
 from cracknuts.solver.trace import ScarrTraceDataset, NumpyTraceDataset
 
 
@@ -32,7 +32,7 @@ class Acquisition(abc.ABC):
 
     def __init__(
         self,
-        cracker: StatefulCracker,
+        cracker: CommonCracker,
         trace_count: int = 1000,
         sample_length: int = -1,
         sample_offset: int = 0,
@@ -54,7 +54,7 @@ class Acquisition(abc.ABC):
         self._current_trace_count = 1
         self._run_thread_pause_event: threading.Event = threading.Event()
 
-        self.cracker: StatefulCracker = cracker
+        self.cracker: CommonCracker = cracker
         self.trace_count: int = trace_count
         self.sample_length = sample_length
         self.sample_offset: int = sample_offset
@@ -71,9 +71,10 @@ class Acquisition(abc.ABC):
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
 
     def get_status(self):
+        self.cracker.get_id()
         return self._status
 
-    def set_cracker(self, cracker: StatefulCracker):
+    def set_cracker(self, cracker: CommonCracker):
         self.cracker = cracker
 
     def on_status_changed(self, callback: typing.Callable[[int], None]) -> None:
@@ -497,9 +498,7 @@ class Acquisition(abc.ABC):
     def _post_do(self): ...
 
     def _is_triggered(self):
-        status, res = self.cracker.osc_is_triggered()
-        res_code = int.from_bytes(res, "big")
-        return res_code == 4
+        return self.cracker.osc_is_triggered()
 
     def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
         if sample_length == -1:
@@ -510,7 +509,7 @@ class Acquisition(abc.ABC):
         enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
-            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
+            wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
         return wave_dict
 
     def _pre_finish(self): ...
@@ -579,16 +578,16 @@ class AcquisitionBuilder:
         self._do_function = lambda _: ...
         self._init_function = lambda _: ...
 
-    def cracker(self, cracker: StatefulCracker):
+    def cracker(self, cracker: CommonCracker):
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[StatefulCracker], None]):
+    def init(self, init_function: typing.Callable[[CommonCracker], None]):
         if init_function is not None:
             self._init_function = init_function
         return self
 
-    def do(self, do_function: typing.Callable[[StatefulCracker], None]):
+    def do(self, do_function: typing.Callable[[CommonCracker], None]):
         if do_function is not None:
             self._do_function = do_function
         return self

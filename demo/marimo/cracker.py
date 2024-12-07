@@ -18,7 +18,7 @@ def __(mo):
 
 @app.cell
 def __(set_connnection_status):
-    from cracknuts.cracker.basic_cracker import CrackerS1
+    from cracknuts.cracker.cracker_s1 import CrackerS1
 
 
     def connect(addr):
