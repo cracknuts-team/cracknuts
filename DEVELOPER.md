@@ -27,3 +27,28 @@ python -m venv --prompt cracknuts .venv
 pip install -e .
 pip install -r requirements-dev.txt
 ```
+
+You then need to install the JavaScript dependencies and run the development server.
+
+```sh
+cd jupyter_frontend
+pnpm i
+```
+
+Then you can run dev mode at developing.
+
+```sh
+npm run dev
+```
+
+To enable `HMR` you should set environment `ANYWIDGET_HMR=1`  
+
+```shell
+# powershell
+$env:ANYWIDGET_HMR=1
+```
+
+```shell
+# bash
+ANYWIDGET_HMR=1 jupyter lab
+```
