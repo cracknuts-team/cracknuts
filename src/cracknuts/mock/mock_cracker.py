@@ -139,7 +139,7 @@ class MockCracker:
     @_handler(cracker.CommonCommands.OSC_GET_ANALOG_WAVES)
     def osc_get_analog_wave(self, payload: bytes) -> bytes:
         channel, offset, sample_count = struct.unpack(">BII", payload)
-        return struct.pack(f">{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
+        return struct.pack(f"<{sample_count}h", *np.random.randint(-100, 100, size=sample_count).tolist())
 
     @_handler(cracker.CommonCommands.OSC_IS_TRIGGERED)
     def osc_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:

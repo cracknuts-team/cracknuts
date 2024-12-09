@@ -18,6 +18,12 @@ class TraceMonitorPanelWidget(MsgHandlerPanelWidget):
 
     series_data = traitlets.Dict({1: [0 for _ in range(1000)]}).tag(sync=True)
 
+    custom_range_model = traitlets.Bool(False).tag(sync=True)
+    custom_y_max = traitlets.Int(0).tag(sync=True)
+    custom_y_min = traitlets.Int(0).tag(sync=True)
+    y_max = traitlets.Int(0).tag(sync=True)
+    y_min = traitlets.Int(0).tag(sync=True)
+
     monitor_status = traitlets.Bool(False).tag(sync=True)
     monitor_period = traitlets.Float(0.1).tag(sync=True)
 
@@ -34,7 +40,12 @@ class TraceMonitorPanelWidget(MsgHandlerPanelWidget):
         self._trace_update_stop_flag = True
 
     def update(self, series_data: dict[int, np.ndarray]) -> None:
-        self.series_data = {k: v.tolist() for k, v in series_data.items()}
+        for k, v in series_data.items():
+            mx = np.max(v)
+            self.y_max = int(max(self.y_max, mx))
+            mn = np.min(v)
+            self.y_min = int(min(self.y_min, mn))
+            self.series_data = {k: v.tolist() for k, v in series_data.items()}
 
     @traitlets.observe("monitor_status")
     def monitor(self, change) -> None:

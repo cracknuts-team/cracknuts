@@ -175,7 +175,7 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
   });
 
   return (
-    <div>
+    <div style={{height: 270}}>
       <Row>
         <Col span={16}>
           <Space size={"large"}>
@@ -435,7 +435,7 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
                     </Col>
                   </Row>
                 </TabPane>
-                <TabPane key={"2"} tab={"Nut配置"}>
+                <TabPane key={"2"} tab={"NUT配置"}>
                   <Row>
                     <Col span={24}>
                       <Form layout={"inline"}>

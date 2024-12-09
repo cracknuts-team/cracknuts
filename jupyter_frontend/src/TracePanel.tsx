@@ -1,8 +1,7 @@
-import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
-import { useModelState } from "@anywidget/react";
-import { Spin, Switch } from "antd";
+import {useModelState} from "@anywidget/react";
+import {Button, InputNumber, Select, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
-import React from "react";
+import React, {useRef} from "react";
 
 interface SeriesData {
   1: number[] | undefined;
@@ -16,8 +15,15 @@ interface TraceMonitorPanelProperties {
 const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = false}) => {
   const [seriesData] = useModelState<SeriesData>("series_data");
   const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
+  const [customRangeModel, setCustomRangeModel] = useModelState<boolean>("custom_range_model");
+  const [yMax] = useModelState<number>("y_max");
+  const [yMin] = useModelState<number>("y_min");
+  const [customYMax, setCustomYMax] = useModelState<number>("custom_y_max");
+  const [customYMin, setCustomYMin] = useModelState<number>("custom_y_min");
 
   const colors = ["green", "red"];
+
+  const echartRef = useRef(null);
 
   const option: object = {
     tooltip: {
@@ -81,6 +87,8 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
       axisLabel: {
         formatter: "{value} mV",
       },
+      // min: customRangeModel ? customYMin : undefined,
+      // max: customRangeModel ? customYMax : undefined,
     });
     if (seriesData["2"]) {
       yAxis.push({
@@ -96,6 +104,8 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
         axisLabel: {
           formatter: "{value} mV",
         },
+        min: customRangeModel ? customYMin : undefined,
+        max: customRangeModel ? customYMax : undefined,
       });
     }
 
@@ -138,20 +148,41 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
     return series;
   }
 
+  const unitSelect = (
+  <Select defaultValue="0" disabled={!customRangeModel}>
+    <Select.Option value="0">mV</Select.Option>
+    {/*<Select.Option value="1">V</Select.Option>*/}
+  </Select>
+);
+
   return (
     <Spin indicator={<span></span>} spinning={disable}>
       {/* eslint @typescript-eslint/no-unused-vars: "off" */}
-      <Switch
-        size="small"
-        onChange={(checked: boolean, _) => {
-          setMonitorStatus(checked);
-        }}
-        checkedChildren={<EyeOutlined />}
-        unCheckedChildren={<EyeInvisibleOutlined />}
-        defaultChecked={monitorStatus ? monitorStatus : false}
-        value={monitorStatus}
-      />
-      <ReactEcharts option={option} notMerge={true} style={{ height: 350 }} />
+      <Space>
+        <Button size={"small"} type={monitorStatus ? "primary" : "default"}
+                onClick={() => setMonitorStatus(!monitorStatus)}>监视</Button>
+        <Space.Compact>
+          <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
+                  onClick={() => {
+                    setCustomYMin(yMin);
+                    setCustomYMax(yMax);
+                    setCustomRangeModel(!customRangeModel);
+                  }}>
+            指定区间
+          </Button>
+          <InputNumber disabled={!customRangeModel} addonBefore={"下限"} addonAfter={unitSelect} size={"small"}
+                       value={customYMin} onChange={(v) => {setCustomYMin(Number(v))}} changeOnWheel/>
+          <InputNumber disabled={!customRangeModel} addonBefore={"上限"} addonAfter={unitSelect} size={"small"}
+                       value={customYMax} onChange={(v) => {setCustomYMax(Number(v))}} changeOnWheel/>
+        </Space.Compact>
+        </Space>
+      <ReactEcharts option={option} notMerge={true}
+                    ref={echartRef}
+                    style={{
+                      height: 350, marginTop: 5, padding: 8,
+                      borderRadius: 3,
+                      boxShadow: "inset 2px 2px 10px rgba(0, 0, 0, 0.1), inset -2px -2px 10px rgba(0, 0, 0, 0.1)"
+                    }} />
     </Spin>
   );
 };
