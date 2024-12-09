@@ -91,7 +91,7 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
   const [nutClock, setNutClock] = useModelState<number>("nut_clock");
 
   // adc
-  const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");
+  const [oscSampleRate, setOscSampleRate] = useModelState<number>("osc_sample_rate");
   const [oscSamplePhase, setOscSamplePhase] = useModelState<number>("osc_sample_phase");
   const [oscSampleLen, setOscSampleLen] = useModelState<number>("osc_sample_len");
   const [oscSampleDelay, setOscSampleDelay] = useModelState<number>("osc_sample_delay");
@@ -104,9 +104,6 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
   const [oscTriggerEdgeLevel, setOscTriggerEdgeLevel] = useModelState<number>("osc_trigger_edge_level");
   const [socAnalogChannelAGain, setOscAnalogChannelAGain] = useModelState<number>("osc_analog_channel_a_gain");
   const [socAnalogChannelBGain, setOscAnalogChannelBGain] = useModelState<number>("osc_analog_channel_b_gain");
-
-  const [syncSample, setSyncSample] = useModelState<boolean>("sync_sample");
-  const [syncArgsTimes, setSyncArgsTimes] = useModelState<number>("sync_args_times");
 
   const dumpConfig = () => {
     model.send({ source: "dumpConfigButton", event: "onClick", args: {} });
@@ -168,7 +165,6 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
     // listen acq status disable disconnect when acq is running or testing.
     const changeCallback = () => {
       setAcqStatus(model.get("acq_status"));
-      console.warn("acq status change...........", model.get("acq_status"));
     };
     model.on(`change:acq_status`, changeCallback);
 
@@ -343,47 +339,21 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
                       <Row>
                         <Col>
                           <Form layout={"inline"}>
-                            <Form.Item label="采样时钟">
+                            <Form.Item label="采样频率">
                               <Select
                                 size={"small"}
                                 options={[
-                                  // 62.5 mHZ, 50 mHZ, 25mHZ, 10mHZ
-                                  { value: 62.5, label: "62.5 mHz" },
-                                  { value: 50.0, label: "50.0 mHz" },
-                                  { value: 25.0, label: "25.0 mHz" },
-                                  { value: 10.0, label: "10.0 mHz" },
+                                  { value: 62500, label: "62.5 mHz" },
+                                  { value: 48000, label: "48 mHz" },
+                                  { value: 24000, label: "24 mHz" },
+                                  { value: 12000, label: "12 mHz" },
+                                  { value: 8000, label: "8 mHz" },
+                                  { value: 4000, label: "4 mHz" },
                                 ]}
-                                value={oscSampleClock}
-                                onChange={setOscSampleClock}
+                                value={oscSampleRate}
+                                onChange={setOscSampleRate}
                                 style={{ minWidth: 100 }}
-                                disabled={syncSample}
                               ></Select>
-                            </Form.Item>
-                            <Form.Item label="同步采样">
-                              <Switch
-                                size={"small"}
-                                value={syncSample}
-                                onChange={(checked) => {
-                                  setSyncSample(checked);
-                                }}
-                                checkedChildren={<CheckOutlined />}
-                                unCheckedChildren={<CloseOutlined />}
-                                defaultChecked={false}
-                              />
-                            </Form.Item>
-                            <Form.Item label="倍数">
-                              <InputNumber
-                                step="1"
-                                value={syncArgsTimes}
-                                onChange={(v) => {
-                                  setSyncArgsTimes(Number(v));
-                                }}
-                                size={"small"}
-                                min={1}
-                                max={10}
-                                changeOnWheel
-                                disabled={!syncSample}
-                              />
                             </Form.Item>
                             <Form.Item label="采样相位">
                               <InputNumber
@@ -393,12 +363,11 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
                                 size={"small"}
                                 min={-360}
                                 max={360}
-                                defaultValue={oscSamplePhase}
+                                value={oscSamplePhase}
                                 onChange={(v) => {
                                   setOscSamplePhase(Number(v));
                                 }}
                                 changeOnWheel
-                                disabled={!syncSample}
                               />
                             </Form.Item>
                           </Form>
@@ -506,14 +475,16 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
                           <Select
                             size={"small"}
                             options={[
-                              // 62.5 mHZ, 50 mHZ, 25mHZ, 10mHZ
-                              { value: 62.5, label: "62.5 mHz" },
-                              { value: 50.0, label: "50.0 mHz" },
-                              { value: 25.0, label: "25.0 mHz" },
-                              { value: 10.0, label: "10.0 mHz" },
+                              { value: 62500, label: "62.5 mHz" },
+                              { value: 48000, label: "48 mHz" },
+                              { value: 24000, label: "24 mHz" },
+                              { value: 12000, label: "12 mHz" },
+                              { value: 8000, label: "8 mHz" },
+                              { value: 4000, label: "4 mHz" },
                             ]}
                             value={nutClock}
                             onChange={setNutClock}
+                            style={{ minWidth: 100 }}
                           ></Select>
                         </Form.Item>
                         <Form.Item label="NUT相位">

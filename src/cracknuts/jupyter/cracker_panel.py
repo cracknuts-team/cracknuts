@@ -24,7 +24,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     # nut
     nut_enable = traitlets.Bool(False).tag(sync=True)
     nut_voltage = traitlets.Int(3300).tag(sync=True)
-    nut_clock = traitlets.Float(62.5).tag(sync=True)
+    nut_clock = traitlets.Int(62500).tag(sync=True)
 
     # adc
     osc_analog_channel_a_enable = traitlets.Bool(False).tag(sync=True)
@@ -32,7 +32,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     sync_sample = traitlets.Bool(False).tag(sync=True)
     sync_args_times = traitlets.Int(1).tag(sync=True)
 
-    osc_sample_clock = traitlets.Float(62.5).tag(sync=True)
+    osc_sample_rate = traitlets.Int(62500).tag(sync=True)
     osc_sample_phase = traitlets.Int(0).tag(sync=True)
     osc_sample_len = traitlets.Int(1024).tag(sync=True)
     osc_sample_delay = traitlets.Int(1024).tag(sync=True)
@@ -74,7 +74,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         if current_config.nut_voltage is not None:
             self.nut_voltage = current_config.nut_voltage
         if current_config.nut_clock is not None:
-            self.nut_clock = current_config.nut_clock / 1000
+            self.nut_clock = current_config.nut_clock
 
         # osc
         self.osc_analog_channel_a_enable = current_config.osc_analog_channel_enable.get(1, False)
@@ -83,7 +83,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(2, 1)
         self.osc_sample_len = current_config.osc_sample_len
         self.osc_sample_delay = current_config.osc_sample_delay
-        self.osc_sample_clock = current_config.osc_sample_clock
+        self.osc_sample_rate = current_config.osc_sample_rate
         self.osc_sample_phase = current_config.osc_sample_phase
         self.osc_trigger_source = current_config.osc_analog_trigger_source
         self.osc_trigger_mode = current_config.osc_trigger_mode
@@ -99,10 +99,6 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         """
         proxy_config = ConfigProxy(self.cracker.get_current_config(), self)
         self.cracker._config = proxy_config
-
-        proxy_config.bind("nut_clock", formatter=lambda v: v / 1000)
-        proxy_config.bind("osc_sample_clock", formatter=lambda v: v / 1000)
-        # todo bind cracker config set event.
 
     def msg_connection_button_on_click(self, args: dict[str, typing.Any]):
         if args.get("action") == "connect":
@@ -137,7 +133,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_clock")
     @observe_interceptor
     def _nut_clock_change(self, change):
-        self.cracker.nut_set_clock(int(change.get("new") * 1000))
+        self.cracker.nut_set_clock(int(change.get("new")))
 
     @traitlets.observe("osc_sample_phase")
     @observe_interceptor
@@ -154,11 +150,10 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     def osc_sample_delay_change(self, change):
         self.cracker.osc_set_sample_delay(int(change.get("new")))
 
-    @traitlets.observe("osc_sample_clock")
+    @traitlets.observe("osc_sample_rate")
     @observe_interceptor
-    def osc_sample_clock_change(self, change):
-        ...
-        # self.cracker.osc_set_sample_clock(int(change.get("new") * 1000))
+    def osc_sample_rate_change(self, change):
+        self.cracker.osc_set_sample_rate(int(change.get("new")))
 
     @traitlets.observe("osc_analog_channel_a_enable")
     @observe_interceptor
