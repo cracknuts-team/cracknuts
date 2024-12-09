@@ -60,7 +60,7 @@ jobs:
     - name: Install node dependencies
       run: |
         cd jupyter_frontend
-        npm install
+        npx pnpm install
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
