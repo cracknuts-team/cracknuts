@@ -1,11 +1,16 @@
 import {useModelState} from "@anywidget/react";
 import {Button, InputNumber, Select, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
-import React, {useRef} from "react";
+import React from "react";
 
 interface SeriesData {
   1: number[] | undefined;
   2: number[] | undefined;
+}
+
+interface RangeData {
+  1: number[];
+  2: number[];
 }
 
 interface TraceMonitorPanelProperties {
@@ -16,14 +21,19 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
   const [seriesData] = useModelState<SeriesData>("series_data");
   const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
   const [customRangeModel, setCustomRangeModel] = useModelState<boolean>("custom_range_model");
-  const [yMax] = useModelState<number>("y_max");
-  const [yMin] = useModelState<number>("y_min");
-  const [customYMax, setCustomYMax] = useModelState<number>("custom_y_max");
-  const [customYMin, setCustomYMin] = useModelState<number>("custom_y_min");
+  // const [combineYRange, setCombineYRange] = useModelState<boolean>("combine_y_range");
+  const [yRange] = useModelState<RangeData>("y_range");
+  const [customYRange, setCustomYRange] = useModelState<RangeData>("custom_y_range");
 
   const colors = ["green", "red"];
 
-  const echartRef = useRef(null);
+  const updateCustomYRange = (c: number, mn: number, mx: number) => {
+    const r = {...customYRange}
+    if (c == 1 || c == 2) {
+      r[c] = [mn, mx]
+    }
+    setCustomYRange(r)
+  };
 
   const option: object = {
     tooltip: {
@@ -37,6 +47,7 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
       right: "80",
       top: "40",
       bottom: "80",
+      show: false
     },
     animation: false,
     xAxis: {
@@ -46,7 +57,7 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
       },
     },
     dataZoom: getDataZoom(),
-    yAxis: getEchartsYAxis(seriesData),
+    yAxis: getEchartsYAxis(),
     series: getEchartsSeries(seriesData),
   };
 
@@ -72,8 +83,11 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
     }
   }
 
-  function getEchartsYAxis(seriesData: SeriesData) {
+  function getEchartsYAxis() {
     const yAxis = [];
+
+    console.info(yRange)
+
     yAxis.push({
       type: "value",
       position: "left",
@@ -87,27 +101,34 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
       axisLabel: {
         formatter: "{value} mV",
       },
-      // min: customRangeModel ? customYMin : undefined,
-      // max: customRangeModel ? customYMax : undefined,
+      min: yRange[1][0],
+      max: yRange[1][1],
+      interval: yRange[1][2],
+      splitLine: {
+          show: false
+      },
     });
-    if (seriesData["2"]) {
-      yAxis.push({
-        type: "value",
-        position: "right",
-        alignTicks: true,
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: colors[1],
-          },
+
+    yAxis.push({
+      type: "value",
+      position: "right",
+      alignTicks: true,
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: colors[1],
         },
-        axisLabel: {
-          formatter: "{value} mV",
-        },
-        min: customRangeModel ? customYMin : undefined,
-        max: customRangeModel ? customYMax : undefined,
-      });
-    }
+      },
+      axisLabel: {
+        formatter: "{value} mV",
+      },
+      min: yRange[2][0],
+      max: yRange[2][1],
+      interval: yRange[2][2],
+      splitLine: {
+          show: false
+      },
+    });
 
     return yAxis;
   }
@@ -162,22 +183,23 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
         <Button size={"small"} type={monitorStatus ? "primary" : "default"}
                 onClick={() => setMonitorStatus(!monitorStatus)}>监视</Button>
         <Space.Compact>
+          {/*<Button size={"small"} type={combineYRange ? "primary" : "default"}*/}
+          {/*        onClick={() => setMonitorStatus(!monitorStatus)}>共同坐标</Button>*/}
           <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                   onClick={() => {
-                    setCustomYMin(yMin);
-                    setCustomYMax(yMax);
+                    updateCustomYRange(1, yRange[1][0], yRange[1][1]);
+                    updateCustomYRange(2, yRange[2][0], yRange[2][1]);
                     setCustomRangeModel(!customRangeModel);
                   }}>
             指定区间
           </Button>
           <InputNumber disabled={!customRangeModel} addonBefore={"下限"} addonAfter={unitSelect} size={"small"}
-                       value={customYMin} onChange={(v) => {setCustomYMin(Number(v))}} changeOnWheel/>
+                       value={customYRange[1][0]} onChange={(v) => {updateCustomYRange(1, Number(v), yRange[1][1])}} changeOnWheel/>
           <InputNumber disabled={!customRangeModel} addonBefore={"上限"} addonAfter={unitSelect} size={"small"}
-                       value={customYMax} onChange={(v) => {setCustomYMax(Number(v))}} changeOnWheel/>
+                       value={customYRange[1][1]} onChange={(v) => {updateCustomYRange(1, yRange[1][0], Number(v))}} changeOnWheel/>
         </Space.Compact>
         </Space>
       <ReactEcharts option={option} notMerge={true}
-                    ref={echartRef}
                     style={{
                       height: 350, marginTop: 5, padding: 8,
                       borderRadius: 3,
