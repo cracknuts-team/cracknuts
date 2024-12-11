@@ -1,7 +1,7 @@
-import { useModel, useModelState } from "@anywidget/react";
-import { Col, Form, Input, InputNumber, Progress, Radio, Row, Select } from "antd";
-import { CheckboxChangeEvent } from "antd/es/checkbox";
-import React, { ChangeEvent } from "react";
+import {useModel, useModelState} from "@anywidget/react";
+import {Col, Form, Input, InputNumber, Progress, Radio, Row, Select} from "antd";
+import {CheckboxChangeEvent} from "antd/es/checkbox";
+import React, {ChangeEvent} from "react";
 
 interface AcqRunProgress {
   finished: number;
@@ -51,6 +51,14 @@ const AcquisitionPanel: React.FC = () => {
   function checkFrontBackStatusSync() {
     return (frontStatus > 0 && frontStatus != acqStatus) || (frontStatus < 0 && acqStatus > 0);
   }
+
+  const conicColors = [
+    '#0066ff',
+    '#0099cc',
+    '#00cccc',
+    '#00ff99',
+    '#00ff00',
+  ]
 
   return (
     <div>
@@ -168,21 +176,21 @@ const AcquisitionPanel: React.FC = () => {
                 }}
               />
             </Form.Item>
+            <Form.Item>
+              {(acqStatus == 1 || acqStatus == -1) && (
+                <Progress percent={100} showInfo={false} steps={1} size={20} strokeColor={['#87d068']}/>
+              )}
+              {(acqStatus == 2 || acqStatus == -2 || (acqStatus ==0 && acqRunProgress["total"] != -1)) && (
+                <Progress strokeColor={conicColors} steps={5} size={"default"}
+                  percent={acqRunProgress["total"] > 0 ? (acqRunProgress["finished"] / acqRunProgress["total"]) * 100 : 100}
+                  status={"active"}
+                  format={(p) => {
+                    return acqRunProgress["finished"] + "/" + acqRunProgress["total"] + "(" + p?.toFixed(2) + " %)";
+                  }}
+                />)
+              }
+            </Form.Item>
           </Form>
-        </Col>
-      </Row>
-      <Row>
-        <Col span={24}>
-          {acqStatus != 0 && (
-            <Progress
-              percent={acqRunProgress["total"] > 0 ? (acqRunProgress["finished"] / acqRunProgress["total"]) * 100 : 100}
-              status="active"
-              format={(p) => {
-                return acqRunProgress["finished"] + "/" + acqRunProgress["total"] + "(" + p?.toFixed(2) + " %)";
-              }}
-              showInfo={acqStatus == 2 || acqStatus == -2}
-            />
-          )}
         </Col>
       </Row>
     </div>
