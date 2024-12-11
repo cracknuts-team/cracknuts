@@ -59,7 +59,7 @@ const render = createRender(() => {
 
     return (
         <ConfigProvider theme={{algorithm: algorithm}}>
-            <div style={{padding: 20, border: "1px solid #616161", backgroundColor: backgroundColor,}}>
+            <div style={{padding: 20, border: "1px solid #616161", backgroundColor: backgroundColor, marginTop: 8, marginBottom: 8}}>
                 <CrackerPanel hasAcquisition={true} connectStatusChanged={(s) => {setConnected(s);}}/>
                 <TraceMonitorPanel disable={!connected}></TraceMonitorPanel>
             </div>
