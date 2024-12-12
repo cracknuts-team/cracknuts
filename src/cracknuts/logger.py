@@ -1,4 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
+
 """
 这是一个示例模块，展示了如何编写模块级别的文档字符串。
 
