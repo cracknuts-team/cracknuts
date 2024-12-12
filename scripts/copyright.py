@@ -48,15 +48,15 @@ def add_copyright():
 
 
 def check_copyright(files: list[str]):
-    home = os.path.dirname(os.path.dirname(__file__))
     if len(files) == 0:
+        home = os.path.dirname(os.path.dirname(__file__))
         src_path = os.path.join(home, "src")
         files = (os.path.join(root, file) for root, dirs, files in os.walk(src_path) for file in files)
 
     files_without_copyright = []
 
     for file in files:
-        if os.path.join(home, "scripts") in file:
+        if "scripts" in file:
             continue
         if file.endswith(".py"):
             print(f"Checking {file}.")
