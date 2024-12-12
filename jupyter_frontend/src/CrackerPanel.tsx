@@ -487,17 +487,6 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
                             style={{ minWidth: 100 }}
                           ></Select>
                         </Form.Item>
-                        <Form.Item label="NUT相位">
-                          <InputNumber
-                            suffix="°"
-                            step="10"
-                            stringMode
-                            size={"small"}
-                            min={-360}
-                            max={360}
-                            changeOnWheel
-                          />
-                        </Form.Item>
                       </Form>
                     </Col>
                   </Row>
