@@ -3,7 +3,7 @@ name: PR-CI
 on:
   pull_request:
     branches:
-      - "**"
+      - main
 jobs:
   checkout:
     runs-on: ubuntu-latest
