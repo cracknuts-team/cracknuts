@@ -15,7 +15,7 @@ def add_copyright():
     count = 0
 
     skip_dirs = ["bin", "node_modules"]
-    new_line = "# Copyright 2024 CrackNuts. All rights reserved.\n"
+    new_line = "# Copyright 2024 CrackNuts. All rights reserved.\n\n"
 
     # Iterate over each Python file in the specified directory
     for root, _, files in os.walk(src_path):
@@ -61,8 +61,13 @@ def check_copyright(files: list[str]):
             print(f"Checking {file}.")
             with open(file, encoding="utf-8") as f:
                 content = f.readlines()
-                if content and content[0] != "# Copyright 2024 CrackNuts. All rights reserved." and content[1] != "\n":
-                    files_without_copyright.append(file)
+                if content:
+                    if content[0].strip() != "# Copyright 2024 CrackNuts. All rights reserved.":
+                        files_without_copyright.append(file)
+                        print(111111, content[0])
+                    elif content[1].strip() != "":
+                        files_without_copyright.append(file)
+                        print(2222222)
 
     if len(files_without_copyright) > 0:
         files_list = "\n".join(files_without_copyright)
