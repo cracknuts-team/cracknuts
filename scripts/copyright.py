@@ -48,15 +48,16 @@ def add_copyright():
 
 
 def check_copyright(files: list[str]):
+    home = os.path.dirname(os.path.dirname(__file__))
     if len(files) == 0:
-        home = os.path.dirname(os.path.dirname(__file__))
-        print(home)
         src_path = os.path.join(home, "src")
         files = (os.path.join(root, file) for root, dirs, files in os.walk(src_path) for file in files)
 
     files_without_copyright = []
 
     for file in files:
+        if os.path.join(home, "scripts") in file:
+            continue
         if file.endswith(".py"):
             print(f"Checking {file}.")
             with open(file, encoding="utf-8") as f:
@@ -64,10 +65,8 @@ def check_copyright(files: list[str]):
                 if content:
                     if content[0].strip() != "# Copyright 2024 CrackNuts. All rights reserved.":
                         files_without_copyright.append(file)
-                        print(111111, content[0])
                     elif content[1].strip() != "":
                         files_without_copyright.append(file)
-                        print(2222222)
 
     if len(files_without_copyright) > 0:
         files_list = "\n".join(files_without_copyright)
