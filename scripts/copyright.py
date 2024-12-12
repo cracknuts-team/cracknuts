@@ -65,9 +65,9 @@ def check_copyright(files: list[str]):
                     files_without_copyright.append(file)
 
     if len(files_without_copyright) > 0:
+        files_list = "\n".join(files_without_copyright)
         print(
-            f"\033[1;31mThe file: \n{'\n'.join(files_without_copyright)}\nis missing a copyright notice "
-            f"or lacks a blank line after the copyright notice.\033[0m"
+            f"The file: \n{files_list}\nis missing a copyright notice or lacks a blank line after the copyright notice."
         )
         exit(1)
     else:
