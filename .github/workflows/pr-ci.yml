@@ -19,7 +19,6 @@ jobs:
           pip install ruff
       - name: Ruff check
         run: |
-          
           ruff check
   spell:
     runs-on: ubuntu-latest
@@ -41,4 +40,4 @@ jobs:
           git fetch origin ${{ github.event.pull_request.head.ref }}:pr_branch --depth=1
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
           git checkout pr_branch
-          git diff --name-only ${{ github.event.pull_request.base.ref }} | python3 scripts/copyright.py check
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} | python3 scripts/copyright.py check
