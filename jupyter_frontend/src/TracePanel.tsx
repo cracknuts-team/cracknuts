@@ -126,15 +126,13 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
             return [
                 {
                     type: "inside",
-                    xAxisIndex: 0,
+                    xAxisIndex: [0, 1],
                     moveOnMouseMove: "alt",
                     zoomOnMouseWheel: "alt",
                 },
                 {
                     type: "slider",
-                    xAxisIndex: 0,
-                    moveOnMouseMove: "alt",
-                    zoomOnMouseWheel: "alt",
+                    xAxisIndex: [0, 1],
                     realtime: false,
                 },
             ];
