@@ -42,7 +42,10 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         self.acq_status = self.acquisition.get_status()
 
     def sync_config(self) -> None:
-        self.trace_count = self.acquisition.trace_count
+        if self.acquisition.trace_count != -1:
+            # When acquisition.trace_count = -1, it indicates that the ACQUISITION is in test mode,
+            # and in this mode, synchronization of the acquisition trace_count to the GUI is not required.
+            self.trace_count = self.acquisition.trace_count
         self.sample_offset = self.acquisition.sample_offset
         self.sample_length = self.acquisition.sample_length
         self.trigger_judge_wait_time = self.acquisition.trigger_judge_wait_time

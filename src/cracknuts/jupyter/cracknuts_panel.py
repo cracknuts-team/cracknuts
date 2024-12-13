@@ -82,7 +82,7 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
                 self.cracker.set_uri(connection_info)
                 self.acquisition.load_config_from_str(acquisition_info)
         else:
-            self._logger.warning("Current config path is None or is no exist, current config will be ignored.")
+            self._logger.debug("Current config path is None or is no exist, current config will be ignored.")
 
     @staticmethod
     def _get_current_config_path():
