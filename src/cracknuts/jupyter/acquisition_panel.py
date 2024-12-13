@@ -39,6 +39,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         self.reg_msg_handler("acqStatusButton", "onChange", self.msg_acq_status_changed)
         self.acquisition.on_status_changed(self.update_acq_status)
         self.acquisition.on_run_progress_changed(self.update_acq_run_progress)
+        self.acq_status = self.acquisition.get_status()
 
     def sync_config(self) -> None:
         self.trace_count = self.acquisition.trace_count

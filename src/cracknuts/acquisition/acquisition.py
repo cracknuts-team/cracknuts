@@ -71,7 +71,6 @@ class Acquisition(abc.ABC):
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
 
     def get_status(self):
-        self.cracker.get_id()
         return self._status
 
     def set_cracker(self, cracker: CommonCracker):
@@ -263,7 +262,10 @@ class Acquisition(abc.ABC):
         file_path: str | None = "auto",
     ):
         if self._status > 0:
-            raise Exception(f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.')
+            self._logger.warning(
+                f'AcquisitionTemplate is already running in {'run' if self._status == 2 else 'test'} mode.'
+            )
+            return
 
         if not test:
             self._status = self.STATUS_RUNNING

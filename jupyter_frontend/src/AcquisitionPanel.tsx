@@ -42,7 +42,7 @@ const AcquisitionPanel: React.FC = () => {
       setFrontStatus(backStatus >= 0 ? backStatus : -1);
     };
     model.on("change:acq_status", callback);
-
+    callback();
     return () => model.off(`change:acq_status`, callback);
   }, [model]);
 
@@ -98,26 +98,6 @@ const AcquisitionPanel: React.FC = () => {
                 changeOnWheel
               />
             </Form.Item>
-            {/*<Form.Item label="采样长度">*/}
-            {/*  <InputNumber*/}
-            {/*    size={"small"}*/}
-            {/*    value={sampleLength}*/}
-            {/*    onChange={(v) => {*/}
-            {/*      setSampleLength(Number(v));*/}
-            {/*    }}*/}
-            {/*    changeOnWheel*/}
-            {/*  />*/}
-            {/*</Form.Item>*/}
-            {/*<Form.Item label="采样偏移">*/}
-            {/*  <InputNumber*/}
-            {/*    size={"small"}*/}
-            {/*    value={sampleOffset}*/}
-            {/*    onChange={(v) => {*/}
-            {/*      setSampleOffset(Number(v));*/}
-            {/*    }}*/}
-            {/*    changeOnWheel*/}
-            {/*  />*/}
-            {/*</Form.Item>*/}
             <Form.Item label="触发判断等待时长">
               <InputNumber
                 size={"small"}
