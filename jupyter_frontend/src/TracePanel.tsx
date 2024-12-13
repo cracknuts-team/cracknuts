@@ -2,6 +2,7 @@ import {useModel, useModelState} from "@anywidget/react";
 import {Button, Input, InputNumber, Select, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useState} from "react";
+import {LinkOutlined} from "@ant-design/icons";
 
 interface SeriesData {
     1: number[] | undefined;
@@ -30,6 +31,54 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
     const [customC1YMax, setCustomC1YMax] = useState<number|undefined>(undefined)
     const [customC2YMin, setCustomC2YMin] = useState<number|undefined>(undefined)
     const [customC2YMax, setCustomC2YMax] = useState<number|undefined>(undefined)
+
+    const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(false)
+    const [customC2YRangeLink, setCustomC2YRangeLink] = useState<boolean>(false)
+
+    const setCustomC1YMinLink = (v: number) => {
+        if (customC1YRangeLink) {
+            const min = customC1YMin ? customC1YMin : 0
+            const max = customC1YMax ? customC1YMax : 0
+            const offset = v - min
+            setCustomC1YMax(max + offset)
+            setCustomC1YMin(v)
+        } else {
+            setCustomC1YMin(v)
+        }
+    };
+    const setCustomC1YMaxLink = (v: number) => {
+        if (customC1YRangeLink) {
+            const max = customC1YMax ? customC1YMax : 0
+            const min = customC1YMin ? customC1YMin : 0
+            const offset = v - max
+            setCustomC1YMin(min + offset)
+            setCustomC1YMax(v)
+        } else {
+            setCustomC1YMax(v)
+        }
+    };
+    const setCustomC2YMinLink = (v: number) => {
+        if (customC2YRangeLink) {
+            const min = customC2YMin ? customC2YMin : 0
+            const max = customC2YMax ? customC2YMax : 0
+            const offset = v - min
+            setCustomC2YMax(max + offset)
+            setCustomC2YMin(v)
+        } else {
+            setCustomC2YMin(v)
+        }
+    };
+    const setCustomC2YMaxLink = (v: number) => {
+        if (customC2YRangeLink) {
+            const max = customC2YMax ? customC2YMax : 0
+            const min = customC2YMin ? customC2YMin : 0
+            const offset = v - max
+            setCustomC2YMin(min + offset)
+            setCustomC2YMax(v)
+        } else {
+            setCustomC2YMax(v)
+        }
+    };
 
     const colors = ["green", "red"];
 
@@ -247,12 +296,16 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                            style={{width: 50, textAlign: 'center', pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={"下限"}
                                  size={"small"}
-                                 value={customC1YMin} onChange={(v) => {setCustomC1YMin(Number(v))}} changeOnWheel/>
-                    <Input size={"small"} placeholder={"~"} disabled className="site-input-split"
-                           style={{width: 30, textAlign: 'center', pointerEvents: 'none'}}/>
+                                 value={customC1YMin} onChange={(v) => {setCustomC1YMinLink(Number(v))}} changeOnWheel/>
+                    <Button type={customC1YRangeLink ? "primary" : "default"}
+                            size={"small"}
+                            disabled={!customRangeModel}
+                            onClick={() => {setCustomC1YRangeLink(!customC1YRangeLink)}}>
+                        <LinkOutlined />
+                    </Button>
                     <InputNumber disabled={!customRangeModel} placeholder={"上限"}
                                  size={"small"}
-                                 value={customC1YMax} onChange={(v) => {setCustomC1YMax(Number(v))}} changeOnWheel/>
+                                 value={customC1YMax} onChange={(v) => {setCustomC1YMaxLink(Number(v))}} changeOnWheel/>
                     <Select defaultValue="0" disabled={!customRangeModel} size={"small"}>
                         <Select.Option value="0">mV</Select.Option>
                         {/*<Select.Option value="1">V</Select.Option>*/}
@@ -263,12 +316,18 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                            style={{width: 50, borderRight: 0, pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={"下限"}
                                  size={"small"}
-                                 value={customC2YMin} onChange={(v) => {setCustomC2YMin(Number(v))}} changeOnWheel/>
-                    <Input size={"small"} placeholder={"~"} disabled className="site-input-split"
-                           style={{width: 30,  borderRight: 0, pointerEvents: 'none',  textAlign: 'center'}}/>
+                                 value={customC2YMin} onChange={(v) => {setCustomC2YMinLink(Number(v))}} changeOnWheel/>
+                    {/*<Input size={"small"} placeholder={"~"} disabled className="site-input-split"*/}
+                    {/*       style={{width: 30,  borderRight: 0, pointerEvents: 'none',  textAlign: 'center'}}/>*/}
+                    <Button type={customC2YRangeLink ? "primary" : "default"}
+                            size={"small"}
+                            disabled={!customRangeModel}
+                            onClick={() => {setCustomC2YRangeLink(!customC2YRangeLink)}}>
+                        <LinkOutlined />
+                    </Button>
                     <InputNumber disabled={!customRangeModel} placeholder={"上限"}
                                  size={"small"}
-                                 value={customC2YMax} onChange={(v) => {setCustomC2YMax(Number(v))}} changeOnWheel/>
+                                 value={customC2YMax} onChange={(v) => {setCustomC2YMaxLink(Number(v))}} changeOnWheel/>
                     <Select defaultValue="0" disabled={!customRangeModel} size={"small"}>
                         <Select.Option value="0">mV</Select.Option>
                         {/*<Select.Option value="1">V</Select.Option>*/}
