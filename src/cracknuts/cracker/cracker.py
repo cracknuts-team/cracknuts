@@ -96,7 +96,7 @@ class CommonCommands:
 
     CRACKER_I2C_FREQ = 0x0240
     CRACKER_I2C_TIMEOUT = 0x0244
-    CRACKER_I2C_DATA = 0x024A
+    CRACKER_I2C_TRANSCEIVE = 0x024A
 
     CRACKER_CAN_FREQ = 0x0250
     CRACKER_CAN_TIMEOUT = 0x0254
@@ -490,8 +490,8 @@ class BaseCracker(ABC, typing.Generic[T]):
         """
         Get current configuration of `Cracker`.
         Note: Currently, the configuration returned is recorded on the host computer,
-              not the ACTUAL configuration of the device.
-        In the future, it should be synchronized from the device to the host computer.
+        not the ACTUAL configuration of the device. In the future, it should be
+        synchronized from the device to the host computer.
 
         :return: Current configuration of `Cracker`.
         :rtype: CommonConfig
@@ -987,7 +987,24 @@ class CommonCracker(BaseCracker[T], ABC):
         else:
             self._config.osc_clock_divisor = div
 
-    def _spi_transceive(self, data: bytes | str | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool):
+    def _spi_transceive(
+        self, data: bytes | str | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool
+    ) -> bytes | None:
+        """
+        Basic interface for sending and receiving data through the SPI protocol.
+
+        :param data: The data to send.
+        :param is_delay: Whether the transmit delay is enabled.
+        :type is_delay: bool
+        :param delay: The transmit delay in milliseconds, with a minimum effective duration of 10 nanoseconds.
+        :type delay: int
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the SPI device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
         if isinstance(data, str):
             data = bytes.fromhex(data)
         payload = struct.pack(">?IH?", is_delay, delay, rx_count, is_trigger)
@@ -1002,16 +1019,264 @@ class CommonCracker(BaseCracker[T], ABC):
             return res
 
     def spi_transmit(self, data: bytes | str, is_trigger: bool = False):
+        """
+        Send data through the SPI protocol.
+
+        :param data: The data to send.
+        :type data: str | bytes
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        """
         return self._spi_transceive(data, is_delay=False, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger)
 
-    def spi_receive(self, rx_count: int, is_trigger: bool = False):
+    def spi_receive(self, rx_count: int, is_trigger: bool = False) -> bytes | None:
+        """
+        Receive data through the SPI protocol.
+
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the SPI device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
         return self._spi_transceive(None, is_delay=False, delay=1_000_000_000, rx_count=rx_count, is_trigger=is_trigger)
 
-    def spi_transmit_delay_receive(self, data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False):
+    def spi_transmit_delay_receive(
+        self, data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False
+    ) -> bytes | None:
+        """
+        Send and receive data with delay through the SPI protocol.
+
+        :param data: The data to send.
+        :type data: str | bytes
+        :param delay: The transmit delay in milliseconds, with a minimum effective duration of 10 nanoseconds.
+        :type delay: int
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the SPI device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
         return self._spi_transceive(data, is_delay=True, delay=delay, rx_count=rx_count, is_trigger=is_trigger)
 
-    def spi_transceive(self, data: bytes | str, rx_count: int, is_trigger: bool = False):
+    def spi_transceive(self, data: bytes | str, rx_count: int, is_trigger: bool = False) -> bytes | None:
+        """
+        Send and receive data without delay through the SPI protocol.
+
+        :param data: The data to send.
+        :type data: str | bytes
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the SPI device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
         return self._spi_transceive(data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
+
+    def _i2c_transceive(
+        self,
+        addr: str | int,
+        data: bytes | str | None,
+        speed: int,
+        combined_transfer_count_1: int,
+        combined_transfer_count_2: int,
+        transfer_rw: tuple[int, int, int, int, int, int, int, int],
+        transfer_lens: tuple[int, int, int, int, int, int, int, int],
+        is_delay: bool,
+        delay: int,
+        is_trigger: bool,
+    ) -> bytes | None:
+        """
+        Basic API for sending and receiving data through the I2C protocol.
+
+        :param addr: I2C device address, 7-bit length.
+        :type addr: str | int
+        :param data: The data to be sent.
+        :type data: bytes | str | None
+        :param speed: Transmit speed. 0：100K bit/s, 1：400K bit/s, 2：1M bit/s, 3：3.4M bit/s, 4：5M bit/s.
+        :type speed: int
+        :param combined_transfer_count_1: The first combined transmit transfer count.
+        :type combined_transfer_count_1: int
+        :param combined_transfer_count_2: The second combined transmit transfer count.
+        :type combined_transfer_count_2: int
+        :param transfer_rw: The read/write configuration tuple of the four transfers in the two sets
+                            of Combined Transfer, with a tuple length of 8, where 0 represents write
+                            and 1 represents read.
+        :type transfer_rw: tuple[int, int, int, int, int, int, int, int, int]
+        :param transfer_lens: The transfer length tuple of the four transfers in the two combined transmit sets.
+        :param is_delay: Whether the transmit delay is enabled.
+        :type is_delay: bool
+        :param delay: Transmit delay duration, in nanoseconds, with a minimum effective duration of 10 nanoseconds.
+        :type delay: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the I2C device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
+        if isinstance(addr, str):
+            addr = int(addr, 16)
+
+        if addr > (1 << 7) - 1:
+            raise ValueError("Illegal address")
+
+        if isinstance(data, str):
+            data = bytes.fromhex(data)
+
+        if speed > 4:
+            raise ValueError("Illegal speed")
+
+        if combined_transfer_count_1 > 4:
+            raise ValueError("Illegal combined combined_transfer_count_1")
+        if combined_transfer_count_2 > 4:
+            raise ValueError("Illegal combined combined_transfer_count_2")
+
+        if len(transfer_rw) != 8:
+            raise ValueError("transfer_rw length must be 8")
+        if len(transfer_lens) != 8:
+            raise ValueError("transfer_lens length must be 8")
+
+        transfer_rw_num = sum(bit << (7 - i) for i, bit in enumerate(transfer_rw))
+
+        payload = struct.pack(
+            ">?I5B8H?",
+            is_delay,
+            delay,
+            addr,
+            speed,
+            combined_transfer_count_1,
+            combined_transfer_count_2,
+            transfer_rw_num,
+            *transfer_lens,
+            is_trigger,
+        )
+
+        if data is not None:
+            payload += data
+        status, res = self.send_with_command(CommonCommands.CRACKER_I2C_TRANSCEIVE, payload=payload)
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Receive status code error [{status}]")
+            return None
+        else:
+            return res
+
+    def i2c_transmit(self, addr: str | int, data: bytes | str, is_trigger: bool = False):
+        """
+        Send data through the I2C protocol.
+
+        :param addr: I2C device address, 7-bit length.
+        :type addr: str | int
+        :param data: The data to be sent.
+        :type data: str | bytes
+        :param is_trigger: Whether the transmit trigger is enabled.
+        """
+        transfer_rw = (0, 0, 0, 0, 0, 0, 0, 0)
+        transfer_lens = (len(data), 0, 0, 0, 0, 0, 0, 0)
+        self._i2c_transceive(
+            addr,
+            data,
+            speed=0,
+            combined_transfer_count_1=1,
+            combined_transfer_count_2=0,
+            transfer_rw=transfer_rw,
+            transfer_lens=transfer_lens,
+            is_delay=False,
+            delay=0,
+            is_trigger=is_trigger,
+        )
+
+    def i2c_receive(self, addr: str | int, rx_count, is_trigger: bool = False) -> bytes | None:
+        """
+        Receive data through the I2C protocol.
+
+        :param addr: I2C device address, 7-bit length.
+        :type addr: str | int
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :return: The data received from the I2C device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
+        transfer_rw = (1, 1, 1, 1, 1, 1, 1, 1)
+        transfer_lens = (rx_count, 0, 0, 0, 0, 0, 0, 0)
+        return self._i2c_transceive(
+            addr,
+            data=None,
+            speed=0,
+            combined_transfer_count_1=1,
+            combined_transfer_count_2=0,
+            transfer_rw=transfer_rw,
+            transfer_lens=transfer_lens,
+            is_delay=False,
+            delay=0,
+            is_trigger=is_trigger,
+        )
+
+    def i2c_transmit_delay_receive(
+        self, addr: str | int, data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False
+    ) -> bytes | None:
+        """
+        Send and receive data with delay through the I2C protocol.
+
+        :param addr: I2C device address, 7-bit length.
+        :type addr: str | int
+        :param data: The data to be sent.
+        :type data: str | bytes
+        :param delay: Transmit delay duration, in nanoseconds, with a minimum effective duration of 10 nanoseconds.
+        :type delay: int
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the I2C device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
+        transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
+        transfer_lens = (len(data), 0, 0, 0, rx_count, 0, 0, 0)
+        return self._i2c_transceive(
+            addr,
+            data,
+            speed=0,
+            combined_transfer_count_1=1,
+            combined_transfer_count_2=1,
+            transfer_rw=transfer_rw,
+            transfer_lens=transfer_lens,
+            is_delay=True,
+            delay=delay,
+            is_trigger=is_trigger,
+        )
+
+    def i2c_transceive(self, addr, data, rx_count, is_trigger: bool = False) -> bytes | None:
+        """
+        Send and receive data without delay through the I2C protocol.
+
+        :param addr: I2C device address, 7-bit length.
+        :type addr: str | int
+        :param data: The data to be sent.
+        :type data: str | bytes
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :return: The data received from the I2C device. Return None if an exception is caught.
+        :rtype: bytes | None
+        """
+        transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
+        transfer_lens = (len(data), 0, 0, 0, rx_count, 0, 0, 0)
+        return self._i2c_transceive(
+            addr,
+            data,
+            speed=0,
+            combined_transfer_count_1=1,
+            combined_transfer_count_2=1,
+            transfer_rw=transfer_rw,
+            transfer_lens=transfer_lens,
+            is_delay=False,
+            delay=0,
+            is_trigger=is_trigger,
+        )
 
     def cracker_serial_baud(self, baud: int):
         payload = struct.pack(">I", baud)
@@ -1140,7 +1405,7 @@ class CommonCracker(BaseCracker[T], ABC):
         payload = struct.pack(">I", expect_len)
         payload += data
         self._logger.debug(f"cracker_i2c_data payload: {payload.hex()}")
-        status, res = self.send_with_command(CommonCommands.CRACKER_I2C_DATA, payload=payload)
+        status, res = self.send_with_command(CommonCommands.CRACKER_I2C_TRANSCEIVE, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
             return None
