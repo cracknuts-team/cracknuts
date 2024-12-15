@@ -253,14 +253,15 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                     setCustomC2YMin(c2[0])
                     setCustomC2YMax(c2[1])
                 }
-            }
-            if (!c1[0]) {
-                setCustomC1YMin(undefined)
-                setCustomC1YMax(undefined)
-            }
-            if (!c2[0]) {
-                setCustomC2YMin(undefined)
-                setCustomC2YMax(undefined)
+            } else {
+                if (!c1[0]) {
+                    setCustomC1YMin(undefined)
+                    setCustomC1YMax(undefined)
+                }
+                if (!c2[0]) {
+                    setCustomC2YMin(undefined)
+                    setCustomC2YMax(undefined)
+                }
             }
         };
         model.on("change:y_range", updateCustomRangeOnCustom);

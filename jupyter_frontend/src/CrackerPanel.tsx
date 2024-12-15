@@ -175,7 +175,7 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
   });
 
   return (
-    <div style={{height: 270}}>
+    <div>
       <Row>
         <Col span={16}>
           <Space size={"large"}>
