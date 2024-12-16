@@ -1,5 +1,5 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Button, Input, InputNumber, Select, Space, Spin} from "antd";
+import {Button, Input, InputNumber, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useState} from "react";
 import {LinkOutlined} from "@ant-design/icons";
@@ -155,9 +155,6 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                     color: colors[0],
                 },
             },
-            axisLabel: {
-                formatter: "{value} mV",
-            },
             min: customC1YMin ? customC1YMin : yRange[1][0],
             max: customC1YMin ? customC1YMax : yRange[1][1],
             // interval: yRange[1][2],
@@ -177,9 +174,6 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                 lineStyle: {
                     color: colors[1],
                 },
-            },
-            axisLabel: {
-                formatter: "{value} mV",
             },
             min: customRangeModel ? customC2YMin : yRange[2][0],
             max: customRangeModel ? customC2YMax : yRange[2][1],
@@ -305,10 +299,6 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                     <InputNumber disabled={!customRangeModel} placeholder={"上限"}
                                  size={"small"}
                                  value={customC1YMax} onChange={(v) => {setCustomC1YMaxLink(Number(v))}} changeOnWheel/>
-                    <Select defaultValue="0" disabled={!customRangeModel} size={"small"}>
-                        <Select.Option value="0">mV</Select.Option>
-                        {/*<Select.Option value="1">V</Select.Option>*/}
-                    </Select>
                 </Space.Compact>
                 <Space.Compact>
                     <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
@@ -327,10 +317,6 @@ const TraceMonitorPanel: React.FC<TraceMonitorPanelProperties> = ({disable = fal
                     <InputNumber disabled={!customRangeModel} placeholder={"上限"}
                                  size={"small"}
                                  value={customC2YMax} onChange={(v) => {setCustomC2YMaxLink(Number(v))}} changeOnWheel/>
-                    <Select defaultValue="0" disabled={!customRangeModel} size={"small"}>
-                        <Select.Option value="0">mV</Select.Option>
-                        {/*<Select.Option value="1">V</Select.Option>*/}
-                    </Select>
                 </Space.Compact>
             </Space>
             <ReactEcharts option={option} notMerge={true}
