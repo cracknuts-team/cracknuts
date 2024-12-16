@@ -166,6 +166,9 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
     const changeCallback = () => {
       setAcqStatus(model.get("acq_status"));
     };
+
+    changeCallback();
+
     model.on(`change:acq_status`, changeCallback);
 
     return () => {
