@@ -24,16 +24,17 @@ version = release
 
 extensions = [
     "sphinx.ext.autodoc",  # 支持自动文档生成
-    # 'sphinx.ext.napoleon',       # 支持 Google 和 NumPy 风格 docstring
     "sphinx.ext.autosummary",  # 可选：生成模块总结
     "sphinx_autodoc_typehints",  # 可选：显示类型注释
     'sphinx.ext.viewcode',
+    'sphinx.ext.doctest'
 ]
 
 templates_path = ["_templates"]
 exclude_patterns = []
 
 language = "en"
+languages = ['en', 'zh_CN']
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -47,11 +48,17 @@ html_static_path = ["_static"]
 html_favicon = '../../static/favicon.ico'
 
 html_theme_options = {
-    # "logo_light": "../../static/logo2.svg",
-    # "logo_dark": "../../static/logo2.svg",
-    # "main_nav_links": {
-    #     "CrackNuts": "/",
-    # },
 }
 
-autodoc_default_flags = ['members', 'private-members']
+autodoc_default_options = {
+    'members': True,  # 包括类成员
+    'undoc-members': True,  # 包括未文档化的成员
+    'private-members': False,  # 包括私有成员
+    'special-members': '__init__',  # 包括特殊成员 (如 __init__)
+    'inherited-members': False,  # 包括继承的成员
+    'show-inheritance': True,  # 显示继承关系
+    'no-index': True,  # 不生成索引
+}
+
+locale_dirs = ['locale/']   # path is example but recommended.
+gettext_compact = False     # optional

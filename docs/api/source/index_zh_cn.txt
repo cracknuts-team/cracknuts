@@ -1,0 +1,8 @@
+CrackNuts 是一个集成的侧信道分析框架，结合了硬件和软件的协同工作。上位机程序使用 Python 开发，专为 Jupyter 环境优化，提供直观的用户体验，提升操作的便捷性与效率。
+
+本文档介绍了 CrackNuts 上位机程序的架构、功能和 API 接口，以帮助开发人员更高效地使用该程序进行侧信道分析。
+
+
+`CrackNuts` 上位机抽象出 `Cracker` `Acquisition` 两个概念。
+其中 `Cracker` 代表 `CrackNuts` 中的设备，用于对设备进行配置、数据下发、数据采集等操作。
+`Acquisition` 代表在 `测试` 或 `运行` 模式下的执行流程，包括：设备配置、数据下方、数据采集等主要流程，详细内容参考 :ref:`acquisition.rst`

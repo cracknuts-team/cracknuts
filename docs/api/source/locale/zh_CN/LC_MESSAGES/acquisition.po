@@ -1,0 +1,98 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024, CrackNuts
+# This file is distributed under the same license as the CrackNuts package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: CrackNuts 0.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-18 14:21+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: ../../source/acquisition.rst:2 ../../source/acquisition.rst:7
+msgid "Acquisition"
+msgstr ""
+
+#: ../../source/acquisition.rst:4
+msgid ""
+"`Acquisition` is responsible for managing the process of waveform data "
+"acquisition."
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition:1 of
+msgid "Bases: :py:class:`~abc.ABC`"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.connect_cracker:1 of
+msgid "Connect to cracker device. :return:"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.connect_scrat:1 of
+msgid "Connect to scrat device :return:"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.dump_config:1 of
+msgid ""
+"Dump the current config to a JSON file if a path is specified, or to a "
+"JSON string if no path is specified. :type path: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param path: "
+"the path to the JSON file :rtype: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
+"\\:py\\:obj\\:\\`None\\`` :return: the content of JSON string or None if "
+"no path is specified."
+msgstr ""
+
+#: ../../source/acquisition.rst
+msgid "Return type"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:2 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`dict\\`\\\\ "
+"\\\\\\[\\:py\\:class\\:\\`int\\`\\, "
+"\\:py\\:class\\:\\`\\~numpy.ndarray\\`\\] \\| \\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:1 of
+msgid ""
+"Load config from a JSON file :type path: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param path: "
+"the path to the JSON file"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:6
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:6
+#: cracknuts.acquisition.acquisition.Acquisition.on_run_progress_changed:2
+#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:7
+#: cracknuts.acquisition.acquisition.Acquisition.on_wave_loaded:2 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:1 of
+msgid ""
+"Load config from a JSON string :type json_str: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param "
+"json_str: the JSON string"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:1 of
+msgid ""
+"User should not use this function. If you need to perform actions when "
+"the ACQ state changes, please use the node functions in the ACQ lifecycle"
+" point: `init`, `do`, and `finish`."
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:4 of
+msgid "status: 0 stopped, 1 testing, 2 running 3 paused"
+msgstr ""
+
