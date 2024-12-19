@@ -23,7 +23,9 @@ from cracknuts.cracker.operator import Operator
 
 class CommonCommands:
     """
-    Protocol commands.
+    The generic command proxy configuration class defines the `CNP` communication code for general devices.
+    For details, refer to the `CNP` protocol documentation.
+
     """
 
     GET_ID = 0x0001
@@ -106,7 +108,9 @@ class CommonCommands:
 class CommonConfig:
     def __init__(self):
         """
-        For specific devices, users need to set default values and extend configuration items by inheriting this class.
+        The generic configuration object contains various configuration items for general devices.
+        If a device has non-generic configurations, the class should be inherited and extended.
+
         """
 
         self._binder: dict[str, typing.Callable] = {}
@@ -147,8 +151,9 @@ class CommonConfig:
 
     def bind(self, key: str, callback: typing.Callable):
         """
-        Bind a callback which will be call when the key field is updated.
-        :param key: a filed name of class `Config`
+        Bind a callback which will be call when the key field is updated. The end user should use this.
+
+        :param key: a filed name of class `CommonConfig`
         :param callback:
         :return:
         """
@@ -192,7 +197,21 @@ T = typing.TypeVar("T", bound=CommonConfig)
 
 
 class BaseCracker(ABC, typing.Generic[T]):
-    """Cnp protocol supported Cracker"""
+    """
+    The basic device class, provides support for the `CNP` protocol, configuration management, firmware maintenance,
+    and other basic operations.
+
+    For firmware updates, in the `Cracker` architecture, the host computer will attempt to update the latest firmware
+    files from the following directories each time it connects to the device:
+
+    - The directory carried by the current package: <site-packages>/cracknuts/bin
+    - The user directory: ~/.cracknuts/bin
+    - The working directory: <work-directory>/.bin
+
+    Users can obtain the latest firmware by updating `cracknuts`. After downloading the latest firmware from the
+    official website, simply place it in the working directory or user directory.
+
+    """
 
     def __init__(
         self,
@@ -202,7 +221,16 @@ class BaseCracker(ABC, typing.Generic[T]):
         operator_port: int = None,
     ):
         """
-        :param address: Cracker device address (ip, port) or "cnp://xxx:xx"
+        :param address: Cracker device address (ip, port) or "[cnp://]<ip>[:port]",
+                        If no configuration is provided here,
+                        it needs to be configured later by calling `set_address`, `set_ip_port`, or `set_uri`.
+        :type address: str | tuple | None
+        :param bin_server_path: The bin_server (firmware) file for updates; normally, the user should not specify this.
+        :type bin_server_path: str | None
+        :param bin_bitstream_path: The bin_bitstream (firmware) file for updates; normally,
+                                   the user should not specify this.
+        :type bin_bitstream_path: str | None
+        :param operator_port: The operator port to connect to.
         """
         self._command_lock = threading.Lock()
         self._logger = logger.get_logger(self)
@@ -215,19 +243,48 @@ class BaseCracker(ABC, typing.Generic[T]):
         self.set_address(address)
         self._config = self.get_default_config()
 
-    def set_address(self, address: tuple[str, int] | str):
+    def set_address(self, address: tuple[str, int] | str) -> None:
+        """
+        Set the device address in tuple format.
+
+        :param address: address in tuple format: (ip, port).
+        :type address: tuple[str, int]
+        :return: None
+        """
         if isinstance(address, tuple):
             self._server_address = address
         elif isinstance(address, str):
             self.set_uri(address)
 
-    def get_address(self):
+    def get_address(self) -> tuple[str, int]:
+        """
+        Get the device address in tuple format.
+
+        :return: address in tuple format: (ip, port).
+        :rtype: tuple[str, int]
+        """
         return self._server_address
 
     def set_ip_port(self, ip, port) -> None:
+        """
+        Set the device IP address.
+
+        :param ip: IP address.
+        :type ip: str
+        :param port: Port.
+        :type port: int
+        :return: None
+        """
         self._server_address = ip, port
 
     def set_uri(self, uri: str) -> None:
+        """
+        Set the device address in URI format.
+
+        :param uri: URI.
+        :type uri: str
+        :return: None
+        """
         if not uri.startswith("cnp://") and uri.count(":") < 2:
             uri = "cnp://" + uri
 
@@ -239,7 +296,13 @@ class BaseCracker(ABC, typing.Generic[T]):
 
         self._server_address = host, int(port)
 
-    def get_uri(self):
+    def get_uri(self) -> str | None:
+        """
+        Get the device address in URI format.
+
+        :return: URI. if cracker address is not specified, None is returned.
+        :rtype: str | None
+        """
         if self._server_address is None:
             return None
         else:
@@ -254,9 +317,20 @@ class BaseCracker(ABC, typing.Generic[T]):
         force_update_bin: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-    ):
+    ) -> None:
         """
-        Connect to Cracker device.
+        Connect to cracker device.
+
+        :param update_bin: Whether to update the firmware.
+        :type update_bin: bool
+        :param force_update_bin: Whether to force update the firmware while the device is running normally
+                          (by default, firmware updates are not performed when the device is running normally).
+        :type force_update_bin: bool
+        :param bin_server_path: The bin_server (firmware) file for updates.
+        :type bin_server_path: str | None
+        :param bin_bitstream_path: The bin_bitstream (firmware) file for updates.
+        :type bin_bitstream_path: str | None
+        :return: None
         """
         if bin_server_path is None:
             bin_server_path = self._bin_server_path
@@ -387,10 +461,11 @@ class BaseCracker(ABC, typing.Generic[T]):
 
         return server_bin_dict, bitstream_bin_dict
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """
-        Disconnect Cracker device.
-        :return: Cracker self.
+        Disconnect from cracker device.
+
+        :return: None
         """
         try:
             if self._socket:
@@ -404,8 +479,9 @@ class BaseCracker(ABC, typing.Generic[T]):
 
     def reconnect(self):
         """
-        Reconnect to Cracker device.
-        :return: Cracker self.
+        Reconnect to cracker device.
+
+        :return: None
         """
         self.disconnect()
         self.connect()
@@ -413,15 +489,20 @@ class BaseCracker(ABC, typing.Generic[T]):
     def get_connection_status(self) -> bool:
         """
         Get connection status.
-        :return: True or False
+
+        :return: True for connected and False for disconnected.
+        :rtype: bool
         """
         return self._connection_status
 
-    def send_and_receive(self, message) -> tuple[int, bytes | None]:
+    def send_and_receive(self, message: bytes) -> tuple[int, bytes | None]:
         """
-        Send message to socket
-        :param message:
-        :return:
+        Send message to cracker device.
+
+        :param message: The byte message to send.
+        :type message: bytes
+        :return: Received message in format: (status, message).
+        :rtype: tuple[int, bytes | None]
         """
         if self._socket is None:
             self._logger.error("Cracker not connected")
@@ -484,7 +565,15 @@ class BaseCracker(ABC, typing.Generic[T]):
         return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
 
     @abc.abstractmethod
-    def get_default_config(self) -> T: ...
+    def get_default_config(self) -> T:
+        """
+        Get the default configuration. This method needs to be implemented by the specific device class,
+        as different devices have different default configurations.
+
+        :return: The default config object(The specific subclass of CommonConfig).
+        :rtype: CommonConfig
+        """
+        ...
 
     def get_current_config(self) -> T:
         """
@@ -515,7 +604,9 @@ class BaseCracker(ABC, typing.Generic[T]):
         Dump the current config to a JSON file if a path is specified, or to a JSON string if no path is specified.
 
         :param path: the path to the JSON file
+        :type path: str | None
         :return: the content of JSON string or None if no path is specified.
+        :rtype: str | None
         """
         config_json = self._config.dump_to_json()
         if path is None:
@@ -524,20 +615,24 @@ class BaseCracker(ABC, typing.Generic[T]):
             with open(path, "w") as f:
                 f.write(config_json)
 
-    def load_config_from_file(self, path) -> None:
+    def load_config_from_file(self, path: str) -> None:
         """
         Load config from a JSON file.
 
         :param path: the path to the JSON file
+        :type path: str
+        :return: None
         """
         with open(path) as f:
-            self.load_config_from_str(f.readlines())
+            self.load_config_from_str("".join(f.readlines()))
 
-    def load_config_from_str(self, json_str) -> None:
+    def load_config_from_str(self, json_str: str) -> None:
         """
         Load config from a JSON string.
 
         :param json_str: the JSON string
+        :type json_str: str
+        :return: None
         """
         self._config.load_from_json(json_str)
 
@@ -790,6 +885,7 @@ class CommonCracker(BaseCracker[T], ABC):
     def osc_set_sample_rate(self, rate: int):
         """
         Set osc sample rate
+
         :param rate: The sample rate in kHz
         """
         payload = struct.pack(">I", rate)
@@ -949,6 +1045,7 @@ class CommonCracker(BaseCracker[T], ABC):
     def nut_set_clock(self, clock: int):
         """
         Set nut clock.
+
         :param clock: The clock of the nut in kHz
         :type clock: int
         """

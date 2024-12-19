@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-18 14:21+0800\n"
+"POT-Creation-Date: 2024-12-19 15:51+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: ../../source/acquisition.rst:2 ../../source/acquisition.rst:7
+#: ../acquisition.rst:2 ../acquisition.rst:7
 msgid "Acquisition"
 msgstr ""
 
-#: ../../source/acquisition.rst:4
+#: ../acquisition.rst:4
 msgid ""
 "`Acquisition` is responsible for managing the process of waveform data "
 "acquisition."
@@ -52,7 +52,7 @@ msgid ""
 "no path is specified."
 msgstr ""
 
-#: ../../source/acquisition.rst
+#: ../acquisition.rst
 msgid "Return type"
 msgstr ""
 

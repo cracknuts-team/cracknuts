@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-18 14:21+0800\n"
+"POT-Creation-Date: 2024-12-19 17:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -23,7 +23,13 @@ msgstr ""
 msgid "Cracker"
 msgstr ""
 
-#: ../../source/cracker.rst:5
+#: ../../source/cracker.rst:4
+msgid ""
+"The `Cracker` module includes all operations on the device, such as "
+"device configuration, data transmission, and acquisition."
+msgstr "`Cracker` 模块包含了所有对设备的操作，包括设备配置、数据下发采集等。"
+
+#: ../../source/cracker.rst:7
 msgid "CommonCommands"
 msgstr ""
 
@@ -33,36 +39,51 @@ msgid "Bases: :py:class:`object`"
 msgstr ""
 
 #: cracknuts.cracker.cracker.CommonCommands:1 of
-msgid "Protocol commands."
-msgstr ""
+msgid ""
+"The generic command proxy configuration class defines the `CNP` "
+"communication code for general devices. For details, refer to the `CNP` "
+"protocol documentation."
+msgstr "通用指令代理配置类，定义了通用设备的 `CNP` 通讯代码。详情参考 `CNP` 协议说明。"
 
-#: ../../source/cracker.rst:9
+#: ../../source/cracker.rst:11
 msgid "CommonConfig"
 msgstr ""
 
 #: cracknuts.cracker.cracker.CommonConfig.__init__:1
 #: cracknuts.cracker.cracker_s1.CrackerS1Config.__init__:1 of
 msgid ""
-"For specific devices, users need to set default values and extend "
-"configuration items by inheriting this class."
-msgstr ""
+"The generic configuration object contains various configuration items for"
+" general devices. If a device has non-generic configurations, the class "
+"should be inherited and extended."
+msgstr "通用配置对象，包含通用设备的各个配置项目，如果设备有非通用配置，需要继承该类并扩展。"
 
 #: cracknuts.cracker.cracker.CommonConfig.bind:1 of
+#, fuzzy
 msgid ""
-"Bind a callback which will be call when the key field is updated. :type "
-"key: :sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param "
-"key: a filed name of class `Config` :type callback: "
-":sphinx_autodoc_typehints_type:`\\:py\\:data\\:\\`\\~typing.Callable\\`` "
-":param callback: :return:"
-msgstr ""
+"Bind a callback which will be call when the key field is updated. The end"
+" user should use this."
+msgstr "绑定配置回调函数，当配置更新时，该函数被调用 最终用户不要使用该函数"
+
+#: ../../source/cracker.rst
+msgid "Parameters"
+msgstr "参数"
+
+#: cracknuts.cracker.cracker.CommonConfig.bind:4 of
+#, fuzzy
+msgid "a filed name of class `CommonConfig`"
+msgstr "`CommonConfig` 类对象的字段"
+
+#: ../../source/cracker.rst
+msgid "Returns"
+msgstr "返回"
 
 #: cracknuts.cracker.cracker.CommonConfig.dump_to_json:1 of
 msgid "Dump the configuration to a JSON string."
-msgstr ""
+msgstr "到处配置到 JSON 字符串"
 
 #: ../../source/cracker.rst
 msgid "Return type"
-msgstr ""
+msgstr "返回类型"
 
 #: cracknuts.cracker.cracker.CommonConfig.dump_to_json:5 of
 msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\``"
@@ -72,13 +93,13 @@ msgstr ""
 msgid ""
 "Load configuration from a JSON string. If a value in the JSON string is "
 "null, it will be skipped, and the default configuration will be used."
-msgstr ""
+msgstr "从 JSON 字符串加载配置文件。如果字符串是空则加载默认配置文件"
 
 #: cracknuts.cracker.cracker.CommonConfig.load_from_json:6 of
 msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~cracknuts.cracker.cracker.CommonConfig\\``"
 msgstr ""
 
-#: ../../source/cracker.rst:13
+#: ../../source/cracker.rst:15
 msgid "BaseCracker"
 msgstr ""
 
@@ -89,109 +110,206 @@ msgid ""
 msgstr ""
 
 #: cracknuts.cracker.cracker.BaseCracker:1 of
-msgid "Cnp protocol supported Cracker"
-msgstr ""
+msgid ""
+"The basic device class, provides support for the `CNP` protocol, "
+"configuration management, firmware maintenance, and other basic "
+"operations."
+msgstr "基础设备类，提供 `CNP` 协议支持、配置管理、固件维护等基础操作。"
 
-#: ../../source/cracker.rst
-msgid "Parameters"
-msgstr ""
+#: cracknuts.cracker.cracker.BaseCracker:4 of
+msgid ""
+"For firmware updates, in the `Cracker` architecture, the host computer "
+"will attempt to update the latest firmware files from the following "
+"directories each time it connects to the device:"
+msgstr "对于固件更新，在 `Cracker` 架构中，上位机在每次连接设备时都会尝试更新以下目录中的最新的固件文件："
+
+#: cracknuts.cracker.cracker.BaseCracker:7 of
+msgid ""
+"The directory carried by the current package: <site-"
+"packages>/cracknuts/bin"
+msgstr "当前安装包所携带：<site-packages>/cracknuts/bin"
+
+#: cracknuts.cracker.cracker.BaseCracker:8 of
+msgid "The user directory: ~/.cracknuts/bin"
+msgstr "用户目录: ~/.cracknuts/bin"
+
+#: cracknuts.cracker.cracker.BaseCracker:9 of
+msgid "The working directory: <work-directory>/.bin"
+msgstr "工作目录：<work-directory>/.bin"
+
+#: cracknuts.cracker.cracker.BaseCracker:11 of
+msgid ""
+"Users can obtain the latest firmware by updating `cracknuts`. After "
+"downloading the latest firmware from the official website, simply place "
+"it in the working directory or user directory."
+msgstr "用户可以通过更新`cracknuts`方式获取最新的固件，获取到官网下载最新固件后放置到工作目录或用户目录下即可。"
 
 #: cracknuts.cracker.cracker.BaseCracker.__init__:2 of
-msgid "Cracker device address (ip, port) or \"cnp://xxx:xx\""
+msgid ""
+"Cracker device address (ip, port) or \"[cnp://]<ip>[:port]\", If no "
+"configuration is provided here, it needs to be configured later by "
+"calling `set_address`, `set_ip_port`, or `set_uri`."
 msgstr ""
+"Cracker设备地址：(ip, port) 或者 \"cnp://<ip>:<port>\" "
+"格式，如果这里没有配置，后续则需要调用`set_address`, `set_ip_port`, 或者 `set_uri`进行配置。"
+
+#: cracknuts.cracker.cracker.BaseCracker.__init__:7 of
+msgid ""
+"The bin_server (firmware) file for updates; normally, the user should not"
+" specify this."
+msgstr "需要更新的 bin_server（固件）文件，一般无需用户配置。"
+
+#: cracknuts.cracker.cracker.BaseCracker.__init__:10 of
+msgid ""
+"The bin_bitstream (firmware) file for updates; normally, the user should "
+"not specify this."
+msgstr "需要更新的 bin_bitstream（固件）文件，一般无需用户配置。"
+
+#: cracknuts.cracker.cracker.BaseCracker.__init__:13 of
+msgid "The operator port to connect to."
+msgstr "operator 端口"
 
 #: cracknuts.cracker.cracker.BaseCracker.connect:1 of
-msgid "Connect to Cracker device."
+msgid "Connect to cracker device."
+msgstr "连接到cracker设备"
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:4 of
+msgid "Whether to update the firmware."
+msgstr "是否更新固件"
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:7 of
+msgid ""
+"Whether to force update the firmware while the device is running normally"
+" (by default, firmware updates are not performed when the device is "
+"running normally)."
+msgstr "在设备正常运行时是否强制更新固件（默认情况下，设备正常运行情况下固件不进行更新）"
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:11 of
+msgid "The bin_server (firmware) file for updates."
+msgstr "需要更新的 bin_server（固件）文件"
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:14 of
+msgid "The bin_bitstream (firmware) file for updates."
+msgstr "需要更新的 bin_bitstream（固件）文件"
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:16
+#: cracknuts.cracker.cracker.BaseCracker.disconnect:3
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:6
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:6
+#: cracknuts.cracker.cracker.BaseCracker.set_address:6
+#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:9
+#: cracknuts.cracker.cracker.BaseCracker.set_uri:6 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:17
+#: cracknuts.cracker.cracker.BaseCracker.disconnect:4
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:7
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:7
+#: cracknuts.cracker.cracker.BaseCracker.reconnect:3
+#: cracknuts.cracker.cracker.BaseCracker.set_address:7
+#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:10
+#: cracknuts.cracker.cracker.BaseCracker.set_uri:7 of
+msgid "None"
 msgstr ""
 
 #: cracknuts.cracker.cracker.BaseCracker.disconnect:1 of
-msgid "Disconnect Cracker device. :return: Cracker self."
-msgstr ""
+msgid "Disconnect from cracker device."
+msgstr "断开连接"
 
 #: cracknuts.cracker.cracker.BaseCracker.dump_config:1 of
 msgid ""
 "Dump the current config to a JSON file if a path is specified, or to a "
 "JSON string if no path is specified."
-msgstr ""
+msgstr "导出当前配置，如果指定了path则导出JSON文件，否则导出json字符串。"
 
 #: cracknuts.cracker.cracker.BaseCracker.dump_config:4
 #: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:4 of
 msgid "the path to the JSON file"
-msgstr ""
-
-#: cracknuts.cracker.cracker.BaseCracker.dump_config:5
-#: cracknuts.cracker.cracker.CommonCracker.get_id:2
-#: cracknuts.cracker.cracker.CommonCracker.get_name:2
-#: cracknuts.cracker.cracker.CommonCracker.get_version:2 of
-msgid ""
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
-"\\:py\\:obj\\:\\`None\\``"
-msgstr ""
-
-#: ../../source/cracker.rst
-msgid "Returns"
-msgstr ""
+msgstr "JSON文件路径"
 
 #: cracknuts.cracker.cracker.BaseCracker.dump_config:6 of
 msgid "the content of JSON string or None if no path is specified."
-msgstr ""
+msgstr "在path没有配置的抢矿下返回配置文件的JSON字符串，否则返回None。"
+
+#: cracknuts.cracker.cracker.BaseCracker.get_address:1 of
+msgid "Get the device address in tuple format."
+msgstr "获取设备元组形式的地址"
+
+#: cracknuts.cracker.cracker.BaseCracker.get_address:3
+#: cracknuts.cracker.cracker.BaseCracker.set_address:4 of
+msgid "address in tuple format: (ip, port)."
+msgstr "元组形式的地址：(ip, port)。"
 
 #: cracknuts.cracker.cracker.BaseCracker.get_connection_status:1 of
-msgid ""
-"Get connection status. :rtype: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`bool\\`` :return: True"
-" or False"
-msgstr ""
+msgid "Get connection status."
+msgstr "获取连接状态"
+
+#: cracknuts.cracker.cracker.BaseCracker.get_connection_status:3 of
+msgid "True for connected and False for disconnected."
+msgstr "True：已连接，False：未连接。"
 
 #: cracknuts.cracker.cracker.BaseCracker.get_current_config:1 of
+#, fuzzy
 msgid ""
 "Get current configuration of `Cracker`. Note: Currently, the "
 "configuration returned is recorded on the host computer, not the ACTUAL "
 "configuration of the device. In the future, it should be synchronized "
 "from the device to the host computer."
-msgstr ""
+msgstr "获取设备的当前的配置信息。注意：当前返回的是上位机记录的配置信息，并不是设备真实的配置。需要实现。"
 
 #: cracknuts.cracker.cracker.BaseCracker.get_current_config:6 of
 msgid "Current configuration of `Cracker`."
-msgstr ""
+msgstr "Cracker的当前配置信息"
 
-#: cracknuts.cracker.cracker.BaseCracker.get_default_config:2 of
+#: cracknuts.cracker.cracker.BaseCracker.get_default_config:1
+#: cracknuts.cracker.cracker_s1.CrackerS1.get_default_config:1 of
 msgid ""
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~typing.TypeVar\\`\\\\"
-" \\\\\\(\\`\\`T\\`\\`\\, bound\\= "
-"\\:py\\:class\\:\\`\\~cracknuts.cracker.cracker.CommonConfig\\`\\)`"
-msgstr ""
+"Get the default configuration. This method needs to be implemented by the"
+" specific device class, as different devices have different default "
+"configurations."
+msgstr "获取默认配置。因为不同设备有不同的默认之，该方法需要具体的设备子类实现。"
+
+#: cracknuts.cracker.cracker.BaseCracker.get_default_config:4
+#: cracknuts.cracker.cracker_s1.CrackerS1.get_default_config:4 of
+msgid "The default config object(The specific subclass of CommonConfig)."
+msgstr "默认配置对象（CommonConfig 的具体实现类）"
+
+#: cracknuts.cracker.cracker.BaseCracker.get_uri:1 of
+msgid "Get the device address in URI format."
+msgstr "获取URI格式的设备地址"
+
+#: cracknuts.cracker.cracker.BaseCracker.get_uri:3 of
+msgid "URI. if cracker address is not specified, None is returned."
+msgstr "URI地址，如果 Cracker 地址没有指定则返回空。"
 
 #: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:1 of
 msgid "Load config from a JSON file."
-msgstr ""
-
-#: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:6
-#: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:6
-#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:2
-#: cracknuts.cracker.cracker.BaseCracker.set_uri:2 of
-msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
-msgstr ""
+msgstr "从JSON文件中加载配置。"
 
 #: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:1 of
 msgid "Load config from a JSON string."
-msgstr ""
+msgstr "从JSON字符串中加载配置。"
 
 #: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:4 of
 msgid "the JSON string"
-msgstr ""
+msgstr "JSON字符串"
 
 #: cracknuts.cracker.cracker.BaseCracker.reconnect:1 of
-msgid "Reconnect to Cracker device. :return: Cracker self."
-msgstr ""
+msgid "Reconnect to cracker device."
+msgstr "重新连接"
 
 #: cracknuts.cracker.cracker.BaseCracker.send_and_receive:1 of
-msgid ""
-"Send message to socket :type message:  :param message: :rtype: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`tuple\\`\\\\ "
-"\\\\\\[\\:py\\:class\\:\\`int\\`\\, \\:py\\:class\\:\\`bytes\\` \\| "
-"\\:py\\:obj\\:\\`None\\`\\]` :return:"
-msgstr ""
+msgid "Send message to cracker device."
+msgstr "发送消息到设备。"
+
+#: cracknuts.cracker.cracker.BaseCracker.send_and_receive:4 of
+msgid "The byte message to send."
+msgstr "待发送的消息"
+
+#: cracknuts.cracker.cracker.BaseCracker.send_and_receive:6 of
+msgid "Received message in format: (status, message)."
+msgstr "接收的消息，格式：(status, message)。"
 
 #: cracknuts.cracker.cracker.BaseCracker.send_with_command:2 of
 msgid ""
@@ -200,24 +318,48 @@ msgid ""
 "\\:py\\:obj\\:\\`None\\`\\]`"
 msgstr ""
 
+#: cracknuts.cracker.cracker.BaseCracker.set_address:1 of
+msgid "Set the device address in tuple format."
+msgstr "设置元组格式的地址"
+
+#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:1 of
+msgid "Set the device IP address."
+msgstr "设置设备IP地址"
+
+#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:4 of
+msgid "IP address."
+msgstr "IP地址"
+
+#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:7 of
+msgid "Port."
+msgstr "端口"
+
+#: cracknuts.cracker.cracker.BaseCracker.set_uri:1 of
+msgid "Set the device address in URI format."
+msgstr "设置URI格式的地址"
+
+#: cracknuts.cracker.cracker.BaseCracker.set_uri:4 of
+msgid "URI."
+msgstr ""
+
 #: cracknuts.cracker.cracker.BaseCracker.sync_config_to_cracker:1 of
 msgid "Sync config to cracker."
-msgstr ""
+msgstr "同步配置到Cracker"
 
 #: cracknuts.cracker.cracker.BaseCracker.sync_config_to_cracker:3 of
 msgid ""
 "To prevent configuration inconsistencies between the host and the device,"
 " so all configuration information needs to be written to the device. User"
 " should call this function before get data from device."
-msgstr ""
+msgstr "为了防止上位机与设备间的配置信息不同步，在获取数据前用户需要调用该方法同步配置到设备。"
 
 #: cracknuts.cracker.cracker.BaseCracker.sync_config_to_cracker:7 of
 msgid ""
 "NOTE: This function is currently ignored and will be resumed after all "
 "Cracker functions are completed."
-msgstr ""
+msgstr "注意：这个方法暂时无用，后期功能完整后再开启。"
 
-#: ../../source/cracker.rst:17
+#: ../../source/cracker.rst:19
 msgid "CommonCracker"
 msgstr ""
 
@@ -234,16 +376,24 @@ msgid ""
 "\\:py\\:obj\\:\\`None\\``"
 msgstr ""
 
+#: cracknuts.cracker.cracker.CommonCracker.get_id:2
+#: cracknuts.cracker.cracker.CommonCracker.get_name:2
+#: cracknuts.cracker.cracker.CommonCracker.get_version:2 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
+"\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
 #: cracknuts.cracker.cracker.CommonCracker.i2c_receive:1 of
 msgid "Receive data through the I2C protocol."
-msgstr ""
+msgstr "通过I2C协议接收数据"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_receive:4
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:4
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:4
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:4 of
 msgid "I2C device address, 7-bit length."
-msgstr ""
+msgstr "I2C设备地址，7-bit长度"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_receive:7
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:10
@@ -252,7 +402,7 @@ msgstr ""
 #: cracknuts.cracker.cracker.CommonCracker.spi_transceive:7
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:10 of
 msgid "The number of received data bytes."
-msgstr ""
+msgstr "接收数据的长度"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_receive:10
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:13
@@ -263,7 +413,7 @@ msgstr ""
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit:7
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:13 of
 msgid "Whether the transmit trigger is enabled."
-msgstr ""
+msgstr "是否开启触发"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_receive:11
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:15
@@ -271,53 +421,56 @@ msgstr ""
 msgid ""
 "The data received from the I2C device. Return None if an exception is "
 "caught."
-msgstr ""
+msgstr "通过I2C接收到的数据，如果出现异常则返回None。"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:1 of
 msgid "Send and receive data without delay through the I2C protocol."
-msgstr ""
+msgstr "没有延迟的通过I2C发送接收数据"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:7
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:7
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:7 of
 msgid "The data to be sent."
-msgstr ""
+msgstr "待发送的数据"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:1 of
 msgid "Send data through the I2C protocol."
-msgstr ""
+msgstr "通过I2C协议发送数据"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:1 of
 msgid "Send and receive data with delay through the I2C protocol."
-msgstr ""
+msgstr "有延迟的通过I2C发送和接收数据"
 
 #: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:10 of
 msgid ""
 "Transmit delay duration, in nanoseconds, with a minimum effective "
 "duration of 10 nanoseconds."
-msgstr ""
+msgstr "传输延迟，单位：纳秒，最小有效值：10纳秒。"
 
 #: cracknuts.cracker.cracker.CommonCracker.nut_set_clock:1 of
-msgid ""
-"Set nut clock. :type clock: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`int\\`` :param clock: "
-"The clock of the nut in kHz :type clock: int"
-msgstr ""
+msgid "Set nut clock."
+msgstr "设置NUT时钟。"
+
+#: cracknuts.cracker.cracker.CommonCracker.nut_set_clock:4 of
+msgid "The clock of the nut in kHz"
+msgstr "时钟：单位 kHz"
 
 #: cracknuts.cracker.cracker.CommonCracker.osc_get_analog_wave:2 of
 msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~numpy.ndarray\\``"
 msgstr ""
 
 #: cracknuts.cracker.cracker.CommonCracker.osc_set_sample_rate:1 of
-msgid ""
-"Set osc sample rate :type rate: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`int\\`` :param rate: "
-"The sample rate in kHz"
-msgstr ""
+msgid "Set osc sample rate"
+msgstr "设置osc采样率"
+
+#: cracknuts.cracker.cracker.CommonCracker.osc_set_sample_rate:4 of
+#, fuzzy
+msgid "The sample rate in kHz"
+msgstr "采样率，单位：kHz"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_receive:1 of
 msgid "Receive data through the SPI protocol."
-msgstr ""
+msgstr "通过SPI协议接收数据"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_receive:9
 #: cracknuts.cracker.cracker.CommonCracker.spi_transceive:12
@@ -325,33 +478,33 @@ msgstr ""
 msgid ""
 "The data received from the SPI device. Return None if an exception is "
 "caught."
-msgstr ""
+msgstr "通过SPI协议接收的数据，如果出现异常则返回空。"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_transceive:1 of
 msgid "Send and receive data without delay through the SPI protocol."
-msgstr ""
+msgstr "没有延迟的通过SPI发送和接收数据。"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_transceive:4
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit:4
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:4 of
 msgid "The data to send."
-msgstr ""
+msgstr "待发送的数据。"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit:1 of
 msgid "Send data through the SPI protocol."
-msgstr ""
+msgstr "通过SPI发送数据。"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:1 of
 msgid "Send and receive data with delay through the SPI protocol."
-msgstr ""
+msgstr "有延迟的通过SPI发送和接收数据。"
 
 #: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:7 of
 msgid ""
 "The transmit delay in milliseconds, with a minimum effective duration of "
 "10 nanoseconds."
-msgstr ""
+msgstr "发送数据延迟，单位：纳秒，最小有效值： 10纳秒"
 
-#: ../../source/cracker.rst:21
+#: ../../source/cracker.rst:23
 msgid "CrackerS1Config"
 msgstr ""
 
@@ -359,7 +512,7 @@ msgstr ""
 msgid "Bases: :py:class:`~cracknuts.cracker.cracker.CommonConfig`"
 msgstr ""
 
-#: ../../source/cracker.rst:25
+#: ../../source/cracker.rst:27
 msgid "CrackerS1"
 msgstr ""
 
@@ -368,8 +521,3 @@ msgid ""
 "Bases: :py:class:`~cracknuts.cracker.cracker.CommonCracker`\\ "
 "[:py:class:`~cracknuts.cracker.cracker_s1.CrackerS1Config`]"
 msgstr ""
-
-#: cracknuts.cracker.cracker_s1.CrackerS1.get_default_config:2 of
-msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~cracknuts.cracker.cracker\\_s1.CrackerS1Config\\``"
-msgstr ""
-
