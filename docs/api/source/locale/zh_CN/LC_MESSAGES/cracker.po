@@ -1,0 +1,375 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024, CrackNuts
+# This file is distributed under the same license as the CrackNuts package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: CrackNuts 0.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-18 14:21+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: ../../source/cracker.rst:2
+msgid "Cracker"
+msgstr ""
+
+#: ../../source/cracker.rst:5
+msgid "CommonCommands"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCommands:1
+#: cracknuts.cracker.cracker.CommonConfig:1 of
+msgid "Bases: :py:class:`object`"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCommands:1 of
+msgid "Protocol commands."
+msgstr ""
+
+#: ../../source/cracker.rst:9
+msgid "CommonConfig"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonConfig.__init__:1
+#: cracknuts.cracker.cracker_s1.CrackerS1Config.__init__:1 of
+msgid ""
+"For specific devices, users need to set default values and extend "
+"configuration items by inheriting this class."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonConfig.bind:1 of
+msgid ""
+"Bind a callback which will be call when the key field is updated. :type "
+"key: :sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param "
+"key: a filed name of class `Config` :type callback: "
+":sphinx_autodoc_typehints_type:`\\:py\\:data\\:\\`\\~typing.Callable\\`` "
+":param callback: :return:"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonConfig.dump_to_json:1 of
+msgid "Dump the configuration to a JSON string."
+msgstr ""
+
+#: ../../source/cracker.rst
+msgid "Return type"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonConfig.dump_to_json:5 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\``"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonConfig.load_from_json:1 of
+msgid ""
+"Load configuration from a JSON string. If a value in the JSON string is "
+"null, it will be skipped, and the default configuration will be used."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonConfig.load_from_json:6 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~cracknuts.cracker.cracker.CommonConfig\\``"
+msgstr ""
+
+#: ../../source/cracker.rst:13
+msgid "BaseCracker"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker:1 of
+msgid ""
+"Bases: :py:class:`~abc.ABC`, :py:class:`~typing.Generic`\\ "
+"[:py:obj:`~cracknuts.cracker.cracker.T`]"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker:1 of
+msgid "Cnp protocol supported Cracker"
+msgstr ""
+
+#: ../../source/cracker.rst
+msgid "Parameters"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.__init__:2 of
+msgid "Cracker device address (ip, port) or \"cnp://xxx:xx\""
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.connect:1 of
+msgid "Connect to Cracker device."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.disconnect:1 of
+msgid "Disconnect Cracker device. :return: Cracker self."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.dump_config:1 of
+msgid ""
+"Dump the current config to a JSON file if a path is specified, or to a "
+"JSON string if no path is specified."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.dump_config:4
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:4 of
+msgid "the path to the JSON file"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.dump_config:5
+#: cracknuts.cracker.cracker.CommonCracker.get_id:2
+#: cracknuts.cracker.cracker.CommonCracker.get_name:2
+#: cracknuts.cracker.cracker.CommonCracker.get_version:2 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
+"\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: ../../source/cracker.rst
+msgid "Returns"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.dump_config:6 of
+msgid "the content of JSON string or None if no path is specified."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.get_connection_status:1 of
+msgid ""
+"Get connection status. :rtype: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`bool\\`` :return: True"
+" or False"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.get_current_config:1 of
+msgid ""
+"Get current configuration of `Cracker`. Note: Currently, the "
+"configuration returned is recorded on the host computer, not the ACTUAL "
+"configuration of the device. In the future, it should be synchronized "
+"from the device to the host computer."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.get_current_config:6 of
+msgid "Current configuration of `Cracker`."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.get_default_config:2 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~typing.TypeVar\\`\\\\"
+" \\\\\\(\\`\\`T\\`\\`\\, bound\\= "
+"\\:py\\:class\\:\\`\\~cracknuts.cracker.cracker.CommonConfig\\`\\)`"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:1 of
+msgid "Load config from a JSON file."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_file:6
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:6
+#: cracknuts.cracker.cracker.BaseCracker.set_ip_port:2
+#: cracknuts.cracker.cracker.BaseCracker.set_uri:2 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:1 of
+msgid "Load config from a JSON string."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.load_config_from_str:4 of
+msgid "the JSON string"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.reconnect:1 of
+msgid "Reconnect to Cracker device. :return: Cracker self."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.send_and_receive:1 of
+msgid ""
+"Send message to socket :type message:  :param message: :rtype: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`tuple\\`\\\\ "
+"\\\\\\[\\:py\\:class\\:\\`int\\`\\, \\:py\\:class\\:\\`bytes\\` \\| "
+"\\:py\\:obj\\:\\`None\\`\\]` :return:"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.send_with_command:2 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`tuple\\`\\\\ "
+"\\\\\\[\\:py\\:class\\:\\`int\\`\\, \\:py\\:class\\:\\`bytes\\` \\| "
+"\\:py\\:obj\\:\\`None\\`\\]`"
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.sync_config_to_cracker:1 of
+msgid "Sync config to cracker."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.sync_config_to_cracker:3 of
+msgid ""
+"To prevent configuration inconsistencies between the host and the device,"
+" so all configuration information needs to be written to the device. User"
+" should call this function before get data from device."
+msgstr ""
+
+#: cracknuts.cracker.cracker.BaseCracker.sync_config_to_cracker:7 of
+msgid ""
+"NOTE: This function is currently ignored and will be resumed after all "
+"Cracker functions are completed."
+msgstr ""
+
+#: ../../source/cracker.rst:17
+msgid "CommonCracker"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker:1 of
+msgid ""
+"Bases: :py:class:`~cracknuts.cracker.cracker.BaseCracker`\\ "
+"[:py:obj:`~cracknuts.cracker.cracker.T`], :py:class:`~abc.ABC`"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.cracker_read_register:2
+#: cracknuts.cracker.cracker.CommonCracker.cracker_write_register:2 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`bytes\\` \\| "
+"\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_receive:1 of
+msgid "Receive data through the I2C protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_receive:4
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:4
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:4
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:4 of
+msgid "I2C device address, 7-bit length."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_receive:7
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:10
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:13
+#: cracknuts.cracker.cracker.CommonCracker.spi_receive:4
+#: cracknuts.cracker.cracker.CommonCracker.spi_transceive:7
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:10 of
+msgid "The number of received data bytes."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_receive:10
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:13
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:10
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:16
+#: cracknuts.cracker.cracker.CommonCracker.spi_receive:7
+#: cracknuts.cracker.cracker.CommonCracker.spi_transceive:10
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit:7
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:13 of
+msgid "Whether the transmit trigger is enabled."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_receive:11
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:15
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:18 of
+msgid ""
+"The data received from the I2C device. Return None if an exception is "
+"caught."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:1 of
+msgid "Send and receive data without delay through the I2C protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transceive:7
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:7
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:7 of
+msgid "The data to be sent."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit:1 of
+msgid "Send data through the I2C protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:1 of
+msgid "Send and receive data with delay through the I2C protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.i2c_transmit_delay_receive:10 of
+msgid ""
+"Transmit delay duration, in nanoseconds, with a minimum effective "
+"duration of 10 nanoseconds."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.nut_set_clock:1 of
+msgid ""
+"Set nut clock. :type clock: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`int\\`` :param clock: "
+"The clock of the nut in kHz :type clock: int"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.osc_get_analog_wave:2 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~numpy.ndarray\\``"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.osc_set_sample_rate:1 of
+msgid ""
+"Set osc sample rate :type rate: "
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`int\\`` :param rate: "
+"The sample rate in kHz"
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_receive:1 of
+msgid "Receive data through the SPI protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_receive:9
+#: cracknuts.cracker.cracker.CommonCracker.spi_transceive:12
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:15 of
+msgid ""
+"The data received from the SPI device. Return None if an exception is "
+"caught."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_transceive:1 of
+msgid "Send and receive data without delay through the SPI protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_transceive:4
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit:4
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:4 of
+msgid "The data to send."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit:1 of
+msgid "Send data through the SPI protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:1 of
+msgid "Send and receive data with delay through the SPI protocol."
+msgstr ""
+
+#: cracknuts.cracker.cracker.CommonCracker.spi_transmit_delay_receive:7 of
+msgid ""
+"The transmit delay in milliseconds, with a minimum effective duration of "
+"10 nanoseconds."
+msgstr ""
+
+#: ../../source/cracker.rst:21
+msgid "CrackerS1Config"
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1Config:1 of
+msgid "Bases: :py:class:`~cracknuts.cracker.cracker.CommonConfig`"
+msgstr ""
+
+#: ../../source/cracker.rst:25
+msgid "CrackerS1"
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1:1 of
+msgid ""
+"Bases: :py:class:`~cracknuts.cracker.cracker.CommonCracker`\\ "
+"[:py:class:`~cracknuts.cracker.cracker_s1.CrackerS1Config`]"
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.get_default_config:2 of
+msgid ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`\\~cracknuts.cracker.cracker\\_s1.CrackerS1Config\\``"
+msgstr ""
+

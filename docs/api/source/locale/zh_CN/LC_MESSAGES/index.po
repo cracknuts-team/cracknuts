@@ -1,0 +1,55 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2024, CrackNuts
+# This file is distributed under the same license as the CrackNuts package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: CrackNuts 0.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-18 17:27+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: ../../source/index.rst:2
+msgid "CrackNuts API Documentation"
+msgstr "CrackNuts API 文档"
+
+#: ../../source/index.rst:4
+msgid ""
+"CrackNuts is an integrated side-channel analysis framework that combines "
+"the collaborative work of hardware and software. The host application is "
+"developed in Python and optimized for the Jupyter environment, providing "
+"an intuitive user experience to enhance ease of use and efficiency."
+msgstr ""
+"CrackNuts 是一个集成的侧信道分析框架，结合了硬件和软件的协同工作。上位机程序使用 Python 开发，专为 Jupyter "
+"环境优化，提供直观的用户体验，提升操作的便捷性与效率。"
+
+#: ../../source/index.rst:8
+msgid ""
+"This document outlines the architecture, features, and API interfaces of "
+"the CrackNuts host application to help developers efficiently utilize the"
+" program for side-channel analysis."
+msgstr "本文档介绍了 CrackNuts 上位机程序的架构、功能和 API 接口，以帮助开发人员更高效地使用该程序进行侧信道分析。"
+
+#: ../../source/index.rst:11
+msgid ""
+"The `CrackNuts` host application abstracts two concepts: `Cracker` and "
+"`Acquisition`. The `Cracker` represents the devices within `CrackNuts`, "
+"used for operations such as device configuration, data transmission, and "
+"data collection. The `Acquisition` represents the execution flow in "
+"either test or run mode, which includes key processes such as device "
+"configuration, data transmission, and data collection. For detailed "
+"information, refer to :ref:acquisition.rst."
+msgstr ""
+"`CrackNuts` 上位机抽象出 `Cracker` `Acquisition` 两个概念。其中 `Cracker` 代表 "
+"`CrackNuts` 中的设备，用于对设备进行配置、数据下发、数据采集等操作。`Acquisition` 代表在 `测试` 或 `运行` "
+"模式下的执行流程，包括：设备配置、数据下方、数据采集等主要流程，详细内容参考 :ref:`acquisition.rst`"
