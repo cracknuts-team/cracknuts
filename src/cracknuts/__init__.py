@@ -6,10 +6,11 @@ import sys
 import typing
 from collections.abc import Callable
 
-from cracknuts.acquisition import Acquisition
-from cracknuts.cracker.cracker import CommonCracker, CommonConfig
-from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts import jupyter
+from cracknuts.acquisition import Acquisition, AcquisitionBuilder
+from cracknuts.cracker.cracker_basic import CrackerBasic
+from cracknuts.cracker.cracker_g1 import CrackerG1
+from cracknuts.cracker.cracker_s1 import CrackerS1
 
 try:
     from IPython.display import display
@@ -20,11 +21,11 @@ except ImportError:
     display = None
 
 
-T = typing.TypeVar("T", bound=CommonConfig)
-
-
 def version():
     return __version__
+
+
+CRACKER = typing.TypeVar("CRACKER", bound=CrackerBasic)
 
 
 def new_cracker(
@@ -32,29 +33,33 @@ def new_cracker(
     bin_server_path: str | None = None,
     bin_bitstream_path: str | None = None,
     operator_port: int = None,
-    module: type[T] | None = None,
-):
+    model: type[CRACKER] | str | None = None,
+) -> CRACKER:
     kwargs = {
         "address": address,
         "bin_server_path": bin_server_path,
         "bin_bitstream_path": bin_bitstream_path,
         "operator_port": operator_port,
     }
-    return _Cracker(module, **kwargs)
+    if model is None:
+        model = CrackerS1
+    else:
+        if isinstance(model, str):
+            if model == "s1":
+                model = CrackerS1
+            elif model == "g1":
+                model = CrackerG1
+            else:
+                raise ValueError(f"Unknown cracker model: {model}")
+    return model(**kwargs)
 
 
 def new_acquisition(
-    cracker: CommonCracker,
-    init: Callable[[CommonCracker], None] | None = None,
-    do: Callable[[CommonCracker], None] | None = None,
+    cracker: CrackerBasic,
+    init: Callable[[CrackerBasic], None] | None = None,
+    do: Callable[[CrackerBasic], None] | None = None,
 ) -> Acquisition:
-    return _Acquisition(cracker, init, do)
-
-
-if display is not None:
-
-    def monitor_panel(acq: Acquisition):
-        return jupyter.display_trace_monitor_panel(acq)
+    return AcquisitionBuilder().cracker(cracker).init(init).do(do).build()
 
 
 if display is not None:
@@ -65,59 +70,23 @@ if display is not None:
 
 if display is not None:
 
-    def trace_analysis_panel():
-        return jupyter.display_trace_analysis_panel()
+    def panel_cracker(cracker: CrackerBasic):
+        return jupyter.display_cracker_panel(cracker)
 
 
-class _Cracker(CommonCracker[T]):
-    def get_default_config(self) -> T:
-        return self._cracker.get_default_config()
+if display is not None:
 
-    def __init__(self, module: type[T] | None = None, **kwargs):
-        if module is None:
-            module = CrackerS1
-        self._cracker = module()
-        super().__init__(**kwargs)
-
-    if display is not None:
-
-        def _ipython_display_(self):
-            display(jupyter.display_cracker_panel(self))
+    def panel_scope(acq: Acquisition):
+        return jupyter.display_scope_panel(acq)
 
 
-class _Acquisition(Acquisition):
-    def __init__(
-        self, cracker: CommonCracker, init: Callable[[CommonCracker], None], do: Callable[[CommonCracker], None]
-    ):
-        super().__init__(cracker)
-        self._init = init
-        self._do = do
+if display is not None:
 
-    def init(self):
-        if self._init is not None:
-            return self._init(self.cracker)
-
-    def do(self):
-        if self._do is not None:
-            return self._do(self.cracker)
-
-    if display is not None:
-
-        def _ipython_display_(self):
-            display(jupyter.display_acquisition_panel(self))
+    def panel_acquisition(acq: Acquisition):
+        return jupyter.display_acquisition_panel(acq)
 
 
-class _CrackNuts:
-    def __init__(self):
-        self._cracker = None
-        self._acquisition = None
+if display is not None:
 
-    def cracker(self, address: tuple | str | None = None, module: type[T] | None = None) -> "_CrackNuts":
-        self._cracker = _Cracker(address, module)
-        return self
-
-    def acquisition(
-        self, init: Callable[[CommonCracker], None] | None = None, do: Callable[[CommonCracker], None] | None = None
-    ) -> "_CrackNuts":
-        self._acquisition = _Acquisition(self._cracker, init, do)
-        return self
+    def panel_trace():
+        return jupyter.display_trace_panel()

@@ -1,77 +1,127 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import pathlib
-import threading
-import time
 import typing
 
 import numpy as np
-import traitlets
+from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset
+from traitlets import traitlets
 
-from cracknuts.acquisition.acquisition import Acquisition
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
-class TraceMonitorPanelWidget(MsgHandlerPanelWidget):
-    _esm = pathlib.Path(__file__).parent / "static" / "TraceMonitorPanelWidget.js"
+class TracePanelWidget(MsgHandlerPanelWidget):
+    _esm = pathlib.Path(__file__).parent / "static" / "TraceAnalysisPanelWidget.js"
     _css = ""
 
-    series_data = traitlets.Dict({}).tag(sync=True)
+    trace_series_list: list[dict] = traitlets.List([]).tag(sync=True)
 
-    # custom_range_model = traitlets.Bool(False).tag(sync=True)
-    custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"1": (0, 0), "2": (0, 0)}).tag(sync=True)
-    y_range: dict[int, tuple[int, int]] = traitlets.Dict({1: (None, None), 2: (None, None)}).tag(sync=True)
-    combine_y_range = traitlets.Bool(False).tag(sync=True)
-
-    monitor_status = traitlets.Bool(False).tag(sync=True)
-    monitor_period = traitlets.Float(0.1).tag(sync=True)
+    _DEFAULT_SHOW_INDEX_THRESHOLD = 3
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
+        self._emphasis = kwargs.get("emphasis", False)
+        self._trace_dataset: TraceDataset | None = None
+        self.show_trace: ShowTrace = ShowTrace(self._show_trace)
 
-        if not hasattr(self, "acquisition"):
-            self.acquisition: Acquisition | None = None
-            if "acquisition" in kwargs and isinstance(kwargs["acquisition"], Acquisition):
-                self.acquisition = kwargs["acquisition"]
-            if self.acquisition is None:
-                raise ValueError("acquisition is required")
+    def set_emphasis(self, value: bool) -> None:
+        if self._emphasis != value:
+            self._emphasis = value
+            self.trace_series_list = [{**series, "emphasis": not value} for series in self.trace_series_list]
 
-        self._trace_update_stop_flag = True
+    def set_numpy_data(self, trace: np.ndarray, data: np.ndarray = None) -> None:
+        ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
+        self.set_trace_dataset(ds)
 
-    def update(self, series_data: dict[int, np.ndarray]) -> None:
-        (
-            mn1,
-            mx1,
-        ) = None, None
-        (
-            mn2,
-            mx2,
-        ) = None, None
+    def _show_trace(self, channel_slice, trace_slice):
+        channel_indexes, trace_indexes, traces, data = self._trace_dataset.data[channel_slice, trace_slice]
 
-        if 1 in series_data.keys():
-            c1 = series_data[1]
-            mn1, mx1 = np.min(c1), np.max(c1)
-        if 2 in series_data.keys():
-            c2 = series_data[2]
-            mn2, mx2 = np.min(c2), np.max(c2)
+        trace_series_list = []
 
-        self.y_range = {1: (mn1, mx1), 2: (mn2, mx2)}
+        for c, channel_index in enumerate(channel_indexes):
+            for t, trace_index in enumerate(trace_indexes):
+                trace_series_list.append(
+                    {
+                        "name": str(channel_index) + "-" + str(trace_index),
+                        "data": traces[c, t],
+                        "emphasis": not self._emphasis,
+                    }
+                )
+        self.trace_series_list = trace_series_list
 
-        self.series_data = {k: v.tolist() for k, v in series_data.items()}
+    def show_default_trace(self):
+        trace_count = self._trace_dataset.trace_count
+        self._show_trace(
+            0,
+            slice(
+                0,
+                trace_count if trace_count < self._DEFAULT_SHOW_INDEX_THRESHOLD else self._DEFAULT_SHOW_INDEX_THRESHOLD,
+            ),
+        )
 
-    @traitlets.observe("monitor_status")
-    def monitor(self, change) -> None:
-        if change.get("new"):
-            self.start_monitor()
+    def show_all_trace(self):
+        channel_count = self._trace_dataset.channel_count
+        trace_count = self._trace_dataset.trace_count
+        self._show_trace(slice(0, channel_count), slice(0, trace_count))
 
-    def _monitor(self) -> None:
-        while self.monitor_status:
-            self.update(self.acquisition.get_last_wave())
-            time.sleep(self.monitor_period)
+    def highlight(self, *indexes: int) -> None:
+        self._emphasis = False
+        self.trace_series_list = [
+            {**series, "emphasis": True, "color": "red" if i in indexes else "gray"}
+            for i, series in enumerate(self.trace_series_list)
+        ]
 
-    def start_monitor(self) -> None:
-        self.monitor_status = True
-        threading.Thread(target=self._monitor).start()
+    def set_numpy_data_highlight(self, trace: np.ndarray, data: np.ndarray = None, highlight_indexes=None):
+        if highlight_indexes is None:
+            highlight_indexes = []
+        ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
+        self._trace_dataset = ds
+        trace_series_list = []
 
-    def stop_monitor(self) -> None:
-        self.monitor_status = False
+        for t, trace_index in enumerate(range(ds.trace_count)):
+            if t not in highlight_indexes:
+                trace_series_list.append(
+                    {
+                        "name": str(0) + "-" + str(trace_index),
+                        "data": trace[t],
+                        "emphasis": not self._emphasis,
+                        "color": "gray",
+                    }
+                )
+        for t, trace_index in enumerate(range(ds.trace_count)):
+            if t in highlight_indexes:
+                trace_series_list.append(
+                    {
+                        "name": str(0) + "-" + str(trace_index),
+                        "data": trace[t],
+                        "emphasis": not self._emphasis,
+                        "color": "red",
+                        "z": 10,
+                    }
+                )
+        self.trace_series_list = trace_series_list
+
+    def set_trace_dataset(
+        self, trace_dataset: TraceDataset, show_all_trace=False, channel_slice=None, trace_slice=None
+    ) -> None:
+        self._trace_dataset = trace_dataset
+        if show_all_trace:
+            self.show_all_trace()
+        elif channel_slice is not None and trace_slice is not None:
+            self._show_trace(channel_slice, trace_slice)
+        else:
+            self.show_default_trace()
+
+    def open_trace_data_set_file(self, trace_dataset: TraceDataset) -> TraceDataset: ...
+
+    def open_numpy_file(self, path: str): ...
+
+    def open_zarr(self, path: str): ...
+
+
+class ShowTrace:
+    def __init__(self, func_show_trace):
+        self._func_trace = func_show_trace
+
+    def __getitem__(self, item):
+        return self._func_trace(item[0], item[1])

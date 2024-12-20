@@ -1,11 +1,11 @@
 import { createRender } from "@anywidget/react";
 import React from "react";
-import {TraceAnalysisPanel} from "@/TracePanel.tsx";
+import TracePanel from "@/TracePanel.tsx";
 
 const render = createRender(() => {
   return (
     <div >
-      <TraceAnalysisPanel></TraceAnalysisPanel>
+      <TracePanel></TracePanel>
     </div>
   );
 });
