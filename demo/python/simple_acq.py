@@ -1,7 +1,7 @@
 from cracknuts.acquisition import Acquisition
 from cracknuts.acquisition.acquisition import AcqProgress
 from cracknuts.cracker.cracker_s1 import CrackerS1
-from cracknuts.cracker.cracker import Cracker
+from cracknuts.cracker.cracker_basic import Cracker
 from cracknuts.cracker.stateful_cracker import StatefulCracker
 
 

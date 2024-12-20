@@ -4,6 +4,7 @@ Cracker
 The `Cracker` module includes all operations on the device, such as device configuration, data transmission, and acquisition.
 
 .. autoclass:: cracknuts.cracker.cracker.CommonCommands
+   :literal:
 
 .. autoclass:: cracknuts.cracker.cracker.CommonConfig
 

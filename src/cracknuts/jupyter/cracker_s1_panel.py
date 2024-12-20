@@ -6,13 +6,13 @@ from typing import Any
 
 from traitlets import traitlets
 
-from cracknuts import logger, CommonCracker
+from cracknuts import logger, CrackerS1
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
 
 
-class CrackerPanelWidget(MsgHandlerPanelWidget):
-    _esm = pathlib.Path(__file__).parent / "static" / "CrackerPanelWidget.js"
+class CrackerS1PanelWidget(MsgHandlerPanelWidget):
+    _esm = pathlib.Path(__file__).parent / "static" / "CrackerS1PanelWidget.js"
     _css = ""
 
     uri = traitlets.Unicode("cnp://192.168.0.11:8080").tag(sync=True)
@@ -50,9 +50,9 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         super().__init__(*args, **kwargs)
         self._logger = logger.get_logger(self)
         self._observe: bool = True
-        self.cracker: CommonCracker | None = None
-        if "cracker" in kwargs and isinstance(kwargs["cracker"], CommonCracker):
-            self.cracker: CommonCracker = kwargs["cracker"]
+        self.cracker: CrackerS1 | None = None
+        if "cracker" in kwargs:
+            self.cracker: CrackerS1 = kwargs["cracker"]
         if self.cracker is None:
             raise ValueError("cracker is required")
         self.reg_msg_handler("connectButton", "onClick", self.msg_connection_button_on_click)

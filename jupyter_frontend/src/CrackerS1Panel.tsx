@@ -28,12 +28,12 @@ import {
 import TabPane from "antd/es/tabs/TabPane";
 import AcquisitionPanel from "@/AcquisitionPanel.tsx";
 
-interface CrackPanelProps {
+interface CrackS1PanelProps {
   hasAcquisition?: boolean;
   connectStatusChanged?: (connected: boolean) => void;
 }
 
-const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, connectStatusChanged = undefined }) => {
+const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({ hasAcquisition = false, connectStatusChanged = undefined }) => {
   // 连接
   const [uri, setUri] = useModelState<string>("uri");
   const [connectStatus] = useModelState<boolean>("connect_status");
@@ -503,4 +503,4 @@ const CrackerPanel: React.FC<CrackPanelProps> = ({ hasAcquisition = false, conne
   );
 };
 
-export default CrackerPanel;
+export default CrackerS1Panel;
