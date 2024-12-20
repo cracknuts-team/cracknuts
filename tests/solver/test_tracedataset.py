@@ -1,11 +1,11 @@
-from cracknuts.solver.trace import ScarrTraceDataset, NumpyTraceDataset, TraceDataset
+from cracknuts.trace.trace import ScarrTraceDataset, NumpyTraceDataset, TraceDataset
 import numpy as np
 
 channel_count = 2
 trace_count = 100
 sample_count = 4096
 data_length = 16
-version = "(cracker: 0.0.1, solver: 0.0.1)"
+version = "(cracker: 0.0.1, trace: 0.0.1)"
 
 zarr_path = "d:\\z.zarr"
 

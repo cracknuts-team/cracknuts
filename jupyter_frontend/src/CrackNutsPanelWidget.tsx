@@ -1,10 +1,13 @@
-import {createRender} from "@anywidget/react";
-import {TraceMonitorPanel} from "@/TracePanel.tsx";
+import {createRender, useModelState} from "@anywidget/react";
+import ScopePanel from "@/ScopePanel.tsx";
 import React, {useState} from "react";
-import CrackerPanel from "@/CrackerPanel.tsx";
+import CrackerS1Panel from "@/CrackerS1Panel.tsx";
 import {ConfigProvider, theme} from "antd";
 
 const render = createRender(() => {
+
+    const [crackerModel] = useModelState<string>("cracker_model");
+
     const [connected, setConnected] = useState(false);
 
     // in browser
@@ -59,9 +62,18 @@ const render = createRender(() => {
 
     return (
         <ConfigProvider theme={{algorithm: algorithm}}>
-            <div style={{padding: 20, border: "1px solid #616161", backgroundColor: backgroundColor, marginTop: 8, marginBottom: 8}}>
-                <CrackerPanel hasAcquisition={true} connectStatusChanged={(s) => {setConnected(s);}}/>
-                <TraceMonitorPanel disable={!connected}></TraceMonitorPanel>
+            <div style={{
+                padding: 20,
+                border: "1px solid #616161",
+                backgroundColor: backgroundColor,
+                marginTop: 8,
+                marginBottom: 8
+            }}>
+                {crackerModel == "s1" && (<CrackerS1Panel hasAcquisition={true} connectStatusChanged={(s) => {
+                    setConnected(s);
+                }}/>)}
+                {/*{crackerModel == "g1" && (<CrackerG1Panel hasAcquisition={true} connectStatusChanged={(s) => {setConnected(s);}}/>)}*/}
+                <ScopePanel disable={!connected}></ScopePanel>
             </div>
         </ConfigProvider>
     );
