@@ -11,7 +11,7 @@ from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
 class TracePanelWidget(MsgHandlerPanelWidget):
-    _esm = pathlib.Path(__file__).parent / "static" / "TraceAnalysisPanelWidget.js"
+    _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
     _css = ""
 
     trace_series_list: list[dict] = traitlets.List([]).tag(sync=True)

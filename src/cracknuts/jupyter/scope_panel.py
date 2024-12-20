@@ -13,7 +13,7 @@ from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
 class ScopePanelWidget(MsgHandlerPanelWidget):
-    _esm = pathlib.Path(__file__).parent / "static" / "TraceMonitorPanelWidget.js"
+    _esm = pathlib.Path(__file__).parent / "static" / "ScopePanelWidget.js"
     _css = ""
 
     series_data = traitlets.Dict({}).tag(sync=True)

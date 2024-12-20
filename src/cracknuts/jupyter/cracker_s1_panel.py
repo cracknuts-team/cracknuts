@@ -6,7 +6,8 @@ from typing import Any
 
 from traitlets import traitlets
 
-from cracknuts import logger, CrackerS1
+from cracknuts import logger
+from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
 

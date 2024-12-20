@@ -1,5 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
-
+import subprocess
 import urllib.request
 import xml.etree.ElementTree as et
 import logging
@@ -14,6 +14,15 @@ from cracknuts.cracker import protocol
 @click.group(help="A library for cracker device.", context_settings=dict(max_content_width=120))
 @click.version_option(version=cracknuts.__version__, message="%(version)s")
 def main(): ...
+
+
+@main.command(help="Start jupyter lab")
+@click.option("--workspace", default=".", show_default=True, help="Working directory")
+def start_lab(workspace: str = "."):
+    try:
+        subprocess.run(["jupyter", "lab", "--notebook-dir", workspace], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Start Jupyter Lab failed: {e}")
 
 
 @main.command(help="Start a mock cracker.")
