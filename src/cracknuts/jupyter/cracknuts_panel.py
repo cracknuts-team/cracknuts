@@ -6,21 +6,32 @@ import pathlib
 import typing
 import sys
 
-from cracknuts import CommonCracker
+import traitlets
+
+from cracknuts import CrackerS1, CrackerG1
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
-from cracknuts.jupyter.cracker_panel import CrackerPanelWidget
+from cracknuts.jupyter.cracker_s1_panel import CrackerS1PanelWidget
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
-from cracknuts.jupyter.trace_panel import TraceMonitorPanelWidget
+from cracknuts.jupyter.scope_panel import ScopePanelWidget
 
 
-class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMonitorPanelWidget, MsgHandlerPanelWidget):
+class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackNutsPanelWidget.js"
     _css = ""
+
+    cracker_model = traitlets.Unicode("s1").tag(sync=True)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if "acquisition" not in kwargs:
             raise ValueError("acquisition must be provided")
-        kwargs["cracker"]: CommonCracker = kwargs["acquisition"].cracker
+        cracker = kwargs["acquisition"].cracker
+        kwargs["cracker"] = cracker
+        if isinstance(cracker, CrackerS1):
+            self.cracker_model = "s1"
+        elif isinstance(cracker, CrackerG1):
+            self.cracker_model = "g1"
+        else:
+            raise ValueError(f"can't find panel for cracker type: {type(cracker)}.")
         super().__init__(*args, **kwargs)
         self._load_current_path_config()
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
@@ -28,11 +39,11 @@ class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, TraceMoni
         self.reg_msg_handler("saveConfigButton", "onClick", self.save_config_button_click)
 
     def sync_config(self) -> None:
-        CrackerPanelWidget.sync_config(self)
+        CrackerS1PanelWidget.sync_config(self)
         AcquisitionPanelWidget.sync_config(self)
 
     def bind(self) -> None:
-        CrackerPanelWidget.bind(self)
+        CrackerS1PanelWidget.bind(self)
         AcquisitionPanelWidget.bind(self)
 
     def dump_config_button_click(self, args: dict[str, typing.Any]):

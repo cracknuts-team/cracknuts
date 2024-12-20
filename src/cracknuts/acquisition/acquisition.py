@@ -11,8 +11,8 @@ import typing
 import numpy as np
 
 from cracknuts import logger
-from cracknuts.cracker.cracker import CommonCracker
-from cracknuts.solver.trace import ScarrTraceDataset, NumpyTraceDataset
+from cracknuts.cracker.cracker_basic import CrackerBasic
+from cracknuts.trace.trace import ScarrTraceDataset, NumpyTraceDataset
 
 
 class AcqProgress:
@@ -32,7 +32,7 @@ class Acquisition(abc.ABC):
 
     def __init__(
         self,
-        cracker: CommonCracker,
+        cracker: CrackerBasic,
         trace_count: int = 1000,
         sample_length: int = -1,
         sample_offset: int = 0,
@@ -54,7 +54,7 @@ class Acquisition(abc.ABC):
         self._current_trace_count = 1
         self._run_thread_pause_event: threading.Event = threading.Event()
 
-        self.cracker: CommonCracker = cracker
+        self.cracker: CrackerBasic = cracker
         self.trace_count: int = trace_count
         self.sample_length = sample_length
         self.sample_offset: int = sample_offset
@@ -73,7 +73,7 @@ class Acquisition(abc.ABC):
     def get_status(self):
         return self._status
 
-    def set_cracker(self, cracker: CommonCracker):
+    def set_cracker(self, cracker: CrackerBasic):
         self.cracker = cracker
 
     def on_status_changed(self, callback: typing.Callable[[int], None]) -> None:
@@ -580,16 +580,16 @@ class AcquisitionBuilder:
         self._do_function = lambda _: ...
         self._init_function = lambda _: ...
 
-    def cracker(self, cracker: CommonCracker):
+    def cracker(self, cracker: CrackerBasic):
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[CommonCracker], None]):
+    def init(self, init_function: typing.Callable[[CrackerBasic], None]):
         if init_function is not None:
             self._init_function = init_function
         return self
 
-    def do(self, do_function: typing.Callable[[CommonCracker], None]):
+    def do(self, do_function: typing.Callable[[CrackerBasic], None]):
         if do_function is not None:
             self._do_function = do_function
         return self

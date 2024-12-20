@@ -1,6 +1,6 @@
 import logging
 
-import cracknuts.cracker.cracker
+import cracknuts.cracker.cracker_basic
 from cracknuts.cracker import protocol
 from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.logger import set_level

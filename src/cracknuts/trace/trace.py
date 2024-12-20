@@ -7,7 +7,7 @@ import time
 import typing
 
 import numpy as np
-import zarr  # type: ignore
+import zarr
 
 from cracknuts import logger
 
