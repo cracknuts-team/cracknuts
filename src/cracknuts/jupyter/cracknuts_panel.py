@@ -3,12 +3,13 @@
 import json
 import os
 import pathlib
-import typing
 import sys
+import typing
 
 import traitlets
 
-from cracknuts import CrackerS1, CrackerG1
+from cracknuts.cracker.cracker_g1 import CrackerG1
+from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
 from cracknuts.jupyter.cracker_s1_panel import CrackerS1PanelWidget
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget

@@ -1,6 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-from cracknuts import CrackerBasic
+from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.acquisition import Acquisition
 
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
