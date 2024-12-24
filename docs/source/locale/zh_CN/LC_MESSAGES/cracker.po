@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-24 12:45+0800\n"
+"POT-Creation-Date: 2024-12-24 17:15+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -32,34 +32,6 @@ msgstr "`Cracker` 模块包含了所有对设备的操作，包括设备配置�
 #: cracknuts.cracker.cracker_basic.ConfigBasic:1 of
 msgid "Bases: :py:class:`object`"
 msgstr ""
-
-#: cracknuts.cracker.cracker_basic.ConfigBasic.__init__:1
-#: cracknuts.cracker.cracker_s1.ConfigS1.__init__:1 of
-msgid ""
-"The generic configuration object contains various configuration items for"
-" general devices. If a device has non-generic configurations, the class "
-"should be inherited and extended."
-msgstr "通用配置对象，包含通用设备的各个配置项目，如果设备有非通用配置，需要继承该类并扩展。"
-
-#: cracknuts.cracker.cracker_basic.ConfigBasic.bind:1 of
-#, fuzzy
-msgid ""
-"Bind a callback which will be call when the key field is updated. The end"
-" user should use this."
-msgstr "绑定配置回调函数，当配置更新时，该函数被调用 最终用户不要使用该函数"
-
-#: ../../source/cracker.rst
-msgid "Parameters"
-msgstr "参数"
-
-#: cracknuts.cracker.cracker_basic.ConfigBasic.bind:4 of
-#, fuzzy
-msgid "a filed name of class `CommonConfig`"
-msgstr "`CommonConfig` 类对象的字段"
-
-#: ../../source/cracker.rst
-msgid "Returns"
-msgstr "返回"
 
 #: cracknuts.cracker.cracker_basic.ConfigBasic.dump_to_json:1 of
 msgid "Dump the configuration to a JSON string."
@@ -124,6 +96,10 @@ msgid ""
 "it in the working directory or user directory."
 msgstr "用户可以通过更新`cracknuts`方式获取最新的固件，获取到官网下载最新固件后放置到工作目录或用户目录下即可。"
 
+#: ../../source/cracker.rst
+msgid "Parameters"
+msgstr "参数"
+
 #: cracknuts.cracker.cracker_basic.CrackerBasic.__init__:2 of
 msgid ""
 "Cracker device address (ip, port) or \"[cnp://]<ip>[:port]\", If no "
@@ -178,9 +154,29 @@ msgstr "需要更新的 bin_bitstream（固件）文件"
 #: cracknuts.cracker.cracker_basic.CrackerBasic.load_config_from_str:6
 #: cracknuts.cracker.cracker_basic.CrackerBasic.set_address:6
 #: cracknuts.cracker.cracker_basic.CrackerBasic.set_ip_port:9
-#: cracknuts.cracker.cracker_basic.CrackerBasic.set_uri:6 of
+#: cracknuts.cracker.cracker_basic.CrackerBasic.set_uri:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:11
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_clock:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_enable:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage_raw:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_coupling:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_trigger_source:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_voltage:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_digital_channel_enable:2
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_len:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_phase:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_rate:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge_level:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_mode:6 of
 msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
 msgstr ""
+
+#: ../../source/cracker.rst
+msgid "Returns"
+msgstr "返回"
 
 #: cracknuts.cracker.cracker_basic.CrackerBasic.connect:17
 #: cracknuts.cracker.cracker_basic.CrackerBasic.disconnect:4
@@ -189,7 +185,23 @@ msgstr ""
 #: cracknuts.cracker.cracker_basic.CrackerBasic.reconnect:3
 #: cracknuts.cracker.cracker_basic.CrackerBasic.set_address:7
 #: cracknuts.cracker.cracker_basic.CrackerBasic.set_ip_port:10
-#: cracknuts.cracker.cracker_basic.CrackerBasic.set_uri:7 of
+#: cracknuts.cracker.cracker_basic.CrackerBasic.set_uri:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:12
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_clock:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_enable:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage_raw:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_bias_voltage:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:10
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_coupling:10
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_trigger_source:8
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_voltage:10
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_len:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_phase:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_rate:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge_level:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_mode:7 of
 msgid "None"
 msgstr "无"
 
@@ -361,12 +373,39 @@ msgid ""
 "[:py:class:`~cracknuts.cracker.cracker_s1.ConfigS1`]"
 msgstr ""
 
-#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:2 of
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:1 of
+msgid "Read register."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:4
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:4 of
+msgid "Base address of the register."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:7 of
+msgid "Offset of the register."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:9 of
 msgid ""
 ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`bytes\\` \\| "
 "\\:py\\:obj\\:\\`None\\``"
 msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:10 of
+#, fuzzy
+msgid "The value read from the register or None if an exception is raised."
+msgstr "通过SPI协议接收的数据，如果出现异常则返回空。"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:1 of
+msgid "Write register."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:10 of
+#, fuzzy
+msgid "Data to write."
+msgstr "待发送的数据。"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.i2c_receive:1 of
 msgid "Receive data through the I2C protocol."
@@ -439,14 +478,126 @@ msgstr "设置NUT时钟。"
 msgid "The clock of the nut in kHz"
 msgstr "时钟：单位 kHz"
 
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_enable:1 of
+#, fuzzy
+msgid "Set nut enable."
+msgstr "设置NUT时钟。"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_enable:4 of
+msgid "Enable or disable. 0 for disable, 1 for enable if specified as a integer."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage:1 of
+#, fuzzy
+msgid "Set nut voltage."
+msgstr "设置NUT时钟。"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage:4
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage_raw:4 of
+msgid "Nut voltage, in milli volts (mV)."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage_raw:1 of
+msgid "Set nut raw voltage."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_bias_voltage:1 of
+msgid "Set analog bias voltage."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_bias_voltage:4
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:4
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_coupling:4
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_voltage:4 of
+msgid "Channel to enable."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_bias_voltage:7
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_voltage:7 of
+msgid "Voltage to set. unit: mV."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:1 of
+msgid "Set analog channel enable."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:7 of
+msgid "Enable or disable."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_coupling:1 of
+msgid "Set analog coupling."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_coupling:7 of
+msgid "1 for DC and 0 for AC."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_trigger_source:1 of
+msgid "Set trigger source."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_trigger_source:4 of
+msgid ""
+"Trigger source: 'N', 'A', 'B', 'P', or 0, 1, 2, 3 represent Nut, Channel "
+"A, Channel B, and Protocol, respectively."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_voltage:1 of
+msgid "Set analog voltage."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_len:1 of
+#, fuzzy
+msgid "Set sample length."
+msgstr "设置osc采样率"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_len:4 of
+msgid "Sample length."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_phase:1 of
+#, fuzzy
+msgid "Set sample phase."
+msgstr "设置osc采样率"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_phase:4 of
+msgid "Sample phase."
+msgstr ""
+
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_rate:1 of
 msgid "Set osc sample rate"
 msgstr "设置osc采样率"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_rate:4 of
-#, fuzzy
-msgid "The sample rate in kHz"
-msgstr "采样率，单位：kHz"
+msgid "The sample rate in kHz, one of (62500, 48000, 24000, 12000, 8000, 4000)"
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge:1 of
+msgid "Set trigger edge."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge:4 of
+msgid ""
+"Trigger edge. 'up', 'down', 'either' or 0, 1, 2 represent up, down, "
+"either, respectively."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge_level:1 of
+msgid "Set trigger edge level."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_edge_level:4 of
+msgid "Edge level."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_mode:1 of
+msgid "Set trigger mode."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_trigger_mode:4 of
+msgid "Trigger mode. Trigger mode: 0 for edge, 1 for wave."
+msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.spi_receive:1 of
 msgid "Receive data through the SPI protocol."
@@ -530,4 +681,24 @@ msgstr "发送数据延迟，单位：纳秒，最小有效值： 10纳秒"
 #~ "Bases: :py:class:`~cracknuts.cracker.cracker.CommonCracker`\\"
 #~ " [:py:class:`~cracknuts.cracker.cracker_s1.CrackerS1Config`]"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "The generic configuration object contains "
+#~ "various configuration items for general "
+#~ "devices. If a device has non-"
+#~ "generic configurations, the class should "
+#~ "be inherited and extended."
+#~ msgstr "通用配置对象，包含通用设备的各个配置项目，如果设备有非通用配置，需要继承该类并扩展。"
+
+#~ msgid ""
+#~ "Bind a callback which will be call"
+#~ " when the key field is updated. "
+#~ "The end user should use this."
+#~ msgstr "绑定配置回调函数，当配置更新时，该函数被调用 最终用户不要使用该函数"
+
+#~ msgid "a filed name of class `CommonConfig`"
+#~ msgstr "`CommonConfig` 类对象的字段"
+
+#~ msgid "The sample rate in kHz"
+#~ msgstr "采样率，单位：kHz"
 
