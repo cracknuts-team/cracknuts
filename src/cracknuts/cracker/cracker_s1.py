@@ -2,7 +2,6 @@
 
 import struct
 
-
 from cracknuts.cracker import protocol
 from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
 
@@ -10,6 +9,15 @@ from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
 class ConfigS1(ConfigBasic):
     def __init__(self):
         super().__init__()
+        self.int_dict_fields = (
+            "osc_analog_channel_enable",
+            "osc_analog_coupling",
+            "osc_analog_voltage",
+            "osc_analog_bias_voltage",
+            "osc_analog_gain",
+            "osc_analog_gain_raw",
+        )
+
         self.nut_enable = False
         self.nut_voltage = 3500
         self.nut_clock = 62500
@@ -25,12 +33,40 @@ class ConfigS1(ConfigBasic):
         self.osc_analog_trigger_edge = 0
         self.osc_analog_trigger_edge_level = 1
 
+        self.osc_analog_coupling: dict[int, int] = {}
+        self.osc_analog_voltage: dict[int, int] = {}
+        self.osc_analog_bias_voltage: dict[int, int] = {}
+        self.osc_digital_voltage: int | None = None
+        self.osc_digital_trigger_source: int | None = None
+        self.osc_analog_gain_raw: dict[int, int] = {}
+        self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
+        self.osc_clock_sample_divisor: tuple[int, int] | None = None
+        self.osc_clock_simple: tuple[int, int, int] | None = None
+        self.osc_clock_phase: int | None = None
+        self.osc_clock_divisor: int | None = None
+
+        self.nut_enable: bool | None = None
+        self.nut_voltage: int | None = None
+        self.nut_voltage_raw: int | None = None
+        self.nut_clock: int | None = None
+        self.nut_interface: int | None = None
+        self.nut_timeout: int | None = None
+
 
 class CrackerS1(CrackerBasic[ConfigS1]):
     def get_default_config(self) -> ConfigS1:
         return ConfigS1()
 
     def cracker_read_register(self, base_address: int, offset: int) -> bytes | None:
+        """
+        Read register.
+
+        :param base_address: Base address of the register.
+        :type base_address: int
+        :param offset: Offset of the register.
+        :type offset: int
+        :return: The value read from the register or None if an exception is raised.
+        """
         payload = struct.pack(">II", base_address, offset)
         self._logger.debug(f"cracker_read_register payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_READ_REGISTER, payload=payload)
@@ -40,7 +76,17 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             return res
 
-    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> bytes | None:
+    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> None:
+        """
+        Write register.
+
+        :param base_address: Base address of the register.
+        :type base_address: int
+        :param offset: Offset of the register.
+        :type offset: int
+        :param data: Data to write.
+        :return: None
+        """
         if isinstance(data, str):
             if data.startswith("0x") or data.startswith("0X"):
                 data = data[2:]
@@ -52,11 +98,17 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         status, res = self.send_with_command(protocol.Command.CRACKER_WRITE_REGISTER, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
-            return None
-        else:
-            return res
 
-    def osc_set_analog_channel_enable(self, channel: int, enable: bool):
+    def osc_set_analog_channel_enable(self, channel: int, enable: bool) -> None:
+        """
+        Set analog channel enable.
+
+        :param channel: Channel to enable.
+        :type channel: int
+        :param enable: Enable or disable.
+        :type enable: bool
+        :return: None
+        """
         final_enable = self._config.osc_analog_channel_enable | {channel: enable}
         mask = 0
         if final_enable.get(0):
@@ -85,7 +137,16 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_analog_channel_enable = final_enable
 
-    def osc_set_analog_coupling(self, channel: int, coupling: int):
+    def osc_set_analog_coupling(self, channel: int, coupling: int) -> None:
+        """
+        Set analog coupling.
+
+        :param channel: Channel to enable.
+        :type channel: int
+        :param coupling: 1 for DC and 0 for AC.
+        :type coupling: int
+        :return: None
+        """
         final_coupling = self._config.osc_analog_coupling | {channel: coupling}
         enable = 0
         if final_coupling.get(0):
@@ -116,7 +177,16 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_analog_coupling = final_coupling
 
-    def osc_set_analog_voltage(self, channel: int, voltage: int):
+    def osc_set_analog_voltage(self, channel: int, voltage: int) -> None:
+        """
+        Set analog voltage.
+
+        :param channel: Channel to enable.
+        :type channel: int
+        :param voltage: Voltage to set. unit: mV.
+        :type voltage: int
+        :return: None
+        """
         payload = struct.pack(">BI", channel, voltage)
         self._logger.debug(f"scrat_analog_coupling payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_VOLTAGE, payload=payload)
@@ -126,6 +196,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.osc_analog_voltage[channel] = voltage
 
     def osc_set_analog_bias_voltage(self, channel: int, voltage: int):
+        """
+        Set analog bias voltage.
+
+        :param channel: Channel to enable.
+        :type channel: int
+        :param voltage: Voltage to set. unit: mV.
+        :type voltage: int
+        :return: None
+        """
         payload = struct.pack(">BI", channel, voltage)
         self._logger.debug(f"scrat_analog_bias_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_BIAS_VOLTAGE, payload=payload)
@@ -134,7 +213,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_analog_bias_voltage[channel] = voltage
 
-    def osc_set_digital_channel_enable(self, channel: int, enable: bool):
+    def osc_set_digital_channel_enable(self, channel: int, enable: bool) -> None:
         final_enable = self._config.osc_digital_channel_enable | {channel: enable}
         mask = 0
         if final_enable.get(0):
@@ -172,16 +251,44 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_digital_voltage = voltage
 
-    def osc_set_trigger_mode(self, mode: int):
+    def osc_set_trigger_mode(self, mode: int) -> None:
+        """
+        Set trigger mode.
+
+        :param mode: Trigger mode. Trigger mode: 0 for edge, 1 for wave.
+        :type mode: int
+        :return: None
+        """
         payload = struct.pack(">B", mode)
-        self._logger.debug(f"scrat_trigger_mode payload: {payload.hex()}")
+        self._logger.debug(f"osc_set_trigger_mode payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_MODE, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
             self._config.osc_trigger_mode = mode
 
-    def osc_set_analog_trigger_source(self, source: int):
+    def osc_set_analog_trigger_source(self, source: int | str) -> None:
+        """
+        Set trigger source.
+
+        :param source: Trigger source: 'N', 'A', 'B', 'P', or 0, 1, 2, 3
+                       represent Nut, Channel A, Channel B, and Protocol, respectively.
+        :type source: int | str
+        :return: None
+        """
+        if isinstance(source, str):
+            if source == "N":
+                source = 0
+            elif source == "A":
+                source = 1
+            elif source == "B":
+                source = 2
+            elif source == "P":
+                source = 3
+            else:
+                self._logger.error(
+                    f"Invalid trigger source: {source}. " f"  It must be one of (N, A, B, P) if specified as a string."
+                )
         payload = struct.pack(">B", source)
         self._logger.debug(f"scrat_analog_trigger_source payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_TRIGGER_SOURCE, payload=payload)
@@ -199,7 +306,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_digital_trigger_source = channel
 
-    def osc_set_trigger_edge(self, edge: int | str):
+    def osc_set_trigger_edge(self, edge: int | str) -> None:
+        """
+        Set trigger edge.
+
+        :param edge: Trigger edge. 'up', 'down', 'either' or 0, 1, 2 represent up, down, either, respectively.
+        :type edge: int
+        :return: None
+        """
         if isinstance(edge, str):
             if edge == "up":
                 edge = 0
@@ -220,7 +334,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_analog_trigger_edge = edge
 
-    def osc_set_trigger_edge_level(self, edge_level: int):
+    def osc_set_trigger_edge_level(self, edge_level: int) -> None:
+        """
+        Set trigger edge level.
+
+        :param edge_level: Edge level.
+        :type edge_level: int
+        :return: None
+        """
         payload = struct.pack(">H", edge_level)
         self._logger.debug(f"scrat_analog_trigger_edge_level payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE_LEVEL, payload=payload)
@@ -247,7 +368,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_sample_delay = delay
 
-    def osc_set_sample_len(self, length: int):
+    def osc_set_sample_len(self, length: int) -> None:
+        """
+        Set sample length.
+
+        :param length: Sample length.
+        :type length: int
+        :return: None
+        """
         payload = struct.pack(">I", length)
         self._logger.debug(f"osc_set_sample_len payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_LENGTH, payload=payload)
@@ -256,11 +384,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_sample_len = length
 
-    def osc_set_sample_rate(self, rate: int):
+    def osc_set_sample_rate(self, rate: int) -> None:
         """
         Set osc sample rate
 
-        :param rate: The sample rate in kHz
+        :param rate: The sample rate in kHz, one of (62500, 48000, 24000, 12000, 8000, 4000)
+        :type rate: int
+        :return: None
         """
         payload = struct.pack(">I", rate)
         self._logger.debug(f"osc_set_sample_rate payload: {payload.hex()}")
@@ -332,7 +462,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_clock_simple = nut_clk, mult, phase
 
-    def osc_set_sample_phase(self, phase: int):
+    def osc_set_sample_phase(self, phase: int) -> None:
+        """
+        Set sample phase.
+
+        :param phase: Sample phase.
+        :type phase: int
+        :return: None
+        """
         payload = struct.pack(">I", phase)
         self._logger.debug(f"osc_set_sample_phase payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_CLOCK_SAMPLE_PHASE, payload=payload)
@@ -341,7 +478,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.osc_sample_phase = phase
 
-    def nut_set_enable(self, enable: int | bool):
+    def nut_set_enable(self, enable: int | bool) -> None:
+        """
+        Set nut enable.
+
+        :param enable: Enable or disable. 0 for disable, 1 for enable if specified as a integer.
+        :type enable: int | bool
+        :return: None
+        """
         if isinstance(enable, bool):
             enable = 1 if enable else 0
         payload = struct.pack(">B", enable)
@@ -352,7 +496,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.nut_enable = enable
 
-    def nut_set_voltage(self, voltage: int):
+    def nut_set_voltage(self, voltage: int) -> None:
+        """
+        Set nut voltage.
+
+        :param voltage: Nut voltage, in milli volts (mV).
+        :type voltage: int
+        :return: None
+        """
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE, payload=payload)
@@ -361,7 +512,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.nut_voltage = voltage
 
-    def nut_set_voltage_raw(self, voltage: int):
+    def nut_set_voltage_raw(self, voltage: int) -> None:
+        """
+        Set nut raw voltage.
+
+        :param voltage: Nut voltage, in milli volts (mV).
+        :type voltage: int
+        :return: None
+        """
         payload = struct.pack(">B", voltage)
         self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE_RAW, payload=payload)
@@ -370,12 +528,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             self._config.nut_voltage_raw = voltage
 
-    def nut_set_clock(self, clock: int):
+    def nut_set_clock(self, clock: int) -> None:
         """
         Set nut clock.
 
         :param clock: The clock of the nut in kHz
         :type clock: int
+        :return: None
         """
         payload = struct.pack(">I", clock)
         self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")

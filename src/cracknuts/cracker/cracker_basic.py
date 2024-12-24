@@ -23,57 +23,10 @@ from cracknuts.cracker.operator import Operator
 
 class ConfigBasic:
     def __init__(self):
-        """
-        The generic configuration object contains various configuration items for general devices.
-        If a device has non-generic configurations, the class should be inherited and extended.
-
-        """
-
-        self._binder: dict[str, typing.Callable] = {}
-
-        self.osc_analog_channel_enable: dict[int, bool] = {}
-        self.osc_analog_coupling: dict[int, int] = {}
-        self.osc_analog_voltage: dict[int, int] = {}
-        self.osc_analog_bias_voltage: dict[int, int] = {}
-        self.osc_digital_voltage: int | None = None
-        self.osc_trigger_mode: int | None = None
-        self.osc_analog_trigger_source: int | None = None
-        self.osc_digital_trigger_source: int | None = None
-        self.osc_analog_trigger_edge: int | None = None
-        self.osc_analog_trigger_edge_level: int | None = None
-        self.osc_sample_delay: int | None = None
-        self.osc_sample_len: int | None = None
-        self.osc_sample_rate: int | None = None
-        self.osc_analog_gain: dict[int, int] = {}
-        self.osc_analog_gain_raw: dict[int, int] = {}
-        self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
-        self.osc_clock_sample_divisor: tuple[int, int] | None = None
-        self.osc_clock_simple: tuple[int, int, int] | None = None
-        self.osc_clock_phase: int | None = None
-        self.osc_clock_divisor: int | None = None
-        self.osc_sample_phase: int | None = None
-
-        self.nut_enable: bool | None = None
-        self.nut_voltage: int | None = None
-        self.nut_voltage_raw: int | None = None
-        self.nut_clock: int | None = None
-        self.nut_interface: int | None = None
-        self.nut_timeout: int | None = None
-
-    def __setattr__(self, key, value):
-        self.__dict__[key] = value
-        if "_binder" in self.__dict__ and (binder := self._binder.get(key)) is not None:
-            binder(value)
-
-    def bind(self, key: str, callback: typing.Callable):
-        """
-        Bind a callback which will be call when the key field is updated. The end user should use this.
-
-        :param key: a filed name of class `CommonConfig`
-        :param callback:
-        :return:
-        """
-        self._binder[key] = callback
+        # The name list of fields whose value type is dict[int, Any]. When converting to a dictionary from JSON,
+        # numbers are converted to strings, so this needs to be handled separately. The subclass should overwrite
+        # this field when its field has a similar structure.
+        self.int_dict_fields = ()
 
     def __str__(self):
         return f"Config({", ".join([f"{k}: {v}" for k, v in self.__dict__.items() if not k.startswith("_")])})"
@@ -95,14 +48,7 @@ class ConfigBasic:
 
         """
         for k, v in json.loads(json_str).items():
-            if k in (
-                "osc_analog_channel_enable",
-                "osc_analog_coupling",
-                "osc_analog_voltage",
-                "osc_analog_bias_voltage",
-                "osc_analog_gain",
-                "osc_analog_gain_raw",
-            ):
+            if k in self.int_dict_fields:
                 v = {int(_k): _v for _k, _v in v.items()}
             if v is not None:
                 self.__dict__[k] = v
