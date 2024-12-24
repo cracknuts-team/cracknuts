@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-    <a href="https://pypi.org/project/cracknuts/"><img src="https://img.shields.io/pypi/v/cracknuts.svg?color=%2334D058&label=pypi" /></a>
-    <a href="https://github.com/cracknuts-team/cracknuts/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/cracknuts.svg" /></a>
+    <a href="https://pypi.org/project/cracknuts/"><img src="https://img.shields.io/pypi/v/cracknuts.svg" /></a>
+    <a href="https://github.com/cracknuts-team/cracknuts/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cracknuts-team/cracknuts.svg" /></a>
     <a href="https://github.com/cracknuts-team/cracknuts/releases"><img alt="GitHub release" src="https://img.shields.io/github/release/cracknuts-team/cracknuts.svg"></a>
 </p>
 
