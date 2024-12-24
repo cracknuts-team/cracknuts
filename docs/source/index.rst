@@ -13,7 +13,7 @@ The `Cracker` represents the devices within `CrackNuts`,
 used for operations such as device configuration, data transmission, and data collection.
 The `Acquisition` represents the execution flow in either test or run mode,
 which includes key processes such as device configuration, data transmission, and data collection.
-For detailed information, refer to :ref:acquisition.rst.
+For detailed information, refer to `acquisition.rst`.
 
 .. toctree::
    :maxdepth: 2
