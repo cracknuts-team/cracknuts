@@ -10,8 +10,8 @@ import cracknuts
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../../../src/cracknuts"))  # 修改为你的项目路径
-sys.path.insert(1, ".")
+sys.path.insert(0, os.path.abspath("../../src/cracknuts"))  # 修改为你的项目路径
+sys.path.insert(1, "")
 
 project = "CrackNuts"
 copyright = "2024, CrackNuts"
@@ -43,9 +43,8 @@ html_title = "CrackNuts API Documentation"
 # html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 # html_theme = "sphinxawesome_theme"
-html_static_path = ["_static"]
 
-html_favicon = '../../static/favicon.ico'
+html_favicon = '../static/favicon.ico'
 
 html_theme_options = {
 }
