@@ -242,7 +242,6 @@ msgid "True for connected and False for disconnected."
 msgstr "True：已连接，False：未连接。"
 
 #: cracknuts.cracker.cracker_basic.CrackerBasic.get_current_config:1 of
-#, fuzzy
 msgid ""
 "Get current configuration of `Cracker`. Note: Currently, the "
 "configuration returned is recorded on the host computer, not the ACTUAL "
@@ -394,7 +393,6 @@ msgid ""
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.cracker_read_register:10 of
-#, fuzzy
 msgid "The value read from the register or None if an exception is raised."
 msgstr "通过SPI协议接收的数据，如果出现异常则返回空。"
 
@@ -403,7 +401,6 @@ msgid "Write register."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.cracker_write_register:10 of
-#, fuzzy
 msgid "Data to write."
 msgstr "待发送的数据。"
 
@@ -479,7 +476,6 @@ msgid "The clock of the nut in kHz"
 msgstr "时钟：单位 kHz"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_enable:1 of
-#, fuzzy
 msgid "Set nut enable."
 msgstr "设置NUT时钟。"
 
@@ -488,7 +484,6 @@ msgid "Enable or disable. 0 for disable, 1 for enable if specified as a integer.
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.nut_set_voltage:1 of
-#, fuzzy
 msgid "Set nut voltage."
 msgstr "设置NUT时钟。"
 
@@ -548,22 +543,21 @@ msgid "Set analog voltage."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_len:1 of
-#, fuzzy
+
 msgid "Set sample length."
-msgstr "设置osc采样率"
+msgstr "设置osc采样长度"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_len:4 of
 msgid "Sample length."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_phase:1 of
-#, fuzzy
 msgid "Set sample phase."
-msgstr "设置osc采样率"
+msgstr "设置osc采样相位"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_phase:4 of
 msgid "Sample phase."
-msgstr ""
+msgstr "相位"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_sample_rate:1 of
 msgid "Set osc sample rate"
