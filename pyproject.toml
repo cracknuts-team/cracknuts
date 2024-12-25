@@ -16,13 +16,12 @@ dependencies = [
     "click~=8.1.7",
     "zarr~=2.18.2",
     "packaging~=24.1",
+    "anywidget~=0.9.13",
 ]
 
 [project.optional-dependencies]
 jupyter = [
     "jupyter~=1.1.1",
-    "anywidget~=0.9.13",
-    "traitlets~=5.14.3",
 ]
 
 [project.urls]
