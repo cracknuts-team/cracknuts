@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-19 15:51+0800\n"
+"POT-Creation-Date: 2024-12-25 16:44+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -19,56 +19,161 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: ../acquisition.rst:2 ../acquisition.rst:7
+#: ../../source/acquisition.rst:2 ../../source/acquisition.rst:34
 msgid "Acquisition"
 msgstr ""
 
-#: ../acquisition.rst:4
+#: ../../source/acquisition.rst:4
 msgid ""
 "`Acquisition` is responsible for managing the process of waveform data "
 "acquisition."
+msgstr "`Acquisition` 管理数据的采集流程。"
+
+#: ../../source/acquisition.rst:6
+msgid ""
+"Data acquisition has two modes: `Test` and `Run`: `Test` and `Run`. The "
+"`Test` mode can be understood as a debugging mode, where real-time "
+"adjustments to the Cracker configuration and data acquisition settings "
+"can be made to achieve better data collection results (currently, this "
+"mode is meaningful only in the Jupyter environment, where waveforms can "
+"be viewed in real-time through the oscilloscope panel). In this mode, the"
+" acquired waveform data is not saved."
+msgstr "数据采集又分成了两个模式：测试、运行。测试模式可以理解为调试模式，在该模式下，可以实时调整Cracker的配置和采集数据配置以达到更好的采集效果（当前该模式在Jupyter环境下才有意义，在Jpupyter环境可以通过示波器面板实时查看波形效果），在此模式下采集到的波形数据不保存。"
+
+#: ../../source/acquisition.rst:11
+msgid ""
+"In the `Run` mode, the user cannot make real-time configurations to the "
+"device. This mode is mainly used for data collection after various "
+"parameter adjustments are completed. In this mode, the user can specify "
+"the file path and file format for saving the data."
+msgstr "在运行模式下用户无法对设备进行实时配置，主要用于在各种参数调试完成后进行数据的采集，该模式下可以指定保存文件的路径和保存文件的格式。"
+
+#: ../../source/acquisition.rst:14
+msgid "The acquisition process consists of the following steps:"
+msgstr "采集流程主要包含如下步骤："
+
+#: ../../source/acquisition.rst:16
+msgid "Pre-initialization"
+msgstr "初始化前置操作"
+
+#: ../../source/acquisition.rst:17
+msgid "Initialization"
+msgstr "初始化操作"
+
+#: ../../source/acquisition.rst:18
+msgid "Post-initialization"
+msgstr "后置初始化操作"
+
+#: ../../source/acquisition.rst:19
+msgid "Pre-acquisition"
+msgstr "前置采集操作"
+
+#: ../../source/acquisition.rst:20
+msgid "Data acquisition"
+msgstr "采集操作"
+
+#: ../../source/acquisition.rst:21
+msgid "Post-acquisition"
+msgstr "后置采集操作"
+
+#: ../../source/acquisition.rst:22
+msgid "Pre-completion"
+msgstr "前置完成操作"
+
+#: ../../source/acquisition.rst:23
+msgid "Completion"
+msgstr "完成操作"
+
+#: ../../source/acquisition.rst:24
+msgid "Post-completion"
+msgstr "后置完成操作"
+
+#: ../../source/acquisition.rst:26
+msgid ""
+"The end user mainly needs to focus on the Initialization and Data "
+"Acquisition steps, which are the `init` and `do` methods of the "
+"`Acquisition` class in the code. Typically, key settings for the device "
+"are made in `init`, while specific operations like encrypted data "
+"transmission and result reception are handled in `do`."
 msgstr ""
+"其中，最终用户需要关注的是 初始化 和 采集 两个操作，在代码中分别是 Acquisition 的 init 和 do 两个方法，一般情况下，在 "
+"init 中进行设备的密钥设置等操作，do 中则是具体的加密数据发送和结果接收等操作。"
+
+#: ../../source/acquisition.rst:29
+msgid "The flowchart is shown below:"
+msgstr "流程图如下："
 
 #: cracknuts.acquisition.acquisition.Acquisition:1 of
 msgid "Bases: :py:class:`~abc.ABC`"
 msgstr ""
 
+#: cracknuts.acquisition.acquisition.Acquisition:1 of
+msgid "Trace acquisition process control class"
+msgstr "数据采集流程控制类"
+
 #: cracknuts.acquisition.acquisition.Acquisition.connect_cracker:1 of
 msgid "Connect to cracker device. :return:"
-msgstr ""
+msgstr "连接到cracker设备"
 
 #: cracknuts.acquisition.acquisition.Acquisition.connect_scrat:1 of
 msgid "Connect to scrat device :return:"
 msgstr ""
 
+#: cracknuts.acquisition.acquisition.Acquisition.do:1 of
+msgid "The `do` logic, which the user should implement in the subclass."
+msgstr "`do` 逻辑函数，用户需要在子类实现。"
+
 #: cracknuts.acquisition.acquisition.Acquisition.dump_config:1 of
 msgid ""
 "Dump the current config to a JSON file if a path is specified, or to a "
-"JSON string if no path is specified. :type path: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param path: "
-"the path to the JSON file :rtype: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
-"\\:py\\:obj\\:\\`None\\`` :return: the content of JSON string or None if "
-"no path is specified."
-msgstr ""
+"JSON string if no path is specified."
+msgstr "导出当前配置到JSON，如果指定了 path 则导出到文件，否则导出到字符串。"
 
-#: ../acquisition.rst
+#: ../../source/acquisition.rst
+msgid "Parameters"
+msgstr "参数"
+
+#: cracknuts.acquisition.acquisition.Acquisition.dump_config:4
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:4 of
+msgid "the path to the JSON file"
+msgstr "JSON 路径"
+
+#: ../../source/acquisition.rst
 msgid "Return type"
+msgstr "返回类型"
+
+#: cracknuts.acquisition.acquisition.Acquisition.dump_config:5 of
+msgid ""
+":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
+"\\:py\\:obj\\:\\`None\\``"
 msgstr ""
 
-#: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:2 of
+#: ../../source/acquisition.rst
+msgid "Returns"
+msgstr "返回"
+
+#: cracknuts.acquisition.acquisition.Acquisition.dump_config:6 of
+msgid "the content of JSON string or None if no path is specified."
+msgstr "JSON 内容，如果 path 指定则返回空"
+
+#: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:1 of
+msgid "Get the last wave."
+msgstr "获取最后的波形数据。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:5 of
 msgid ""
 ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`dict\\`\\\\ "
 "\\\\\\[\\:py\\:class\\:\\`int\\`\\, "
 "\\:py\\:class\\:\\`\\~numpy.ndarray\\`\\] \\| \\:py\\:obj\\:\\`None\\``"
 msgstr ""
 
+#: cracknuts.acquisition.acquisition.Acquisition.init:1 of
+msgid "The `init` logic, which the user should implement in the subclass."
+msgstr "`init` 逻辑，用户需要在子类实现。"
+
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:1 of
-msgid ""
-"Load config from a JSON file :type path: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param path: "
-"the path to the JSON file"
-msgstr ""
+msgid "Load config from a JSON file."
+msgstr "从 JSON 文件加载配置。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:6
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:6
@@ -79,10 +184,11 @@ msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
 msgstr ""
 
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:1 of
-msgid ""
-"Load config from a JSON string :type json_str: "
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\`` :param "
-"json_str: the JSON string"
+msgid "Load config from a JSON string."
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:4 of
+msgid "the JSON string"
 msgstr ""
 
 #: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:1 of
@@ -90,9 +196,116 @@ msgid ""
 "User should not use this function. If you need to perform actions when "
 "the ACQ state changes, please use the node functions in the ACQ lifecycle"
 " point: `init`, `do`, and `finish`."
-msgstr ""
+msgstr "最终用户不需要使用该函数。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:4 of
 msgid "status: 0 stopped, 1 testing, 2 running 3 paused"
 msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.pause:1 of
+msgid "Pause test or run mode."
+msgstr "暂停测试或运行模式。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.resume:1 of
+msgid "Resume from paused test or run mode."
+msgstr "从测试或运行模式恢复。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:1 of
+msgid ""
+"Start run mode in the background. The parameters configured here will "
+"override the settings specified in `__init__`."
+msgstr "在后台启动运行模式，该方法的参数会覆盖 `__init__` 中配置的参数。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:5
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:4 of
+msgid "The number of traces to acquire."
+msgstr "需要曲线的数量。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:8
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:7
+#: cracknuts.acquisition.acquisition.Acquisition.test:7
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:7 of
+msgid "The sample length to be acquired."
+msgstr "需要采集的曲线长度。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:11
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:10
+#: cracknuts.acquisition.acquisition.Acquisition.test:10
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:10 of
+msgid "The sample offset to be acquired."
+msgstr "采集偏移。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:14 of
+msgid "The data length to be acquired."
+msgstr "采集的数据的长度。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:17
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:13
+#: cracknuts.acquisition.acquisition.Acquisition.test:13
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:13 of
+msgid "The trigger judge wait time in seconds."
+msgstr "`触发` 判断等待时常，单位：秒。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:20
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:16
+#: cracknuts.acquisition.acquisition.Acquisition.test:16
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:16 of
+msgid "The trigger judge timeout in seconds."
+msgstr "`触发` 超时时常，单位：秒"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:23
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:19
+#: cracknuts.acquisition.acquisition.Acquisition.test:19
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:19 of
+msgid ""
+"The maximum number of error count. If `do_error_handler_strategy` is 0, "
+"this setting is invalid."
+msgstr "最大出现错误次数，如果 `do_error_handler_strategy` 设置 0，则不生效。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:27
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:23
+#: cracknuts.acquisition.acquisition.Acquisition.test:23
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:23 of
+msgid ""
+"The strategy to handle error handling. 0: Exit immediately, 1: Exit after"
+" exceeding the error count."
+msgstr ""
+"错误处理策略：0 立即退出，1 超过尝试次数后退出。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:31
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:27 of
+msgid "The file format of the trace dataset. \"scarr\" or \"numpy\"."
+msgstr "保存文件格式，\"scarr\" 或者 \"numpy\""
+
+#: cracknuts.acquisition.acquisition.Acquisition.run:34
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:30 of
+msgid ""
+"The file path of the trace dataset. If set to \"auto\", a folder with a "
+"timestamp format will be created in the current working directory to save"
+" the data."
+msgstr ""
+"文件保存路径，如果设置了 \"auto\"，则在当前工作目录下创建一个以时间戳格式命名的文件夹保存数据。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:1 of
+msgid "Start run mode in the foreground, which will cause blocking."
+msgstr ""
+"前台启动 `运行` 模式，这会导致阻塞。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.stop:1 of
+msgid "Stop test or run mode."
+msgstr "停止测试或运行模式。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.test:1 of
+msgid "Start test mode in background."
+msgstr "在后台启动 `测试` 模式。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.test:4
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:4 of
+msgid "The number of traces to acquire. normally this value should be -1."
+msgstr "需要采集的曲线数量，一般不要指定，使用默认值：-1。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:1 of
+msgid "Start test mode in foreground, which will cause blocking."
+msgstr "前台启动 `测试` 模式，这会导致阻塞。"
+
 
