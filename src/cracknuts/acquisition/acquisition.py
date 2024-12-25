@@ -22,6 +22,10 @@ class AcqProgress:
 
 
 class Acquisition(abc.ABC):
+    """
+    Trace acquisition process control class
+    """
+
     STATUS_STOPPED: int = 0
     STATUS_TESTING: int = 1
     STATUS_RUNNING: int = 2
@@ -45,8 +49,32 @@ class Acquisition(abc.ABC):
         file_path: str = "auto",
     ):
         """
+        :param cracker: The controlled Cracker object.
+        :type cracker: CrackerBasic
+        :param trace_count: The number of traces to acquire.
+        :type trace_count: int
         :param sample_length: the sample length to be acquired,
-                              it will set to `cracker.current_count().sample_len` if it is -1
+                              If it is -1, it will be set to the value of `cracker.current_count().sample_len`.
+        :type sample_length: int
+        :param sample_offset: the sample offset to be acquired.
+        :type sample_offset: int
+        :param data_length: the data length to be acquired.
+        :type data_length: int
+        :param trigger_judge_timeout: The trigger judge timeout in seconds.
+        :type trigger_judge_timeout: float
+        :param trigger_judge_wait_time: The trigger judge wait time in seconds.
+        :type trigger_judge_wait_time: float
+        :param do_error_handler_strategy: The strategy to handle error handling.
+                                          0: Exit immediately, 1: Exit after exceeding the error count.
+        :type do_error_handler_strategy: int
+        :param do_error_max_count: The maximum number of error count.
+                                   If `do_error_handler_strategy` is 0, this setting is invalid.
+        :type do_error_max_count: int
+        :param file_format: The file format of the trace dataset. "scarr" or "numpy".
+        :type file_format: str
+        :param file_path: The file path of the trace dataset. If set to "auto", a folder with a timestamp format
+                          will be created in the current working directory to save the data.
+        :type file_path: str
         """
         self._logger = logger.get_logger(self)
         self._last_wave: dict[int, np.ndarray] | None = {1: np.zeros(1)}
@@ -104,6 +132,34 @@ class Acquisition(abc.ABC):
         file_format: str | None = "scarr",
         file_path: str | None = "auto",
     ):
+        """
+        Start run mode in the background.
+        The parameters configured here will override the settings specified in `__init__`.
+
+        :param count: The number of traces to acquire.
+        :type count: int
+        :param sample_length: The sample length to be acquired.
+        :type sample_length: int
+        :param sample_offset: The sample offset to be acquired.
+        :type sample_offset: int
+        :param data_length: The data length to be acquired.
+        :type data_length: int
+        :param trigger_judge_wait_time: The trigger judge wait time in seconds.
+        :type trigger_judge_wait_time: float
+        :param trigger_judge_timeout: The trigger judge timeout in seconds.
+        :type trigger_judge_timeout: float
+        :param do_error_max_count: The maximum number of error count.
+                                   If `do_error_handler_strategy` is 0, this setting is invalid.
+        :type do_error_max_count: int
+        :param do_error_handler_strategy: The strategy to handle error handling.
+                                          0: Exit immediately, 1: Exit after exceeding the error count.
+        :type do_error_handler_strategy: int
+        :param file_format: The file format of the trace dataset. "scarr" or "numpy".
+        :type file_format: str
+        :param file_path: The file path of the trace dataset. If set to "auto", a folder with a timestamp format
+                          will be created in the current working directory to save the data.
+        :type file_path: str
+        """
         if self._status < 0:
             self.resume()
         else:
@@ -131,7 +187,33 @@ class Acquisition(abc.ABC):
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
+        file_path: str | None = "auto",
     ):
+        """
+        Start run mode in the foreground, which will cause blocking.
+
+        :param count: The number of traces to acquire.
+        :type count: int
+        :param sample_length: The sample length to be acquired.
+        :type sample_length: int
+        :param sample_offset: The sample offset to be acquired.
+        :type sample_offset: int
+        :param trigger_judge_wait_time: The trigger judge wait time in seconds.
+        :type trigger_judge_wait_time: float
+        :param trigger_judge_timeout: The trigger judge timeout in seconds.
+        :type trigger_judge_timeout: float
+        :param do_error_max_count: The maximum number of error count.
+                                   If `do_error_handler_strategy` is 0, this setting is invalid.
+        :type do_error_max_count: int
+        :param do_error_handler_strategy: The strategy to handle error handling.
+                                          0: Exit immediately, 1: Exit after exceeding the error count.
+        :type do_error_handler_strategy: int
+        :param file_format: The file format of the trace dataset. "scarr" or "numpy".
+        :type file_format: str
+        :param file_path: The file path of the trace dataset. If set to "auto", a folder with a timestamp format
+                          will be created in the current working directory to save the data.
+        :type file_path: str
+        """
         try:
             self._do_run(
                 test=False,
@@ -143,6 +225,7 @@ class Acquisition(abc.ABC):
                 do_error_max_count=do_error_max_count,
                 do_error_handler_strategy=do_error_handler_strategy,
                 file_format=file_format,
+                file_path=file_path,
             )
             self._logger.debug("stop by timeout.")
         except KeyboardInterrupt:
@@ -159,6 +242,25 @@ class Acquisition(abc.ABC):
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
     ):
+        """
+        Start test mode in background.
+
+        :param count: The number of traces to acquire. normally this value should be -1.
+        :type count: int
+        :param sample_length: The sample length to be acquired.
+        :type sample_length: int
+        :param sample_offset: The sample offset to be acquired.
+        :type sample_offset: int
+        :param trigger_judge_wait_time: The trigger judge wait time in seconds.
+        :type trigger_judge_wait_time: float
+        :param trigger_judge_timeout: The trigger judge timeout in seconds.
+        :type trigger_judge_timeout: float
+        :param do_error_max_count: The maximum number of error count.
+                                   If `do_error_handler_strategy` is 0, this setting is invalid.
+        :type do_error_max_count: int
+        :param do_error_handler_strategy: The strategy to handle error handling.
+                                          0: Exit immediately, 1: Exit after exceeding the error count.
+        """
         if self._status < 0:
             self._logger.debug("Resume to test mode.")
             self.resume()
@@ -185,6 +287,25 @@ class Acquisition(abc.ABC):
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
     ):
+        """
+        Start test mode in foreground, which will cause blocking.
+
+        :param count: The number of traces to acquire. normally this value should be -1.
+        :type count: int
+        :param sample_length: The sample length to be acquired.
+        :type sample_length: int
+        :param sample_offset: The sample offset to be acquired.
+        :type sample_offset: int
+        :param trigger_judge_wait_time: The trigger judge wait time in seconds.
+        :type trigger_judge_wait_time: float
+        :param trigger_judge_timeout: The trigger judge timeout in seconds.
+        :type trigger_judge_timeout: float
+        :param do_error_max_count: The maximum number of error count.
+                                   If `do_error_handler_strategy` is 0, this setting is invalid.
+        :type do_error_max_count: int
+        :param do_error_handler_strategy: The strategy to handle error handling.
+                                          0: Exit immediately, 1: Exit after exceeding the error count.
+        """
         try:
             self._do_run(
                 test=True,
@@ -201,16 +322,28 @@ class Acquisition(abc.ABC):
             self.stop()
 
     def pause(self):
+        """
+        Pause test or run mode.
+
+        """
         if self._status > 0:
             self._run_thread_pause_event.clear()
             self._status = self._status * self._STATUS_PAUSED_SWITCH
 
     def resume(self):
+        """
+        Resume from paused test or run mode.
+
+        """
         if self._status < 0:
             self._run_thread_pause_event.set()
             self._status = self._status * self._STATUS_PAUSED_SWITCH
 
     def stop(self):
+        """
+        Stop test or run mode.
+
+        """
         if not self._run_thread_pause_event.is_set():
             self._run_thread_pause_event.set()
         self._status = self.STATUS_STOPPED
@@ -477,7 +610,12 @@ class Acquisition(abc.ABC):
         self.cracker.sync_config_to_cracker()
 
     @abc.abstractmethod
-    def init(self): ...
+    def init(self):
+        """
+        The `init` logic, which the user should implement in the subclass.
+
+        """
+        ...
 
     def _post_init(self): ...
 
@@ -487,7 +625,12 @@ class Acquisition(abc.ABC):
         self.cracker.osc_single()
 
     @abc.abstractmethod
-    def do(self): ...
+    def do(self):
+        """
+        The `do` logic, which the user should implement in the subclass.
+
+        """
+        ...
 
     def _do(self):
         try:
@@ -524,11 +667,16 @@ class Acquisition(abc.ABC):
         pass
 
     def get_last_wave(self) -> dict[int, np.ndarray] | None:
+        """
+        Get the last wave.
+
+        """
         return self._last_wave
 
     def dump_config(self, path: str = None) -> str | None:
         """
         Dump the current config to a JSON file if a path is specified, or to a JSON string if no path is specified.
+
         :param path: the path to the JSON file
         :return: the content of JSON string or None if no path is specified.
         """
@@ -549,7 +697,8 @@ class Acquisition(abc.ABC):
 
     def load_config_from_file(self, path: str) -> None:
         """
-        Load config from a JSON file
+        Load config from a JSON file.
+
         :param path: the path to the JSON file
         """
         with open(path) as f:
@@ -557,7 +706,8 @@ class Acquisition(abc.ABC):
 
     def load_config_from_str(self, json_str: str) -> None:
         """
-        Load config from a JSON string
+        Load config from a JSON string.
+
         :param json_str: the JSON string
         """
         config = json.loads(json_str)
@@ -575,26 +725,59 @@ class Acquisition(abc.ABC):
 
 
 class AcquisitionBuilder:
+    """
+    The helper class for create a Sub acquisition class.
+
+    """
+
     def __init__(self):
         self._cracker = None
         self._do_function = lambda _: ...
         self._init_function = lambda _: ...
 
     def cracker(self, cracker: CrackerBasic):
+        """
+        Specify the cracker for acquisition.
+
+        :param cracker: the cracker
+        :type cracker: CrackerBasic
+        :return: 'AcquisitionBuilder'
+        """
         self._cracker = cracker
         return self
 
     def init(self, init_function: typing.Callable[[CrackerBasic], None]):
+        """
+        The init function of acquisition.
+
+        :param init_function: the init function
+        :type init_function: typing.Callable[[CrackerBasic], None]
+        :return: 'AcquisitionBuilder'
+        """
         if init_function is not None:
             self._init_function = init_function
         return self
 
     def do(self, do_function: typing.Callable[[CrackerBasic], None]):
+        """
+        The do function of acquisition.
+
+        :param do_function: the do function
+        :type do_function: typing.Callable[[CrackerBasic], None]
+        :return: 'AcquisitionBuilder'
+        """
         if do_function is not None:
             self._do_function = do_function
         return self
 
     def build(self, **kwargs):
+        """
+        Build the acquisition object.
+
+        :param kwargs: other keyword arguments of Acquisition.
+        :type kwargs: dict
+        :return Acquisition
+        """
         if self._cracker is None:
             raise ValueError("No cracker")
 

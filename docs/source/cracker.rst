@@ -3,7 +3,7 @@ Cracker
 
 The `Cracker` module includes all operations on the device, such as device configuration, data transmission, and acquisition.
 
-.. image:: _static/cracker/cracker_struct.drawio.png
+.. image:: _static/cracker_struct.drawio.png
 
 .. autoclass:: cracknuts.cracker.cracker_basic.ConfigBasic
 
