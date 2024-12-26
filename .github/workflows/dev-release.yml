@@ -16,6 +16,7 @@ jobs:
       with:
           # get tag history for version number
           fetch-depth: 0
+          submodules: true
     - name: Get latest release from rs-linux-app
       id: get_release_from_rs-linux-app
       run: |

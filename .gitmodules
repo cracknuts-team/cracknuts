@@ -1,0 +1,6 @@
+[submodule "src/cracknuts/template"]
+	path = src/cracknuts/template
+	url = git@github.com:cracknuts-team/template.git
+[submodule "src/cracknuts/tutorials"]
+	path = src/cracknuts/tutorials
+	url = git@github.com:cracknuts-team/tutorials.git
