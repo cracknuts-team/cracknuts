@@ -10,7 +10,6 @@ build
 .pytest_cache
 
 **/__pycache__/**
-src/cracknuts/bin
 docs/api/build
 node_modules
 src/cracknuts/jupyter/static/*

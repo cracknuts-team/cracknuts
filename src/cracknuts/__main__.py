@@ -3,6 +3,8 @@
 import logging
 import shutil
 import subprocess
+import sys
+from datetime import datetime
 from importlib.resources import files
 from pathlib import Path
 
@@ -30,8 +32,11 @@ def start_lab(workspace: str = "."):
 
 @main.command(name="tutorials", help="Start tutorials")
 def start_tutorials():
-    _update_check()
-    start_lab(files("cracknuts.jupyter.tutorials").as_posix())
+    tutorials_path = str(Path(sys.modules["cracknuts"].__file__).parent.joinpath("tutorials").as_posix())
+    try:
+        subprocess.run(["jupyter", "notebook", "--notebook-dir", tutorials_path], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Start Jupyter Lab failed: {e}")
 
 
 @main.command(name="create", help="Create a jupyter notebook from template.")
@@ -39,18 +44,27 @@ def start_tutorials():
     "--template",
     "-t",
     help="The jupyter notebook template.",
-    required=True,
+    required=False,
     type=click.Choice(["acquisition", "analysis"]),
 )
 @click.option(
     "--new-ipynb-name",
     "-n",
     help="The jupyter notebook name or path.",
-    required=True,
+    required=False,
 )
 def create_jupyter_notebook(template: str, new_ipynb_name: str):
     _update_check()
-    template = files("cracknuts.jupyter.template").joinpath(f"{template}.ipynb")
+    template_dir = Path(sys.modules["cracknuts"].__file__).parent.joinpath("template")
+    if template is None:
+        print("Available templates:")
+        for t in template_dir.glob("*.ipynb"):
+            print(f"\t{t.name[:-6]}")
+        return
+    if new_ipynb_name is None:
+        new_ipynb_name = f"{template}_{datetime.now().timestamp():.0f}.ipynb"
+
+    template = files("cracknuts.template").joinpath(f"{template}.ipynb")
     if not new_ipynb_name.endswith(".ipynb"):
         new_ipynb_name += ".ipynb"
 
