@@ -45,9 +45,9 @@ def new_cracker(
         model = CrackerS1
     else:
         if isinstance(model, str):
-            if model == "s1":
+            if model.lower() == "s1":
                 model = CrackerS1
-            elif model == "g1":
+            elif model.lower() == "g1":
                 model = CrackerG1
             else:
                 raise ValueError(f"Unknown cracker model: {model}")
