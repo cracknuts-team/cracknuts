@@ -346,7 +346,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({ hasAcquisition = false, c
                               <Select
                                 size={"small"}
                                 options={[
-                                  { value: 62500, label: "62.5 mHz" },
+                                  { value: 65000, label: "65 mHz" },
                                   { value: 48000, label: "48 mHz" },
                                   { value: 24000, label: "24 mHz" },
                                   { value: 12000, label: "12 mHz" },
@@ -478,7 +478,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({ hasAcquisition = false, c
                           <Select
                             size={"small"}
                             options={[
-                              { value: 62500, label: "62.5 mHz" },
+                              { value: 65000, label: "65 mHz" },
                               { value: 48000, label: "48 mHz" },
                               { value: 24000, label: "24 mHz" },
                               { value: 12000, label: "12 mHz" },

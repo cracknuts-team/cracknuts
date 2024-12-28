@@ -179,6 +179,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         force_update_bin: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
+        update_unknown: bool = False,
     ) -> None:
         """
         Connect to cracker device.
@@ -192,6 +193,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :type bin_server_path: str | None
         :param bin_bitstream_path: The bin_bitstream (firmware) file for updates.
         :type bin_bitstream_path: str | None
+        :param update_unknown: Whether to update the unknown firmware.
+        :type update_unknown: bool
         :return: None
         """
         if bin_server_path is None:
@@ -200,7 +203,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             bin_bitstream_path = self._bin_bitstream_path
 
         if update_bin and not self._update_cracker_bin(
-            force_update_bin, bin_server_path, bin_bitstream_path, self._operator_port
+            force_update_bin, bin_server_path, bin_bitstream_path, self._operator_port, update_unknown=update_unknown
         ):
             return
 
@@ -226,6 +229,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         operator_port: int = None,
         server_version: str = None,
         bitstream_version: str = None,
+        update_unknown: bool = False,
     ) -> bool:
         if operator_port is None:
             operator_port = protocol.DEFAULT_OPERATOR_PORT
@@ -239,10 +243,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
             return True
 
         hardware_model = operator.get_hardware_model()
+        if hardware_model == "unknown" and update_unknown:
+            hardware_model = "*"
 
-        bin_path = os.path.join(cracknuts.__file__, "bin")
-        user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "bin")
-        current_bin_path = os.path.join(os.getcwd(), ".bin")
+        bin_path = os.path.join(cracknuts.__file__, "firmware")
+        user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "firmware")
+        current_bin_path = os.path.join(os.getcwd(), ".firmware")
 
         if bin_server_path is None or bin_bitstream_path is None:
             server_bin_dict, bitstream_bin_dict = self._find_bin_files(bin_path, user_home_bin_path, current_bin_path)
@@ -266,8 +272,14 @@ class CrackerBasic(ABC, typing.Generic[T]):
             )
             return False
 
-        self._logger.debug(f"Get bit_server file at {bin_server_path}.")
-        self._logger.debug(f"Get bin_bitstream file at {bin_bitstream_path}.")
+        if hardware_model == "*" and update_unknown:
+            self._logger.warning(
+                f"Equipment return unknown hardware: {hardware_model}, and update_unknown is True,"
+                f"The firmware bitstream: {bin_bitstream_path} and server: {bin_server_path} is used."
+            )
+        else:
+            self._logger.debug(f"Get bit_server file at {bin_server_path}.")
+            self._logger.debug(f"Get bin_bitstream file at {bin_bitstream_path}.")
         bin_server = open(bin_server_path, "rb").read()
         bin_bitstream = open(bin_bitstream_path, "rb").read()
 
@@ -286,7 +298,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
     def _get_version_file_path(
         self, bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str
     ) -> str | None:
-        dict_by_hardware = bin_dict.get(hardware_model, None)
+        if hardware_model == "*":
+            dict_by_hardware = {k: v for d in bin_dict.values() for k, v in d.items()}
+        else:
+            dict_by_hardware = bin_dict.get(hardware_model, None)
         if dict_by_hardware is None:
             self._logger.error(f"bin file dict is none: {hardware_model}.")
             return None
@@ -297,7 +312,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
     @staticmethod
     def _find_bin_files(*bin_paths: str) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
-        server_path_pattern = r"server-(?P<hardware>.+?)-(?P<firmware>.+?)"
+        server_path_pattern = r"server-(?P<hardware>.+?)-(?P<firmware>.+?).bin"
         bitstream_path_pattern = r"bitstream-(?P<hardware>.+?)-(?P<firmware>.+?).bit.bin"
 
         server_bin_dict = {}
