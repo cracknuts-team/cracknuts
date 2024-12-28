@@ -13,13 +13,13 @@ class ConfigG1(ConfigBasic):
         super().__init__()
         self.nut_enable = False
         self.nut_voltage = 3500
-        self.nut_clock = 62500
+        self.nut_clock = 65000
 
         self.osc_analog_channel_enable = {1: False, 2: True}
         self.osc_analog_gain = {1: 50, 2: 50}
         self.osc_sample_len = 1024
         self.osc_sample_delay = 0
-        self.osc_sample_rate = 62500
+        self.osc_sample_rate = 65000
         self.osc_sample_phase = 0
         self.osc_analog_trigger_source = 0
         self.osc_trigger_mode = 0

@@ -25,7 +25,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     # nut
     nut_enable = traitlets.Bool(False).tag(sync=True)
     nut_voltage = traitlets.Int(3300).tag(sync=True)
-    nut_clock = traitlets.Int(62500).tag(sync=True)
+    nut_clock = traitlets.Int(65000).tag(sync=True)
 
     # adc
     osc_analog_channel_a_enable = traitlets.Bool(False).tag(sync=True)
@@ -33,7 +33,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     sync_sample = traitlets.Bool(False).tag(sync=True)
     sync_args_times = traitlets.Int(1).tag(sync=True)
 
-    osc_sample_rate = traitlets.Int(62500).tag(sync=True)
+    osc_sample_rate = traitlets.Int(65000).tag(sync=True)
     osc_sample_phase = traitlets.Int(0).tag(sync=True)
     osc_sample_len = traitlets.Int(1024).tag(sync=True)
     osc_sample_delay = traitlets.Int(1024).tag(sync=True)

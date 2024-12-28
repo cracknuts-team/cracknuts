@@ -20,13 +20,13 @@ class ConfigS1(ConfigBasic):
 
         self.nut_enable = False
         self.nut_voltage = 3500
-        self.nut_clock = 62500
+        self.nut_clock = 65000
 
         self.osc_analog_channel_enable = {1: False, 2: True}
         self.osc_analog_gain = {1: 50, 2: 50}
         self.osc_sample_len = 1024
         self.osc_sample_delay = 0
-        self.osc_sample_rate = 62500
+        self.osc_sample_rate = 65000
         self.osc_sample_phase = 0
         self.osc_analog_trigger_source = 0
         self.osc_trigger_mode = 0
@@ -45,10 +45,7 @@ class ConfigS1(ConfigBasic):
         self.osc_clock_phase: int | None = None
         self.osc_clock_divisor: int | None = None
 
-        self.nut_enable: bool | None = None
-        self.nut_voltage: int | None = None
         self.nut_voltage_raw: int | None = None
-        self.nut_clock: int | None = None
         self.nut_interface: int | None = None
         self.nut_timeout: int | None = None
 
@@ -56,6 +53,23 @@ class ConfigS1(ConfigBasic):
 class CrackerS1(CrackerBasic[ConfigS1]):
     def get_default_config(self) -> ConfigS1:
         return ConfigS1()
+
+    def sync_config_to_cracker(self):
+        config = self.get_current_config()
+        self.nut_set_enable(config.nut_enable)
+        self.nut_set_voltage(config.nut_voltage)
+        self.nut_set_clock(config.nut_clock)
+        for k, v in config.osc_analog_channel_enable.items():
+            self.osc_set_analog_channel_enable(k, v)
+            self.osc_set_analog_gain(k, config.osc_analog_gain.get(k, False))
+        self.osc_set_sample_len(config.osc_sample_len)
+        self.osc_set_sample_delay(config.osc_sample_delay)
+        self.osc_set_sample_rate(config.osc_sample_rate)
+        self.osc_set_sample_phase(config.osc_sample_phase)
+        self.osc_set_analog_trigger_source(config.osc_analog_trigger_source)
+        self.osc_set_trigger_mode(config.osc_trigger_mode)
+        self.osc_set_trigger_edge(config.osc_analog_trigger_edge)
+        self.osc_set_trigger_edge_level(config.osc_analog_trigger_edge_level)
 
     def cracker_read_register(self, base_address: int, offset: int) -> bytes | None:
         """
@@ -388,7 +402,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set osc sample rate
 
-        :param rate: The sample rate in kHz, one of (62500, 48000, 24000, 12000, 8000, 4000)
+        :param rate: The sample rate in kHz, one of (65000, 48000, 24000, 12000, 8000, 4000)
         :type rate: int
         :return: None
         """
