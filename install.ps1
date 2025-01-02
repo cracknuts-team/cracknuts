@@ -45,8 +45,7 @@ else {
     Write-Host "Miniconda is not installed, downloading Miniconda..."
 
     # Miniconda download link (Windows 64-bit)
-    # $minicondaUrl = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe"
-    $minicondaUrl = "http://192.168.0.100/files/Miniconda3-latest-Windows-x86_64.exe"
+    $minicondaUrl = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe"
     $destinationPath = "$userProfile\Downloads\Miniconda3-latest-Windows-x86_64.exe"
 
     # Download the Miniconda installer
@@ -59,8 +58,8 @@ else {
     Start-Process -FilePath $destinationPath -ArgumentList "/S" -Wait
 
     Write-Host "Miniconda installation completed."
-    
-    # Remove the installer (optional)
+
+    # Remove the installer
     Remove-Item $destinationPath -Force
 
     $condaInstallPath = "$userProfile\miniconda3"
@@ -110,19 +109,25 @@ Write-Host "Install or update cracknuts package..."
 pip install -U cracknuts[jupyter]
 
 # Download the CrackNuts icon
-$iconUrl = "http://192.168.0.100/files/icon.png" 
+if ($EnableChinaConfig) {
+    $iconUrl = "https://cracknuts.cn/files/logo.ico"
+} else {
+    $iconUrl = "https://cracknuts.io/files/logo.ico"
+}
 $userProfile = [System.Environment]::GetFolderPath("UserProfile") # Get the user profile directory
 $iconDirPath = Join-Path -Path $userProfile -ChildPath ".cracknuts"
 New-Item -Path $iconDirPath -ItemType Directory -Force
-$iconPath = Join-Path -Path $userProfile -ChildPath ".cracknuts\icon.png"
+$iconPath = Join-Path -Path $iconDirPath -ChildPath "logo.ico"
 
 $webClient = New-Object System.Net.WebClient
 $webClient.DownloadFile($iconUrl, $iconPath)
 
 # Define the target application path
 $targetPath = "%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe"
-$arguments = "-ExecutionPolicy ByPass -NoExit -Command ""& '$condaInstallPath\shell\condabin\conda-hook.ps1' ; conda activate $condaEnvName ; cracknuts lab"""
+$arguments = "-ExecutionPolicy ByPass -NoExit -Command ""& '$condaInstallPath\shell\condabin\conda-hook.ps1' ; conda activate $condaEnvName"""
+$argumentsLab = "-ExecutionPolicy ByPass -NoExit -Command ""& '$condaInstallPath\shell\condabin\conda-hook.ps1' ; conda activate $condaEnvName ; cracknuts tutorials"""
 $shortcutName = "CrackNuts"  # Name of the shortcut
+$labShortcutName = "CrackNuts Tutorials"  # Name of the shortcut
 $desktopPath = [System.Environment]::GetFolderPath("Desktop")  # Get the Desktop folder path
 $startMenuPath = [System.Environment]::GetFolderPath("Programs")  # Get the Start Menu folder path
 
@@ -132,6 +137,8 @@ $shell = New-Object -ComObject WScript.Shell
 # Define the full paths for the shortcut on Desktop and Start Menu
 $desktopShortcutPath = Join-Path -Path $desktopPath -ChildPath "$shortcutName.lnk"
 $startMenuShortcutPath = Join-Path -Path $startMenuPath -ChildPath "$shortcutName.lnk"
+$desktopLabShortcutPath = Join-Path -Path $desktopPath -ChildPath "$labShortcutName.lnk"
+$startMenuLabShortcutPath = Join-Path -Path $startMenuPath -ChildPath "$labShortcutName.lnk"
 
 # Create shortcut on Desktop
 $desktopShortcut = $shell.CreateShortcut($desktopShortcutPath)
@@ -146,6 +153,20 @@ $startMenuShortcut.TargetPath = $targetPath
 $startMenuShortcut.Arguments = $arguments
 $startMenuShortcut.IconLocation = $iconPath
 $startMenuShortcut.Save()
+
+# Create shortcut on Desktop
+$desktopLabShortcut = $shell.CreateShortcut($desktopLabShortcutPath)
+$desktopLabShortcut.TargetPath = $targetPath
+$desktopLabShortcut.Arguments = $argumentsLab
+$desktopLabShortcut.IconLocation = $iconPath
+$desktopLabShortcut.Save()
+
+# Create shortcut in Start Menu
+$startMenuLabShortcut = $shell.CreateShortcut($startMenuLabShortcutPath)
+$startMenuLabShortcut.TargetPath = $targetPath
+$startMenuLabShortcut.Arguments = $argumentsLab
+$startMenuLabShortcut.IconLocation = $iconPath
+$startMenuLabShortcut.Save()
 
 Write-Host "Shortcut created on Desktop and Start Menu."
 
