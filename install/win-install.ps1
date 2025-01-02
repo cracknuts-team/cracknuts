@@ -110,9 +110,9 @@ pip install -U cracknuts[jupyter]
 
 # Download the CrackNuts icon
 if ($EnableChinaConfig) {
-    $iconUrl = "https://cracknuts.cn/files/logo.ico"
+    $iconUrl = "https://cracknuts.cn/img/logo.ico"
 } else {
-    $iconUrl = "https://cracknuts.io/files/logo.ico"
+    $iconUrl = "https://cracknuts.io/img/logo.ico"
 }
 $userProfile = [System.Environment]::GetFolderPath("UserProfile") # Get the user profile directory
 $iconDirPath = Join-Path -Path $userProfile -ChildPath ".cracknuts"
