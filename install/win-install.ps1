@@ -169,4 +169,5 @@ $startMenuLabShortcut.IconLocation = $iconPath
 $startMenuLabShortcut.Save()
 
 Write-Host "Shortcut created on Desktop and Start Menu."
+Write-Host "Installation successful."
 
