@@ -34,7 +34,7 @@ cracknuts = "cracknuts.__main__:main"
 version = { attr = "cracknuts.__version__" }
 
 [tool.setuptools.package-data]
-"cracknuts" = ["bin/*", "jupyter/static/*", "template/**/*"]
+"cracknuts" = ["bin/*", "jupyter/static/*", "template/**/*", "tutorials/**/*"]
 
 [tool.ruff]
 line-length = 120
