@@ -145,6 +145,7 @@ $desktopShortcut = $shell.CreateShortcut($desktopShortcutPath)
 $desktopShortcut.TargetPath = $targetPath
 $desktopShortcut.Arguments = $arguments
 $desktopShortcut.IconLocation = $iconPath
+$desktopShortcut.WorkingDirectory = $userProfile
 $desktopShortcut.Save()
 
 # Create shortcut in Start Menu
@@ -152,6 +153,7 @@ $startMenuShortcut = $shell.CreateShortcut($startMenuShortcutPath)
 $startMenuShortcut.TargetPath = $targetPath
 $startMenuShortcut.Arguments = $arguments
 $startMenuShortcut.IconLocation = $iconPath
+$startMenuShortcut.WorkingDirectory = $userProfile
 $startMenuShortcut.Save()
 
 # Create shortcut on Desktop
@@ -159,6 +161,7 @@ $desktopLabShortcut = $shell.CreateShortcut($desktopLabShortcutPath)
 $desktopLabShortcut.TargetPath = $targetPath
 $desktopLabShortcut.Arguments = $argumentsLab
 $desktopLabShortcut.IconLocation = $iconPath
+$desktopLabShortcut.WorkingDirectory = $userProfile
 $desktopLabShortcut.Save()
 
 # Create shortcut in Start Menu
@@ -166,6 +169,7 @@ $startMenuLabShortcut = $shell.CreateShortcut($startMenuLabShortcutPath)
 $startMenuLabShortcut.TargetPath = $targetPath
 $startMenuLabShortcut.Arguments = $argumentsLab
 $startMenuLabShortcut.IconLocation = $iconPath
+$startMenuLabShortcut.WorkingDirectory = $userProfile
 $startMenuLabShortcut.Save()
 
 Write-Host "Shortcut created on Desktop and Start Menu."
