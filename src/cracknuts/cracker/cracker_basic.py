@@ -439,7 +439,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
     ) -> tuple[int, bytes | None]:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
-        return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
+        status, res = self.send_and_receive(protocol.build_send_message(command, rfu, payload))
+        if status != protocol.STATUS_OK:
+            self._logger.warning(f"Receive status code error [{status}]")
+        return status, res
 
     @abc.abstractmethod
     def get_default_config(self) -> T:
@@ -513,66 +516,87 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         self._config.load_from_json(json_str)
 
-    def get_id(self) -> str | None:
+    def get_id(self) -> tuple[int, str | None]:
+        """
+        Get the ID of the equipment.
+
+        :return: The equipment response status code and the ID of the equipment.
+        :rtype: tuple[int, str | None]
+        """
         status, res = self.send_with_command(protocol.Command.GET_ID)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-        return res.decode("ascii") if res is not None else None
+        return status, res.decode("ascii") if res is not None else None
 
-    def get_name(self) -> str | None:
+    def get_name(self) -> tuple[int, str | None]:
+        """
+        Get the name of the equipment.
+
+        :return: The equipment response status code and the name of the equipment.
+        :rtype: tuple[int, str | None]
+        """
         status, res = self.send_with_command(protocol.Command.GET_NAME)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-        return res.decode("ascii") if res is not None else None
+        return status, res.decode("ascii") if res is not None else None
 
-    def get_version(self) -> str | None:
+    def get_version(self) -> tuple[int, str | None]:
+        """
+        Get the version of the equipment.
+
+        :return: The equipment response status code and the version of the equipment.
+        :rtype: tuple[int, str | None]
+        """
         status, res = self.send_with_command(protocol.Command.GET_VERSION)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-        return res.decode("ascii") if res is not None else None
+        return status, res.decode("ascii") if res is not None else None
 
-    def osc_single(self):
+    def osc_single(self) -> tuple[int, None]:
         payload = None
         self._logger.debug("scrat_sample_len payload: %s", payload)
         status, res = self.send_with_command(protocol.Command.OSC_SINGLE, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
+        return status, None
 
-    def osc_is_triggered(self):
+    def osc_is_triggered(self) -> tuple[int, bool]:
         payload = None
         self._logger.debug(f"scrat_is_triggered payload: {payload}")
         status, res = self.send_with_command(protocol.Command.OSC_IS_TRIGGERED, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
-            return False
+            return status, False
         else:
             res_code = int.from_bytes(res, "big")
-            return res_code == 4
+            return status, res_code == 4
 
-    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
+    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
+        """
+        Get the analog wave.
+
+        :param channel: the channel of the analog wave.
+        :type channel: int
+        :param offset: the offset of the analog wave.
+        :type offset: int
+        :param sample_count: the sample count of the analog wave.
+        :type sample_count: int
+        :return: the analog wave.
+        :rtype: tuple[int, np.ndarray]
+        """
         payload = struct.pack(">BII", channel, offset, sample_count)
         self._logger.debug(f"scrat_get_analog_wave payload: {payload.hex()}")
         status, wave_bytes = self.send_with_command(protocol.Command.OSC_GET_ANALOG_WAVES, payload=payload)
         if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return np.array([])
+            return status, np.array([])
         else:
             if wave_bytes is None:
-                return np.array([])
+                return status, np.array([])
             else:
                 wave = struct.unpack(f"{sample_count}h", wave_bytes)
-                return np.array(wave, dtype=np.int16)
+                return status, np.array(wave, dtype=np.int16)
 
-    def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int):
+    def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
         payload = struct.pack(">BII", channel, offset, sample_count)
         self._logger.debug(f"scrat_get_digital_wave payload: {payload.hex()}")
         status, wave_bytes = self.send_with_command(protocol.Command.OSC_GET_ANALOG_WAVES, payload=payload)
         if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return np.array([])
+            return status, np.array([])
         else:
             if wave_bytes is None:
-                return np.array([])
+                return status, np.array([])
             else:
                 wave = struct.unpack(f"{sample_count}h", wave_bytes)
-                return np.array(wave, dtype=np.int16)
+                return status, np.array(wave, dtype=np.int16)

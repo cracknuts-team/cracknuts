@@ -2,7 +2,6 @@
 
 import struct
 
-import numpy as np
 
 from cracknuts.cracker import protocol
 from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
@@ -272,52 +271,6 @@ class CrackerG1(CrackerBasic[ConfigG1]):
             self._logger.error(f"Receive status code error [{status}]")
         else:
             self._config.osc_sample_rate = rate
-
-    def osc_single(self):
-        payload = None
-        self._logger.debug("scrat_sample_len payload: %s", payload)
-        status, res = self.send_with_command(protocol.Command.OSC_SINGLE, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-
-    def osc_is_triggered(self):
-        payload = None
-        self._logger.debug(f"scrat_is_triggered payload: {payload}")
-        status, res = self.send_with_command(protocol.Command.OSC_IS_TRIGGERED, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return False
-        else:
-            res_code = int.from_bytes(res, "big")
-            return res_code == 4
-
-    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> np.ndarray:
-        payload = struct.pack(">BII", channel, offset, sample_count)
-        self._logger.debug(f"scrat_get_analog_wave payload: {payload.hex()}")
-        status, wave_bytes = self.send_with_command(protocol.Command.OSC_GET_ANALOG_WAVES, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return np.array([])
-        else:
-            if wave_bytes is None:
-                return np.array([])
-            else:
-                wave = struct.unpack(f"{sample_count}h", wave_bytes)
-                return np.array(wave, dtype=np.int16)
-
-    def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int):
-        payload = struct.pack(">BII", channel, offset, sample_count)
-        self._logger.debug(f"scrat_get_digital_wave payload: {payload.hex()}")
-        status, wave_bytes = self.send_with_command(protocol.Command.OSC_GET_ANALOG_WAVES, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return np.array([])
-        else:
-            if wave_bytes is None:
-                return np.array([])
-            else:
-                wave = struct.unpack(f"{sample_count}h", wave_bytes)
-                return np.array(wave, dtype=np.int16)
 
     def osc_set_analog_gain(self, channel: int, gain: int):
         payload = struct.pack(">BB", channel, gain)
