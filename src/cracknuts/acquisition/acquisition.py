@@ -643,7 +643,8 @@ class Acquisition(abc.ABC):
     def _post_do(self): ...
 
     def _is_triggered(self):
-        return self.cracker.osc_is_triggered()
+        _, triggered = self.cracker.osc_is_triggered()
+        return triggered
 
     def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
         if sample_length == -1:
@@ -654,7 +655,7 @@ class Acquisition(abc.ABC):
         enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
         wave_dict = {}
         for c in enable_channels:
-            wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
+            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
         return wave_dict
 
     def _pre_finish(self): ...
