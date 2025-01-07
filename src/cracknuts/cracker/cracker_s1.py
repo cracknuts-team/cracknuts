@@ -9,42 +9,10 @@ from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
 class ConfigS1(ConfigBasic):
     def __init__(self):
         super().__init__()
-        self.int_dict_fields = (
-            "osc_analog_channel_enable",
-            "osc_analog_coupling",
-            "osc_analog_voltage",
-            "osc_analog_bias_voltage",
-            "osc_analog_gain",
-            "osc_analog_gain_raw",
-        )
 
         self.nut_enable = False
         self.nut_voltage = 3500
         self.nut_clock = 65000
-
-        self.osc_analog_channel_enable = {1: False, 2: True}
-        self.osc_analog_gain = {1: 50, 2: 50}
-        self.osc_sample_len = 1024
-        self.osc_sample_delay = 0
-        self.osc_sample_rate = 65000
-        self.osc_sample_phase = 0
-        self.osc_analog_trigger_source = 0
-        self.osc_trigger_mode = 0
-        self.osc_analog_trigger_edge = 0
-        self.osc_analog_trigger_edge_level = 1
-
-        self.osc_analog_coupling: dict[int, int] = {}
-        self.osc_analog_voltage: dict[int, int] = {}
-        self.osc_analog_bias_voltage: dict[int, int] = {}
-        self.osc_digital_voltage: int | None = None
-        self.osc_digital_trigger_source: int | None = None
-        self.osc_analog_gain_raw: dict[int, int] = {}
-        self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
-        self.osc_clock_sample_divisor: tuple[int, int] | None = None
-        self.osc_clock_simple: tuple[int, int, int] | None = None
-        self.osc_clock_phase: int | None = None
-        self.osc_clock_divisor: int | None = None
-
         self.nut_voltage_raw: int | None = None
         self.nut_interface: int | None = None
         self.nut_timeout: int | None = None
@@ -476,17 +444,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.osc_analog_gain_raw[channel] = gain
 
         return status, None
-
-    def osc_force(self) -> tuple[int, None]:
-        """
-        Force produce a wave data.
-
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = None
-        self._logger.debug(f"scrat_force payload: {payload}")
-        return self.send_with_command(protocol.Command.OSC_FORCE, payload=payload)
 
     def osc_set_clock_base_freq_mul_div(self, mult_int: int, mult_fra: int, div: int) -> tuple[int, None]:
         """

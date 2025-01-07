@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import logging
+import os
 import socket
 import struct
 import sys
@@ -170,3 +171,34 @@ class MockCracker:
 
     @_handler(protocol.Command.OSC_SAMPLE_LENGTH, has_payload=False)
     def osc_sample_len(self) -> bytes: ...
+
+    @_handler(protocol.Command.NUT_ENABLE, has_payload=False)
+    def nut_enable(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_ANALOG_GAIN, has_payload=False)
+    def osc_analog_gain(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_SAMPLE_DELAY, has_payload=False)
+    def osc_sample_delay(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_SAMPLE_RATE, has_payload=False)
+    def osc_sample_rate(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_CLOCK_SAMPLE_PHASE, has_payload=False)
+    def osc_clock_sample_phase(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_ANALOG_TRIGGER_SOURCE, has_payload=False)
+    def osc_analog_trigger_source(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_TRIGGER_MODE, has_payload=False)
+    def osc_trigger_mode(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_TRIGGER_EDGE, has_payload=False)
+    def osc_trigger_edge(self) -> bytes: ...
+
+    @_handler(protocol.Command.OSC_TRIGGER_EDGE_LEVEL, has_payload=False)
+    def osc_trigger_edge_level(self) -> bytes: ...
+
+    @_handler(protocol.Command.CRACKER_SERIAL_DATA)
+    def cracker_serial_data(self, payload: bytes) -> bytes:
+        return os.urandom(10)

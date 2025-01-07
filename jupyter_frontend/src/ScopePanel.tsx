@@ -1,8 +1,9 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Button, Input, InputNumber, Space, Spin} from "antd";
+import {Button, Input, InputNumber, Radio, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useState} from "react";
 import {LinkOutlined} from "@ant-design/icons";
+import {CheckboxChangeEvent} from "antd/es/checkbox";
 
 interface SeriesData {
     1: number[] | undefined;
@@ -20,17 +21,17 @@ interface ScopePanelProperties {
 
 const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [seriesData] = useModelState<SeriesData>("series_data");
-    const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
-    // const [customRangeModel, setCustomRangeModel] = useModelState<boolean>("custom_range_model");
-    // const [combineYRange, setCombineYRange] = useModelState<boolean>("combine_y_range");
+    const [monitorStatus] = useModelState<boolean>("monitor_status");
+
+    const [status, setStatus] = useModelState<number>("status");
+
     const [yRange] = useModelState<RangeData>("y_range");
-    // const [customYRange, setCustomYRange] = useModelState<RangeData>("custom_y_range");
 
     const [customRangeModel, setCustomRangeModel] = useState<boolean>(false)
-    const [customC1YMin, setCustomC1YMin] = useState<number|undefined>(undefined)
-    const [customC1YMax, setCustomC1YMax] = useState<number|undefined>(undefined)
-    const [customC2YMin, setCustomC2YMin] = useState<number|undefined>(undefined)
-    const [customC2YMax, setCustomC2YMax] = useState<number|undefined>(undefined)
+    const [customC1YMin, setCustomC1YMin] = useState<number | undefined>(undefined)
+    const [customC1YMax, setCustomC1YMax] = useState<number | undefined>(undefined)
+    const [customC2YMin, setCustomC2YMin] = useState<number | undefined>(undefined)
+    const [customC2YMax, setCustomC2YMax] = useState<number | undefined>(undefined)
 
     const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(false)
     const [customC2YRangeLink, setCustomC2YRangeLink] = useState<boolean>(false)
@@ -109,7 +110,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             axisLine: {
                 onZero: false,
             },
-        },{
+        }, {
             gridIndex: 1,
             type: "category",
             axisLine: {
@@ -270,8 +271,29 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         <Spin indicator={<span></span>} spinning={disable}>
             {/* eslint @typescript-eslint/no-unused-vars: "off" */}
             <Space>
-                <Button size={"small"} type={monitorStatus ? "primary" : "default"}
-                        onClick={() => setMonitorStatus(!monitorStatus)}>监视</Button>
+
+                <Radio.Group
+                    value={status}
+                    buttonStyle="solid"
+                    onChange={(e: CheckboxChangeEvent) => {
+                        setStatus(Number(e.target.value));
+                    }}
+                    size={"small"}
+                >
+                    <Radio.Button value={0}>
+                        STOP
+                    </Radio.Button>
+                    <Radio.Button value={1}>
+                        NORMAL
+                    </Radio.Button>
+                    <Radio.Button value={2}>
+                        SINGLE
+                    </Radio.Button>
+                    <Radio.Button value={3}>
+                        REPEAT
+                    </Radio.Button>
+                </Radio.Group>
+
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
                             setCustomC1YMin(yRange[1][0]);
@@ -289,34 +311,46 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                            style={{width: 50, textAlign: 'center', pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={"下限"}
                                  size={"small"}
-                                 value={customC1YMin} onChange={(v) => {setCustomC1YMinLink(Number(v))}} changeOnWheel/>
+                                 value={customC1YMin} onChange={(v) => {
+                        setCustomC1YMinLink(Number(v))
+                    }} changeOnWheel/>
                     <Button type={customC1YRangeLink ? "primary" : "default"}
                             size={"small"}
                             disabled={!customRangeModel}
-                            onClick={() => {setCustomC1YRangeLink(!customC1YRangeLink)}}>
-                        <LinkOutlined />
+                            onClick={() => {
+                                setCustomC1YRangeLink(!customC1YRangeLink)
+                            }}>
+                        <LinkOutlined/>
                     </Button>
                     <InputNumber disabled={!customRangeModel} placeholder={"上限"}
                                  size={"small"}
-                                 value={customC1YMax} onChange={(v) => {setCustomC1YMaxLink(Number(v))}} changeOnWheel/>
+                                 value={customC1YMax} onChange={(v) => {
+                        setCustomC1YMaxLink(Number(v))
+                    }} changeOnWheel/>
                 </Space.Compact>
                 <Space.Compact>
                     <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
                            style={{width: 50, borderRight: 0, pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={"下限"}
                                  size={"small"}
-                                 value={customC2YMin} onChange={(v) => {setCustomC2YMinLink(Number(v))}} changeOnWheel/>
+                                 value={customC2YMin} onChange={(v) => {
+                        setCustomC2YMinLink(Number(v))
+                    }} changeOnWheel/>
                     {/*<Input size={"small"} placeholder={"~"} disabled className="site-input-split"*/}
                     {/*       style={{width: 30,  borderRight: 0, pointerEvents: 'none',  textAlign: 'center'}}/>*/}
                     <Button type={customC2YRangeLink ? "primary" : "default"}
                             size={"small"}
                             disabled={!customRangeModel}
-                            onClick={() => {setCustomC2YRangeLink(!customC2YRangeLink)}}>
-                        <LinkOutlined />
+                            onClick={() => {
+                                setCustomC2YRangeLink(!customC2YRangeLink)
+                            }}>
+                        <LinkOutlined/>
                     </Button>
                     <InputNumber disabled={!customRangeModel} placeholder={"上限"}
                                  size={"small"}
-                                 value={customC2YMax} onChange={(v) => {setCustomC2YMaxLink(Number(v))}} changeOnWheel/>
+                                 value={customC2YMax} onChange={(v) => {
+                        setCustomC2YMaxLink(Number(v))
+                    }} changeOnWheel/>
                 </Space.Compact>
             </Space>
             <ReactEcharts option={option} notMerge={true}
