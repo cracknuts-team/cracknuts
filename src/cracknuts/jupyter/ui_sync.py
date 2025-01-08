@@ -20,6 +20,8 @@ class ConfigProxy:
 
         setattr(config, name, value)
 
+        print(f"proxy attr: {name}: {value}.")
+
         if name in listener_dict:
             setattr(widget, name, listener_dict[name](value))
         elif name in dir(widget):
