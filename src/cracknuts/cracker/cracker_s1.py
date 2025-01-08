@@ -2,7 +2,7 @@
 
 import struct
 
-from cracknuts.cracker import protocol
+from cracknuts.cracker import protocol, serial
 from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
 
 
@@ -16,6 +16,9 @@ class ConfigS1(ConfigBasic):
         self.nut_voltage_raw: int | None = None
         self.nut_interface: int | None = None
         self.nut_timeout: int | None = None
+
+        self.cracker_uart_enable: bool | None = False
+        self.cracker_uart_config: dict | None = {}
 
 
 class CrackerS1(CrackerBasic[ConfigS1]):
@@ -960,6 +963,126 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             delay=0,
             is_trigger=is_trigger,
         )
+
+    def cracker_uart_enable(self, enable: bool) -> tuple[int, None]:
+        """
+        Enable the uart.
+
+        :param enable: True for enable, False for disable.
+        :type enable: bool
+        :return: The device response status.
+        :rtype: tuple[int, None]
+        """
+        payload = struct.pack(">?", enable)
+        self._logger.debug(f"cracker_uart_enable payload: {payload.hex()}")
+        status, res = self.send_with_command(protocol.Command.CRACKER_UART_ENABLE, payload=payload)
+        if status == protocol.STATUS_OK:
+            self.get_current_config().cracker_uart_enable = enable
+        return status, res
+
+    def cracker_uart_reset(self) -> tuple[int, None]:
+        """
+        Reset the UART hardware.
+
+        :return: The device response status.
+        :rtype: tuple[int, None]
+        """
+        payload = None
+        self._logger.debug(f"cracker_uart_reset payload: {payload}")
+        return self.send_with_command(protocol.Command.CRACKER_UART_RESET)
+
+    def cracker_uart_config(
+        self,
+        baudrate=serial.BAUDRATE_115200,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+    ) -> tuple[int, None]:
+        """
+        Config uart.
+
+        :param baudrate: The baudrate of the uart.
+        :type baudrate: int
+        :param bytesize: The bytesize of the uart.
+        :type bytesize: int
+        :param parity: The parity of the uart.
+        :type parity: int
+        :param stopbits: The stopbits of the uart.
+        :type stopbits: int
+        :return: The device response status.
+        :rtype: tuple[int, None]
+        """
+        payload = struct.pack(">BBBI", stopbits, parity, bytesize, baudrate)
+        self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
+        status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
+        if status == protocol.STATUS_OK:
+            self.get_current_config().cracker_uart_config = {
+                "baudrate": baudrate,
+                "bytesize": bytesize,
+                "parity": parity,
+                "stopbits": stopbits,
+            }
+        return status, res
+
+    def cracker_uart_transmit_receive(
+        self, tx_data: str | bytes = None, rx_count: int = 0, is_trigger: bool = False, timeout: int = 10000
+    ) -> tuple[int, bytes | None]:
+        """
+        Transmit and receive data through the UART protocol.
+
+        :param tx_data: The data to be sent.
+        :type tx_data: str | bytes
+        :param rx_count: The number of received data bytes.
+        :type rx_count: int
+        :param is_trigger: Whether the transmit trigger is enabled.
+        :type is_trigger: bool
+        :param timeout: Timeout in milliseconds.
+        :type timeout: int
+        :return: The device response status and the data received from the device.
+        :rtype: tuple[int, bytes | None]
+        """
+        if isinstance(tx_data, str):
+            tx_data = bytes.fromhex(tx_data)
+
+        payload = struct.pack(">H?I", rx_count, is_trigger, timeout)
+        if tx_data is not None:
+            payload += tx_data
+        self._logger.debug(f"cracker_uart_transmit_receive payload: {payload.hex()}")
+        return self.send_with_command(protocol.Command.CRACKER_UART_TRANSCEIVE, payload=payload)
+
+    def cracker_uart_receive_fifo_remained(self) -> tuple[int, int]:
+        """
+        Get the number of remaining unread bytes in the UART receive FIFO.
+
+        :return: The device response status and the number of remaining unread bytes.
+        :rtype: tuple[int, int]
+        """
+        payload = None
+        self._logger.debug(f"cracker_uart_receive_fifo_remained payload: {payload}")
+        status, res = self.send_with_command(protocol.Command.CRACKER_UART_RECEIVE_FIFO_REMAINED)
+        return status, struct.unpack(">H", res)[0]
+
+    def cracker_uart_receive_fifo_dump(self) -> tuple[int, bytes | None]:
+        """
+        Read all the remaining data from the UART receive FIFO.
+
+        :return: The device response status and all the remaining unread bytes.
+        :rtype: tuple[int, bytes | None]
+        """
+        payload = None
+        self._logger.debug(f"cracker_uart_receive_fifo_dump payload: {payload}")
+        return self.send_with_command(protocol.Command.CRACKER_UART_CRACKER_UART_RECEIVE_FIFO_DUMP)
+
+    def uart_receive_fifo_clear(self) -> tuple[int, bytes | None]:
+        """
+        Clear all the remaining data in the UART receive FIFO.
+
+        :return: The device response status and all the remaining unread bytes.
+        :rtype: tuple[int, bytes | None]
+        """
+        payload = None
+        self._logger.debug(f"cracker_uart_receive_fifo_dump payload: {payload}")
+        return self.send_with_command(protocol.Command.CRACKER_UART_CRACKER_UART_RECEIVE_CLEAR)
 
     def cracker_serial_baud(self, baud: int) -> tuple[int, bytes | None]:
         payload = struct.pack(">I", baud)
