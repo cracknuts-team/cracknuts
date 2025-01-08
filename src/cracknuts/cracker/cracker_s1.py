@@ -549,12 +549,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        if isinstance(enable, bool):
-            enable = 1 if enable else 0
-        payload = struct.pack(">B", enable)
+        if isinstance(enable, int):
+            enable = True if enable == 1 else False
+        payload = struct.pack(">?", enable)
         self._logger.debug(f"cracker_nut_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_ENABLE, payload=payload)
-        if status != protocol.STATUS_OK:
+        if status == protocol.STATUS_OK:
             self._config.nut_enable = enable
 
         return status, None
@@ -571,7 +571,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE, payload=payload)
-        if status != protocol.STATUS_OK:
+        if status == protocol.STATUS_OK:
             self._config.nut_voltage = voltage
 
         return status, None
@@ -588,7 +588,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">B", voltage)
         self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE_RAW, payload=payload)
-        if status != protocol.STATUS_OK:
+        if status == protocol.STATUS_OK:
             self._config.nut_voltage_raw = voltage
 
         return status, None
@@ -605,7 +605,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">I", clock)
         self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK, payload=payload)
-        if status != protocol.STATUS_OK:
+        if status == protocol.STATUS_OK:
             self._config.nut_clock = clock
 
         return status, None
@@ -639,7 +639,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">I", timeout)
         self._logger.debug(f"cracker_nut_timeout payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_TIMEOUT, payload=payload)
-        if status != protocol.STATUS_OK:
+        if status == protocol.STATUS_OK:
             self._config.nut_timeout = timeout
 
         return status, None
