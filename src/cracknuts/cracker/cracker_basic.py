@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import importlib.util
 import json
 import logging
 import os
@@ -14,7 +15,6 @@ from abc import ABC
 import numpy as np
 from packaging.version import Version
 
-import cracknuts
 import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
@@ -23,10 +23,38 @@ from cracknuts.cracker.operator import Operator
 
 class ConfigBasic:
     def __init__(self):
+        self.osc_analog_channel_enable = {1: False, 2: True}
+        self.osc_analog_gain = {1: 50, 2: 50}
+        self.osc_sample_len = 1024
+        self.osc_sample_delay = 0
+        self.osc_sample_rate = 65000
+        self.osc_sample_phase = 0
+        self.osc_analog_trigger_source = 0
+        self.osc_trigger_mode = 0
+        self.osc_analog_trigger_edge = 0
+        self.osc_analog_trigger_edge_level = 1
+        self.osc_analog_coupling: dict[int, int] = {}
+        self.osc_analog_voltage: dict[int, int] = {}
+        self.osc_analog_bias_voltage: dict[int, int] = {}
+        self.osc_digital_voltage: int | None = None
+        self.osc_digital_trigger_source: int | None = None
+        self.osc_analog_gain_raw: dict[int, int] = {}
+        self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
+        self.osc_clock_sample_divisor: tuple[int, int] | None = None
+        self.osc_clock_simple: tuple[int, int, int] | None = None
+        self.osc_clock_phase: int | None = None
+        self.osc_clock_divisor: int | None = None
         # The name list of fields whose value type is dict[int, Any]. When converting to a dictionary from JSON,
         # numbers are converted to strings, so this needs to be handled separately. The subclass should overwrite
         # this field when its field has a similar structure.
-        self.int_dict_fields = ()
+        self.int_dict_fields = (
+            "osc_analog_channel_enable",
+            "osc_analog_coupling",
+            "osc_analog_voltage",
+            "osc_analog_bias_voltage",
+            "osc_analog_gain",
+            "osc_analog_gain_raw",
+        )
 
     def __str__(self):
         return f"Config({", ".join([f"{k}: {v}" for k, v in self.__dict__.items() if not k.startswith("_")])})"
@@ -246,7 +274,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         if hardware_model == "unknown" and update_unknown:
             hardware_model = "*"
 
-        bin_path = os.path.join(cracknuts.__file__, "firmware")
+        bin_path = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "firmware")
         user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "firmware")
         current_bin_path = os.path.join(os.getcwd(), ".firmware")
 
@@ -260,21 +288,27 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if bin_bitstream_path is None:
                 bin_bitstream_path = self._get_version_file_path(bitstream_bin_dict, hardware_model, bitstream_version)
 
-        if bin_server_path is None or not os.path.exists(bin_server_path):
-            self._logger.error(
-                f"Server binary file not found for hardware: {hardware_model} and server_version: {server_version}."
-            )
-            return False
-
-        if bin_bitstream_path is None or not os.path.exists(bin_bitstream_path):
-            self._logger.error(
-                f"Bitstream file not found for hardware: {hardware_model} and bitstream_version: {bitstream_version}"
-            )
+        if (
+            bin_server_path is None
+            or not os.path.exists(bin_server_path)
+            or bin_bitstream_path is None
+            or not os.path.exists(bin_bitstream_path)
+        ):
+            if bin_server_path is None or not os.path.exists(bin_server_path):
+                self._logger.error(
+                    f"Server binary file not found for hardware: {hardware_model} "
+                    f"and server_version: {server_version}."
+                )
+            if bin_bitstream_path is None or not os.path.exists(bin_bitstream_path):
+                self._logger.error(
+                    f"Bitstream file not found for hardware: {hardware_model} "
+                    f"and bitstream_version: {bitstream_version}"
+                )
             return False
 
         if hardware_model == "*" and update_unknown:
             self._logger.warning(
-                f"Equipment return unknown hardware: {hardware_model}, and update_unknown is True,"
+                f"Device return unknown hardware: {hardware_model}, and update_unknown is True,"
                 f"The firmware bitstream: {bin_bitstream_path} and server: {bin_server_path} is used."
             )
         else:
@@ -302,8 +336,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             dict_by_hardware = {k: v for d in bin_dict.values() for k, v in d.items()}
         else:
             dict_by_hardware = bin_dict.get(hardware_model, None)
-        if dict_by_hardware is None:
-            self._logger.error(f"bin file dict is none: {hardware_model}.")
+        if dict_by_hardware is None or len(dict_by_hardware) == 0:
             return None
         if version is None:
             sorted_version = sorted(dict_by_hardware.keys(), key=Version)
@@ -551,6 +584,17 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._logger.debug("scrat_sample_len payload: %s", payload)
         status, res = self.send_with_command(protocol.Command.OSC_SINGLE, payload=payload)
         return status, None
+
+    def osc_force(self) -> tuple[int, None]:
+        """
+        Force produce a wave data.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
+        payload = None
+        self._logger.debug(f"scrat_force payload: {payload}")
+        return self.send_with_command(protocol.Command.OSC_FORCE, payload=payload)
 
     def osc_is_triggered(self) -> tuple[int, bool]:
         payload = None
