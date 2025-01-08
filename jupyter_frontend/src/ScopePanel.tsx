@@ -21,9 +21,9 @@ interface ScopePanelProperties {
 
 const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [seriesData] = useModelState<SeriesData>("series_data");
-    const [monitorStatus] = useModelState<boolean>("monitor_status");
-
-    const [status, setStatus] = useModelState<number>("status");
+    const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
+    const [lockScopeOperation] = useModelState<boolean>("lock_scope_operation");
+    const [scopeStatus, setScopeStatus] = useModelState<number>("scope_status");
 
     const [yRange] = useModelState<RangeData>("y_range");
 
@@ -273,27 +273,33 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             <Space>
 
                 <Radio.Group
-                    value={status}
+                    value={scopeStatus}
                     buttonStyle="solid"
                     onChange={(e: CheckboxChangeEvent) => {
-                        setStatus(Number(e.target.value));
+                        setScopeStatus(Number(e.target.value));
                     }}
                     size={"small"}
+                    disabled={lockScopeOperation}
                 >
                     <Radio.Button value={0}>
-                        STOP
+                        停止
                     </Radio.Button>
                     <Radio.Button value={1}>
-                        NORMAL
+                        运行
                     </Radio.Button>
                     <Radio.Button value={2}>
-                        SINGLE
+                        单次
                     </Radio.Button>
                     <Radio.Button value={3}>
-                        REPEAT
+                        重复
                     </Radio.Button>
                 </Radio.Group>
 
+                <Button size={"small"} type={monitorStatus ? "primary" : "default"}
+                        onClick={() => {
+                            setMonitorStatus(!monitorStatus);
+                        }}
+                >监视</Button>
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
                             setCustomC1YMin(yRange[1][0]);
@@ -304,8 +310,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         }}>
                     指定区间
                 </Button>
-                {/*<Button size={"small"} type={combineYRange ? "primary" : "default"}*/}
-                {/*        onClick={() => setMonitorStatus(!monitorStatus)}>共同坐标</Button>*/}
                 <Space.Compact>
                     <Input size={"small"} placeholder={"CH A"} disabled className="site-input-split"
                            style={{width: 50, textAlign: 'center', pointerEvents: 'none'}}/>
@@ -336,8 +340,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                                  value={customC2YMin} onChange={(v) => {
                         setCustomC2YMinLink(Number(v))
                     }} changeOnWheel/>
-                    {/*<Input size={"small"} placeholder={"~"} disabled className="site-input-split"*/}
-                    {/*       style={{width: 30,  borderRight: 0, pointerEvents: 'none',  textAlign: 'center'}}/>*/}
                     <Button type={customC2YRangeLink ? "primary" : "default"}
                             size={"small"}
                             disabled={!customRangeModel}

@@ -7,7 +7,7 @@ import typing
 
 import numpy as np
 import traitlets
-
+import cracknuts.logger as logger
 from cracknuts.acquisition.acquisition import Acquisition
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.scope.scope_acquisition import ScopeAcquisition
@@ -19,17 +19,17 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
 
     series_data = traitlets.Dict({}).tag(sync=True)
 
-    # custom_range_model = traitlets.Bool(False).tag(sync=True)
     custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"1": (0, 0), "2": (0, 0)}).tag(sync=True)
     y_range: dict[int, tuple[int, int]] = traitlets.Dict({1: (None, None), 2: (None, None)}).tag(sync=True)
     combine_y_range = traitlets.Bool(False).tag(sync=True)
 
-    status = traitlets.Int(0).tag(sync=True)
+    scope_status = traitlets.Int(0).tag(sync=True)
     monitor_status = traitlets.Bool(False).tag(sync=True)
+    lock_scope_operation = traitlets.Bool(False).tag(sync=True)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-
+        self._logger = logger
         if not hasattr(self, "acquisition"):
             self._acquisition: Acquisition | None = None
             if "acquisition" in kwargs and isinstance(kwargs["acquisition"], Acquisition):
@@ -46,34 +46,23 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
         self._monitor_period = 0.1
 
     def _change_acquisition_source(self, status: int) -> None:
-        if self._effect_acq == 1:
-            if status == 0:
-                # self._effect_acq = 0
-                self.stop_monitor()
-                self.status = 0
+        # Listen the acquisition thread status change and update scope monitor status.
+        if status == 0:
+            self.lock_scope_operation = False
         else:
-            print("start .....")
             self._effect_acq = 1
-            if status != 0:
-                if not self.monitor_status:
-                    self.start_monitor()
+            self.lock_scope_operation = True
+            self.scope_status = 0
+            if not self.monitor_status:
+                self.start_monitor()
 
     def _change_scope_acquisition_status(self, status: int) -> None:
-        print(f"{time.time()}: scope acq status changed: {status}, acq: {self._effect_acq}")
-        if self._effect_acq == 0:
-            if status == 0:
-                self.stop_monitor()
-            else:
-                if not self.monitor_status:
-                    self.start_monitor()
-            self.status = status
-        elif self._effect_acq == 1:
-            if status != 0 and self.status == 0:
-                self._effect_acq = 0
-                self.status = status
+        # Only listen the stop change from scope acquisition thread, and sync status to ui.
+        if status == 0 and self._effect_acq == 0:
+            self.scope_status = status
 
     def _update_status(self, status: int) -> None:
-        self.status = status
+        self.scope_status = status
 
     def update(self, series_data: dict[int, np.ndarray]) -> None:
         (
@@ -96,32 +85,35 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
 
         self.series_data = {k: v.tolist() for k, v in series_data.items()}
 
-    @traitlets.observe("status")
-    def status_changed(self, change) -> None:
+    @traitlets.observe("scope_status")
+    def scope_status_changed(self, change) -> None:
         self.run(change.get("new"))
 
-    def run(self, status: int) -> None:
-        if status == 0:
-            self.stop_monitor()
-        else:
+    @traitlets.observe("monitor_status")
+    def monitor_status_changed(self, change) -> None:
+        if change.get("new"):
             self.start_monitor()
 
-        self._scope_acquisition.run(status)
+    def run(self, status: int) -> None:
+        if not self.lock_scope_operation:
+            self._scope_acquisition.run(status)
+            self._effect_acq = 0
+            if not self.monitor_status:
+                self.start_monitor()
 
     def _monitor(self) -> None:
-        while True:
-            # print(f"get wave as {time.time()}")
+        while self.monitor_status:
             if self._effect_acq == 0:
-                print("get from scope acq")
                 wave = self._scope_acquisition.get_last_wave()
+                if not self._scope_acquisition.is_running():
+                    self.monitor_status = False
             else:
-                print("get from acq")
-                self._scope_acquisition.stop()
+                if self._scope_acquisition.is_running():
+                    self._scope_acquisition.stop()
                 wave = self._acquisition.get_last_wave()
-            print(f"wave: {wave}")
+                if not self._acquisition.is_running():
+                    self.monitor_status = False
             self.update(wave)
-            if not self.monitor_status:
-                break
             time.sleep(self._monitor_period)
 
     def start_monitor(self) -> None:

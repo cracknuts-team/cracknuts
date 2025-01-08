@@ -29,17 +29,19 @@ class ScopeAcquisition:
         for listener in self._status_change_listener:
             listener(self._status)
 
-    def set_sample_length(self, sample_length: int):
-        self._sample_length = sample_length
-
     def set_offset(self, offset: int):
         self._offset = offset
+
+    def is_running(self) -> bool:
+        return self._status != 0
 
     def run(self, model: int = 1) -> None:
         if model == 0:
             self.stop()
         else:
             if self._status == 0:
+                # When starting from the stopped state, clear the waveform data left from the previous acquisition.
+                self._last_waves = {}
                 self._status = model
                 threading.Thread(target=self._acquisition, kwargs={"model": model}).start()
                 self._status_changed()
