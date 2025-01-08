@@ -692,11 +692,20 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return self.send_with_command(protocol.Command.CRACKER_SPI_RESET)
 
     def cracker_spi_config(
-        self, speed: int = 10_000, cpol: int = serial.SPI_CPOL_LOW, cpha: int = serial.SPI_CPHA_LOW
+        self,
+        speed: int = 10_000,
+        cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW,
+        cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW,
     ) -> tuple[int, None]:
         """
         Config the SPI.
 
+        :param speed: SPI speed.
+        :type speed: int
+        :param cpol: Clock polarity.
+        :type cpol: serial.SpiCpol
+        :param cpha: Clock phase.
+        :type cpha: serial.SpiCpha
         :return: The device response status.
         :rtype: tuple[int, None]
         """
@@ -717,7 +726,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 f"The speed: [{speed}] cannot calculate an integer Prescaler, " f"so the integer value is set to {psc}."
             )
 
-        payload = struct.pack(">HBB", psc, cpol, cpha)
+        payload = struct.pack(">HBB", int(psc), cpol.value, cpha.value)
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
@@ -1068,26 +1077,27 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def cracker_uart_config(
         self,
-        baudrate=serial.BAUDRATE_115200,
-        bytesize=serial.EIGHTBITS,
-        parity=serial.PARITY_NONE,
-        stopbits=serial.STOPBITS_ONE,
+        baudrate: serial.Baudrate = serial.Baudrate.BAUDRATE_115200,
+        bytesize: serial.Bytesize = serial.Bytesize.EIGHTBITS,
+        parity: serial.Parity = serial.Parity.PARITY_NONE,
+        stopbits: serial.Stopbits = serial.Stopbits.STOPBITS_ONE,
     ) -> tuple[int, None]:
         """
         Config uart.
 
         :param baudrate: The baudrate of the uart.
-        :type baudrate: int
+        :type baudrate: serial.Baudrate
         :param bytesize: The bytesize of the uart.
-        :type bytesize: int
+        :type bytesize: serial.Bytesize
         :param parity: The parity of the uart.
-        :type parity: int
+        :type parity: serial.Parity
         :param stopbits: The stopbits of the uart.
-        :type stopbits: int
+        :type stopbits: serial.Stopbits
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-        payload = struct.pack(">BBBI", stopbits, parity, bytesize, baudrate)
+
+        payload = struct.pack(">BBBI", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
