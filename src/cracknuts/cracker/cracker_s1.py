@@ -23,6 +23,9 @@ class ConfigS1(ConfigBasic):
         self.cracker_spi_enable: bool | None = False
         self.cracker_spi_config: dict | None = {}
 
+        self.cracker_i2c_enable: bool | None = False
+        self.cracker_i2c_config: dict | None = {}
+
 
 class CrackerS1(CrackerBasic[ConfigS1]):
     def get_default_config(self) -> ConfigS1:
@@ -730,7 +733,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_uart_config = {
+            self.get_current_config().cracker_i2c_config = {
                 "speed": speed,
                 "cpol": cpol,
                 "cpha": cpha,
@@ -840,6 +843,59 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, bytes | None]
         """
         return self._cracker_spi_transceive(tx_data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
+
+    def cracker_i2c_enable(self, enable: bool):
+        """
+        Enable the I2C.
+
+        :param enable: True for enable, False for disable.
+        :type enable: bool
+        :return: The device response status.
+        :rtype: tuple[int, None]
+        """
+        payload = struct.pack(">?", enable)
+        self._logger.debug(f"cracker_i2c_enable payload: {payload.hex()}")
+        status, res = self.send_with_command(protocol.Command.CRACKER_I2C_ENABLE, payload=payload)
+        if status == protocol.STATUS_OK:
+            self.get_current_config().cracker_uart_enable = enable
+        return status, res
+
+    def cracker_i2c_reset(self) -> tuple[int, None]:
+        """
+        Reset the I2C.
+
+        :return: The device response status.
+        :rtype: tuple[int, None]
+        """
+        payload = None
+        self._logger.debug(f"cracker_i2c_reset payload: {payload}")
+        return self.send_with_command(protocol.Command.CRACKER_I2C_RESET)
+
+    def cracker_i2c_config(
+        self,
+        dev_addr: int = 0x00,
+        speed: serial.I2cSpeed = serial.I2cSpeed.STANDARD_100K,
+    ) -> tuple[int, None]:
+        """
+        Config the SPI.
+
+        :param dev_addr: The address of the device.
+        :type dev_addr: int
+        :param speed: The speed of the device.
+        :type speed: serial.I2cSpeed
+        :return: The device response status.
+        :rtype: tuple[int, None]
+        """
+
+        payload = struct.pack(">BB", dev_addr, speed.value)
+        self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
+        status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)
+        if status == protocol.STATUS_OK:
+            self.get_current_config().cracker_i2c_config = {
+                "dev_addr": dev_addr,
+                "speed": speed,
+            }
+        return status, res
 
     def _cracker_i2c_transceive(
         self,

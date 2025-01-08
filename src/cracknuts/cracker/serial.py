@@ -24,3 +24,7 @@ class SpiCpol(Enum):
 
 class SpiCpha(Enum):
     SPI_CPHA_LOW, SPI_CPHA_HIGH = 0, 1
+
+
+class I2cSpeed(Enum):
+    STANDARD_100K, FAST_400K, FAST_PLUS_1M, HIGH_SPEED_3400K, ULTRA_FAST_5M = 0, 1, 2, 3, 4
