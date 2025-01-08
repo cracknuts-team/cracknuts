@@ -720,6 +720,9 @@ class Acquisition(abc.ABC):
         self.do_error_max_count = config["do_error_max_count"]
         self.file_path = config["trace_file_path"]
 
+    def is_running(self):
+        return self._status != self.STATUS_STOPPED
+
     @staticmethod
     def builder():
         return AcquisitionBuilder()
