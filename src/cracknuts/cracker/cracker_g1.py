@@ -438,7 +438,7 @@ class CrackerG1(CrackerBasic[ConfigG1]):
         if data is not None:
             payload += data
         self._logger.debug(f"_spi_transceive payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.SPI_TRANSCEIVE, payload=payload)
+        status, res = self.send_with_command(protocol.Command.CRACKER_SPI_TRANSCEIVE, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
             return None
