@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import threading
 import time
 import typing
