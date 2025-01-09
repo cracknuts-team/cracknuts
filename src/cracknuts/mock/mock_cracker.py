@@ -122,7 +122,7 @@ class MockCracker:
     @staticmethod
     def _unsupported(command):
         return protocol.build_response_message(
-            protocol.STATUS_UNSUPPORTED, f'Command [0x{format(command, '04x')}] not supported'.encode()
+            protocol.STATUS_COMMAND_UNSUPPORTED, f'Command [0x{format(command, '04x')}] not supported'.encode()
         )
 
     @_handler(protocol.Command.GET_ID, has_payload=False)
