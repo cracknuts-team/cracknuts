@@ -330,9 +330,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             operator.disconnect()
 
     @staticmethod
-    def _get_version_file_path(
-        self, bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str
-    ) -> str | None:
+    def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str | None:
         if hardware_model == "*":
             dict_by_hardware = {k: v for d in bin_dict.values() for k, v in d.items()}
         else:
@@ -437,17 +435,17 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
                     f"Receive header from {self._server_address}: "
-                    f"{magic}, {version}, {direction}, {status:02X}, {length}"
+                    f"{magic}, {version}, {direction}, 0x{status:04X}, {length}"
                 )
-            if status != protocol.STATUS_ERROR:
+            if status != protocol.STATUS_OK:
                 self._logger.error(
-                    f"Receive status error: {status:02X}, "
+                    f"Receive status error: 0x{status:04X}, "
                     f"{protocol.STATUS_DESCRIPTION.get(status, "Unknown error.")}"
                 )
             if length == 0:
                 return status, None
             resp_payload = self._recv(length)
-            if status >= protocol.STATUS_ERROR:
+            if status != protocol.STATUS_OK:
                 self._logger.error(
                     f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
                 )
