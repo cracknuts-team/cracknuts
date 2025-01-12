@@ -548,6 +548,9 @@ class Acquisition(abc.ABC):
             dataset.dump()
         self._status = self.STATUS_STOPPED
         self._status_changed()
+        # Reduce the execution frequency in test mode.
+        if not persistent:
+            time.sleep(2)
 
     def _progress_changed(self, progress: "AcqProgress"):
         for listener in self._on_run_progress_changed_listeners:
