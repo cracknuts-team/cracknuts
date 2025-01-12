@@ -90,6 +90,7 @@ class ScopeAcquisition:
                 time.sleep(self._interval)
             elif self._status == 2:
                 while self._status == 2:
+                    self._cracker.osc_single()
                     if self._cracker.osc_is_triggered():
                         self._last_waves = self._get_waves()
                         self.stop()
