@@ -111,8 +111,8 @@ class TraceDataset(abc.ABC):
     @property
     def info(self):
         return (
-            f"Channels: {self._channel_names}\n"
-            f"Traces: {self._trace_count}, {self._sample_count}\n"
+            f"Channels: {self._channel_names}\r\n"
+            f"Traces: {self._trace_count}, {self._sample_count}\r\n"
             f"Data: {self.trace_count}, {self._data_length}"
         )
 
