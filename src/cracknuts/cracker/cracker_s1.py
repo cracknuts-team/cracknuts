@@ -546,7 +546,16 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    def nut_power_off(self) -> tuple[int, None]:
+        return self._nut_power(False)
+
+    def nut_power_on(self) -> tuple[int, None]:
+        return self._nut_power(True)
+
     def nut_set_enable(self, enable: int | bool) -> tuple[int, None]:
+        return self._nut_power(enable)
+
+    def _nut_power(self, enable: int | bool) -> tuple[int, None]:
         """
         Set nut enable.
 
