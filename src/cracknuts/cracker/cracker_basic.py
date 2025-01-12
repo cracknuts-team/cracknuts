@@ -329,9 +329,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         finally:
             operator.disconnect()
 
-    def _get_version_file_path(
-        self, bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str
-    ) -> str | None:
+    @staticmethod
+    def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str | None:
         if hardware_model == "*":
             dict_by_hardware = {k: v for d in bin_dict.values() for k, v in d.items()}
         else:
@@ -436,14 +435,17 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
                     f"Receive header from {self._server_address}: "
-                    f"{magic}, {version}, {direction}, {status:02X}, {length}"
+                    f"{magic}, {version}, {direction}, 0x{status:04X}, {length}"
                 )
-            if status >= protocol.STATUS_ERROR:
-                self._logger.error(f"Receive status error: {status:02X}")
+            if status != protocol.STATUS_OK:
+                self._logger.error(
+                    f"Receive status error: 0x{status:04X}, "
+                    f"{protocol.STATUS_DESCRIPTION.get(status, "Unknown error.")}"
+                )
             if length == 0:
                 return status, None
             resp_payload = self._recv(length)
-            if status >= protocol.STATUS_ERROR:
+            if status != protocol.STATUS_OK:
                 self._logger.error(
                     f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
                 )
@@ -472,10 +474,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
     ) -> tuple[int, bytes | None]:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
-        status, res = self.send_and_receive(protocol.build_send_message(command, rfu, payload))
-        if status != protocol.STATUS_OK:
-            self._logger.warning(f"Receive status code error [{status}]")
-        return status, res
+        return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
 
     @abc.abstractmethod
     def get_default_config(self) -> T:
@@ -604,8 +603,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._logger.error(f"Receive status code error [{status}]")
             return status, False
         else:
-            res_code = int.from_bytes(res, "big")
-            return status, res_code == 4
+            if res is None:
+                self._logger.error("is_triggered get empty payload.")
+                return status, False
+            else:
+                res_code = int.from_bytes(res, "big")
+                return status, res_code == 4
 
     def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
         """
