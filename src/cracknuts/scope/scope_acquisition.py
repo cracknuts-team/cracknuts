@@ -103,6 +103,7 @@ class ScopeAcquisition:
                     else:
                         if self._cracker.osc_is_triggered():
                             self._last_waves = self._get_waves()
+                            break
                         time.sleep(self._trigger_judge_wait_time)
                 self._last_waves = self._get_waves()
             else:
