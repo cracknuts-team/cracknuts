@@ -445,7 +445,8 @@ class Acquisition(abc.ABC):
 
         cracker_version = self.cracker.get_version()
         if persistent:
-            channel_count = len(self.cracker.get_current_config().osc_analog_channel_enable.keys())
+            channel_names = [str(k) for k in self.cracker.get_current_config().osc_analog_channel_enable.keys()]
+            print(channel_names)
             if self.sample_length == -1:
                 sample_length = self.cracker.get_current_config().osc_sample_len
             else:
@@ -461,7 +462,7 @@ class Acquisition(abc.ABC):
             if file_format == "scarr":
                 dataset = ScarrTraceDataset.new(
                     file_path,
-                    channel_count,
+                    channel_names,
                     self.trace_count,
                     sample_length,
                     self.data_length,
@@ -470,7 +471,7 @@ class Acquisition(abc.ABC):
             elif file_format == "numpy":
                 dataset = NumpyTraceDataset.new(
                     file_path,
-                    channel_count,
+                    channel_names,
                     self.trace_count,
                     sample_length,
                     self.data_length,
@@ -536,9 +537,9 @@ class Acquisition(abc.ABC):
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None and self._last_wave is not None:
                 if 1 in self._last_wave.keys():
-                    dataset.set_trace(0, trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
+                    dataset.set_trace("1", trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
                 elif 2 in self._last_wave.keys():
-                    dataset.set_trace(1, trace_index, self._last_wave[2], np.frombuffer(data, dtype=np.uint8))
+                    dataset.set_trace("2", trace_index, self._last_wave[2], np.frombuffer(data, dtype=np.uint8))
             self._post_do()
             trace_index += 1
             self._current_trace_count = trace_index

@@ -60,7 +60,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         )
 
     def show_all_trace(self):
-        channel_count = self._trace_dataset.channel_count
+        channel_count = self._trace_dataset.channel_names
         trace_count = self._trace_dataset.trace_count
         self._show_trace(slice(0, channel_count), slice(0, trace_count))
 
