@@ -74,6 +74,9 @@ class TraceDataset(abc.ABC):
     def data(self) -> TraceDatasetData:
         return TraceDatasetData(get_trace_data=self._get_trace_data)
 
+    def __getitem__(self, item):
+        return TraceDatasetData(get_trace_data=self._get_trace_data)[item]
+
     @abc.abstractmethod
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]: ...
 
@@ -106,19 +109,16 @@ class TraceDataset(abc.ABC):
 
     def __repr__(self):
         t = type(self)
-        return f"<{t.__module__}.{t.__name__} ({self._channel_names}, {self.trace_count})"
+        return f"<{t.__module__}.{t.__name__} ({self._channel_names}, {self._trace_count})"
 
-    @property
     def info(self):
-        return (
-            f"Channels: {self._channel_names}\r\n"
-            f"Traces: {self._trace_count}, {self._sample_count}\r\n"
-            f"Data: {self.trace_count}, {self._data_length}"
+        return _InfoRender(
+            self._channel_names, self._channel_count, self._trace_count, self._sample_count, self._data_length
         )
 
     @property
-    def channel_count(self):
-        return self._channel_count
+    def channel_names(self):
+        return self._channel_names
 
     @property
     def trace_count(self):
@@ -135,6 +135,24 @@ class TraceDataset(abc.ABC):
     @property
     def create_time(self):
         return self._create_time
+
+
+class _InfoRender:
+    def __init__(
+        self, channel_names: list[str], channel_count: int, trace_count: int, sample_count: int, data_length: int
+    ):
+        self._channel_names: list[str] = channel_names
+        self._channel_count: int = channel_count
+        self._trace_count: int = trace_count
+        self._sample_count: int = sample_count
+        self._data_length: int = data_length
+
+    def __repr__(self):
+        return (
+            f"Channel: {self._channel_names}\r\n"
+            f"Trace:   {self._trace_count}, {self._sample_count}\r\n"
+            f"Data:    {self._trace_count}, {self._data_length}"
+        )
 
 
 class ScarrTraceDataset(TraceDataset):
@@ -189,7 +207,7 @@ class ScarrTraceDataset(TraceDataset):
                     "must be specified when in write mode."
                 )
             self._create_time = int(time.time())
-            group_root = self._zarr_data.create_group(self._GROUP_ROOT_PATH).__repr__()
+            group_root = self._zarr_data.create_group(self._GROUP_ROOT_PATH)
             for name in self._channel_names:
                 channel_group = group_root.create_group(name)
                 channel_group.create(
@@ -217,8 +235,14 @@ class ScarrTraceDataset(TraceDataset):
                 raise ValueError("The zarr_path must be specified when in non-write mode.")
             metadata = self._zarr_data.attrs[self._ATTR_METADATA_KEY]
             self._create_time = metadata.get("create_time")
-            self._channel_names = metadata.get("channel_names")
-            self._channel_count = len(self._channel_names)
+            # This is a piece of logic for handling dataset files compatible with previous versions,
+            # which will be removed in subsequent stable versions.
+            if "channel_names" not in metadata:
+                self._channel_count = metadata.get("channel_count")
+                self._channel_names = [str(i) for i in range(self._channel_count)]
+            else:
+                self._channel_names = metadata.get("channel_names")
+                self._channel_count = len(self._channel_names)
             self._trace_count = metadata.get("trace_count")
             self._sample_count = metadata.get("sample_count")
             self._data_length = metadata.get("data_length")
@@ -267,7 +291,7 @@ class ScarrTraceDataset(TraceDataset):
         if self._data_length != 0 and data is not None:
             self._get_under_root(channel_name, self._ARRAY_DATA_PATH)[trace_index] = data
 
-    def get_origin_data(self):
+    def get_origin_data(self) -> zarr.hierarchy.Group:
         return self._zarr_data
 
     def get_trace_by_indexes(self, channel_name: str, *trace_indexes: int) -> tuple[np.ndarray, np.ndarray] | None:
@@ -298,8 +322,9 @@ class ScarrTraceDataset(TraceDataset):
             trace_slice = slice(trace_slice, trace_slice + 1)
 
         for channel_index in channel_indexes:
-            traces.append(self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_slice])
-            data.append(self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[trace_slice])
+            channel_name = self._channel_names[channel_index]
+            traces.append(self._get_under_root(channel_name, self._ARRAY_TRACES_PATH)[trace_slice])
+            data.append(self._get_under_root(channel_name, self._ARRAY_DATA_PATH)[trace_slice])
 
         return channel_indexes, trace_indexes, np.array(traces), np.array(data)
 
@@ -376,8 +401,14 @@ class NumpyTraceDataset(TraceDataset):
     def _load_metadata(self):
         with open(self._npy_metadata_path) as f:
             metadata = json.load(f)
-            self._channel_names: list[str] | None = metadata.get("channel_names")
-            self._channel_count: int | None = len(self._channel_names)
+            # This is a piece of logic for handling dataset files compatible with previous versions,
+            # which will be removed in subsequent stable versions.
+            if "channel_names" not in metadata:
+                self._channel_count = metadata["channel_count"]
+                self._channel_names = [str(i) for i in range(self._channel_count)]
+            else:
+                self._channel_names: list[str] | None = metadata.get("channel_names")
+                self._channel_count: int | None = len(self._channel_names)
             self._trace_count: int | None = metadata.get("trace_count")
             self._sample_count: int | None = metadata.get("sample_count")
             self._data_length: int | None = metadata.get("data_length")
@@ -398,7 +429,7 @@ class NumpyTraceDataset(TraceDataset):
                 f,
             )
 
-    def get_origin_data(self):
+    def get_origin_data(self) -> tuple[np.array, np.array]:
         return self._trace_array, self._data_array
 
     @classmethod

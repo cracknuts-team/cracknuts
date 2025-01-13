@@ -21,16 +21,19 @@ def test_scarr_trace_dataset_create():
     ds = ScarrTraceDataset.new(zarr_path, channel_name, trace_count, sample_count, data_length, version)
     _update_trace(ds)
 
-
 def test_scarr_trace_dataset_load():
-    ds = ScarrTraceDataset.load("d:\\z.zarr")
-    print(ds.get_origin_data()["0/0/traces"].info)
-    print(ds.get_origin_data()["0/0/traces"][0].shape)
+    ds = ScarrTraceDataset.load("D:\\project\\cracknuts\\demo\\jupyter\\dataset\\20250113160603.zarr")
+    print(ds.info())
+    print(ds.get_origin_data().tree())
+    for name in ds.channel_names:
+        print(ds.get_origin_data()[f"0/{name}/traces"].info)
+        print(ds.get_origin_data()[f"0/{name}/traces"][0].shape)
 
 
 def test_scarr_trace_dataset_data_slice():
     ds = ScarrTraceDataset.load(zarr_path)
-    print()
+    print(ds.info())
+    print(ds.data[0][0])
     # print(ds.data[0][0])
     # print(type(ds.data[1][1]))
     # print(type(ds.data[1,1]))
@@ -40,7 +43,7 @@ def test_scarr_trace_dataset_data_slice():
     # print(type(ds.data[[0,1]][[9,11]]))
     # print(ds.data[0][1:3][2].shape)
     # print(ds.data[0,1:3][2].shape)
-    print(ds.get_origin_data()[0, 1])
+    # print(ds.get_origin_data())
 
 
 npy_path = "d:\\trace_dataset.npy"
@@ -56,12 +59,13 @@ def test_numpy_trace_dataset_load():
     ds = NumpyTraceDataset.load(npy_path)
     print(ds.get_origin_data()[0].shape)
     print(ds.get_origin_data()[1].shape)
+    print(ds.info())
 
 
 def test_numpy_trace_dataset_data_slice():
     ds = NumpyTraceDataset.load(npy_path)
     print()
-    print(ds.channel_count)
+    print(ds.channel_names)
     # print(ds.data[0:1][1:3][2].shape)
     # print(ds.data[0,1:3][2].shape)
     s = slice(0, 1)
