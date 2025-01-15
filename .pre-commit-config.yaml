@@ -1,21 +1,21 @@
 repos:
-  - repo: https://github.com/abravalheri/validate-pyproject
+  - repo: git@github.com:abravalheri/validate-pyproject.git
     rev: v0.19
     hooks:
       - id: validate-pyproject
 
-  - repo: https://github.com/igorshubovych/markdownlint-cli
+  - repo: git@github.com:igorshubovych/markdownlint-cli.git
     rev: v0.41.0
     hooks:
       - id: markdownlint-fix
         args: [ -c, .markdownlint.yaml, --fix ]
 
-  - repo: https://github.com/crate-ci/typos
+  - repo: git@github.com:crate-ci/typos.git
     rev: typos-dict-v0.11.27
     hooks:
       - id: typos
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
+  - repo: git@github.com:astral-sh/ruff-pre-commit.git
     rev: v0.6.3
     hooks:
       - id: ruff
