@@ -437,17 +437,13 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     f"Receive header from {self._server_address}: "
                     f"{magic}, {version}, {direction}, 0x{status:04X}, {length}"
                 )
-            if status != protocol.STATUS_OK:
-                self._logger.error(
-                    f"Receive status error: 0x{status:04X}, "
-                    f"{protocol.STATUS_DESCRIPTION.get(status, "Unknown error.")}"
-                )
             if length == 0:
                 return status, None
             resp_payload = self._recv(length)
             if status != protocol.STATUS_OK:
-                self._logger.error(
-                    f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                self._logger.warning(
+                    f"Received a non-OK response status code: 0x{status:04X}, "
+                    f"with the payload: {resp_payload.decode('utf-8')}"
                 )
             else:
                 if self._logger.isEnabledFor(logging.DEBUG):
