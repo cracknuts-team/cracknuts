@@ -1,15 +1,16 @@
 # Copyright 2024 CrackNuts. All rights reserved.
-
+import json
 import logging
+import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from importlib.resources import files
 from pathlib import Path
-
+from packaging import version
 import click
-
+import urllib.request
 import cracknuts
 import cracknuts.mock as mock
 from cracknuts.cracker import protocol
@@ -109,34 +110,34 @@ def _open_jupyter(ipynb_file: str):
 
 
 def _update_check():
-    ...
-    # time_format = "%Y-%m-%d %H:%M:%S"
-    # current_version = version.parse(cracknuts.__version__)
-    # latest_version = None
-    # version_check_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "version_check")
-    # if os.path.exists(version_check_path):
-    #     last_version_json = json.loads(open(version_check_path).read())
-    #     last_check_time = datetime.strptime(last_version_json["last_check_time"], time_format)
-    #     if datetime.now() - last_check_time < timedelta(days=1):
-    #         latest_version = version.parse(last_version_json["version"])
-    # if latest_version is None:
-    #     try:
-    #         res = urllib.request.urlopen("https://cracknuts.cn/api/version/latest")
-    #         version_meta = json.loads(res.read().decode())
-    #         latest_version = version.parse(version_meta["version"])
-    #     except Exception as e:
-    #         print(f"Failed to get latest version: {e}")
-    #         return
-    #
-    # if latest_version > current_version:
-    #     RED = "\033[31m"
-    #     GREEN = "\033[32m"
-    #     RESET = "\033[0m"
-    #     print(
-    #         f"A new release of cracknuts is available: "
-    #         f"{RED}{current_version}{RESET} -> {GREEN}{latest_version}{RESET}\r\n"
-    #         f"To update, run: python.exe -m pip install --upgrade cracknuts\r\n"
-    #     )
+    print("Check update...")
+    time_format = "%Y-%m-%d %H:%M:%S"
+    current_version = version.parse(cracknuts.__version__)
+    latest_version = None
+    version_check_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "version_check")
+    if os.path.exists(version_check_path):
+        last_version_json = json.loads(open(version_check_path).read())
+        last_check_time = datetime.strptime(last_version_json["last_check_time"], time_format)
+        if datetime.now() - last_check_time < timedelta(days=1):
+            latest_version = version.parse(last_version_json["version"])
+    if latest_version is None:
+        try:
+            res = urllib.request.urlopen("https://cracknuts.cn/api/version/latest")
+            version_meta = json.loads(res.read().decode())
+            latest_version = version.parse(version_meta["version"])
+        except Exception as e:
+            print(f"Failed to get latest version: {e}")
+            return
+
+    if latest_version > current_version:
+        RED = "\033[31m"
+        GREEN = "\033[32m"
+        RESET = "\033[0m"
+        print(
+            f"A new release of cracknuts is available: "
+            f"{RED}{current_version}{RESET} -> {GREEN}{latest_version}{RESET}\r\n"
+            f"To update, run: python.exe -m pip install --upgrade cracknuts\r\n"
+        )
 
 
 if __name__ == "__main__":
