@@ -388,7 +388,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             step="10"
                             stringMode
                             size={"small"}
-                            min={-360}
+                            min={0}
                             max={360}
                             value={oscSamplePhase}
                             onChange={(v) => {
