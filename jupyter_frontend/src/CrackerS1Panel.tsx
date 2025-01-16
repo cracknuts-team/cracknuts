@@ -248,8 +248,6 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         disabled={!nutEnable}
                         size={"small"}
                         options={[
-                          {value: 65000, label: "65 mHz"},
-                          {value: 48000, label: "48 mHz"},
                           {value: 24000, label: "24 mHz"},
                           {value: 12000, label: "12 mHz"},
                           {value: 8000, label: "8  mHz"},
