@@ -1,7 +1,7 @@
 import {useModel, useModelState} from "@anywidget/react";
 import {Button, Input, InputNumber, Radio, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {LinkOutlined} from "@ant-design/icons";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 
@@ -20,6 +20,9 @@ interface ScopePanelProperties {
 }
 
 const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
+
+     const chartRef = useRef<ReactEcharts | null>(null);
+
     const [seriesData] = useModelState<SeriesData>("series_data");
     const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
     const [lockScopeOperation] = useModelState<boolean>("lock_scope_operation");
@@ -35,6 +38,13 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
 
     const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(false)
     const [customC2YRangeLink, setCustomC2YRangeLink] = useState<boolean>(false)
+
+    // const [customXRangeEnabled, setCustomXRangeEnabled] = useState<boolean>(false)
+    const [customXMin, setCustomXMin] = useState<number | undefined>(undefined)
+    const [customXMax, setCustomXMax] = useState<number | undefined>(undefined)
+
+    const [xRangeBrushEnabled, setXRangeBrushEnabled] = useState<boolean>(false)
+
 
     const setCustomC1YMinLink = (v: number) => {
         if (customC1YRangeLink) {
@@ -84,69 +94,134 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const colors = ["green", "red"];
 
     const option: object = {
+        toolbox: {
+        //   show: false,
+        feature: {
+          dataZoom: {
+            id: "toolboxDataZoom",
+            show: true,
+            xAxisIndex: 0,
+            yAxisIndex: false,
+            brushStyle: {
+              color: "rgba(144, 238, 144, 0.4)",
+            },
+            filterMode: "none",
+          },
+        },
+      },
         tooltip: {
             trigger: "axis",
             axisPointer: {
                 type: "cross",
             },
         },
-        grid: [{
-            left: "80",
-            right: "80",
-            top: "40",
-            bottom: "80",
-            // show: false
-        }, {
-            left: "80",
-            right: "80",
-            top: "40",
-            bottom: "80",
-            // show: false
-        }],
+        // grid: [{
+        //     left: "80",
+        //     right: "80",
+        //     top: "40",
+        //     bottom: "80",
+        //     // show: false
+        // }, {
+        //     left: "80",
+        //     right: "80",
+        //     top: "40",
+        //     bottom: "80",
+        //     // show: false
+        // }],
         animation: false,
-        xAxis: [{
-            gridIndex: 0,
+        xAxis: {
+            // gridIndex: 0,
             type: "category",
             axisLine: {
                 onZero: false,
             },
-        }, {
-            gridIndex: 1,
-            type: "category",
-            axisLine: {
-                onZero: false,
+        },
+        // xAxis: [{
+        //     gridIndex: 0,
+        //     type: "category",
+        //     axisLine: {
+        //         onZero: false,
+        //     },
+        // }, {
+        //     gridIndex: 1,
+        //     type: "category",
+        //     axisLine: {
+        //         onZero: false,
+        //     },
+        // }],
+        dataZoom: [
+            {
+                type: "inside",
+                // xAxisIndex: [0, 1],
+                moveOnMouseMove: "alt",
+                zoomOnMouseWheel: "alt",
             },
-        }],
-        dataZoom: getDataZoom(),
+            {
+                type: "slider",
+                // xAxisIndex: [0, 1],
+                // realtime: false,
+            },
+        ],
         yAxis: getEchartsYAxis(),
-        series: getEchartsSeries(seriesData)
+        series: [
+          {
+                name: "channel 2",
+                data: seriesData["2"] ? seriesData["2"] : undefined,
+                type: "line",
+                lineStyle: {
+                    color: colors[1],
+                    width: 1,
+                },
+                symbol: "none",
+                emphasis: {
+                    disabled: true,
+                },
+                // xAxisIndex: 1,
+                yAxisIndex: 1,
+            },
+          {
+                name: "channel 1",
+                data: seriesData["1"] ? seriesData["1"] : undefined,
+                type: "line",
+                lineStyle: {
+                    color: colors[0],
+                    width: 1,
+                },
+                symbol: "none",
+                emphasis: {
+                    disabled: true,
+                },
+                // xAxisIndex: 0,
+                yAxisIndex: 0,
+            }
+        ]
     };
 
-    function getDataZoom() {
-        if (!monitorStatus) {
-            return [
-                {
-                    type: "inside",
-                    xAxisIndex: [0, 1],
-                    moveOnMouseMove: "alt",
-                    zoomOnMouseWheel: "alt",
-                },
-                {
-                    type: "slider",
-                    xAxisIndex: [0, 1],
-                    realtime: false,
-                },
-            ];
-        } else {
-            return [];
-        }
-    }
+    // function getDataZoom() {
+    //     if (!monitorStatus) {
+    //         return [
+    //             {
+    //                 type: "inside",
+    //                 xAxisIndex: [0, 1],
+    //                 moveOnMouseMove: "alt",
+    //                 zoomOnMouseWheel: "alt",
+    //             },
+    //             {
+    //                 type: "slider",
+    //                 xAxisIndex: [0, 1],
+    //                 realtime: false,
+    //             },
+    //         ];
+    //     } else {
+    //         return [];
+    //     }
+    // }
 
     function getEchartsYAxis() {
         const yAxis = [];
 
         yAxis.push({
-            gridIndex: 0,
+            // gridIndex: 0,
             type: "value",
             position: "left",
             alignTicks: true,
@@ -156,17 +231,19 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     color: colors[0],
                 },
             },
-            min: customC1YMin ? customC1YMin : yRange[1][0],
-            max: customC1YMin ? customC1YMax : yRange[1][1],
+            // min: customC1YMin ? customC1YMin : yRange[1][0],
+            min: customC1YMin ? customC1YMin : undefined,
+            // max: customC1YMin ? customC1YMax : yRange[1][1],
+            max: customC1YMin ? customC1YMax : undefined,
             // interval: yRange[1][2],
-            minInterval: 1,
-            splitLine: {
-                show: false
-            },
+            // minInterval: 1,
+            // splitLine: {
+            //     show: false
+            // },
         });
 
         yAxis.push({
-            gridIndex: 1,
+            // gridIndex: 1,
             type: "value",
             position: "right",
             alignTicks: true,
@@ -176,59 +253,140 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     color: colors[1],
                 },
             },
-            min: customRangeModel ? customC2YMin : yRange[2][0],
-            max: customRangeModel ? customC2YMax : yRange[2][1],
+            // min: customRangeModel ? customC2YMin : yRange[2][0],
+            min: customRangeModel ? customC2YMin : undefined,
+            // max: customRangeModel ? customC2YMax : yRange[2][1],
+            max: customRangeModel ? customC2YMax : undefined,
             // interval: yRange[2][2],
-            minInterval: 1,
-            splitLine: {
-                show: false
-            },
+            // minInterval: 1,
+            // splitLine: {
+            //     show: false
+            // },
         });
 
         return yAxis;
     }
 
-    function getEchartsSeries(seriesData: SeriesData) {
+    // function getEchartsSeries(seriesData: SeriesData) {
+    //     console.error("get series...")
+    //     const series = [];
+    //
+    //     if (seriesData["2"]) {
+    //         series.push({
+    //             name: "channel 2",
+    //             data: seriesData["2"],
+    //             type: "line",
+    //             lineStyle: {
+    //                 color: colors[1],
+    //                 width: 1,
+    //             },
+    //             symbol: "none",
+    //             emphasis: {
+    //                 disabled: true,
+    //             },
+    //             // xAxisIndex: 1,
+    //             yAxisIndex: 1,
+    //         });
+    //     } else {
+    //         series.push({
+    //             name: "channel 2",
+    //             data: undefined,
+    //             type: "line",
+    //             lineStyle: {
+    //                 color: colors[1],
+    //                 width: 1,
+    //             },
+    //             symbol: "none",
+    //             emphasis: {
+    //                 disabled: true,
+    //             },
+    //             // xAxisIndex: 1,
+    //             yAxisIndex: 1,
+    //         })
+    //     }
+    //     if (seriesData["1"]) {
+    //         series.push({
+    //             name: "channel 1",
+    //             data: seriesData["1"],
+    //             type: "line",
+    //             lineStyle: {
+    //                 color: colors[0],
+    //                 width: 1,
+    //             },
+    //             symbol: "none",
+    //             emphasis: {
+    //                 disabled: true,
+    //             },
+    //             // xAxisIndex: 0,
+    //             yAxisIndex: 0,
+    //         });
+    //     } else {
+    //         series.push({
+    //             name: "channel 1",
+    //             data: undefined,
+    //             type: "line",
+    //             lineStyle: {
+    //                 color: colors[0],
+    //                 width: 1,
+    //             },
+    //             symbol: "none",
+    //             emphasis: {
+    //                 disabled: true,
+    //             },
+    //             // xAxisIndex: 0,
+    //             yAxisIndex: 0,
+    //         })
+    //     }
+    //
+    //     return series;
+    // }
 
-        const series = [];
-
-        if (seriesData["1"]) {
-            series.push({
-                name: "channel 1",
-                data: seriesData["1"],
-                type: "line",
-                lineStyle: {
-                    color: colors[0],
-                    width: 1,
-                },
-                symbol: "none",
-                emphasis: {
-                    disabled: true,
-                },
-                xAxisIndex: 0,
-                yAxisIndex: 0,
+    const enableXRangeBrush = (enabled: boolean = true) => {
+        const chartInstance = chartRef.current?.getEchartsInstance();
+        if (chartInstance) {
+            chartInstance.dispatchAction({
+              type: "takeGlobalCursor",
+              key: enabled ? "dataZoomSelect" : null,
+              dataZoomSelectActive: enabled,
             });
         }
+    };
 
-        if (seriesData["2"]) {
-            series.push({
-                name: "channel 2",
-                data: seriesData["2"],
-                type: "line",
-                lineStyle: {
-                    color: colors[1],
-                    width: 1,
-                },
-                symbol: "none",
-                emphasis: {
-                    disabled: true,
-                },
-                xAxisIndex: 1,
-                yAxisIndex: 1,
+    const setZoomRange = (param: any) => {
+        console.log(param);
+        if (param.batch) {
+            const {startValue, endValue} = param.batch[0]
+            setCustomXMin(startValue);
+            setCustomXMax(endValue)
+        }
+    }
+
+    const setCustomXRangeMin = (value: number) => {
+        const chartInstance = chartRef.current?.getEchartsInstance();
+        if (chartInstance) {
+            chartInstance.dispatchAction({
+                type: "dataZoom",
+                startValue: value,
+                // endValue: customXMax,
             });
         }
+        setCustomXMin(value)
+    };
 
-        return series;
+    const setCustomXRangeMax = (value: number) => {
+        const chartInstance = chartRef.current?.getEchartsInstance();
+        if (chartInstance) {
+            chartInstance.dispatchAction({
+                type: "dataZoom",
+                // startValue: customXMin,
+                endValue: value,
+            });
+        }
+        setCustomXMax(value);
+    };
+
+    const onChartReady = (instance: any) => {
+        instance.on('dataZoom', setZoomRange);
     };
 
     const model = useModel();
@@ -354,10 +512,24 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         setCustomC2YMaxLink(Number(v))
                     }} changeOnWheel/>
                 </Space.Compact>
+                <Space.Compact>
+                    <Button size={"small"} onClick={() => {
+                        enableXRangeBrush(!xRangeBrushEnabled)
+                        setXRangeBrushEnabled(!xRangeBrushEnabled);
+                    }} type = {xRangeBrushEnabled ? "primary" : "default"}
+                    >框选放大</Button>
+                    <Button size={"small"}>指定区间</Button>
+                    <InputNumber size={"small"} changeOnWheel value={customXMin} onChange={(v) => {
+                        setCustomXRangeMin(Number(v))
+                    }}/>
+                    <InputNumber size={"small"} changeOnWheel value={customXMax} onChange={(v) => {
+                        setCustomXRangeMax(Number(v))
+                    }}/>
+                </Space.Compact>
             </Space>
-            <ReactEcharts option={option} notMerge={true}
+            <ReactEcharts option={option} ref={chartRef} onChartReady = {onChartReady}
                           style={{
-                              height: 350, marginTop: 5, padding: 8,
+                              height: 550, marginTop: 5, padding: 8,
                               borderRadius: 3,
                               boxShadow: "inset 2px 2px 10px rgba(0, 0, 0, 0.1), inset -2px -2px 10px rgba(0, 0, 0, 0.1)"
                           }}/>
