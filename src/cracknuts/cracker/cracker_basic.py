@@ -128,9 +128,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._connection_status = False
         self._bin_server_path = bin_server_path
         self._bin_bitstream_path = bin_bitstream_path
-        self._operator_port = operator_port
-        self._server_address = None
+        self._operator_port = protocol.DEFAULT_OPERATOR_PORT if operator_port is None else operator_port
+        self._server_address: tuple[str, int] | None = None
         self.set_address(address)
+        self._operator = Operator(self._server_address[0], self._operator_port)
         self._config = self.get_default_config()
 
     def set_address(self, address: tuple[str, int] | str) -> None:
@@ -185,6 +186,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
             host, port = uri, protocol.DEFAULT_PORT  # type: ignore
 
         self._server_address = host, int(port)
+
+    def get_operator(self) -> Operator:
+        """
+        Get the operator object for this Cracker instance.
+
+        :return: Operator object.
+        :rtype: Operator
+        """
+        return self._operator
 
     def get_uri(self) -> str | None:
         """
@@ -254,23 +264,18 @@ class CrackerBasic(ABC, typing.Generic[T]):
         force_update: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        operator_port: int = None,
         server_version: str = None,
         bitstream_version: str = None,
         update_unknown: bool = False,
     ) -> bool:
-        if operator_port is None:
-            operator_port = protocol.DEFAULT_OPERATOR_PORT
-        operator = Operator(self._server_address[0], operator_port)
-
-        if not operator.connect():
+        if not self._operator.connect():
             return False
 
-        if not force_update and operator.get_status():
-            operator.disconnect()
+        if not force_update and self._operator.get_status():
+            self._operator.disconnect()
             return True
 
-        hardware_model = operator.get_hardware_model()
+        hardware_model = self._operator.get_hardware_model()
         if hardware_model == "unknown" and update_unknown:
             hardware_model = "*"
 
@@ -319,15 +324,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
         try:
             return (
-                operator.update_server(bin_server)
-                and operator.update_bitstream(bin_bitstream)
-                and operator.get_status()
+                self._operator.update_server(bin_server)
+                and self._operator.update_bitstream(bin_bitstream)
+                and self._operator.get_status()
             )
         except OSError as e:
             self._logger.error("Do update cracker bin failed: %s", e)
             return False
         finally:
-            operator.disconnect()
+            self._operator.disconnect()
 
     @staticmethod
     def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str | None:
