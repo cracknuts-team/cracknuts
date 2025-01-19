@@ -187,6 +187,23 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
         self._server_address = host, int(port)
 
+    def set_logging_level(self, level: str) -> None:
+        """
+        Set logging level.
+
+        :param level: The logging level, debug, info, warning, error,
+        """
+
+        if level.lower() not in ("debug", "info", "warning", "error"):
+            self._logger.error("Invalid logging level.")
+            return False
+
+        status, res = self.send_and_receive(
+            protocol.build_send_message(protocol.Command.SET_LOGGING_LEVEL, payload=level.encode("ascii"))
+        )
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Failed to set logging level: {res}")
+
     def get_operator(self) -> Operator:
         """
         Get the operator object for this Cracker instance.
@@ -241,7 +258,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             bin_bitstream_path = self._bin_bitstream_path
 
         if update_bin and not self._update_cracker_bin(
-            force_update_bin, bin_server_path, bin_bitstream_path, self._operator_port, update_unknown=update_unknown
+            force_update_bin, bin_server_path, bin_bitstream_path, update_unknown=update_unknown
         ):
             return
 
