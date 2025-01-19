@@ -241,7 +241,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             bin_bitstream_path = self._bin_bitstream_path
 
         if update_bin and not self._update_cracker_bin(
-            force_update_bin, bin_server_path, bin_bitstream_path, self._operator_port, update_unknown=update_unknown
+            force_update_bin, bin_server_path, bin_bitstream_path, update_unknown=update_unknown
         ):
             return
 
