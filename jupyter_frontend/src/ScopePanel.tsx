@@ -2,7 +2,7 @@ import {useModel, useModelState} from "@anywidget/react";
 import {Button, Input, InputNumber, Radio, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useRef, useState} from "react";
-import {LinkOutlined} from "@ant-design/icons";
+import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 
 interface SeriesData {
@@ -36,8 +36,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [customC2YMin, setCustomC2YMin] = useState<number | undefined>(undefined)
     const [customC2YMax, setCustomC2YMax] = useState<number | undefined>(undefined)
 
-    const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(false)
-    const [customC2YRangeLink, setCustomC2YRangeLink] = useState<boolean>(false)
+    const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(true)
+    const [customC2YRangeLink, setCustomC2YRangeLink] = useState<boolean>(true)
 
     // const [customXRangeEnabled, setCustomXRangeEnabled] = useState<boolean>(false)
     const [customXMin, setCustomXMin] = useState<number | undefined>(undefined)
@@ -115,19 +115,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 type: "cross",
             },
         },
-        // grid: [{
-        //     left: "80",
-        //     right: "80",
-        //     top: "40",
-        //     bottom: "80",
-        //     // show: false
-        // }, {
-        //     left: "80",
-        //     right: "80",
-        //     top: "40",
-        //     bottom: "80",
-        //     // show: false
-        // }],
         animation: false,
         xAxis: {
             // gridIndex: 0,
@@ -136,30 +123,14 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 onZero: false,
             },
         },
-        // xAxis: [{
-        //     gridIndex: 0,
-        //     type: "category",
-        //     axisLine: {
-        //         onZero: false,
-        //     },
-        // }, {
-        //     gridIndex: 1,
-        //     type: "category",
-        //     axisLine: {
-        //         onZero: false,
-        //     },
-        // }],
         dataZoom: [
             {
                 type: "inside",
-                // xAxisIndex: [0, 1],
                 moveOnMouseMove: "alt",
                 zoomOnMouseWheel: "alt",
             },
             {
                 type: "slider",
-                // xAxisIndex: [0, 1],
-                // realtime: false,
             },
         ],
         yAxis: getEchartsYAxis(),
@@ -176,7 +147,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 emphasis: {
                     disabled: true,
                 },
-                // xAxisIndex: 1,
                 yAxisIndex: 1,
             },
           {
@@ -191,37 +161,15 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 emphasis: {
                     disabled: true,
                 },
-                // xAxisIndex: 0,
                 yAxisIndex: 0,
             }
         ]
     };
 
-    // function getDataZoom() {
-    //     if (!monitorStatus) {
-    //         return [
-    //             {
-    //                 type: "inside",
-    //                 xAxisIndex: [0, 1],
-    //                 moveOnMouseMove: "alt",
-    //                 zoomOnMouseWheel: "alt",
-    //             },
-    //             {
-    //                 type: "slider",
-    //                 xAxisIndex: [0, 1],
-    //                 realtime: false,
-    //             },
-    //         ];
-    //     } else {
-    //         return [];
-    //     }
-    // }
-
     function getEchartsYAxis() {
         const yAxis = [];
 
         yAxis.push({
-            // gridIndex: 0,
             type: "value",
             position: "left",
             alignTicks: true,
@@ -231,19 +179,11 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     color: colors[0],
                 },
             },
-            // min: customC1YMin ? customC1YMin : yRange[1][0],
             min: customC1YMin ? customC1YMin : undefined,
-            // max: customC1YMin ? customC1YMax : yRange[1][1],
             max: customC1YMin ? customC1YMax : undefined,
-            // interval: yRange[1][2],
-            // minInterval: 1,
-            // splitLine: {
-            //     show: false
-            // },
         });
 
         yAxis.push({
-            // gridIndex: 1,
             type: "value",
             position: "right",
             alignTicks: true,
@@ -253,93 +193,12 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     color: colors[1],
                 },
             },
-            // min: customRangeModel ? customC2YMin : yRange[2][0],
             min: customRangeModel ? customC2YMin : undefined,
-            // max: customRangeModel ? customC2YMax : yRange[2][1],
             max: customRangeModel ? customC2YMax : undefined,
-            // interval: yRange[2][2],
-            // minInterval: 1,
-            // splitLine: {
-            //     show: false
-            // },
         });
 
         return yAxis;
     }
-
-    // function getEchartsSeries(seriesData: SeriesData) {
-    //     console.error("get series...")
-    //     const series = [];
-    //
-    //     if (seriesData["2"]) {
-    //         series.push({
-    //             name: "channel 2",
-    //             data: seriesData["2"],
-    //             type: "line",
-    //             lineStyle: {
-    //                 color: colors[1],
-    //                 width: 1,
-    //             },
-    //             symbol: "none",
-    //             emphasis: {
-    //                 disabled: true,
-    //             },
-    //             // xAxisIndex: 1,
-    //             yAxisIndex: 1,
-    //         });
-    //     } else {
-    //         series.push({
-    //             name: "channel 2",
-    //             data: undefined,
-    //             type: "line",
-    //             lineStyle: {
-    //                 color: colors[1],
-    //                 width: 1,
-    //             },
-    //             symbol: "none",
-    //             emphasis: {
-    //                 disabled: true,
-    //             },
-    //             // xAxisIndex: 1,
-    //             yAxisIndex: 1,
-    //         })
-    //     }
-    //     if (seriesData["1"]) {
-    //         series.push({
-    //             name: "channel 1",
-    //             data: seriesData["1"],
-    //             type: "line",
-    //             lineStyle: {
-    //                 color: colors[0],
-    //                 width: 1,
-    //             },
-    //             symbol: "none",
-    //             emphasis: {
-    //                 disabled: true,
-    //             },
-    //             // xAxisIndex: 0,
-    //             yAxisIndex: 0,
-    //         });
-    //     } else {
-    //         series.push({
-    //             name: "channel 1",
-    //             data: undefined,
-    //             type: "line",
-    //             lineStyle: {
-    //                 color: colors[0],
-    //                 width: 1,
-    //             },
-    //             symbol: "none",
-    //             emphasis: {
-    //                 disabled: true,
-    //             },
-    //             // xAxisIndex: 0,
-    //             yAxisIndex: 0,
-    //         })
-    //     }
-    //
-    //     return series;
-    // }
 
     const enableXRangeBrush = (enabled: boolean = true) => {
         const chartInstance = chartRef.current?.getEchartsInstance();
@@ -367,7 +226,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             chartInstance.dispatchAction({
                 type: "dataZoom",
                 startValue: value,
-                // endValue: customXMax,
             });
         }
         setCustomXMin(value)
@@ -378,7 +236,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         if (chartInstance) {
             chartInstance.dispatchAction({
                 type: "dataZoom",
-                // startValue: customXMin,
                 endValue: value,
             });
         }
@@ -387,6 +244,50 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
 
     const onChartReady = (instance: any) => {
         instance.on('dataZoom', setZoomRange);
+    };
+
+    const chARangeIncrease = () => {
+      if (customC1YMax == undefined || customC1YMin == undefined) {
+        return
+      }
+      const range = customC1YMax - customC1YMin
+      const size = range * 0.1
+
+      setCustomC1YMin(Math.floor(customC1YMin - size));
+      setCustomC1YMax(Math.ceil(customC1YMax + size));
+    };
+
+    const chARangeDecrease = () => {
+      if (customC1YMax == undefined || customC1YMin == undefined) {
+        return
+      }
+      const range = customC1YMax - customC1YMin
+      const size = range * 0.1
+
+      setCustomC1YMin(Math.ceil(customC1YMin + size));
+      setCustomC1YMax(Math.floor(customC1YMax - size));
+    };
+
+    const chBRangeIncrease = () => {
+      if (customC2YMax == undefined || customC2YMin == undefined) {
+        return
+      }
+      const range = customC2YMax - customC2YMin
+      const size = range * 0.1
+
+      setCustomC2YMin(Math.floor(customC2YMin - size));
+      setCustomC2YMax(Math.ceil(customC2YMax + size));
+    };
+
+    const chBRangeDecrease = () => {
+       if (customC2YMax == undefined || customC2YMin == undefined) {
+        return
+      }
+      const range = customC2YMax - customC2YMin
+      const size = range * 0.1
+
+      setCustomC2YMin(Math.ceil(customC2YMin + size));
+      setCustomC2YMax(Math.floor(customC2YMax - size));
     };
 
     const model = useModel();
@@ -460,6 +361,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 >监视</Button>
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
+                          console.error(chartRef.current)
                             setCustomC1YMin(yRange[1][0]);
                             setCustomC1YMax(yRange[1][1]);
                             setCustomC2YMin(yRange[2][0]);
@@ -469,6 +371,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     指定区间
                 </Button>
                 <Space.Compact>
+                    <Button size={"small"} disabled={!customRangeModel} onClick={chARangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH A"} disabled className="site-input-split"
                            style={{width: 50, textAlign: 'center', pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={"下限"}
@@ -489,8 +392,10 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                                  value={customC1YMax} onChange={(v) => {
                         setCustomC1YMaxLink(Number(v))
                     }} changeOnWheel/>
+                   <Button size={"small"} disabled={!customRangeModel} onClick={chARangeIncrease}><PlusCircleOutlined /></Button>
                 </Space.Compact>
                 <Space.Compact>
+                  <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
                            style={{width: 50, borderRight: 0, pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={"下限"}
@@ -511,6 +416,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                                  value={customC2YMax} onChange={(v) => {
                         setCustomC2YMaxLink(Number(v))
                     }} changeOnWheel/>
+                   <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeIncrease}><PlusCircleOutlined /></Button>
                 </Space.Compact>
                 <Space.Compact>
                     <Button size={"small"} onClick={() => {
