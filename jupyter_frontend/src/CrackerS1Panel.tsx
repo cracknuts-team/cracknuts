@@ -62,6 +62,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   // nut配置
 
   const [nutEnable, setNutEnable] = useModelState<boolean>("nut_enable");
+  const [nutClockEnable, setNutClockEnable] = useModelState<boolean>("nut_clock_enable");
   const [nutVoltage, setNutVoltage] = useModelState<number>("nut_voltage");
   const [nutVoltageMin, nutVoltageMax] = [2000, 4100];
   const [nutClock, setNutClock] = useModelState<number>("nut_clock");
@@ -218,7 +219,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                 <Col span={24}>
                   <Form layout={"inline"}>
                     <Form.Item >
-                      <Button size={"small"} type={nutEnable ? "primary" : "default"}
+                      <Button size={"small"} type={"primary"} danger={!nutEnable}
                               onClick={() => {setNutEnable(!nutEnable)}}>供电使能</Button>
                     </Form.Item>
                     <Form.Item label="NUT电压">
@@ -243,9 +244,13 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         changeOnWheel
                       />
                     </Form.Item>
+                    <Form.Item >
+                      <Button size={"small"} type={nutClockEnable ? "primary" : "default"}
+                              onClick={() => {setNutClockEnable(!nutClockEnable)}}>NUT时钟使能</Button>
+                    </Form.Item>
                     <Form.Item label="NUT时钟">
                       <Select
-                        disabled={!nutEnable}
+                        disabled={!nutClockEnable}
                         size={"small"}
                         options={[
                           {value: 24000, label: "24 mHz"},
