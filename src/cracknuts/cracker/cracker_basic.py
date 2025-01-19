@@ -196,13 +196,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
         if level.lower() not in ("debug", "info", "warning", "error"):
             self._logger.error("Invalid logging level.")
-            return False
 
-        status, res = self.send_and_receive(
+        self.send_and_receive(
             protocol.build_send_message(protocol.Command.SET_LOGGING_LEVEL, payload=level.encode("ascii"))
         )
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Failed to set logging level: {res}")
 
     def get_operator(self) -> Operator:
         """
