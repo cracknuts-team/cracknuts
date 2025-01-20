@@ -913,9 +913,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def _i2c_transceive(
         self,
-        addr: str | int,
         tx_data: bytes | str | None,
-        speed: int,
         combined_transfer_count_1: int,
         combined_transfer_count_2: int,
         transfer_rw: tuple[int, int, int, int, int, int, int, int],
@@ -927,12 +925,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Basic API for sending and receiving data through the I2C protocol.
 
-        :param addr: I2C device address, 7-bit length.
-        :type addr: str | int
         :param tx_data: The data to be sent.
         :type tx_data: bytes | str | None
-        :param speed: Transmit speed. 0：100K bit/s, 1：400K bit/s, 2：1M bit/s, 3：3.4M bit/s, 4：5M bit/s.
-        :type speed: int
         :param combined_transfer_count_1: The first combined transmit transfer count.
         :type combined_transfer_count_1: int
         :param combined_transfer_count_2: The second combined transmit transfer count.
@@ -942,6 +936,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                             and 1 represents read.
         :type transfer_rw: tuple[int, int, int, int, int, int, int, int, int]
         :param transfer_lens: The transfer length tuple of the four transfers in the two combined transmit sets.
+        :type transfer_lens: tuple[int, int, int, int, int, int, int, int]
         :param is_delay: Whether the transmit delay is enabled.
         :type is_delay: bool
         :param delay: Transmit delay duration, in nanoseconds, with a minimum effective duration of 10 nanoseconds.
@@ -952,17 +947,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                  Return None if an exception is caught.
         :rtype: tuple[int, bytes | None]
         """
-        if isinstance(addr, str):
-            addr = int(addr, 16)
-
-        if addr > (1 << 7) - 1:
-            raise ValueError("Illegal address")
-
         if isinstance(tx_data, str):
             tx_data = bytes.fromhex(tx_data)
-
-        if speed > 4:
-            raise ValueError("Illegal speed")
 
         if combined_transfer_count_1 > 4:
             raise ValueError("Illegal combined combined_transfer_count_1")
@@ -977,11 +963,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         transfer_rw_num = sum(bit << (7 - i) for i, bit in enumerate(transfer_rw))
 
         payload = struct.pack(
-            ">?I5B8H?",
+            ">?I3B8H?",
             is_delay,
             delay,
-            addr,
-            speed,
             combined_transfer_count_1,
             combined_transfer_count_2,
             transfer_rw_num,
@@ -998,12 +982,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             return status, res
 
-    def i2c_transmit(self, addr: str | int, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, None]:
+    def i2c_transmit(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, None]:
         """
         Send data through the I2C protocol.
 
-        :param addr: I2C device address, 7-bit length.
-        :type addr: str | int
         :param tx_data: The data to be sent.
         :type tx_data: str | bytes
         :param is_trigger: Whether the transmit trigger is enabled.
@@ -1011,9 +993,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         transfer_rw = (0, 0, 0, 0, 0, 0, 0, 0)
         transfer_lens = (len(tx_data), 0, 0, 0, 0, 0, 0, 0)
         status, _ = self._i2c_transceive(
-            addr,
             tx_data,
-            speed=0,
             combined_transfer_count_1=1,
             combined_transfer_count_2=0,
             transfer_rw=transfer_rw,
@@ -1024,12 +1004,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         )
         return status, None
 
-    def i2c_receive(self, addr: str | int, rx_count, is_trigger: bool = False) -> tuple[int, bytes | None]:
+    def i2c_receive(self, rx_count, is_trigger: bool = False) -> tuple[int, bytes | None]:
         """
         Receive data through the I2C protocol.
 
-        :param addr: I2C device address, 7-bit length.
-        :type addr: str | int
         :param rx_count: The number of received data bytes.
         :type rx_count: int
         :param is_trigger: Whether the transmit trigger is enabled.
@@ -1040,9 +1018,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         transfer_rw = (1, 1, 1, 1, 1, 1, 1, 1)
         transfer_lens = (rx_count, 0, 0, 0, 0, 0, 0, 0)
         return self._i2c_transceive(
-            addr,
             tx_data=None,
-            speed=0,
             combined_transfer_count_1=1,
             combined_transfer_count_2=0,
             transfer_rw=transfer_rw,
@@ -1053,13 +1029,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         )
 
     def i2c_transmit_delay_receive(
-        self, addr: str | int, tx_data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False
+        self, tx_data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False
     ) -> tuple[int, bytes | None]:
         """
         Send and receive data with delay through the I2C protocol.
 
-        :param addr: I2C device address, 7-bit length.
-        :type addr: str | int
         :param tx_data: The data to be sent.
         :type tx_data: str | bytes
         :param delay: Transmit delay duration, in nanoseconds, with a minimum effective duration of 10 nanoseconds.
@@ -1075,9 +1049,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
         transfer_lens = (len(tx_data), 0, 0, 0, rx_count, 0, 0, 0)
         return self._i2c_transceive(
-            addr,
             tx_data,
-            speed=0,
             combined_transfer_count_1=1,
             combined_transfer_count_2=1,
             transfer_rw=transfer_rw,
@@ -1087,12 +1059,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             is_trigger=is_trigger,
         )
 
-    def i2c_transceive(self, addr, tx_data, rx_count, is_trigger: bool = False) -> tuple[int, bytes | None]:
+    def i2c_transceive(self, tx_data, rx_count, is_trigger: bool = False) -> tuple[int, bytes | None]:
         """
         Send and receive data without delay through the I2C protocol.
 
-        :param addr: I2C device address, 7-bit length.
-        :type addr: str | int
         :param tx_data: The data to be sent.
         :type tx_data: str | bytes
         :param rx_count: The number of received data bytes.
@@ -1106,9 +1076,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
         transfer_lens = (len(tx_data), 0, 0, 0, rx_count, 0, 0, 0)
         return self._i2c_transceive(
-            addr,
             tx_data,
-            speed=0,
             combined_transfer_count_1=1,
             combined_transfer_count_2=1,
             transfer_rw=transfer_rw,
