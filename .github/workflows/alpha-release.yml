@@ -1,9 +1,9 @@
-name: Release
+name: Alpha Release
 
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-alpha*'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -68,23 +68,3 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  upload-to-pypi:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist-files
-          path: dist
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install twine
-        run: |
-          pip install twine
-      - name: Upload to pypi
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{secrets.PYPI_TOKEN}}
-        run: |
-          python -m twine upload dist/* --non-interactive
