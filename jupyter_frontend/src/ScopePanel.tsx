@@ -95,17 +95,24 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
 
     const option: object = {
         toolbox: {
-        //   show: false,
         feature: {
           dataZoom: {
             id: "toolboxDataZoom",
             show: true,
+            title: {
+                zoom: "缩放",
+                back: "还原",
+            },
             xAxisIndex: 0,
             yAxisIndex: false,
             brushStyle: {
               color: "rgba(144, 238, 144, 0.4)",
             },
             filterMode: "none",
+          },
+          saveAsImage: {
+            show: true,
+            title: "保存为图片"
           },
         },
       },
