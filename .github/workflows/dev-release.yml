@@ -17,33 +17,6 @@ jobs:
           # get tag history for version number
           fetch-depth: 0
           submodules: true
-    - name: Get latest release from rs-linux-app
-      id: get_release_from_rs-linux-app
-      run: |
-        response=$(curl -s -H "Authorization: token ${{ secrets.FETCH_RELEASE_FROM_RS_LINUX_APP }}" \
-          "https://api.github.com/repos/cracknuts-team/rs-linux-app/releases")
-        echo "Release data: $response"
-        
-        latest_release=$(echo "$response" | jq -r '.[] | select(.prerelease == false and .draft == false) | .tag_name' | sort -V | tail -n 1)
-
-        asset_url=$(echo "$response" | jq -r --arg tag "$latest_release" '.[] | select(.tag_name == $tag) | .assets[] | select(.name | startswith("server-")) | .browser_download_url')
-        asset_name=$(echo "$response" | jq -r --arg tag "$latest_release" '.[] | select(.tag_name == $tag) | .assets[] | select(.name | startswith("server-")) | .name')
-
-        echo "Latest release tag: $latest_release"
-        echo "Asset URL: $asset_url"
-        echo "Asset Name: $asset_name"
-        echo "::set-output name=asset_url::$asset_url"
-        echo "::set-output name=asset_name::$asset_name"
-    - name: Download latest asset from rs-linux-app
-      run: |
-        if [ -z "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}" ]; then
-          echo "No asset found matching the criteria."
-          exit 1
-        fi
-        mkdir -p $GITHUB_WORKSPACE/src/cracknuts/bin
-        curl -L -H "Authorization: token ${{ secrets.FETCH_RELEASE_FROM_RS_LINUX_APP }}" \
-        -o "$GITHUB_WORKSPACE/src/cracknuts/bin/${{ steps.get_release_from_rs-linux-app.outputs.asset_name }}" \
-        "${{ steps.get_release_from_rs-linux-app.outputs.asset_url }}"
     - name: Update version.
       run: |
         incremented_version=`grep '__version__ = ' src/cracknuts/__init__.py | awk '{print $3}' | awk -F. '{printf "%d.%d.%d\n", $1, $2, $3+1}'`
