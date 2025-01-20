@@ -325,6 +325,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     f"Bitstream file not found for hardware: {hardware_model} "
                     f"and bitstream_version: {bitstream_version}"
                 )
+            self._operator.disconnect()
             return False
 
         if hardware_model == "*" and update_unknown:
