@@ -20,7 +20,7 @@ jobs:
           # Extract version from __init__.py
           VERSION=$(grep -oP "(?<=__version__ = \")[^\"]+" src/cracknuts/__init__.py)
           # Compare tag name with version
-          if [[ "$TAG_NAME" != "v$VERSION" ]]; then
+          if [[ "$TAG_NAME" != "$VERSION" ]]; then
             echo "Error: Tag name '$TAG_NAME' does not match the version '$VERSION' in __init__.py"
             exit 1
           else
