@@ -269,6 +269,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
+            self.sync_config_to_cracker()
+            self._logger.info("Synchronize the configuration to Cracker successfully.")
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
             self._connection_status = False
