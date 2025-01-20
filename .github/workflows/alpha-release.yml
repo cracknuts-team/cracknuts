@@ -13,6 +13,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - name: Compare tag name with version string.
+        run: |
+          # Get the triggered tag name
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          # Extract version from __init__.py
+          VERSION=$(grep -oP "(?<=__version__ = ')[^']+" path/to/your/package/__init__.py)
+          # Compare tag name with version
+          if [[ "$TAG_NAME" != "v$VERSION" ]]; then
+            echo "Error: Tag name '$TAG_NAME' does not match the version '$VERSION' in __init__.py"
+            exit 1
+          else
+            echo "Tag name '$TAG_NAME' matches the version '$VERSION'."
+          fi
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
