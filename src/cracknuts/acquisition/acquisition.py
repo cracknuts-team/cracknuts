@@ -610,8 +610,7 @@ class Acquisition(abc.ABC):
 
     def config_cracker(self): ...
 
-    def pre_init(self):
-        self.cracker.sync_config_to_cracker()
+    def pre_init(self): ...
 
     @abc.abstractmethod
     def init(self):
