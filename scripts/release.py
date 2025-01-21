@@ -10,58 +10,55 @@ def update_version(file_path, bump_type, is_alpha):
     with open(file_path) as file:
         content = file.read()
 
-    match = re.search(r'__version__\s*=\s*"([0-9]+)\.([0-9]+)\.([0-9]+)(-alpha\.([0-9]))?"', content)
+    match = re.search(r'__version__\s*=\s*"([0-9]+)\.([0-9]+)\.([0-9]+)(?:-alpha\.([0-9]))?"', content)
 
     if not match:
         print("Error: Could not find version in the file.")
         sys.exit(1)
 
-    print(match.groups())
-    # 获取版本号
-    if is_alpha:
-        major, minor, patch, alpha = map(int, match.groups())
-    else:
-        major, minor, patch = map(int, match.groups())
-        alpha = 1  # 如果不是 alpha 版本，设置 alpha 为 1（不使用，但需要避免后续错误）
+    major, minor, patch, alpha = (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3)),
+        None if match.group(4) is None else int(match.group(4)),
+    )
 
-    # 根据 bump_type 增加版本号
     if bump_type == "major":
         major += 1
         minor, patch = 0, 0
         if is_alpha:
-            alpha = 1  # Reset alpha to 1 for major bump
+            alpha = 1
     elif bump_type == "minor":
         minor += 1
         patch = 0
         if is_alpha:
-            alpha = 1  # Reset alpha to 1 for minor bump
+            alpha = 1
     elif bump_type == "patch":
         patch += 1
+        if is_alpha:
+            alpha = 1
     elif bump_type == "alpha":
-        if is_alpha:  # 增长 alpha 后缀的版本
-            alpha += 1
-        else:
+        if is_alpha and alpha is None:
             print("Error: Alpha version requires the base version to be alpha.")
             sys.exit(1)
+        else:
+            alpha += 1
     else:
         print("Error: Bump type must be 'major', 'minor', 'patch', or 'alpha'.")
         sys.exit(1)
 
-    # 更新版本号字符串
     if is_alpha:
         new_version = f"{major}.{minor}.{patch}-alpha.{alpha}"
     else:
         new_version = f"{major}.{minor}.{patch}"
 
-    # 替换文件中的版本号
     new_content = re.sub(
-        r'__version__\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?"', f'__version__ = "{new_version}"', content
+        r'__version__\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+(?:-alpha\.[0-9]+)?"', f'__version__ = "{new_version}"', content
     )
 
     with open(file_path, "w") as file:
         file.write(new_content)
 
-    print(f"Updated version to {new_version}")
     return new_version
 
 
