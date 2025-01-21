@@ -280,9 +280,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         force_update: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        server_version: str = None,
-        bitstream_version: str = None,
-        update_unknown: bool = False,
     ) -> bool:
         if not self._operator.connect():
             return False
@@ -291,51 +288,23 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._operator.disconnect()
             return True
 
-        hardware_model = self._operator.get_hardware_model()
-        if hardware_model == "unknown" and update_unknown:
-            hardware_model = "*"
-
-        bin_path = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "firmware")
-        user_home_bin_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "firmware")
-        current_bin_path = os.path.join(os.getcwd(), ".firmware")
-
         if bin_server_path is None or bin_bitstream_path is None:
-            server_bin_dict, bitstream_bin_dict = self._find_bin_files(bin_path, user_home_bin_path, current_bin_path)
-            self._logger.debug(
-                f"Find bin server_bin_dict: {server_bin_dict} and bitstream_bin_dict: {bitstream_bin_dict}"
-            )
+            hardware_model = self._operator.get_hardware_model()
+            if hardware_model == "unknown":
+                self._logger.error(
+                    "The hardware model is unknown, and the Cracker bin cannot be updated. Alternatively, "
+                    "you can specify the bin_server_path and bin_bitstream_path in the connect API."
+                )
+                return False
+            firmware_path = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "firmware")
             if bin_server_path is None:
-                bin_server_path = self._get_version_file_path(server_bin_dict, hardware_model, server_version)
+                bin_server_path, _ = self._get_bin_file_path(firmware_path, hardware_model, "server")
             if bin_bitstream_path is None:
-                bin_bitstream_path = self._get_version_file_path(bitstream_bin_dict, hardware_model, bitstream_version)
+                bin_bitstream_path, _ = self._get_bin_file_path(firmware_path, hardware_model, "bitstream")
 
-        if (
-            bin_server_path is None
-            or not os.path.exists(bin_server_path)
-            or bin_bitstream_path is None
-            or not os.path.exists(bin_bitstream_path)
-        ):
-            if bin_server_path is None or not os.path.exists(bin_server_path):
-                self._logger.error(
-                    f"Server binary file not found for hardware: {hardware_model} "
-                    f"and server_version: {server_version}."
-                )
-            if bin_bitstream_path is None or not os.path.exists(bin_bitstream_path):
-                self._logger.error(
-                    f"Bitstream file not found for hardware: {hardware_model} "
-                    f"and bitstream_version: {bitstream_version}"
-                )
             self._operator.disconnect()
             return False
 
-        if hardware_model == "*" and update_unknown:
-            self._logger.warning(
-                f"Device return unknown hardware: {hardware_model}, and update_unknown is True,"
-                f"The firmware bitstream: {bin_bitstream_path} and server: {bin_server_path} is used."
-            )
-        else:
-            self._logger.debug(f"Get bit_server file at {bin_server_path}.")
-            self._logger.debug(f"Get bin_bitstream file at {bin_bitstream_path}.")
         bin_server = open(bin_server_path, "rb").read()
         bin_bitstream = open(bin_bitstream_path, "rb").read()
 
@@ -350,6 +319,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
             return False
         finally:
             self._operator.disconnect()
+
+    def _get_bin_file_path(self, firmware_path, hardware_model: str, bin_type: str):
+        bin_file_name_pattern = rf"{bin_type}-{hardware_model}-(?P<firmware_version>.+?).bin"
+        for filename in os.listdir(firmware_path):
+            bin_match = re.search(bin_file_name_pattern, filename)
+            if bin_match:
+                return os.path.join(firmware_path, filename), bin_match.group("firmware_version")
+
+        return None, None
 
     @staticmethod
     def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str | None:
