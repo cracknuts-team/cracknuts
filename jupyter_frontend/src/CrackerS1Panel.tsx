@@ -215,14 +215,14 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
         <Row>
           <Col span={24} style={{paddingBottom: 15}}>
             <Spin indicator={<span></span>} spinning={acqStatus == 2 || acqStatus == -2}>
+              <Divider orientation="left" style={{marginTop: 15, marginBottom: 5, borderColor: '#3da9c7'}}>NUT</Divider>
               <Row>
                 <Col span={24}>
                   <Form layout={"inline"}>
-                    <Form.Item >
-                      <Button size={"small"} type={"primary"} danger={!nutEnable}
-                              onClick={() => {setNutEnable(!nutEnable)}}>供电使能</Button>
-                    </Form.Item>
-                    <Form.Item label="NUT电压">
+                    <Form.Item>
+                      <Checkbox checked={nutEnable} onChange={() => {setNutEnable(!nutEnable)}}>
+                        供电使能
+                      </Checkbox>
                       <InputNumber
                         disabled={!nutEnable}
                         suffix="V"
@@ -244,11 +244,10 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         changeOnWheel
                       />
                     </Form.Item>
-                    <Form.Item >
-                      <Button size={"small"} type={nutClockEnable ? "primary" : "default"}
-                              onClick={() => {setNutClockEnable(!nutClockEnable)}}>NUT时钟使能</Button>
-                    </Form.Item>
-                    <Form.Item label="NUT时钟">
+                    <Form.Item>
+                      <Checkbox checked={nutClockEnable} onChange={() => {setNutClockEnable(!nutClockEnable)}}>
+                        NUT时钟使能
+                      </Checkbox>
                       <Select
                         disabled={!nutClockEnable}
                         size={"small"}
@@ -260,13 +259,13 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         ]}
                         value={nutClock}
                         onChange={setNutClock}
-                        style={{minWidth: 100}}
+                        style={{width: 100}}
                       ></Select>
                     </Form.Item>
                   </Form>
                 </Col>
               </Row>
-              <Divider variant="dotted" style={{marginTop: 5, marginBottom: 5}}/>
+              <Divider orientation="left" style={{marginTop: 15, marginBottom: 5, borderColor: '#3da9c7'}}>SCOPE</Divider>
               <Row>
                 <Col span={24}>
                   <Row>
@@ -365,7 +364,6 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       </Form>
                     </Col>
                   </Row>
-                  <Divider variant="dotted" style={{marginTop: 5, marginBottom: 5}}/>
                   <Row>
                     <Col>
                       <Form layout={"inline"}>
@@ -403,7 +401,6 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       </Form>
                     </Col>
                   </Row>
-                  <Divider variant="dotted" style={{marginTop: 5, marginBottom: 5}}/>
                   <Row>
                     <Col>
                       <Form layout={"inline"}>
