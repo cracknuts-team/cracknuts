@@ -221,7 +221,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                   <Form layout={"inline"}>
                     <Form.Item>
                       <Checkbox checked={nutEnable} onChange={() => {setNutEnable(!nutEnable)}}>
-                        供电使能
+                        供电
                       </Checkbox>
                       <InputNumber
                         disabled={!nutEnable}
@@ -246,7 +246,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Form.Item>
                     <Form.Item>
                       <Checkbox checked={nutClockEnable} onChange={() => {setNutClockEnable(!nutClockEnable)}}>
-                        NUT时钟使能
+                        时钟
                       </Checkbox>
                       <Select
                         disabled={!nutClockEnable}
