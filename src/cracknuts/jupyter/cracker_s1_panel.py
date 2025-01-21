@@ -137,7 +137,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def nut_voltage_change(self, change):
         self.cracker.nut_set_voltage(change.get("new"))
 
-    @traitlets.observe("nut_enable_clock")
+    @traitlets.observe("nut_clock_enable")
     @observe_interceptor
     def _nut_clock_enable_change(self, change):
         self.cracker.nut_set_clock_enable(bool(change.get("new")))
