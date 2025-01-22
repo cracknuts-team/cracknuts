@@ -279,6 +279,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._logger.info("Synchronize the configuration to Cracker successfully.")
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
+            self._socket = None
             self._connection_status = False
 
     def _update_cracker_bin(
