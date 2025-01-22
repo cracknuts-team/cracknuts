@@ -259,13 +259,19 @@ class CrackerBasic(ABC, typing.Generic[T]):
         ):
             return
 
+        if force_update_bin and self._socket and self._connection_status:
+            # Reset the connection if forcing a bin update when it was previously connected.
+            self._socket = None
+            self._connection_status = False
+
+        if self._socket and self._connection_status:
+            self._logger.debug("Already connected, reuse.")
+            return
+
         try:
             if not self._socket:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self._socket.settimeout(5)
-            if self._connection_status:
-                self._logger.debug("Already connected, reuse.")
-                return
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
