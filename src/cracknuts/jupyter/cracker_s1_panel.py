@@ -82,20 +82,30 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             self.nut_voltage = current_config.nut_voltage
         if current_config.nut_clock is not None:
             self.nut_clock = current_config.nut_clock
+        if current_config.nut_clock_enable is not None:
+            self.nut_clock_enable = current_config.nut_clock_enable
 
         # osc
         self.osc_analog_channel_a_enable = current_config.osc_analog_channel_enable.get(1, False)
         self.osc_analog_channel_b_enable = current_config.osc_analog_channel_enable.get(2, True)
         self.osc_analog_channel_a_gain = current_config.osc_analog_gain.get(1, 1)
         self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(2, 1)
-        self.osc_sample_len = current_config.osc_sample_len
-        self.osc_sample_delay = current_config.osc_sample_delay
-        self.osc_sample_rate = current_config.osc_sample_rate
-        self.osc_sample_phase = current_config.osc_sample_phase
-        self.osc_trigger_source = current_config.osc_analog_trigger_source
-        self.osc_trigger_mode = current_config.osc_trigger_mode
-        self.osc_trigger_edge = current_config.osc_analog_trigger_edge
-        self.osc_trigger_edge_level = current_config.osc_analog_trigger_edge_level
+        if current_config.osc_sample_len is not None:
+            self.osc_sample_len = current_config.osc_sample_len
+        if current_config.osc_sample_delay is not None:
+            self.osc_sample_delay = current_config.osc_sample_delay
+        if current_config.osc_sample_rate is not None:
+            self.osc_sample_rate = current_config.osc_sample_rate
+        if current_config.osc_sample_phase is not None:
+            self.osc_sample_phase = current_config.osc_sample_phase
+        if current_config.osc_analog_trigger_source is not None:
+            self.osc_trigger_source = current_config.osc_analog_trigger_source
+        if current_config.osc_trigger_mode is not None:
+            self.osc_trigger_mode = current_config.osc_trigger_mode
+        if current_config.osc_analog_trigger_edge is not None:
+            self.osc_trigger_edge = current_config.osc_analog_trigger_edge
+        if current_config.osc_analog_trigger_edge_level is not None:
+            self.osc_trigger_edge_level = current_config.osc_analog_trigger_edge_level
 
         self._observe = True
 
@@ -139,12 +149,12 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @traitlets.observe("nut_clock_enable")
     @observe_interceptor
-    def _nut_clock_enable_change(self, change):
+    def nut_clock_enable_change(self, change):
         self.cracker.nut_set_clock_enable(bool(change.get("new")))
 
     @traitlets.observe("nut_clock")
     @observe_interceptor
-    def _nut_clock_change(self, change):
+    def nut_clock_change(self, change):
         self.cracker.nut_set_clock(int(change.get("new")))
 
     @traitlets.observe("osc_sample_phase")
