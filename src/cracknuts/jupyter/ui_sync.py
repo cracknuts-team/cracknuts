@@ -41,7 +41,10 @@ class ConfigProxy:
         self._listener_dict[config_attr] = listener
 
     def __str__(self):
-        return str(self._config)
+        return self._config.__str__()
+
+    def __repr__(self):
+        return self._config.__repr__()
 
 
 def observe_interceptor(func, signal="_observe"):

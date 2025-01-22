@@ -27,6 +27,12 @@ class ConfigS1(ConfigBasic):
         self.cracker_i2c_enable: bool | None = False
         self.cracker_i2c_config: dict | None = {}
 
+    def __str__(self):
+        return super().__str__()
+
+    def __repr__(self):
+        return super().__repr__()
+
 
 class CrackerS1(CrackerBasic[ConfigS1]):
     def get_default_config(self) -> ConfigS1:
