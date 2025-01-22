@@ -13,7 +13,6 @@ import typing
 from abc import ABC
 
 import numpy as np
-from packaging.version import Version
 
 import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
@@ -231,7 +230,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         force_update_bin: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        update_unknown: bool = False,
     ) -> None:
         """
         Connect to cracker device.
@@ -245,8 +243,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :type bin_server_path: str | None
         :param bin_bitstream_path: The bin_bitstream (firmware) file for updates.
         :type bin_bitstream_path: str | None
-        :param update_unknown: Whether to update the unknown firmware.
-        :type update_unknown: bool
         :return: None
         """
         if bin_server_path is None:
@@ -254,9 +250,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         if bin_bitstream_path is None:
             bin_bitstream_path = self._bin_bitstream_path
 
-        if update_bin and not self._update_cracker_bin(
-            force_update_bin, bin_server_path, bin_bitstream_path, update_unknown=update_unknown
-        ):
+        if update_bin and not self._update_cracker_bin(force_update_bin, bin_server_path, bin_bitstream_path):
             return
 
         if force_update_bin and self._socket and self._connection_status:
@@ -288,6 +282,17 @@ class CrackerBasic(ABC, typing.Generic[T]):
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
     ) -> bool:
+        """
+        Update cracker's firmwares: server.bin and bitstream.bin.
+
+        :param force_update: Whether to force update the firmware if the device already has the firmware installed.
+        :type force_update: bool
+        :param bin_server_path: The bin_server file path for updates, will use the embedded firmware if not specified.
+        :type bin_server_path: str | None
+        :param bin_bitstream_path: The bin_bitstream file path for updates,
+                                   will use the embedded firmware if not specified.
+        :type bin_bitstream_path: str | None
+        """
         if not self._operator.connect():
             return False
 
@@ -327,7 +332,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         finally:
             self._operator.disconnect()
 
-    def _get_bin_file_path(self, firmware_path, hardware_model: str, bin_type: str):
+    @staticmethod
+    def _get_bin_file_path(firmware_path, hardware_model: str, bin_type: str):
         bin_file_name_pattern = rf"{bin_type}-{hardware_model}-(?P<firmware_version>.+?).bin"
         for filename in os.listdir(firmware_path):
             bin_match = re.search(bin_file_name_pattern, filename)
@@ -335,47 +341,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 return os.path.join(firmware_path, filename), bin_match.group("firmware_version")
 
         return None, None
-
-    @staticmethod
-    def _get_version_file_path(bin_dict: dict[str, dict[str, str]], hardware_model: str, version: str) -> str | None:
-        if hardware_model == "*":
-            dict_by_hardware = {k: v for d in bin_dict.values() for k, v in d.items()}
-        else:
-            dict_by_hardware = bin_dict.get(hardware_model, None)
-        if dict_by_hardware is None or len(dict_by_hardware) == 0:
-            return None
-        if version is None:
-            sorted_version = sorted(dict_by_hardware.keys(), key=Version)
-            version = sorted_version[-1]
-        return dict_by_hardware.get(version, None)
-
-    @staticmethod
-    def _find_bin_files(*bin_paths: str) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
-        server_path_pattern = r"server-(?P<hardware>.+?)-(?P<firmware>.+?).bin"
-        bitstream_path_pattern = r"bitstream-(?P<hardware>.+?)-(?P<firmware>.+?).bit.bin"
-
-        server_bin_dict = {}
-        bitstream_bin_dict = {}
-
-        for bin_path in bin_paths:
-            if os.path.exists(bin_path):
-                for filename in os.listdir(bin_path):
-                    server_match = re.search(server_path_pattern, filename)
-                    if server_match:
-                        server_hardware_version = server_match.group("hardware")
-                        server_firmware_version = server_match.group("firmware")
-                        server_hardware_dict = server_bin_dict.get(server_hardware_version, {})
-                        server_hardware_dict[server_firmware_version] = os.path.join(bin_path, filename)
-                        server_bin_dict[server_hardware_version] = server_hardware_dict
-                    bitstream_match = re.search(bitstream_path_pattern, filename)
-                    if bitstream_match:
-                        bitstream_hardware_version = bitstream_match.group("hardware")
-                        bitstream_firmware_version = bitstream_match.group("firmware")
-                        bitstream_hardware_dict = bitstream_bin_dict.get(bitstream_hardware_version, {})
-                        bitstream_hardware_dict[bitstream_firmware_version] = os.path.join(bin_path, filename)
-                        bitstream_bin_dict[bitstream_hardware_version] = bitstream_hardware_dict
-
-        return server_bin_dict, bitstream_bin_dict
 
     def disconnect(self) -> None:
         """
