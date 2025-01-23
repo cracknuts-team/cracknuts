@@ -132,6 +132,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self.set_address(address)
         self._operator = Operator(self._server_address[0], self._operator_port)
         self._config = self.get_default_config()
+        self._hardware_model = None
+        self._installed_bin_server_path = None
+        self._installed_bin_bitstream_path = None
 
     def set_address(self, address: tuple[str, int] | str) -> None:
         """
@@ -300,47 +303,64 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._operator.disconnect()
             return True
 
+        self._hardware_model = self._operator.get_hardware_model()
+
         if bin_server_path is None or bin_bitstream_path is None:
-            hardware_model = self._operator.get_hardware_model()
-            if hardware_model == "unknown":
+            if self._hardware_model is None or self._hardware_model == "unknown":
                 self._logger.error(
                     "The hardware model is unknown, and the Cracker bin cannot be updated. Alternatively, "
                     "you can specify the bin_server_path and bin_bitstream_path in the connect API."
                 )
                 return False
+
             firmware_path = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "firmware")
             if bin_server_path is None:
-                bin_server_path, _ = self._get_bin_file_path(firmware_path, hardware_model, "server")
+                bin_server_path = self._get_bin_file_path(firmware_path, "server")
             if bin_bitstream_path is None:
-                bin_bitstream_path, _ = self._get_bin_file_path(firmware_path, hardware_model, "bitstream")
+                bin_bitstream_path = self._get_bin_file_path(firmware_path, "bitstream")
 
-            self._operator.disconnect()
-            return False
-
-        bin_server = open(bin_server_path, "rb").read()
-        bin_bitstream = open(bin_bitstream_path, "rb").read()
+            if bin_server_path is None:
+                self._logger.error(f"Can't find bin_server file for hardware model: {self._hardware_model}.")
+                return False
+            if bin_bitstream_path is None:
+                self._logger.error(f"Can't find bin_bitstream file for hardware model: {self._hardware_model}.")
+                return False
 
         try:
-            return (
+            bin_server = open(bin_server_path, "rb").read()
+            bin_bitstream = open(bin_bitstream_path, "rb").read()
+            success = (
                 self._operator.update_server(bin_server)
                 and self._operator.update_bitstream(bin_bitstream)
                 and self._operator.get_status()
             )
+            if success:
+                self._installed_bin_server_path = bin_server_path
+                self._installed_bin_bitstream_path = bin_bitstream_path
+            return success
         except OSError as e:
-            self._logger.error("Do update cracker bin failed: %s", e)
+            self._logger.error(f"Update cracker bin failed: {e.args}")
             return False
         finally:
             self._operator.disconnect()
 
-    @staticmethod
-    def _get_bin_file_path(firmware_path, hardware_model: str, bin_type: str):
-        bin_file_name_pattern = rf"{bin_type}-{hardware_model}-(?P<firmware_version>.+?).bin"
+    def get_firmware_info(self):
+        if self._installed_bin_server_path is None or self._installed_bin_bitstream_path is None:
+            self._logger.error("The Cracker has not successfully installed any firmware.")
+
+        return (
+            f"hardware model: {self._hardware_model}, "
+            f"bin server: {self._installed_bin_server_path}, "
+            f"bin_bitstream: {self._installed_bin_bitstream_path}"
+        )
+
+    def _get_bin_file_path(self, firmware_path: str, bin_type: str):
+        bin_file_name_pattern = rf"{bin_type}-{self._hardware_model}-.+\.bin"
         for filename in os.listdir(firmware_path):
             bin_match = re.search(bin_file_name_pattern, filename)
             if bin_match:
-                return os.path.join(firmware_path, filename), bin_match.group("firmware_version")
-
-        return None, None
+                return os.path.join(firmware_path, filename)
+        return None
 
     def disconnect(self) -> None:
         """
@@ -351,12 +371,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
         try:
             if self._socket:
                 self._socket.close()
-            self._socket = None
             self._logger.info(f"Disconnect from {self._server_address}")
         except OSError as e:
             self._logger.error("Disconnection failed: %s", e)
         finally:
             self._connection_status = False
+            self._socket = None
+            self._hardware_model = None
+            self._installed_bin_server_path = None
+            self._installed_bin_bitstream_path = None
 
     def reconnect(self):
         """
