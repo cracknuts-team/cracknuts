@@ -219,7 +219,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     };
 
     const setZoomRange = (param: any) => {
-        console.log(param);
         if (param.batch) {
             const {startValue, endValue} = param.batch[0]
             setCustomXMin(startValue);

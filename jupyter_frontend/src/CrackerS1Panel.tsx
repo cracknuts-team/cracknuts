@@ -223,9 +223,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       <Checkbox checked={nutEnable} onChange={() => {setNutEnable(!nutEnable)}}>
                         供电
                       </Checkbox>
-                      <InputNumber
+                      <InputNumber style={{width: 90}}
                         disabled={!nutEnable}
-                        suffix="V"
+                        addonAfter="V"
                         step="100"
                         stringMode
                         size={"small"}
@@ -245,22 +245,28 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       />
                     </Form.Item>
                     <Form.Item>
-                      <Checkbox checked={nutClockEnable} onChange={() => {setNutClockEnable(!nutClockEnable)}}>
+                      <Checkbox checked={nutClockEnable} onChange={() => {
+                        setNutClockEnable(!nutClockEnable)
+                      }}>
                         时钟
                       </Checkbox>
-                      <Select
-                        disabled={!nutClockEnable}
-                        size={"small"}
-                        options={[
-                          {value: 24000, label: "24 mHz"},
-                          {value: 12000, label: "12 mHz"},
-                          {value: 8000, label: "8  mHz"},
-                          {value: 4000, label: "4  mHz"},
-                        ]}
-                        value={nutClock}
-                        onChange={setNutClock}
-                        style={{width: 100}}
-                      ></Select>
+                      <Space.Compact>
+                        <Select
+                            disabled={!nutClockEnable}
+                            size={"small"}
+                            options={[
+                              {value: 24000, label: "24 M"},
+                              {value: 12000, label: "12 M"},
+                              {value: 8000, label: "8  M"},
+                              {value: 4000, label: "4  M"},
+                            ]}
+                            value={nutClock}
+                            onChange={setNutClock}
+                            style={{width: 80}}
+                        ></Select>
+                        <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}
+                                size={"small"}>Hz</Button>
+                      </Space.Compact>
                     </Form.Item>
                   </Form>
                 </Col>
@@ -283,7 +289,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 Ch A 增益
                               </Checkbox>
                               <InputNumber
-                                suffix="%"
+                                addonAfter="%"
+                                style={{width: 100}}
                                 step="1"
                                 size={"small"}
                                 min={1}
@@ -292,7 +299,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 disabled={!channelAEnable}
                                 value={socAnalogChannelAGain}
                                 onChange={(v: number | string | null) => {
-                                  if (v) {
+                                  if (v != null) {
                                     setOscAnalogChannelAGain(Number(v));
                                   }
                                 }}
@@ -312,7 +319,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 Ch B 增益
                               </Checkbox>
                               <InputNumber
-                                suffix="%"
+                                addonAfter="%"
+                                style={{width: 100}}
                                 step="1"
                                 size={"small"}
                                 min={1}
@@ -321,7 +329,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 disabled={!channelBEnable}
                                 value={socAnalogChannelBGain}
                                 onChange={(v: number | string | null) => {
-                                  if (v) {
+                                  if (v != null) {
                                     setOscAnalogChannelBGain(Number(v));
                                   }
                                 }}
@@ -334,11 +342,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             suffix=""
                             step="1"
                             size={"small"}
-                            min={1024}
+                            min={10}
                             value={oscSampleLen}
                             defaultValue={oscSampleLen}
                             onChange={(v: number | string | null) => {
-                              if (v) {
+                              if (v != null) {
                                 setOscSampleLen(Number(v));
                               }
                             }}
@@ -347,14 +355,14 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         </Form.Item>
                         <Form.Item label="延迟点数">
                           <InputNumber
-                            suffix=""
                             step="1"
                             size={"small"}
                             min={0}
                             defaultValue={oscSampleDelay}
                             value={oscSampleDelay}
                             onChange={(v: number | string | null) => {
-                              if (v) {
+                              console.error(v)
+                              if (v != null) {
                                 setOscSampleDelay(Number(v));
                               }
                             }}
@@ -368,25 +376,30 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     <Col>
                       <Form layout={"inline"}>
                         <Form.Item label="采样频率">
-                          <Select
-                            size={"small"}
-                            options={[
-                              {value: 65000, label: "65 mHz"},
-                              {value: 48000, label: "48 mHz"},
-                              {value: 24000, label: "24 mHz"},
-                              {value: 12000, label: "12 mHz"},
-                              {value: 8000, label: "8  mHz"},
-                              {value: 4000, label: "4  mHz"},
-                            ]}
-                            value={oscSampleRate}
-                            onChange={setOscSampleRate}
-                            style={{minWidth: 100}}
-                          ></Select>
+                          <Space.Compact>
+                            <Select
+                              size={"small"}
+                              options={[
+                                {value: 65000, label: "65 M"},
+                                {value: 48000, label: "48 M"},
+                                {value: 24000, label: "24 M"},
+                                {value: 12000, label: "12 M"},
+                                {value: 8000, label: "8  M"},
+                                {value: 4000, label: "4  M"},
+                              ]}
+                              value={oscSampleRate}
+                              onChange={setOscSampleRate}
+                              style={{width: 80}}
+                            ></Select>
+                            <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}
+                                  size={"small"}>Hz</Button>
+                        </Space.Compact>
                         </Form.Item>
                         <Form.Item label="采样相位">
                           <InputNumber
-                            suffix="°"
-                            step="10"
+                            addonAfter="°"
+                            style={{width: 100}}
+                            step="1"
                             stringMode
                             size={"small"}
                             min={0}
@@ -451,10 +464,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             suffix=""
                             step="1"
                             size={"small"}
+                            min={-2047}
+                            max={2048}
                             changeOnWheel
                             value={oscTriggerEdgeLevel}
                             onChange={(value) => {
-                              if (value) {
+                              if (value != null) {
                                 setOscTriggerEdgeLevel(value);
                               }
                             }}

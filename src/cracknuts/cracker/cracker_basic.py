@@ -26,7 +26,7 @@ class ConfigBasic:
         self.osc_analog_gain = {1: 50, 2: 50}
         self.osc_sample_len = 1024
         self.osc_sample_delay = 0
-        self.osc_sample_rate = 65000
+        self.osc_sample_rate = 48000
         self.osc_sample_phase = 0
         self.osc_analog_trigger_source = 0
         self.osc_trigger_mode = 0
@@ -66,7 +66,7 @@ class ConfigBasic:
         Dump the configuration to a JSON string.
 
         """
-        return json.dumps({k: v for k, v in self.__dict__.items() if k != "_binder"})
+        return json.dumps({k: v for k, v in self.__dict__.items() if (k != "_binder" and k != "int_dict_fields")})
 
     def load_from_json(self, json_str: str) -> "ConfigBasic":
         """

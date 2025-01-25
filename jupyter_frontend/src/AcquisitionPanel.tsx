@@ -100,9 +100,10 @@ const AcquisitionPanel: React.FC = () => {
             </Form.Item>
             <Form.Item label="触发判断等待时长">
               <InputNumber
+                style={{width: 100}}
                 size={"small"}
                 value={triggerJudgeWaitTime}
-                suffix={"秒"}
+                addonAfter={"秒"}
                 min={0.05}
                 step={0.01}
                 onChange={(v) => {
@@ -113,9 +114,10 @@ const AcquisitionPanel: React.FC = () => {
             </Form.Item>
             <Form.Item label="触发判断超时">
               <InputNumber
+                style={{width: 100}}
                 size={"small"}
                 value={triggerJudgeTimeout}
-                suffix={"秒"}
+                addonAfter={"秒"}
                 min={0.05}
                 step={0.01}
                 onChange={(v) => {
