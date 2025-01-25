@@ -338,7 +338,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             suffix=""
                             step="1"
                             size={"small"}
-                            min={1024}
+                            min={10}
                             value={oscSampleLen}
                             defaultValue={oscSampleLen}
                             onChange={(v: number | string | null) => {
