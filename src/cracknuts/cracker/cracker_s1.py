@@ -13,7 +13,7 @@ class ConfigS1(ConfigBasic):
         self.nut_enable = False
         self.nut_clock_enable = False
         self.nut_voltage = 3500
-        self.nut_clock = 24000
+        self.nut_clock = 8000
         self.nut_voltage_raw: int | None = None
         self.nut_interface: int | None = None
         self.nut_timeout: int | None = None
@@ -625,7 +625,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def nut_set_clock(self, clock: int) -> tuple[int, None]:
+    def nut_set_clock(self, clock: int | str) -> tuple[int, None]:
         """
         Set nut clock.
 
@@ -634,6 +634,20 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        if isinstance(clock, str):
+            clock = clock.upper()
+            if clock == "24M":
+                clock = 24000
+            elif clock == "12M":
+                clock = 12000
+            elif clock == "6M":
+                clock = 6000
+            elif clock == "4M":
+                clock = 4000
+            else:
+                self._logger.error(f"Unknown clock type: {clock}, 24M or 12M or 6M or 4M")
+                return protocol.STATUS_ERROR, None
+
         payload = struct.pack(">I", clock)
         self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK, payload=payload)
