@@ -223,9 +223,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       <Checkbox checked={nutEnable} onChange={() => {setNutEnable(!nutEnable)}}>
                         供电
                       </Checkbox>
-                      <InputNumber
+                      <InputNumber style={{width: 90}}
                         disabled={!nutEnable}
-                        suffix="V"
+                        addonAfter="V"
                         step="100"
                         stringMode
                         size={"small"}
@@ -248,19 +248,23 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       <Checkbox checked={nutClockEnable} onChange={() => {setNutClockEnable(!nutClockEnable)}}>
                         时钟
                       </Checkbox>
+                      <Space.Compact>
                       <Select
                         disabled={!nutClockEnable}
                         size={"small"}
                         options={[
-                          {value: 24000, label: "24 mHz"},
-                          {value: 12000, label: "12 mHz"},
-                          {value: 8000, label: "8  mHz"},
-                          {value: 4000, label: "4  mHz"},
+                          {value: 24000, label: "24 M"},
+                          {value: 12000, label: "12 M"},
+                          {value: 8000, label: "8  M"},
+                          {value: 4000, label: "4  M"},
                         ]}
                         value={nutClock}
                         onChange={setNutClock}
-                        style={{width: 100}}
+                        style={{width: 80}}
+                        // suffixIcon={<span>Hz</span>}
                       ></Select>
+                        <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}} size={"small"}>Hz</Button>
+                        </Space.Compact>
                     </Form.Item>
                   </Form>
                 </Col>
