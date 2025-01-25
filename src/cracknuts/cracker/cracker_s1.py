@@ -42,7 +42,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         config = self.get_current_config()
         self.nut_set_enable(config.nut_enable)
         self.nut_set_voltage(config.nut_voltage)
-        self.nut_set_clock_enable(config.cracker_uart_enable)
+        self.nut_set_clock_enable(config.nut_clock_enable)
         self.nut_set_clock(config.nut_clock)
         for k, v in config.osc_analog_channel_enable.items():
             self.osc_set_analog_channel_enable(k, v)
