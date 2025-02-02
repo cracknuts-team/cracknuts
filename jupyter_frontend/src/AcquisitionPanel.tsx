@@ -2,6 +2,7 @@ import {useModel, useModelState} from "@anywidget/react";
 import {Col, Form, Input, InputNumber, Progress, Radio, Row, Select} from "antd";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 import React, {ChangeEvent} from "react";
+import {FormattedMessage, useIntl} from "react-intl";
 
 interface AcqRunProgress {
   finished: number;
@@ -21,6 +22,8 @@ const AcquisitionPanel: React.FC = () => {
   const [filePath, setFilePath] = useModelState<string>("file_path");
 
   const model = useModel();
+
+  const intl = useIntl();
 
   function run(status: number) {
     if (status == -1) {
@@ -75,20 +78,20 @@ const AcquisitionPanel: React.FC = () => {
                 size={"small"}
               >
                 <Radio.Button value={1} disabled={acqStatus == 2 || acqStatus == -2 || checkFrontBackStatusSync()}>
-                  测试
+                  <FormattedMessage id={"acquisition.test"}/>
                 </Radio.Button>
                 <Radio.Button value={2} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>
-                  运行
+                  <FormattedMessage id={"acquisition.run"}/>
                 </Radio.Button>
                 <Radio.Button value={-1} disabled={acqStatus == 0 || checkFrontBackStatusSync()}>
-                  暂停
+                  <FormattedMessage id={"acquisition.pause"}/>
                 </Radio.Button>
                 <Radio.Button value={0} disabled={checkFrontBackStatusSync()}>
-                  停止
+                  <FormattedMessage id={"acquisition.stop"}/>
                 </Radio.Button>
               </Radio.Group>
             </Form.Item>
-            <Form.Item label="采样轮数">
+            <Form.Item label={intl.formatMessage({id: "acquisition.traceCount"})}>
               <InputNumber
                 size={"small"}
                 value={traceCount}
@@ -98,12 +101,12 @@ const AcquisitionPanel: React.FC = () => {
                 changeOnWheel
               />
             </Form.Item>
-            <Form.Item label="触发判断等待时长">
+            <Form.Item label={intl.formatMessage({id: "acquisition.triggerJudgeWaitTime"})}>
               <InputNumber
                 style={{width: 100}}
                 size={"small"}
                 value={triggerJudgeWaitTime}
-                addonAfter={"秒"}
+                addonAfter={intl.formatMessage({id: "cracker.config.unit.second"})}
                 min={0.05}
                 step={0.01}
                 onChange={(v) => {
@@ -112,12 +115,12 @@ const AcquisitionPanel: React.FC = () => {
                 changeOnWheel
               />
             </Form.Item>
-            <Form.Item label="触发判断超时">
+            <Form.Item label={intl.formatMessage({id: "acquisition.triggerJudgeTimeout"})}>
               <InputNumber
                 style={{width: 100}}
                 size={"small"}
                 value={triggerJudgeTimeout}
-                addonAfter={"秒"}
+                addonAfter={intl.formatMessage({id: "cracker.config.unit.second"})}
                 min={0.05}
                 step={0.01}
                 onChange={(v) => {
@@ -126,7 +129,7 @@ const AcquisitionPanel: React.FC = () => {
                 changeOnWheel
               />
             </Form.Item>
-            <Form.Item label="do异常最大次数">
+            <Form.Item label={intl.formatMessage({id: "acquisition.doErrorCountMax"})}>
               <InputNumber
                 size={"small"}
                 value={doErrorCountMax}
@@ -137,7 +140,7 @@ const AcquisitionPanel: React.FC = () => {
                 changeOnWheel
               />
             </Form.Item>
-            <Form.Item label="保存格式">
+            <Form.Item label={intl.formatMessage({id: "acquisition.fileFormat"})}>
               <Select
                 size={"small"}
                 options={[
@@ -149,7 +152,7 @@ const AcquisitionPanel: React.FC = () => {
                 style={{ minWidth: "100px" }}
               ></Select>
             </Form.Item>
-            <Form.Item label="保存路径">
+            <Form.Item label={intl.formatMessage({id: "acquisition.filePath"})}>
               <Input
                 size={"small"}
                 value={filePath}

@@ -3,13 +3,15 @@ import React, {ChangeEvent, useEffect, useState} from "react";
 import {useModel, useModelState} from "@anywidget/react";
 import {DownloadOutlined, InfoCircleOutlined, SaveOutlined, UploadOutlined,} from "@ant-design/icons";
 import AcquisitionPanel from "@/AcquisitionPanel.tsx";
+import {FormattedMessage, useIntl} from "react-intl";
 
 interface CrackS1PanelProps {
   hasAcquisition?: boolean;
   connectStatusChanged?: (connected: boolean) => void;
+  languageChanged: (language: string) => void;
 }
 
-const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, connectStatusChanged = undefined}) => {
+const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, connectStatusChanged = undefined, languageChanged = undefined}) => {
   // 连接
   const [uri, setUri] = useModelState<string>("uri");
   const [connectStatus] = useModelState<boolean>("connect_status");
@@ -20,6 +22,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [crackerVersion] = useModelState<string>("cracker_version");
 
   const model = useModel();
+
+  const intl = useIntl();
 
   const getUri = () => {
     if (uri) {
@@ -122,6 +126,21 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
     },
   };
 
+  const [language, setLanguage] = useState('中');
+  const changeLanguage = () => {
+    let languageCode;
+    if (language == '中') {
+      setLanguage('En');
+      languageCode = 'en'
+    } else {
+      setLanguage('中');
+      languageCode = 'zh'
+    }
+    if (languageChanged) {
+      languageChanged(languageCode);
+    }
+  };
+
   const [acqStatus, setAcqStatus] = useState(0);
 
   useEffect(() => {
@@ -168,40 +187,46 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                 }}
               />
               <Button type="primary" onClick={connectButtonOnClick} loading={buttonBusy} disabled={acqStatus != 0}>
-                {connectStatus ? "断开" : "连接"}
+                {connectStatus ? intl.formatMessage({id: 'cracker.disconnect'})
+                    : intl.formatMessage({id: 'cracker.connect'})}
               </Button>
             </Space.Compact>
             <span>
               <Tag icon={<InfoCircleOutlined/>} color="success">
-                Id: {crackerId}
+                <FormattedMessage id={"cracker.id"}/>: {crackerId}
               </Tag>
             </span>
             <span>
               <Tag icon={<InfoCircleOutlined/>} color="success">
-                Name: {crackerName}
+                <FormattedMessage id={"cracker.name"}/>: {crackerName}
               </Tag>
             </span>
             <span>
               <Tag icon={<InfoCircleOutlined/>} color="success">
-                Version: {crackerVersion}
+                <FormattedMessage id={"cracker.version"}/>: {crackerVersion}
               </Tag>
             </span>
           </Space>
         </Col>
-        <Col span={8} style={{textAlign: "right"}}>
+        <Col span={7} style={{textAlign: "right"}}>
           <Space.Compact>
             <Button icon={<SaveOutlined/>} size={"small"} onClick={saveConfig} type="primary">
-              保存配置
+              <FormattedMessage id={"cracknuts.config.save"}/>
             </Button>
             <Upload {...uploadProp}>
               <Button icon={<DownloadOutlined/>} size={"small"} type="primary">
-                加载配置
+                <FormattedMessage id={"cracknuts.config.load"}/>
               </Button>
             </Upload>
             <Button icon={<UploadOutlined/>} size={"small"} onClick={dumpConfig} type="primary">
-              导出配置
+              <FormattedMessage id={"cracknuts.config.dump"}/>
             </Button>
           </Space.Compact>
+        </Col>
+        <Col span={1} style={{textAlign: "right"}}>
+            <Button size={"small"} variant="text" color="default" onClick={changeLanguage}>
+              <span style={{fontSize: '0.8em', width: 13, textAlign: 'center'}}>{language}</span>
+            </Button>
         </Col>
       </Row>
       <Spin indicator={<span></span>} spinning={!connectStatus}>
@@ -221,7 +246,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                   <Form layout={"inline"}>
                     <Form.Item>
                       <Checkbox checked={nutEnable} onChange={() => {setNutEnable(!nutEnable)}}>
-                        供电
+                        <FormattedMessage id={"cracker.config.nut.power"}/>
                       </Checkbox>
                       <InputNumber style={{width: 90}}
                         disabled={!nutEnable}
@@ -248,7 +273,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       <Checkbox checked={nutClockEnable} onChange={() => {
                         setNutClockEnable(!nutClockEnable)
                       }}>
-                        时钟
+                        <FormattedMessage id={"cracker.config.nut.clock"}/>
                       </Checkbox>
                       <Space.Compact>
                         <Select
@@ -286,7 +311,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   setChannelAEnable(v.target.checked);
                                 }}
                               >
-                                Ch A 增益
+                                <FormattedMessage id={"cracker.config.scope.channel.a.gain"}/>
                               </Checkbox>
                               <InputNumber
                                 addonAfter="%"
@@ -316,7 +341,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   setChannelBEnable(v.target.checked);
                                 }}
                               >
-                                Ch B 增益
+                                <FormattedMessage id={"cracker.config.scope.channel.b.gain"}/>
                               </Checkbox>
                               <InputNumber
                                 addonAfter="%"
@@ -337,7 +362,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             </Form.Item>
                           </Space.Compact>
                         </Form.Item>
-                        <Form.Item label="采样点数">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.sampleLength"})}>
                           <InputNumber
                             suffix=""
                             step="1"
@@ -353,7 +378,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             changeOnWheel
                           />
                         </Form.Item>
-                        <Form.Item label="延迟点数">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.sampleDelay"})}>
                           <InputNumber
                             step="1"
                             size={"small"}
@@ -375,7 +400,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                   <Row>
                     <Col>
                       <Form layout={"inline"}>
-                        <Form.Item label="采样频率">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.sampleRate"})}>
                           <Space.Compact>
                             <Select
                               size={"small"}
@@ -395,7 +420,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   size={"small"}>Hz</Button>
                         </Space.Compact>
                         </Form.Item>
-                        <Form.Item label="采样相位">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.samplePhase"})}>
                           <InputNumber
                             addonAfter="°"
                             style={{width: 100}}
@@ -417,7 +442,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                   <Row>
                     <Col>
                       <Form layout={"inline"}>
-                        <Form.Item label="触发源(SR)">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerSource"})}>
                           <Select
                             size={"small"}
                             defaultValue={0}
@@ -432,34 +457,34 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             onChange={setOscTriggerSource}
                           />
                         </Form.Item>
-                        <Form.Item label="触发模式(MD)">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerMode"})}>
                           <Select
                             size={"small"}
                             defaultValue={0}
                             options={[
-                              {label: "边沿", value: 0},
-                              {label: "波形", value: 1},
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerMode.edge"}), value: 0},
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerMode.waveform"}), value: 1},
                             ]}
                             style={{width: 100}}
                             value={oscTriggerMode}
                             onChange={setOscTriggerMode}
                           />
                         </Form.Item>
-                        <Form.Item label="边缘类型(EG)">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerEdge"})}>
                           <Select
                             size={"small"}
                             defaultValue={0}
                             options={[
-                              {label: "上升", value: 0},
-                              {label: "下降", value: 1},
-                              {label: "任意", value: 2},
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerEdge.rising"}), value: 0},
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerEdge.falling"}), value: 1},
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerEdge.both"}), value: 2},
                             ]}
                             style={{width: 100}}
                             value={oscTriggerEdge}
                             onChange={setOscTriggerEdge}
                           />
                         </Form.Item>
-                        <Form.Item label="触发源级别">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerEdgeLevel"})}>
                           <InputNumber
                             suffix=""
                             step="1"
