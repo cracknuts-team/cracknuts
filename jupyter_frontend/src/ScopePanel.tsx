@@ -4,6 +4,7 @@ import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useRef, useState} from "react";
 import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
+import {FormattedMessage, useIntl} from "react-intl";
 
 interface SeriesData {
     1: number[] | undefined;
@@ -45,6 +46,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
 
     const [xRangeBrushEnabled, setXRangeBrushEnabled] = useState<boolean>(false)
 
+    const intl = useIntl();
 
     const setCustomC1YMinLink = (v: number) => {
         if (customC1YRangeLink) {
@@ -100,8 +102,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             id: "toolboxDataZoom",
             show: true,
             title: {
-                zoom: "缩放",
-                back: "还原",
+                zoom: intl.formatMessage({id: "cracker.scope.echarts.toolbox.dataZoom.zoom"}),
+                back: intl.formatMessage({id: "cracker.scope.echarts.toolbox.dataZoom.back"}),
             },
             xAxisIndex: 0,
             yAxisIndex: false,
@@ -112,7 +114,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
           },
           saveAsImage: {
             show: true,
-            title: "保存为图片"
+            title: intl.formatMessage({id: "cracker.scope.echarts.toolbox.saveAsImage"})
           },
         },
       },
@@ -347,16 +349,16 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     disabled={lockScopeOperation}
                 >
                     <Radio.Button value={0}>
-                        停止
+                        <FormattedMessage id={"cracker.scope.stop"}/>
                     </Radio.Button>
                     <Radio.Button value={1}>
-                        运行
+                        <FormattedMessage id={"cracker.scope.run"}/>
                     </Radio.Button>
                     <Radio.Button value={2}>
-                        单次
+                        <FormattedMessage id={"cracker.scope.single"}/>
                     </Radio.Button>
                     <Radio.Button value={3}>
-                        重复
+                        <FormattedMessage id={"cracker.scope.repeat"}/>
                     </Radio.Button>
                 </Radio.Group>
 
@@ -364,7 +366,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         onClick={() => {
                             setMonitorStatus(!monitorStatus);
                         }}
-                >监视</Button>
+                ><FormattedMessage id={"cracker.scope.monitor"}/></Button>
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
                           console.error(chartRef.current)
@@ -374,13 +376,13 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                             setCustomC2YMax(yRange[2][1]);
                             setCustomRangeModel(!customRangeModel);
                         }}>
-                    指定区间
+                    <FormattedMessage id={"cracker.scope.customRange"}/>
                 </Button>
                 <Space.Compact>
                     <Button size={"small"} disabled={!customRangeModel} onClick={chARangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH A"} disabled className="site-input-split"
                            style={{width: 50, textAlign: 'center', pointerEvents: 'none'}}/>
-                    <InputNumber disabled={!customRangeModel} placeholder={"下限"}
+                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.min"})}
                                  size={"small"}
                                  value={customC1YMin} onChange={(v) => {
                         setCustomC1YMinLink(Number(v))
@@ -393,7 +395,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                             }}>
                         <LinkOutlined/>
                     </Button>
-                    <InputNumber disabled={!customRangeModel} placeholder={"上限"}
+                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.max"})}
                                  size={"small"}
                                  value={customC1YMax} onChange={(v) => {
                         setCustomC1YMaxLink(Number(v))
@@ -404,7 +406,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                   <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
                            style={{width: 50, borderRight: 0, pointerEvents: 'none'}}/>
-                    <InputNumber disabled={!customRangeModel} placeholder={"下限"}
+                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.min"})}
                                  size={"small"}
                                  value={customC2YMin} onChange={(v) => {
                         setCustomC2YMinLink(Number(v))
@@ -417,7 +419,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                             }}>
                         <LinkOutlined/>
                     </Button>
-                    <InputNumber disabled={!customRangeModel} placeholder={"上限"}
+                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.max"})}
                                  size={"small"}
                                  value={customC2YMax} onChange={(v) => {
                         setCustomC2YMaxLink(Number(v))
@@ -429,8 +431,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         enableXRangeBrush(!xRangeBrushEnabled)
                         setXRangeBrushEnabled(!xRangeBrushEnabled);
                     }} type = {xRangeBrushEnabled ? "primary" : "default"}
-                    >框选放大</Button>
-                    <Button size={"small"}>指定区间</Button>
+                    ><FormattedMessage id={"cracker.scope.zoomBrush"}/></Button>
+                    <Button size={"small"}><FormattedMessage id={"cracker.scope.zoomBrush.customRange"}/></Button>
                     <InputNumber size={"small"} changeOnWheel value={customXMin} onChange={(v) => {
                         setCustomXRangeMin(Number(v))
                     }}/>
