@@ -41,7 +41,7 @@ cracker = StatefulCracker(cracker_s1)
 
 cracker.set_uri('cnp://192.168.0.10:8080')
 cracker.connect()
-cracker.osc_set_sample_len(sample_len)
+cracker.osc_sample_len(sample_len)
 
 acq = SimpleTestAcq(cracker)
 acq.run(count=trace_count)

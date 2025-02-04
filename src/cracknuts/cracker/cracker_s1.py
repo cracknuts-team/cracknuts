@@ -40,23 +40,23 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def sync_config_to_cracker(self):
         config = self.get_current_config()
-        self.nut_set_enable(config.nut_enable)
-        self.nut_set_voltage(config.nut_voltage)
+        self._nut_set_enable(config.nut_enable)
+        self.nut_voltage_mv(config.nut_voltage)
         self.nut_set_clock_enable(config.nut_clock_enable)
         self.nut_set_clock(config.nut_clock)
         for k, v in config.osc_analog_channel_enable.items():
             self.osc_set_analog_channel_enable(k, v)
-            self.osc_set_analog_gain(k, config.osc_analog_gain.get(k, False))
-        self.osc_set_sample_len(config.osc_sample_len)
-        self.osc_set_sample_delay(config.osc_sample_delay)
-        self.osc_set_sample_rate(config.osc_sample_rate)
-        self.osc_set_sample_phase(config.osc_sample_phase)
-        self.osc_set_analog_trigger_source(config.osc_analog_trigger_source)
-        self.osc_set_trigger_mode(config.osc_trigger_mode)
-        self.osc_set_trigger_edge(config.osc_analog_trigger_edge)
-        self.osc_set_trigger_edge_level(config.osc_analog_trigger_edge_level)
+            self.osc_analog_gain(k, config.osc_analog_gain.get(k, False))
+        self.osc_sample_len(config.osc_sample_len)
+        self.osc_sample_delay(config.osc_sample_delay)
+        self.osc_sample_clock_rate(config.osc_sample_rate)
+        self.osc_sample_clock_phase(config.osc_sample_phase)
+        self.osc_trigger_source(config.osc_analog_trigger_source)
+        self.osc_trigger_mode(config.osc_trigger_mode)
+        self.osc_trigger_edge(config.osc_analog_trigger_edge)
+        self.osc_trigger_level(config.osc_analog_trigger_edge_level)
 
-    def cracker_read_register(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
+    def register_read(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """
         Read register.
 
@@ -68,14 +68,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, bytes | None]
         """
         payload = struct.pack(">II", base_address, offset)
-        self._logger.debug(f"cracker_read_register payload: {payload.hex()}")
+        self._logger.debug(f"register_read payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_READ_REGISTER, payload=payload)
         if status != protocol.STATUS_OK:
             return status, None
         else:
             return status, res
 
-    def cracker_write_register(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, None]:
+    def register_write(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, None]:
         """
         Write register.
 
@@ -94,9 +94,31 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if isinstance(data, int):
             data = struct.pack(">I", data)
         payload = struct.pack(">II", base_address, offset) + data
-        self._logger.debug(f"cracker_write_register payload: {payload.hex()}")
+        self._logger.debug(f"register_write payload: {payload.hex()}")
         status, _ = self.send_with_command(protocol.Command.CRACKER_WRITE_REGISTER, payload=payload)
         return status, None
+
+    def osc_analog_enable(self, channel: int) -> tuple[int, None]:
+        """
+        Enable osc analog.
+
+        :param channel: Osc analog.
+        :type channel: int
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
+        return self.osc_set_analog_channel_enable(channel, True)
+
+    def osc_analog_disable(self, channel: int) -> tuple[int, None]:
+        """
+        Disable osc analog.
+
+        :param channel: Osc analog.
+        :type channel: int
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
+        return self.osc_set_analog_channel_enable(channel, False)
 
     def osc_set_analog_channel_enable(self, channel: int, enable: bool) -> tuple[int, None]:
         """
@@ -136,124 +158,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.osc_analog_channel_enable = final_enable
         return status, None
 
-    def osc_set_analog_coupling(self, channel: int, coupling: int) -> tuple[int, None]:
-        """
-        Set analog coupling.
-
-        :param channel: Channel to enable.
-        :type channel: int
-        :param coupling: 1 for DC and 0 for AC.
-        :type coupling: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        final_coupling = self._config.osc_analog_coupling | {channel: coupling}
-        enable = 0
-        if final_coupling.get(0):
-            enable |= 1
-        if final_coupling.get(1):
-            enable |= 1 << 1
-        if final_coupling.get(2):
-            enable |= 1 << 2
-        if final_coupling.get(3):
-            enable |= 1 << 3
-        if final_coupling.get(4):
-            enable |= 1 << 4
-        if final_coupling.get(5):
-            enable |= 1 << 5
-        if final_coupling.get(6):
-            enable |= 1 << 6
-        if final_coupling.get(7):
-            enable |= 1 << 7
-        if final_coupling.get(8):
-            enable |= 1 << 8
-
-        payload = struct.pack(">I", enable)
-        self._logger.debug(f"scrat_analog_coupling payload: {payload.hex()}")
-
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_COUPLING, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_coupling = final_coupling
-
-        return status, None
-
-    def osc_set_analog_voltage(self, channel: int, voltage: int) -> tuple[int, None]:
-        """
-        Set analog voltage.
-
-        :param channel: Channel to enable.
-        :type channel: int
-        :param voltage: Voltage to set. unit: mV.
-        :type voltage: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">BI", channel, voltage)
-        self._logger.debug(f"scrat_analog_coupling payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_VOLTAGE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_voltage[channel] = voltage
-
-        return status, None
-
-    def osc_set_analog_bias_voltage(self, channel: int, voltage: int) -> tuple[int, None]:
-        """
-        Set analog bias voltage.
-
-        :param channel: Channel to enable.
-        :type channel: int
-        :param voltage: Voltage to set. unit: mV.
-        :type voltage: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">BI", channel, voltage)
-        self._logger.debug(f"scrat_analog_bias_voltage payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_BIAS_VOLTAGE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_bias_voltage[channel] = voltage
-
-        return status, None
-
-    def osc_set_digital_channel_enable(self, channel: int, enable: bool) -> tuple[int, None]:
-        final_enable = self._config.osc_digital_channel_enable | {channel: enable}
-        mask = 0
-        if final_enable.get(0):
-            mask |= 1
-        if final_enable.get(1):
-            mask |= 1 << 1
-        if final_enable.get(2):
-            mask |= 1 << 2
-        if final_enable.get(3):
-            mask |= 1 << 3
-        if final_enable.get(4):
-            mask |= 1 << 4
-        if final_enable.get(5):
-            mask |= 1 << 5
-        if final_enable.get(6):
-            mask |= 1 << 6
-        if final_enable.get(7):
-            mask |= 1 << 7
-        if final_enable.get(8):
-            mask |= 1 << 8
-        payload = struct.pack(">I", mask)
-        self._logger.debug(f"scrat_digital_channel_enable payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_DIGITAL_CHANNEL_ENABLE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_digital_channel_enable = final_enable
-
-        return status, None
-
-    def osc_set_digital_voltage(self, voltage: int) -> tuple[int, None]:
-        payload = struct.pack(">I", voltage)
-        self._logger.debug(f"scrat_digital_voltage payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_DIGITAL_VOLTAGE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_digital_voltage = voltage
-
-        return status, None
-
-    def osc_set_trigger_mode(self, mode: int) -> tuple[int, None]:
+    def osc_trigger_mode(self, mode: int) -> tuple[int, None]:
         """
         Set trigger mode.
 
@@ -263,14 +168,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">B", mode)
-        self._logger.debug(f"osc_set_trigger_mode payload: {payload.hex()}")
+        self._logger.debug(f"osc_trigger_mode payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_MODE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_trigger_mode = mode
 
         return status, None
 
-    def osc_set_analog_trigger_source(self, source: int | str) -> tuple[int, None]:
+    def osc_trigger_source(self, source: int | str) -> tuple[int, None]:
         """
         Set trigger source.
 
@@ -294,23 +199,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                     f"Invalid trigger source: {source}. " f"  It must be one of (N, A, B, P) if specified as a string."
                 )
         payload = struct.pack(">B", source)
-        self._logger.debug(f"scrat_analog_trigger_source payload: {payload.hex()}")
+        self._logger.debug(f"osc_trigger_source payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_TRIGGER_SOURCE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_analog_trigger_source = source
 
         return status, None
 
-    def osc_set_digital_trigger_source(self, channel: int) -> tuple[int, None]:
-        payload = struct.pack(">B", channel)
-        self._logger.debug(f"scrat_digital_trigger_source payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_DIGITAL_TRIGGER_SOURCE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_digital_trigger_source = channel
-
-        return status, None
-
-    def osc_set_trigger_edge(self, edge: int | str) -> tuple[int, None]:
+    def osc_trigger_edge(self, edge: int | str) -> tuple[int, None]:
         """
         Set trigger edge.
 
@@ -332,14 +228,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             if edge not in (0, 1, 2):
                 raise ValueError(f"Unknown edge type: {edge}")
         payload = struct.pack(">B", edge)
-        self._logger.debug(f"scrat_analog_trigger_edge payload: {payload.hex()}")
+        self._logger.debug(f"osc_trigger_edge payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_analog_trigger_edge = edge
 
         return status, None
 
-    def osc_set_trigger_edge_level(self, edge_level: int) -> tuple[int, None]:
+    def osc_trigger_level(self, edge_level: int) -> tuple[int, None]:
         """
         Set trigger edge level.
 
@@ -349,31 +245,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">H", edge_level)
-        self._logger.debug(f"scrat_analog_trigger_edge_level payload: {payload.hex()}")
+        self._logger.debug(f"osc_trigger_level payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE_LEVEL, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_analog_trigger_edge_level = edge_level
 
         return status, None
 
-    def osc_set_analog_trigger_voltage(self, voltage: int) -> tuple[int, None]:
-        """
-        Set analog trigger voltage.
-
-        :param voltage: Analog trigger voltage.
-        :type voltage: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">I", voltage)
-        self._logger.debug(f"scrat_analog_trigger_voltage payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_TRIGGER_VOLTAGE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_trigger_voltage = voltage
-
-        return status, None
-
-    def osc_set_sample_delay(self, delay: int) -> tuple[int, None]:
+    def osc_sample_delay(self, delay: int) -> tuple[int, None]:
         """
         Set sample delay.
 
@@ -390,7 +269,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def osc_set_sample_len(self, length: int) -> tuple[int, None]:
+    def osc_sample_len(self, length: int) -> tuple[int, None]:
         """
         Set sample length.
 
@@ -400,14 +279,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">I", length)
-        self._logger.debug(f"osc_set_sample_len payload: {payload.hex()}")
+        self._logger.debug(f"osc_sample_len payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_LENGTH, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_sample_len = length
 
         return status, None
 
-    def osc_set_sample_rate(self, rate: int | str) -> tuple[int, None]:
+    def osc_sample_clock_rate(self, rate: int | str) -> tuple[int, None]:
         """
         Set osc sample rate
 
@@ -435,14 +314,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 return protocol.STATUS_ERROR, None
 
         payload = struct.pack(">I", rate)
-        self._logger.debug(f"osc_set_sample_rate payload: {payload.hex()}")
+        self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_RATE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_sample_rate = rate
 
         return status, None
 
-    def osc_set_analog_gain(self, channel: int, gain: int) -> tuple[int, None]:
+    def osc_analog_gain(self, channel: int, gain: int) -> tuple[int, None]:
         """
         Set analog gain.
 
@@ -454,108 +333,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">BB", channel, gain)
-        self._logger.debug(f"scrat_analog_gain payload: {payload.hex()}")
+        self._logger.debug(f"osc_analog_gain payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_analog_gain[channel] = gain
 
         return status, None
 
-    def osc_set_analog_gain_raw(self, channel: int, gain: int) -> tuple[int, None]:
-        """
-        Set analog gain.
-
-        :param channel: Analog channel.
-        :type channel: int
-        :param gain: Analog gain.
-        :type gain: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">BB", channel, gain)
-        self._logger.debug(f"scrat_analog_gain payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_GAIN_RAW, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_gain_raw[channel] = gain
-
-        return status, None
-
-    def osc_set_clock_base_freq_mul_div(self, mult_int: int, mult_fra: int, div: int) -> tuple[int, None]:
-        """
-        Set clock base frequency.
-
-        :param mult_int: Mult integration factor.
-        :type mult_int: int
-        :param mult_fra: Mult frequency in Hz.
-        :type mult_fra: int
-        :param div: Division factor.
-        :type div: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">BHB", mult_int, mult_fra, div)
-        self._logger.debug(f"osc_set_clock_base_freq_mul_div payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_CLOCK_BASE_FREQ_MUL_DIV, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_clock_base_freq_mul_div = mult_int, mult_fra, div
-
-        return status, None
-
-    def osc_set_sample_divisor(self, div_int: int, div_frac: int) -> tuple[int, None]:
-        """
-        Set sample divisor.
-
-        :param div_int: Division factor.
-        :type div_int: int
-        :param div_frac: Division factor.
-        :type div_frac: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">BH", div_int, div_frac)
-        self._logger.debug(f"osc_set_sample_divisor payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_CLOCK_SAMPLE_DIVISOR, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_clock_sample_divisor = div_int, div_frac
-
-        return status, None
-
-    def osc_set_clock_update(self) -> tuple[int, None]:
-        """
-        Set clock params update.
-
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        self._logger.debug(f"osc_set_clock_update payload: {None}")
-        return self.send_with_command(protocol.Command.OSC_CLOCK_UPDATE, payload=None)
-
-    def osc_set_clock_simple(self, nut_clk: int, mult: int, phase: int) -> tuple[int, None]:
-        """
-        Set clock simple config.
-
-        :param nut_clk: Nut clk.
-        :type nut_clk: int
-        :param mult: Mult.
-        :type mult: int
-        :param phase: Phase.
-        :type phase: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        if not 1 <= nut_clk <= 32:
-            raise ValueError("nut_clk must be between 1 and 32")
-        if nut_clk * mult > 32:
-            raise ValueError("nut_clk * mult must be less than 32")
-        payload = struct.pack(">BBI", nut_clk, mult, phase * 1000)
-        self._logger.debug(f"osc_set_clock_simple payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_CLOCK_SIMPLE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_clock_simple = nut_clk, mult, phase
-
-        return status, None
-
-    def osc_set_sample_phase(self, phase: int) -> tuple[int, None]:
+    def osc_sample_clock_phase(self, phase: int) -> tuple[int, None]:
         """
         Set sample phase.
 
@@ -565,23 +350,20 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">I", phase)
-        self._logger.debug(f"osc_set_sample_phase payload: {payload.hex()}")
+        self._logger.debug(f"osc_sample_clock_phase payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_CLOCK_SAMPLE_PHASE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.osc_sample_phase = phase
 
         return status, None
 
-    def nut_power_off(self) -> tuple[int, None]:
-        return self._nut_power(False)
+    def nut_clock_disable(self) -> tuple[int, None]:
+        return self._nut_set_enable(False)
 
-    def nut_power_on(self) -> tuple[int, None]:
-        return self._nut_power(True)
+    def nut_clock_enable(self) -> tuple[int, None]:
+        return self._nut_set_enable(True)
 
-    def nut_set_enable(self, enable: int | bool) -> tuple[int, None]:
-        return self._nut_power(enable)
-
-    def _nut_power(self, enable: int | bool) -> tuple[int, None]:
+    def _nut_set_enable(self, enable: int | bool) -> tuple[int, None]:
         """
         Set nut enable.
 
@@ -593,14 +375,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if isinstance(enable, int):
             enable = True if enable == 1 else False
         payload = struct.pack(">?", enable)
-        self._logger.debug(f"cracker_nut_enable payload: {payload.hex()}")
+        self._logger.debug(f"nut_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.nut_enable = enable
 
         return status, None
 
-    def nut_set_voltage(self, voltage: int) -> tuple[int, None]:
+    def nut_voltage_mv(self, voltage: int) -> tuple[int, None]:
         """
         Set nut voltage.
 
@@ -610,27 +392,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">I", voltage)
-        self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
+        self._logger.debug(f"nut_voltage_mv payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.nut_voltage = voltage
-
-        return status, None
-
-    def nut_set_voltage_raw(self, voltage: int) -> tuple[int, None]:
-        """
-        Set nut raw voltage.
-
-        :param voltage: Nut voltage, in milli volts (mV).
-        :type voltage: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">B", voltage)
-        self._logger.debug(f"cracker_nut_voltage payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE_RAW, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.nut_voltage_raw = voltage
 
         return status, None
 
@@ -667,31 +432,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 return protocol.STATUS_ERROR, None
 
         payload = struct.pack(">I", clock)
-        self._logger.debug(f"cracker_nut_clock payload: {payload.hex()}")
+        self._logger.debug(f"nut_set_clock payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.nut_clock = clock
 
         return status, None
 
-    def nut_set_interface(self, interface: int) -> tuple[int, None]:
-        """
-        Set nut interface.
-
-        :param interface: Nut interface.
-        :type interface: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">I", interface)
-        self._logger.debug(f"cracker_nut_interface payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.NUT_INTERFACE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.nut_interface = interface
-
-        return status, None
-
-    def nut_set_timeout(self, timeout: int) -> tuple[int, None]:
+    def nut_timeout_ms(self, timeout: int) -> tuple[int, None]:
         """
         Set nut timeout.
 
@@ -701,27 +449,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">I", timeout)
-        self._logger.debug(f"cracker_nut_timeout payload: {payload.hex()}")
+        self._logger.debug(f"nut_timeout_ms payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_TIMEOUT, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.nut_timeout = timeout
-
-        return status, None
-
-    def set_clock_nut_divisor(self, div: int) -> tuple[int, None]:
-        """
-        Set nut divisor.
-
-        :param div: Nut divisor.
-        :type div: int
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        payload = struct.pack(">B", div)
-        self._logger.debug(f"set_clock_nut_divisor payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_CLOCK_NUT_DIVISOR, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_clock_divisor = div
 
         return status, None
 
@@ -1244,167 +975,3 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = None
         self._logger.debug(f"cracker_uart_receive_fifo_dump payload: {payload}")
         return self.send_with_command(protocol.Command.CRACKER_UART_CRACKER_UART_RECEIVE_CLEAR)
-
-    def cracker_serial_baud(self, baud: int) -> tuple[int, bytes | None]:
-        payload = struct.pack(">I", baud)
-        self._logger.debug(f"cracker_serial_baud payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.CRACKER_SERIAL_BAUD, payload=payload)
-        if status != protocol.STATUS_OK:
-            return status, None
-        else:
-            return status, res
-
-    def cracker_serial_width(self, width: int) -> tuple[int, bytes | None]:
-        payload = struct.pack(">B", width)
-        self._logger.debug(f"cracker_serial_width payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.CRACKER_SERIAL_WIDTH, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return status, None
-        else:
-            return status, res
-
-    def cracker_serial_stop(self, stop: int) -> tuple[int, bytes | None]:
-        payload = struct.pack(">B", stop)
-        self._logger.debug(f"cracker_serial_stop payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.CRACKER_SERIAL_STOP, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return status, None
-        else:
-            return status, res
-
-    def cracker_serial_odd_eve(self, odd_eve: int) -> tuple[int, bytes | None]:
-        payload = struct.pack(">B", odd_eve)
-        self._logger.debug(f"cracker_serial_odd_eve payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.CRACKER_SERIAL_ODD_EVE, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return status, None
-        else:
-            return status, res
-
-    def cracker_serial_data(self, expect_len: int, data: bytes | str) -> tuple[int, bytes | None]:
-        if isinstance(data, str):
-            data = bytes.fromhex(data)
-        payload = struct.pack(">I", expect_len)
-        payload += data
-        self._logger.debug(f"cracker_serial_data payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.CRACKER_SERIAL_DATA, payload=payload)
-        if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
-            return status, None
-        else:
-            return status, res
-
-    # def cracker_spi_cpol(self, cpol: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", cpol)
-    #     self._logger.debug(f"cracker_spi_cpol payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CPOL, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_spi_cpha(self, cpha: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", cpha)
-    #     self._logger.debug(f"cracker_spi_cpha payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CPHA, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_spi_data_len(self, length: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", length)
-    #     self._logger.debug(f"cracker_spi_data_len payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_SPI_DATA_LEN, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_spi_freq(self, freq: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", freq)
-    #     self._logger.debug(f"cracker_spi_freq payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_SPI_FREQ, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_spi_timeout(self, timeout: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", timeout)
-    #     self._logger.debug(f"cracker_spi_timeout payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_SPI_TIMEOUT, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_i2c_freq(self, freq: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", freq)
-    #     self._logger.debug(f"cracker_i2c_freq payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_I2C_FREQ, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_i2c_timeout(self, timeout: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", timeout)
-    #     self._logger.debug(f"cracker_i2c_timeout payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_I2C_TIMEOUT, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_i2c_data(self, expect_len: int, data: bytes) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">I", expect_len)
-    #     payload += data
-    #     self._logger.debug(f"cracker_i2c_data payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_I2C_TRANSCEIVE, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_can_freq(self, freq: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", freq)
-    #     self._logger.debug(f"cracker_can_freq payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_CAN_FREQ, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_can_timeout(self, timeout: int) -> tuple[int, bytes | None]:
-    #     payload = struct.pack(">B", timeout)
-    #     self._logger.debug(f"cracker_can_timeout payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_CAN_TIMEOUT, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return status, None
-    #     else:
-    #         return status, res
-    #
-    # def cracker_can_data(self, expect_len: int, data: bytes):
-    #     payload = struct.pack(">I", expect_len)
-    #     payload += data
-    #     self._logger.debug(f"cracker_can_data payload: {payload.hex()}")
-    #     status, res = self.send_with_command(protocol.Command.CRACKER_CA_DATA, payload=payload)
-    #     if status != protocol.STATUS_OK:
-    #         self._logger.error(f"Receive status code error [{status}]")
-    #         return None
-    #     else:
-    #         return res

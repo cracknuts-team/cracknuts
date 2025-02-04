@@ -140,12 +140,12 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_enable")
     @observe_interceptor
     def nut_enable_change(self, change):
-        self.cracker.nut_set_enable(1 if change.get("new") else 0)
+        self.cracker._nut_set_enable(1 if change.get("new") else 0)
 
     @traitlets.observe("nut_voltage")
     @observe_interceptor
     def nut_voltage_change(self, change):
-        self.cracker.nut_set_voltage(change.get("new"))
+        self.cracker.nut_voltage_mv(change.get("new"))
 
     @traitlets.observe("nut_clock_enable")
     @observe_interceptor
@@ -160,22 +160,22 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("osc_sample_phase")
     @observe_interceptor
     def osc_sample_phase_change(self, change):
-        self.cracker.osc_set_sample_phase(int(change.get("new")))
+        self.cracker.osc_sample_clock_phase(int(change.get("new")))
 
     @traitlets.observe("osc_sample_len")
     @observe_interceptor
     def osc_sample_len_change(self, change):
-        self.cracker.osc_set_sample_len(int(change.get("new")))
+        self.cracker.osc_sample_len(int(change.get("new")))
 
     @traitlets.observe("osc_sample_delay")
     @observe_interceptor
     def osc_sample_delay_change(self, change):
-        self.cracker.osc_set_sample_delay(int(change.get("new")))
+        self.cracker.osc_sample_delay(int(change.get("new")))
 
     @traitlets.observe("osc_sample_rate")
     @observe_interceptor
     def osc_sample_rate_change(self, change):
-        self.cracker.osc_set_sample_rate(int(change.get("new")))
+        self.cracker.osc_sample_clock_rate(int(change.get("new")))
 
     @traitlets.observe("osc_analog_channel_a_enable")
     @observe_interceptor
@@ -190,22 +190,22 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("osc_trigger_source")
     @observe_interceptor
     def osc_set_trigger_source(self, change):
-        self.cracker.osc_set_analog_trigger_source(change.get("new"))
+        self.cracker.osc_trigger_source(change.get("new"))
 
     @traitlets.observe("osc_trigger_mode")
     @observe_interceptor
     def osc_set_trigger_mode(self, change):
-        self.cracker.osc_set_trigger_mode(change.get("new"))
+        self.cracker.osc_trigger_mode(change.get("new"))
 
     @traitlets.observe("osc_trigger_edge")
     @observe_interceptor
     def osc_set_trigger_edge(self, change):
-        self.cracker.osc_set_trigger_edge(change.get("new"))
+        self.cracker.osc_trigger_edge(change.get("new"))
 
     @traitlets.observe("osc_trigger_edge_level")
     @observe_interceptor
     def osc_set_trigger_edge_level(self, change):
-        self.cracker.osc_set_trigger_edge_level(change.get("new"))
+        self.cracker.osc_trigger_level(change.get("new"))
 
     @traitlets.observe("osc_analog_channel_a_gain", "osc_analog_channel_b_gain")
     @observe_interceptor
@@ -217,4 +217,4 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         elif name == "osc_analog_channel_b_gain":
             channel = 2
         if channel is not None:
-            self.cracker.osc_set_analog_gain(channel, change.get("new"))
+            self.cracker.osc_analog_gain(channel, change.get("new"))
