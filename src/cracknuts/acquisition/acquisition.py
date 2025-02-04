@@ -536,10 +536,10 @@ class Acquisition(abc.ABC):
 
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None and self._last_wave is not None:
-                if 1 in self._last_wave.keys():
-                    dataset.set_trace("1", trace_index, self._last_wave[1], np.frombuffer(data, dtype=np.uint8))
-                elif 2 in self._last_wave.keys():
-                    dataset.set_trace("2", trace_index, self._last_wave[2], np.frombuffer(data, dtype=np.uint8))
+                for k in self._last_wave.keys():
+                    if data is not None and isinstance(data, bytes):
+                        data = np.frombuffer(data, dtype=np.uint8)
+                    dataset.set_trace(str(k), trace_index, self._last_wave[k], data)
             self._post_do()
             trace_index += 1
             self._current_trace_count = trace_index

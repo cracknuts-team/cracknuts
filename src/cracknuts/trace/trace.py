@@ -208,8 +208,8 @@ class ScarrTraceDataset(TraceDataset):
                 )
             self._create_time = int(time.time())
             group_root = self._zarr_data.create_group(self._GROUP_ROOT_PATH)
-            for name in self._channel_names:
-                channel_group = group_root.create_group(name)
+            for i, _ in enumerate(self._channel_names):
+                channel_group = group_root.create_group(str(i))
                 channel_group.create(
                     self._ARRAY_TRACES_PATH,
                     shape=(self._trace_count, self._sample_count),
@@ -287,25 +287,28 @@ class ScarrTraceDataset(TraceDataset):
             raise ValueError("channel index out range")
         if trace_index not in range(0, self._trace_count):
             raise ValueError("trace, index out of range")
-        self._get_under_root(channel_name, self._ARRAY_TRACES_PATH)[trace_index] = trace
+        channel_index = self._channel_names.index(channel_name)
+        self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
         if self._data_length != 0 and data is not None:
-            self._get_under_root(channel_name, self._ARRAY_DATA_PATH)[trace_index] = data
+            self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[trace_index] = data
 
     def get_origin_data(self) -> zarr.hierarchy.Group:
         return self._zarr_data
 
     def get_trace_by_indexes(self, channel_name: str, *trace_indexes: int) -> tuple[np.ndarray, np.ndarray] | None:
+        channel_index = self._channel_names.index(channel_name)
         return (
-            self._get_under_root(channel_name, self._ARRAY_TRACES_PATH)[[i for i in trace_indexes]],
-            self._get_under_root(channel_name, self._ARRAY_DATA_PATH)[[i for i in trace_indexes]],
+            self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[[i for i in trace_indexes]],
+            self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[[i for i in trace_indexes]],
         )
 
     def get_trace_by_range(
         self, channel_name: str, index_start: int, index_end: int
     ) -> tuple[np.ndarray, np.ndarray] | None:
+        channel_index = self._channel_names.index(channel_name)
         return (
-            self._get_under_root(channel_name, self._ARRAY_TRACES_PATH)[index_start:index_end],
-            self._get_under_root(channel_name, self._ARRAY_DATA_PATH)[index_start:index_end],
+            self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[index_start:index_end],
+            self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[index_start:index_end],
         )
 
     def _get_under_root(self, *paths: typing.Any):
@@ -322,9 +325,8 @@ class ScarrTraceDataset(TraceDataset):
             trace_slice = slice(trace_slice, trace_slice + 1)
 
         for channel_index in channel_indexes:
-            channel_name = self._channel_names[channel_index]
-            traces.append(self._get_under_root(channel_name, self._ARRAY_TRACES_PATH)[trace_slice])
-            data.append(self._get_under_root(channel_name, self._ARRAY_DATA_PATH)[trace_slice])
+            traces.append(self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_slice])
+            data.append(self._get_under_root(channel_index, self._ARRAY_DATA_PATH)[trace_slice])
 
         return channel_indexes, trace_indexes, np.array(traces), np.array(data)
 
