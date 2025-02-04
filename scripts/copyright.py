@@ -55,7 +55,7 @@ def check_copyright(files: list[str]):
 
     files_without_copyright = []
 
-    skip_dirs = ["bin", "node_modules", "scripts", "docs"]
+    skip_dirs = ["tests", "node_modules", "scripts", "docs"]
 
     for file in files:
         if file.endswith(".py"):
