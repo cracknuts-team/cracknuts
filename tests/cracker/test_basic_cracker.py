@@ -51,7 +51,7 @@ def test_scrat_analog_bias_voltage():
 
 
 def test_scrat_analog_gain():
-    assert basic_device.osc_set_analog_gain(1) is None
+    assert basic_device.osc_analog_gain(1) is None
 
 
 def test_scrat_digital_channel_enable():
@@ -63,11 +63,11 @@ def test_scrat_digital_voltage():
 
 
 def test_scrat_trigger_mode():
-    assert basic_device.osc_set_trigger_mode(1, 1) is None
+    assert basic_device.osc_trigger_mode(1, 1) is None
 
 
 def test_scrat_analog_trigger_source():
-    assert basic_device.osc_set_analog_trigger_source(1) is None
+    assert basic_device.osc_trigger_source(1) is None
 
 
 def test_scrat_digital_trigger_source():
@@ -80,13 +80,13 @@ def test_scrat_analog_trigger_voltage():
 
 # Commands.OSC_SAMPLE_DELAY
 def test_scrat_trigger_delay():
-    status, res = basic_device.osc_set_sample_delay(1)
+    status, res = basic_device.osc_sample_delay(1)
     assert status is protocol.STATUS_OK and res is None
 
 
 # cracknuts.cracker.cracker.Commands.OSC_SAMPLE_LENGTH
 def test_scrat_sample_len():
-    status, res = basic_device.osc_set_sample_len(1)
+    status, res = basic_device.osc_sample_len(1)
     assert status is protocol.STATUS_OK and res is None
 
 
@@ -246,7 +246,7 @@ def test_multiple_echo():
 
 
 def test_write_register():
-    basic_device.cracker_write_register(0x43c00000,0x200, 0x2705)
+    basic_device.register_write(0x43c00000, 0x200, 0x2705)
 
 
 if __name__ == '__main__':

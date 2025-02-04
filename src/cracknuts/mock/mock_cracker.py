@@ -202,3 +202,7 @@ class MockCracker:
     @_handler(protocol.Command.CRACKER_SERIAL_DATA)
     def cracker_serial_data(self, payload: bytes) -> bytes:
         return os.urandom(10)
+
+    @_handler(protocol.Command.NUT_CLOCK_ENABLE)
+    def nut_clock_enable(self, payload: bytes) -> bytes:
+        return b""
