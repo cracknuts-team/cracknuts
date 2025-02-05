@@ -357,10 +357,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def nut_clock_disable(self) -> tuple[int, None]:
+    def nut_voltage_disable(self) -> tuple[int, None]:
         return self._nut_set_enable(False)
 
-    def nut_clock_enable(self) -> tuple[int, None]:
+    def nut_voltage_enable(self) -> tuple[int, None]:
         return self._nut_set_enable(True)
 
     def _nut_set_enable(self, enable: int | bool) -> tuple[int, None]:
@@ -398,6 +398,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_voltage = voltage
 
         return status, None
+
+    def nut_clock_disable(self) -> tuple[int, None]:
+        return self.nut_set_clock_enable(False)
+
+    def nut_clock_enable(self) -> tuple[int, None]:
+        return self.nut_set_clock_enable(True)
 
     def nut_set_clock_enable(self, enable: bool) -> tuple[int, None]:
         payload = struct.pack(">?", enable)
