@@ -140,7 +140,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_enable")
     @observe_interceptor
     def nut_enable_change(self, change):
-        self.cracker._nut_set_enable(1 if change.get("new") else 0)
+        self.cracker.nut_voltage_enable() if bool(change.get("new")) else self.cracker.nut_voltage_disable()
 
     @traitlets.observe("nut_voltage")
     @observe_interceptor
@@ -150,12 +150,12 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_clock_enable")
     @observe_interceptor
     def nut_clock_enable_change(self, change):
-        self.cracker.nut_set_clock_enable(bool(change.get("new")))
+        self.cracker.nut_clock_enable() if bool(change.get("new")) else self.cracker.nut_clock_disable()
 
     @traitlets.observe("nut_clock")
     @observe_interceptor
     def nut_clock_change(self, change):
-        self.cracker.nut_set_clock(int(change.get("new")))
+        self.cracker.nut_clock_freq(int(change.get("new")))
 
     @traitlets.observe("osc_sample_phase")
     @observe_interceptor
