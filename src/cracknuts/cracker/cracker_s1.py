@@ -462,7 +462,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def spi_enable(self, enable: bool):
+    def spi_enable(self) -> tuple[int, None]:
+        return self._spi_enable(True)
+
+    def spi_disable(self) -> tuple[int, None]:
+        return self._spi_enable(False)
+
+    def _spi_enable(self, enable: bool):
         """
         Enable the SPI.
 
@@ -633,7 +639,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._spi_transceive(tx_data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
 
-    def i2c_enable(self, enable: bool):
+    def i2c_enable(self) -> tuple[int, None]:
+        return self._i2c_enable(True)
+
+    def i2c_disable(self) -> tuple[int, None]:
+        return self._i2c_enable(False)
+
+    def _i2c_enable(self, enable: bool):
         """
         Enable the I2C.
 
@@ -861,7 +873,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             is_trigger=is_trigger,
         )
 
-    def uart_enable(self, enable: bool) -> tuple[int, None]:
+    def uart_enable(self) -> tuple[int, None]:
+        return self._uart_enable(True)
+
+    def uart_disable(self) -> tuple[int, None]:
+        return self._uart_enable(False)
+
+    def _uart_enable(self, enable: bool) -> tuple[int, None]:
         """
         Enable the uart.
 
