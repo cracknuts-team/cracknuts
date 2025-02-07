@@ -434,7 +434,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             elif clock == "4M":
                 clock = 4000
             else:
-                self._logger.error(f"Unknown clock type: {clock}, 24M or 12M or 6M or 4M")
+                self._logger.error(f"Unknown clock type: {clock}, 24M or 12M or 8M or 4M")
                 return protocol.STATUS_ERROR, None
 
         payload = struct.pack(">I", clock)
