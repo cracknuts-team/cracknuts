@@ -244,7 +244,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        payload = struct.pack(">H", edge_level)
+        payload = struct.pack(">h", edge_level)
         self._logger.debug(f"osc_trigger_level payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE_LEVEL, payload=payload)
         if status == protocol.STATUS_OK:
