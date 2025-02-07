@@ -8,7 +8,7 @@ import {FormattedMessage, useIntl} from "react-intl";
 interface CrackS1PanelProps {
   hasAcquisition?: boolean;
   connectStatusChanged?: (connected: boolean) => void;
-  languageChanged: (language: string) => void;
+  languageChanged?: (language: string) => void;
 }
 
 const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, connectStatusChanged = undefined, languageChanged = undefined}) => {
@@ -302,6 +302,42 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                   <Row>
                     <Col span={24}>
                       <Form layout="inline">
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.sampleRate"})}>
+                          <Space.Compact>
+                            <Select
+                              size={"small"}
+                              options={[
+                                {value: 65000, label: "65 M"},
+                                {value: 48000, label: "48 M"},
+                                {value: 24000, label: "24 M"},
+                                {value: 12000, label: "12 M"},
+                                {value: 8000, label: "8  M"},
+                                {value: 4000, label: "4  M"},
+                              ]}
+                              value={oscSampleRate}
+                              onChange={setOscSampleRate}
+                              style={{width: 80}}
+                            ></Select>
+                            <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}
+                                  size={"small"}>Hz</Button>
+                          </Space.Compact>
+                        </Form.Item>
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.samplePhase"})}>
+                          <InputNumber
+                            addonAfter="°"
+                            style={{width: 100}}
+                            step="1"
+                            stringMode
+                            size={"small"}
+                            min={0}
+                            max={360}
+                            value={oscSamplePhase}
+                            onChange={(v) => {
+                              setOscSamplePhase(Number(v));
+                            }}
+                            changeOnWheel
+                          />
+                        </Form.Item>
                         <Form.Item>
                           <Space.Compact>
                             <Form.Item>
@@ -400,48 +436,19 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                   <Row>
                     <Col>
                       <Form layout={"inline"}>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.sampleRate"})}>
-                          <Space.Compact>
-                            <Select
-                              size={"small"}
-                              options={[
-                                {value: 65000, label: "65 M"},
-                                {value: 48000, label: "48 M"},
-                                {value: 24000, label: "24 M"},
-                                {value: 12000, label: "12 M"},
-                                {value: 8000, label: "8  M"},
-                                {value: 4000, label: "4  M"},
-                              ]}
-                              value={oscSampleRate}
-                              onChange={setOscSampleRate}
-                              style={{width: 80}}
-                            ></Select>
-                            <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}
-                                  size={"small"}>Hz</Button>
-                        </Space.Compact>
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.samplePhase"})}>
-                          <InputNumber
-                            addonAfter="°"
-                            style={{width: 100}}
-                            step="1"
-                            stringMode
+                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerMode"})}>
+                          <Select
                             size={"small"}
-                            min={0}
-                            max={360}
-                            value={oscSamplePhase}
-                            onChange={(v) => {
-                              setOscSamplePhase(Number(v));
-                            }}
-                            changeOnWheel
+                            defaultValue={0}
+                            options={[
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerMode.edge"}), value: 0},
+                              {label: intl.formatMessage({id: "cracker.config.scope.triggerMode.waveform"}), value: 1},
+                            ]}
+                            style={{width: 100}}
+                            value={oscTriggerMode}
+                            onChange={setOscTriggerMode}
                           />
                         </Form.Item>
-                      </Form>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col>
-                      <Form layout={"inline"}>
                         <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerSource"})}>
                           <Select
                             size={"small"}
@@ -455,19 +462,6 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             style={{width: 110}}
                             value={oscTriggerSource}
                             onChange={setOscTriggerSource}
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerMode"})}>
-                          <Select
-                            size={"small"}
-                            defaultValue={0}
-                            options={[
-                              {label: intl.formatMessage({id: "cracker.config.scope.triggerMode.edge"}), value: 0},
-                              {label: intl.formatMessage({id: "cracker.config.scope.triggerMode.waveform"}), value: 1},
-                            ]}
-                            style={{width: 100}}
-                            value={oscTriggerMode}
-                            onChange={setOscTriggerMode}
                           />
                         </Form.Item>
                         <Form.Item label={intl.formatMessage({id: "cracker.config.scope.triggerEdge"})}>
