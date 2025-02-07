@@ -42,8 +42,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         config = self.get_current_config()
         self._nut_set_enable(config.nut_enable)
         self.nut_voltage_mv(config.nut_voltage)
-        self.nut_set_clock_enable(config.nut_clock_enable)
-        self.nut_set_clock(config.nut_clock)
+        self._nut_set_clock_enable(config.nut_clock_enable)
+        self.nut_clock_freq(config.nut_clock)
         for k, v in config.osc_analog_channel_enable.items():
             self.osc_set_analog_channel_enable(k, v)
             self.osc_analog_gain(k, config.osc_analog_gain.get(k, False))
@@ -400,12 +400,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return status, None
 
     def nut_clock_disable(self) -> tuple[int, None]:
-        return self.nut_set_clock_enable(False)
+        return self._nut_set_clock_enable(False)
 
     def nut_clock_enable(self) -> tuple[int, None]:
-        return self.nut_set_clock_enable(True)
+        return self._nut_set_clock_enable(True)
 
-    def nut_set_clock_enable(self, enable: bool) -> tuple[int, None]:
+    def _nut_set_clock_enable(self, enable: bool) -> tuple[int, None]:
         payload = struct.pack(">?", enable)
         self._logger.debug(f"nut_set_clock_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK_ENABLE, payload=payload)
@@ -414,7 +414,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def nut_set_clock(self, clock: int | str) -> tuple[int, None]:
+    def nut_clock_freq(self, clock: int | str) -> tuple[int, None]:
         """
         Set nut clock.
 
