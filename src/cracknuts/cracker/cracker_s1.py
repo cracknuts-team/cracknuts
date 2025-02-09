@@ -358,9 +358,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return status, None
 
     def nut_voltage_disable(self) -> tuple[int, None]:
+        """
+        Disable the nut voltage.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._nut_set_enable(False)
 
     def nut_voltage_enable(self) -> tuple[int, None]:
+        """
+        Enable the nut voltage.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._nut_set_enable(True)
 
     def _nut_set_enable(self, enable: int | bool) -> tuple[int, None]:
@@ -400,9 +412,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return status, None
 
     def nut_clock_disable(self) -> tuple[int, None]:
+        """
+        Disable the nut clock.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._nut_set_clock_enable(False)
 
     def nut_clock_enable(self) -> tuple[int, None]:
+        """
+        Enable the nut clock.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._nut_set_clock_enable(True)
 
     def _nut_set_clock_enable(self, enable: bool) -> tuple[int, None]:
@@ -463,9 +487,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return status, None
 
     def spi_enable(self) -> tuple[int, None]:
+        """
+        Enable the SPI
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._spi_enable(True)
 
     def spi_disable(self) -> tuple[int, None]:
+        """
+        Disable the SPI
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._spi_enable(False)
 
     def _spi_enable(self, enable: bool):
@@ -640,9 +676,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return self._spi_transceive(tx_data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
 
     def i2c_enable(self) -> tuple[int, None]:
+        """
+        Enable the I2C
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._i2c_enable(True)
 
     def i2c_disable(self) -> tuple[int, None]:
+        """
+        Disable the I2C
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._i2c_enable(False)
 
     def _i2c_enable(self, enable: bool):
@@ -874,9 +922,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         )
 
     def uart_enable(self) -> tuple[int, None]:
+        """
+        Enable the UART.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._uart_enable(True)
 
     def uart_disable(self) -> tuple[int, None]:
+        """
+        Disable the UART.
+
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
         return self._uart_enable(False)
 
     def _uart_enable(self, enable: bool) -> tuple[int, None]:
