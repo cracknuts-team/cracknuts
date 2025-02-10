@@ -58,8 +58,13 @@ def new_acquisition(
     cracker: CrackerBasic,
     init: Callable[[CrackerBasic], None] | None = None,
     do: Callable[[CrackerBasic], None] | None = None,
+    sample_length: int | None = None,
+    data_length: int | None = None,
+    **acq_kwargs,
 ) -> Acquisition:
-    return AcquisitionBuilder().cracker(cracker).init(init).do(do).build()
+    acq_kwargs["sample_length"] = sample_length
+    acq_kwargs["data_length"] = data_length
+    return AcquisitionBuilder().cracker(cracker).init(init).do(do).build(**acq_kwargs)
 
 
 if display is not None:
