@@ -126,7 +126,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
     },
   };
 
-  const [language, setLanguage] = useState('中');
+  const lMap: Record<string, string> = {
+    'en': 'En',
+    'zh': '中'
+  }
+  const [language, setLanguage] = useState(lMap[intl.locale]);
   const changeLanguage = () => {
     let languageCode;
     if (language == '中') {
