@@ -445,8 +445,9 @@ class Acquisition(abc.ABC):
 
         cracker_version = self.cracker.get_version()
         if persistent:
-            channel_names = [str(k) for k in self.cracker.get_current_config().osc_analog_channel_enable.keys()]
-            print(channel_names)
+            channel_names = [
+                str(k) for k, v in self.cracker.get_current_config().osc_analog_channel_enable.items() if v
+            ]
             if self.sample_length == -1:
                 sample_length = self.cracker.get_current_config().osc_sample_len
             else:
