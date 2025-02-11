@@ -13,7 +13,7 @@ const render = createRender(() => {
 
     const [crackerModel] = useModelState<string>("cracker_model");
 
-    const [language, _setLanguage] = useState('zh');
+    const [language, _setLanguage] = useModelState<string>("language");
     const [antLanguage, setAntLanguage] = useState(zhCN);
     const messageMap: Record<string, any> = {
         'zh': zh,
