@@ -21,6 +21,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
     _css = ""
 
     cracker_model = traitlets.Unicode("s1").tag(sync=True)
+    language = traitlets.Unicode("en").tag(sync=True)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if "acquisition" not in kwargs:
@@ -57,11 +58,12 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         self.cracker.load_config_from_str(config_info)
         self.cracker.set_uri(connection_info)
         self.acquisition.load_config_from_str(acquisition_info)
+        self.language = args.get("language")
         self.sync_config()
         self.send({"loadConfigCompleted": True})
 
     def save_config_button_click(self, args: dict[str, typing.Any]):
-        current_config_path = self._get_current_config_path()
+        current_config_path = self._get_workspace_config_path()
         with open(current_config_path, "w") as f:
             f.write(self._dump_config())
 
@@ -71,6 +73,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                 "connection": self.cracker.get_uri(),
                 "config": self.cracker.dump_config(),
                 "acquisition": self.acquisition.dump_config(),
+                "language": self.language,
             }
         )
 
@@ -78,26 +81,32 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         """
         Load the workspace configuration if it exists.
         """
-        current_config_path = self._get_current_config_path()
+        config = self._get_workspace_config()
 
+        if config is not None:
+            connection_info = config.get("connection")
+            config_info = config.get("config")
+            acquisition_info = config.get("acquisition")
+            self.language = config.get("language")
+            self.cracker.load_config_from_str(config_info)
+            self.cracker.set_uri(connection_info)
+            self.acquisition.load_config_from_str(acquisition_info)
+        else:
+            self._logger.debug("Current config path is None or is no exist, current config will be ignored.")
+
+    def _get_workspace_config(self):
+        current_config_path = self._get_workspace_config_path()
         if current_config_path is not None and os.path.exists(current_config_path):
             with open(current_config_path) as f:
                 try:
                     config = json.load(f)
+                    return config
                 except json.JSONDecodeError as e:
                     self._logger.error(f"Load workspace config file failed: {e.args}")
-                    return
-                connection_info = config.get("connection")
-                config_info = config.get("config")
-                acquisition_info = config.get("acquisition")
-                self.cracker.load_config_from_str(config_info)
-                self.cracker.set_uri(connection_info)
-                self.acquisition.load_config_from_str(acquisition_info)
-        else:
-            self._logger.debug("Current config path is None or is no exist, current config will be ignored.")
+                    return None
 
     @staticmethod
-    def _get_current_config_path():
+    def _get_workspace_config_path():
         global_vars = sys.modules["__main__"].__dict__
 
         ipynb_path = None
@@ -109,3 +118,12 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
         if ipynb_path is not None:
             return os.path.join(os.path.dirname(ipynb_path), "." + os.path.basename(ipynb_path)[:-6] + ".cncfg")
+
+    @traitlets.observe("language")
+    def on_language_change(self, change):
+        config = self._get_workspace_config()
+        if config is not None:
+            config["language"] = change["new"]
+            current_config_path = self._get_workspace_config_path()
+            with open(current_config_path, "w") as f:
+                f.write(json.dumps(config))
