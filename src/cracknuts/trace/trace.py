@@ -121,6 +121,10 @@ class TraceDataset(abc.ABC):
         return self._channel_names
 
     @property
+    def channel_count(self):
+        return self._channel_count
+
+    @property
     def trace_count(self):
         return self._trace_count
 
@@ -475,7 +479,7 @@ class NumpyTraceDataset(TraceDataset):
 
         channel_names = []
         for i in range(channel_count):
-            channel_names.append(str(i + 1))  # The default channel name starts from 1.
+            channel_names.append(str(i))
 
         ds = cls(
             create_empty=True,
@@ -539,8 +543,11 @@ class NumpyTraceDataset(TraceDataset):
             np.save(self._npy_data_path, self._data_array)
             self._dump_metadata()
 
-    def set_trace(self, channel_name: str, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
-        channel_index = self._channel_names.index(channel_name)
+    def set_trace(self, channel_name: str | int, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
+        if isinstance(channel_name, int):
+            channel_index = channel_name
+        else:
+            channel_index = self._channel_names.index(channel_name)
         self._trace_array[channel_index, trace_index, :] = trace
         if self._data_length != 0 and data is not None:
             self._data_array[channel_index, trace_index, :] = data
