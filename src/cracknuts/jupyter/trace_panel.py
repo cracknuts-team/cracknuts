@@ -14,7 +14,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
     _css = ""
 
-    trace_series_list: list[dict] = traitlets.List([]).tag(sync=True)
+    trace_series_list: list[dict] = traitlets.List([])
 
     _DEFAULT_SHOW_INDEX_THRESHOLD = 3
 
@@ -23,11 +23,19 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._emphasis = kwargs.get("emphasis", False)
         self._trace_dataset: TraceDataset | None = None
         self.show_trace: ShowTrace = ShowTrace(self._show_trace)
+        self._auto_sync = False
+
+    def _repr_mimebundle_(self, **kwargs: dict) -> tuple[dict, dict] | None:
+        self.send_state("trace_series_list")
+        self._auto_sync = True
+        return super()._repr_mimebundle_(**kwargs)
 
     def set_emphasis(self, value: bool) -> None:
         if self._emphasis != value:
             self._emphasis = value
             self.trace_series_list = [{**series, "emphasis": not value} for series in self.trace_series_list]
+            if self._auto_sync:
+                self.send_state("trace_series_list")
 
     def set_numpy_data(self, trace: np.ndarray, data: np.ndarray = None) -> None:
         ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
@@ -48,6 +56,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                     }
                 )
         self.trace_series_list = trace_series_list
+        if self._auto_sync:
+            self.send_state("trace_series_list")
 
     def show_default_trace(self):
         trace_count = self._trace_dataset.trace_count
@@ -60,16 +70,17 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         )
 
     def show_all_trace(self):
-        channel_count = self._trace_dataset.channel_names
-        trace_count = self._trace_dataset.trace_count
-        self._show_trace(slice(0, channel_count), slice(0, trace_count))
+        self._show_trace(slice(0, self._trace_dataset.channel_count), slice(0, self._trace_dataset.trace_count))
 
     def highlight(self, *indexes: int) -> None:
         self._emphasis = False
-        self.trace_series_list = [
-            {**series, "emphasis": True, "color": "red" if i in indexes else "gray"}
+        x = [
+            {**series, "emphasis": True, "color": "red" if i in indexes else "gray", "z": 100 if i in indexes else 1}
             for i, series in enumerate(self.trace_series_list)
         ]
+        self.trace_series_list = x
+        if self._auto_sync:
+            self.send_state("trace_series_list")
 
     def set_numpy_data_highlight(self, trace: np.ndarray, data: np.ndarray = None, highlight_indexes=None):
         if highlight_indexes is None:
@@ -96,10 +107,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                         "data": trace[t],
                         "emphasis": not self._emphasis,
                         "color": "red",
-                        "z": 10,
+                        "z": 100,
                     }
                 )
         self.trace_series_list = trace_series_list
+        if self._auto_sync:
+            self.send_state("trace_series_list")
 
     def set_trace_dataset(
         self, trace_dataset: TraceDataset, show_all_trace=False, channel_slice=None, trace_slice=None

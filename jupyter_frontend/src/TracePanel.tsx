@@ -8,6 +8,7 @@ interface TraceSeries {
     emphasis: boolean;
     data: Array<number>;
     index: Array<number>;
+    z: number;
 }
 
 const TracePanel: React.FC = () => {
@@ -39,6 +40,7 @@ const TracePanel: React.FC = () => {
                     disabled: traceSeries.emphasis,
                     focus: "series",
                 },
+                z: traceSeries.z
             });
         });
 
