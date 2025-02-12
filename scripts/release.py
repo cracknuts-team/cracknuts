@@ -6,11 +6,11 @@ import subprocess
 import sys
 
 
-def update_version(file_path, bump_type, is_alpha):
+def get_next_version(file_path, bump_type, is_alpha):
     with open(file_path) as file:
         content = file.read()
 
-    match = re.search(r'__version__\s*=\s*"([0-9]+)\.([0-9]+)\.([0-9]+)(?:-alpha\.([0-9]))?"', content)
+    match = re.search(r'__version__\s*=\s*"(\d+)\.(\d+)\.(\d+)(?:(a|b|rc)\.(\d+))?"', content)
 
     if not match:
         print("Error: Could not find version in the file.")
@@ -52,14 +52,18 @@ def update_version(file_path, bump_type, is_alpha):
     else:
         new_version = f"{major}.{minor}.{patch}"
 
-    new_content = re.sub(
-        r'__version__\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+(?:-alpha\.[0-9]+)?"', f'__version__ = "{new_version}"', content
-    )
-
-    with open(file_path, "w") as file:
-        file.write(new_content)
-
     return new_version
+
+
+def update_version(file_path, new_version):
+    with open(file_path, "r+") as file:
+        content = file.read()
+        new_content = re.sub(
+            r'__version__\s*=\s*"\d+\.\d+\.\d+(?:-alpha\.\d+)?"', f'__version__ = "{new_version}"', content
+        )
+        file.seek(0)
+        file.write(new_content)
+        file.truncate()
 
 
 def git_commit_and_tag(file_path, version, repo_root):
@@ -83,16 +87,15 @@ def main(args):
 
     root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    # 拼接目标文件的路径 (假设目标文件位于脚本同级的其他目录)
-    file_path = os.path.join(root_path, FILE_PATH)
+    file_path = os.path.join(root_path, "src/cracknuts/__init__.py")
 
-    # 判断是否为 alpha 版本
-    is_alpha = args[1] == "alpha" or (len(args) > 2 and args[2] == "alpha")
-    new_version = update_version(file_path, args[1], is_alpha)
-    git_commit_and_tag(file_path, new_version, root_path)
+    pr_release = ["a", "b", "rc"]
+    is_pre = args[1] in pr_release or (len(args) > 2 and args[2] in pr_release)
+    new_version = get_next_version(file_path, args[1], is_pre)
+    print(f"New version: {new_version}")
+    # update_version(file_path, new_version)
+    # git_commit_and_tag(file_path, new_version, root_path)
 
-
-FILE_PATH = "src/cracknuts/__init__.py"
 
 if __name__ == "__main__":
     main(sys.argv)
