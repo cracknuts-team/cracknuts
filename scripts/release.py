@@ -18,8 +18,6 @@ def get_next_version(file_path, version_level, next_pre_release):
         print("Error: Could not find version in the file.")
         sys.exit(1)
 
-    print(match.groups())
-
     major, minor, patch, pre_release, pre_release_no = (
         int(match.group(1)),
         int(match.group(2)),
@@ -183,9 +181,8 @@ def main(args):
         new_version = get_next_version(file_path, None, args[1])
     else:
         new_version = get_next_version(file_path, args[1], args[2] if len(args) == 3 else None)
-    # update_version(file_path, new_version)
-    # git_commit_and_tag(file_path, new_version, root_path)
-    print(new_version)
+    update_version(file_path, new_version)
+    git_commit_and_tag(file_path, new_version, root_path)
 
 
 if __name__ == "__main__":
