@@ -3,6 +3,7 @@
 import abc
 import datetime
 import json
+import os.path
 import threading
 import time
 import traceback
@@ -33,6 +34,8 @@ class Acquisition(abc.ABC):
 
     DO_ERROR_HANDLER_STRATEGY_EXIT: int = 0
     DO_ERROR_HANDLER_STRATEGY_CONTINUE_UNTIL_MAX_ERROR_COUNT: int = 1
+
+    _DATASET_DEFAULT_PATH = "./dataset/"
 
     def __init__(
         self,
@@ -92,6 +95,8 @@ class Acquisition(abc.ABC):
         self.do_error_handler_strategy: int = do_error_handler_strategy
         self.do_error_max_count: int = do_error_max_count  # -1 never exit
         self.file_format: str = file_format
+        if file_path is None or file_path == "auto":
+            file_path = os.path.abspath(self._DATASET_DEFAULT_PATH)
         self.file_path: str = file_path
 
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
@@ -454,11 +459,14 @@ class Acquisition(abc.ABC):
                 sample_length = self.sample_length
 
             if file_path is None or file_path == "auto":
-                file_path = "./dataset/" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-                if file_format == "scarr":
-                    file_path += ".zarr"
-                elif file_format == "numpy":
-                    file_path += ".npy"
+                file_path = self._DATASET_DEFAULT_PATH
+            if not file_path.endswith("/"):
+                file_path += "/"
+            file_path += datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            if file_format == "scarr":
+                file_path += ".zarr"
+            elif file_format == "numpy":
+                file_path += ".npy"
 
             if file_format == "scarr":
                 dataset = ScarrTraceDataset.new(
