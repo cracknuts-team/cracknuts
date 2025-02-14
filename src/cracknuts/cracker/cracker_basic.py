@@ -527,7 +527,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: None
         """
         with open(path) as f:
-            self.load_config_from_str("".join(f.readlines()))
+            content = f.readlines()
+            config_json = json.loads("".join(content))
+            if "config" in config_json:
+                content = config_json["config"]
+            self.load_config_from_str(content)
 
     def load_config_from_str(self, json_str: str) -> None:
         """
