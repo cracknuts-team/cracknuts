@@ -15,6 +15,7 @@ import urllib.request
 import cracknuts
 import cracknuts.mock as mock
 from cracknuts.cracker import protocol
+from cracknuts.utils import user_config
 
 
 @click.group(help="A library for cracker device.", context_settings=dict(max_content_width=120))
@@ -22,17 +23,42 @@ from cracknuts.cracker import protocol
 def main(): ...
 
 
+@main.group(name="config", help="Get and set cracknuts options.")
+def config(): ...
+
+
+@config.command(name="get", help="Get cracknuts options.")
+@click.argument("key")
+def config_get(key):
+    print(user_config.get_option(key))
+
+
+@config.command(name="set", help="Set cracknuts options.")
+@click.argument("key")
+@click.argument("value")
+def config_set(key, value):
+    user_config.set_option(key, value)
+
+
+@config.command(name="unset", help="Delete the cracknuts options.")
+@click.argument("key")
+def config_unset(key):
+    user_config.unset_option(key)
+
+
 @main.command(name="lab", help="Start jupyter lab")
-@click.option("--workspace", default=".", show_default=True, help="Working directory")
-def start_lab(workspace: str = "."):
+@click.option("--workspace", show_default=True, help="Working directory")
+def start_lab(workspace: str = None):
     _update_check()
+    if workspace is None:
+        workspace = user_config.get_option("lab.workspace")
     try:
         subprocess.run(["jupyter", "lab", "--notebook-dir", workspace], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Start Jupyter Lab failed: {e}")
 
 
-@main.command(name="tutorials", help="Start tutorials")
+@main.command(name="tutorials", help="Start tutorials.")
 def start_tutorials():
     tutorials_path = str(Path(sys.modules["cracknuts"].__file__).parent.joinpath("tutorials").as_posix())
     try:
