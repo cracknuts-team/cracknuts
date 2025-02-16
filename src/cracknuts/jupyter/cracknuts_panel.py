@@ -36,7 +36,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         else:
             raise ValueError(f"can't find panel for cracker type: {type(cracker)}.")
         super().__init__(*args, **kwargs)
-        self.language = user_config.get_language()
+        self.language = user_config.get_option("language", fallback="en")
         self._load_current_path_config()
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
         self.reg_msg_handler("loadConfigButton", "onClick", self.load_config_button_click)
@@ -120,4 +120,4 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     @traitlets.observe("language")
     def on_language_change(self, change):
-        user_config.set_language(change["new"])
+        user_config.set_option("language", change["new"])
