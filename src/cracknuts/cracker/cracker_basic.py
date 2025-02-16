@@ -90,16 +90,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
     The basic device class, provides support for the `CNP` protocol, configuration management, firmware maintenance,
     and other basic operations.
 
-    For firmware updates, in the `Cracker` architecture, the host computer will attempt to update the latest firmware
-    files from the following directories each time it connects to the device:
-
-    - The directory carried by the current package: <site-packages>/cracknuts/bin
-    - The user directory: ~/.cracknuts/bin
-    - The working directory: <work-directory>/.bin
-
-    Users can obtain the latest firmware by updating `cracknuts`. After downloading the latest firmware from the
-    official website, simply place it in the working directory or user directory.
-
     """
 
     def __init__(
