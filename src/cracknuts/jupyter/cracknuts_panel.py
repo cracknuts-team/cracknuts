@@ -14,6 +14,7 @@ from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
 from cracknuts.jupyter.cracker_s1_panel import CrackerS1PanelWidget
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.scope_panel import ScopePanelWidget
+from cracknuts.utils import user_config
 
 
 class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
@@ -35,6 +36,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         else:
             raise ValueError(f"can't find panel for cracker type: {type(cracker)}.")
         super().__init__(*args, **kwargs)
+        self.language = user_config.get_language()
         self._load_current_path_config()
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
         self.reg_msg_handler("loadConfigButton", "onClick", self.load_config_button_click)
@@ -58,7 +60,6 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         self.cracker.load_config_from_str(config_info)
         self.cracker.set_uri(connection_info)
         self.acquisition.load_config_from_str(acquisition_info)
-        self.language = args.get("language")
         self.sync_config()
         self.send({"loadConfigCompleted": True})
 
@@ -73,7 +74,6 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                 "connection": self.cracker.get_uri(),
                 "config": self.cracker.dump_config(),
                 "acquisition": self.acquisition.dump_config(),
-                "language": self.language,
             }
         )
 
@@ -87,7 +87,6 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             connection_info = config.get("connection")
             config_info = config.get("config")
             acquisition_info = config.get("acquisition")
-            self.language = config.get("language")
             self.cracker.load_config_from_str(config_info)
             self.cracker.set_uri(connection_info)
             self.acquisition.load_config_from_str(acquisition_info)
@@ -121,9 +120,4 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     @traitlets.observe("language")
     def on_language_change(self, change):
-        config = self._get_workspace_config()
-        if config is not None:
-            config["language"] = change["new"]
-            current_config_path = self._get_workspace_config_path()
-            with open(current_config_path, "w") as f:
-                f.write(json.dumps(config))
+        user_config.set_language(change["new"])
