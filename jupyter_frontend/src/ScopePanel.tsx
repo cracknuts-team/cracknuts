@@ -443,7 +443,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             </Space>
             <ReactEcharts option={option} ref={chartRef} onChartReady = {onChartReady}
                           style={{
-                              height: 550, marginTop: 5, padding: 8,
+                              height: 350, marginTop: 5, padding: 8,
                               borderRadius: 3,
                               boxShadow: "inset 2px 2px 10px rgba(0, 0, 0, 0.1), inset -2px -2px 10px rgba(0, 0, 0, 0.1)"
                           }}/>
