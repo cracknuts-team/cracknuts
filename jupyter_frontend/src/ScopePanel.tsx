@@ -181,7 +181,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         yAxis.push({
             type: "value",
             position: "left",
-            alignTicks: true,
+            // alignTicks: true,
             axisLine: {
                 show: true,
                 lineStyle: {
@@ -195,7 +195,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         yAxis.push({
             type: "value",
             position: "right",
-            alignTicks: true,
+            // alignTicks: true,
             axisLine: {
                 show: true,
                 lineStyle: {
