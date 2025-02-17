@@ -1,26 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-"""
-这是一个示例模块，展示了如何编写模块级别的文档字符串。
-
-这个模块提供了几个函数，用于处理文件和目录的操作。它展示了如何使用Python的标准库来完成常见的文件系统任务。
-
-Functions:
-- list_files(directory): 列出指定目录下的所有文件。
-- create_directory(path): 创建一个新的目录。
-- delete_directory(path): 删除一个目录及其内容。
-
-Dependencies:
-- os
-- sys
-
-Example Usage:
->>> import mymodule
->>> files = mymodule.list_files('/path/to/directory')
->>> print(files)
-['file1.txt', 'file2.txt']
-"""
-
 import logging
 from types import ModuleType
 
@@ -113,3 +92,26 @@ def get_logger(name: str | type | object | ModuleType, level: int | None = None)
 
 def default_logger() -> logging.Logger:
     return get_logger("cracknuts")
+
+
+def handler_to_file(log_path, logger=None):
+    handler = logging.FileHandler(log_path)
+    _update_logger_handler(handler, logger)
+
+
+def handler_to_stdout(logger=None):
+    handler = logging.StreamHandler()
+    _update_logger_handler(handler, logger)
+
+
+def _update_logger_handler(handler, logger=None):
+    loggers = []
+    if logger is None:
+        loggers.extend(_LOGGERS.values())
+    else:
+        logger.append(logger)
+
+    for _logger in loggers:
+        for _handler in _logger.handlers[:]:
+            _logger.removeHandler(_handler)
+        _logger.addHandler(handler)
