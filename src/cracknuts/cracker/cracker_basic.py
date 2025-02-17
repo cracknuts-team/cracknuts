@@ -111,6 +111,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :type bin_bitstream_path: str | None
         :param operator_port: The operator port to connect to.
         """
+        self._logger_debug_payload_max_length = 512
+        self._logger_info_payload_max_length = 16
         self._command_lock = threading.Lock()
         self._logger = logger.get_logger(self)
         self._socket: socket.socket | None = None
@@ -407,7 +409,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 self._logger.error("Cracker is not connected.")
                 return protocol.STATUS_ERROR, None
             if self._logger.isEnabledFor(logging.DEBUG):
-                self._logger.debug(f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(message)}")
+                self._logger.debug(
+                    f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(
+                        message, max_bytes_count=self._logger_info_payload_max_length
+                    )}"
+                )
             self._socket.sendall(message)
             resp_header = self._socket.recv(protocol.RES_HEADER_SIZE)
             if self._logger.isEnabledFor(logging.DEBUG):
@@ -455,7 +461,28 @@ class CrackerBasic(ABC, typing.Generic[T]):
     ) -> tuple[int, bytes | None]:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
-        return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
+        if self._logger.isEnabledFor(logging.INFO):
+            self._logger.info(
+                f"Send command [0x{command:04x}] with payload: "
+                f"{None if payload is None else hex_util.get_hex(
+                                  payload, self._logger_info_payload_max_length)}] "
+                f"to {self._server_address}"
+            )
+        status, payload = self.send_and_receive(protocol.build_send_message(command, rfu, payload))
+        if self._logger.isEnabledFor(logging.INFO):
+            self._logger.info(
+                f"Receive response for command: [0x{command:04x}] from {self._server_address}, "
+                f"status: {status}, payload: length: {0 if payload is None else len(payload)}, content: "
+                f"{None if payload is None else hex_util.get_hex(
+                                  payload, self._logger_info_payload_max_length)}"
+            )
+        return status, payload
+
+    def set_logger_info_payload_max_length(self, length):
+        self._logger_info_payload_max_length = length
+
+    def set_logger_debug_payload_max_length(self, length):
+        self._logger_debug_payload_max_length = length
 
     @abc.abstractmethod
     def get_default_config(self) -> T:
