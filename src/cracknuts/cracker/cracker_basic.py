@@ -559,6 +559,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: None
         """
         self._config.load_from_json(json_str)
+        self.sync_config_to_cracker()
 
     def get_id(self) -> tuple[int, str | None]:
         """

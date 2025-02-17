@@ -6,6 +6,7 @@ from types import ModuleType
 _LOG_LEVEL = logging.WARNING
 _LOG_FORMATTER = logging.Formatter("[%(levelname)s] %(asctime)s %(module)s.%(funcName)s:%(lineno)d %(message)s")
 _LOGGERS: dict[str, logging.Logger] = {}
+_log_handler = None
 
 
 def set_level(
@@ -82,9 +83,11 @@ def get_logger(name: str | type | object | ModuleType, level: int | None = None)
         logger.setLevel(_LOG_LEVEL)
     else:
         logger.setLevel(level)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(_LOG_FORMATTER)
-    logger.addHandler(stream_handler)
+    global _log_handler
+    if _log_handler is None:
+        _log_handler = logging.StreamHandler()
+        _log_handler.setFormatter(_LOG_FORMATTER)
+    logger.addHandler(_log_handler)
     _LOGGERS[name] = logger
     logger.propagate = False
     return logger
@@ -96,12 +99,18 @@ def default_logger() -> logging.Logger:
 
 def handler_to_file(log_path, logger=None):
     handler = logging.FileHandler(log_path)
+    handler.setFormatter(_LOG_FORMATTER)
     _update_logger_handler(handler, logger)
+    global _log_handler
+    _log_handler = handler
 
 
 def handler_to_stdout(logger=None):
     handler = logging.StreamHandler()
+    handler.setFormatter(_LOG_FORMATTER)
     _update_logger_handler(handler, logger)
+    global _log_handler
+    _log_handler = handler
 
 
 def _update_logger_handler(handler, logger=None):
