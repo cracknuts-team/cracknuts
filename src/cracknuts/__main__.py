@@ -51,7 +51,7 @@ def config_unset(key):
 def start_lab(workspace: str = None):
     _update_check()
     if workspace is None:
-        workspace = user_config.get_option("lab.workspace")
+        workspace = user_config.get_option("lab.workspace", ".")
     try:
         subprocess.run(["jupyter", "lab", "--notebook-dir", workspace], check=True)
     except subprocess.CalledProcessError as e:
