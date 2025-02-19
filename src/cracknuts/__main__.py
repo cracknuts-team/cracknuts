@@ -167,16 +167,19 @@ def _open_jupyter(ipynb_file: str):
 
 
 def _update_check():
-    print("Check update...")
     time_format = "%Y-%m-%d %H:%M:%S"
     current_version = version.parse(cracknuts.__version__)
     latest_version = None
     version_check_path = os.path.join(os.path.expanduser("~"), ".cracknuts", "version_check")
     if os.path.exists(version_check_path):
-        last_version_json = json.loads(open(version_check_path).read())
-        last_check_time = datetime.strptime(last_version_json["last_check_time"], time_format)
-        if datetime.now() - last_check_time < timedelta(days=1):
-            latest_version = version.parse(last_version_json["version"])
+        try:
+            with open(version_check_path) as f:
+                last_version_json = json.loads("".join(f.readlines()))
+            last_check_time = datetime.strptime(last_version_json["last_check_time"], time_format)
+            if datetime.now() - last_check_time < timedelta(days=1):
+                latest_version = version.parse(last_version_json["version"])
+        except Exception as e:
+            print(f"Check update file failed: {e.args}")
     if latest_version is None:
         try:
             res = urllib.request.urlopen("https://cracknuts.cn/api/version/latest")
@@ -185,6 +188,11 @@ def _update_check():
         except Exception as e:
             print(f"Failed to get latest version: {e}")
             return
+
+    with open(version_check_path, "w") as f:
+        json.dump(
+            {"version": str(latest_version), "last_check_time": datetime.strftime(datetime.now(), time_format)}, f
+        )
 
     if latest_version > current_version:
         RED = "\033[31m"
