@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import textwrap
 from datetime import datetime, timedelta
 from importlib.resources import files
 from pathlib import Path
@@ -130,6 +131,35 @@ def start_mock_cracker(
 ):
     _update_check()
     mock.start(host, port, operator_port, logging_level)
+
+
+@main.command(name="welcome", help="Welcome to cracknuts.")
+def welcome():
+    # ruff: noqa: W293 W291
+    welcome_str = r"""
+       ______                           __      _   __           __         
+      / ____/   _____  ____ _  _____   / /__   / | / /  __  __  / /_   _____
+     / /       / ___/ / __ `/ / ___/  / //_/  /  |/ /  / / / / / __/  / ___/
+    / /___    / /    / /_/ / / /__   / ,<    / /|  /  / /_/ / / /_   (__  ) 
+    \____/   /_/     \__,_/  \___/  /_/|_|  /_/ |_/   \__,_/  \__/  /____/  
+                                                        
+    Welcome to CrackNuts! 🎉
+    
+    Here are some commands to get you started:
+    
+    1. cracknuts tutorials - Open the tutorials to learn more about CrackNuts.
+    2. cracknuts lab - Launch Jupyter Lab for interactive analysis.
+    3. cracknuts --help - View detailed command options and usage instructions.
+    
+    For more information, visit:
+    - Official website: https://cracknuts.io
+    - GitHub repository: https://github.com/cracknuts-team/cracknuts
+    - API documentation: https://api.cracknuts.io
+    
+    Enjoy exploring CrackNuts! If you need assistance, feel free to check the documentation or ask for help.
+    """
+
+    print(textwrap.dedent(welcome_str))
 
 
 def _open_jupyter(ipynb_file: str):
