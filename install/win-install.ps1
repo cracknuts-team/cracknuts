@@ -124,7 +124,7 @@ $webClient.DownloadFile($iconUrl, $iconPath)
 
 # Define the target application path
 $targetPath = "%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe"
-$arguments = "-ExecutionPolicy ByPass -NoExit -Command ""& '$condaInstallPath\shell\condabin\conda-hook.ps1' ; conda activate $condaEnvName"""
+$arguments = "-ExecutionPolicy ByPass -NoExit -Command ""& '$condaInstallPath\shell\condabin\conda-hook.ps1' ; conda activate $condaEnvName ; cracknuts welcome"""
 $argumentsLab = "-ExecutionPolicy ByPass -NoExit -Command ""& '$condaInstallPath\shell\condabin\conda-hook.ps1' ; conda activate $condaEnvName ; cracknuts tutorials"""
 $shortcutName = "CrackNuts"  # Name of the shortcut
 $labShortcutName = "CrackNuts Tutorials"  # Name of the shortcut
