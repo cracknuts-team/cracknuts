@@ -45,7 +45,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._nut_set_clock_enable(config.nut_clock_enable)
         self.nut_clock_freq(config.nut_clock)
         for k, v in config.osc_analog_channel_enable.items():
-            self.osc_set_analog_channel_enable(k, v)
+            self._osc_set_analog_channel_enable(k, v)
             self.osc_analog_gain(k, config.osc_analog_gain.get(k, False))
         self.osc_sample_len(config.osc_sample_len)
         self.osc_sample_delay(config.osc_sample_delay)
@@ -107,7 +107,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        return self.osc_set_analog_channel_enable(channel, True)
+        return self._osc_set_analog_channel_enable(channel, True)
 
     def osc_analog_disable(self, channel: int) -> tuple[int, None]:
         """
@@ -118,9 +118,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        return self.osc_set_analog_channel_enable(channel, False)
+        return self._osc_set_analog_channel_enable(channel, False)
 
-    def osc_set_analog_channel_enable(self, channel: int, enable: bool) -> tuple[int, None]:
+    def _osc_set_analog_channel_enable(self, channel: int, enable: bool) -> tuple[int, None]:
         """
         Set analog channel enable.
 
