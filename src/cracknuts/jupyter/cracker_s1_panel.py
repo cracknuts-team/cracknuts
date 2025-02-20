@@ -61,8 +61,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         self.connect_status = self.cracker.get_connection_status()
         if self.connect_status:
             _, self.cracker_id = self.cracker.get_id()
-            _, self.cracker_name = self.cracker.get_name()
-            _, self.cracker_version = self.cracker.get_version()
+            _, self.cracker_name = self.cracker.get_hardware_model()
+            _, self.cracker_version = self.cracker.get_firmware_version()
 
     def sync_config(self) -> None:
         """
@@ -123,8 +123,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             if self.cracker.get_connection_status():
                 self.connect_status = True
                 _, self.cracker_id = self.cracker.get_id()
-                _, self.cracker_name = self.cracker.get_name()
-                _, self.cracker_version = self.cracker.get_version()
+                _, self.cracker_name = self.cracker.get_hardware_model()
+                _, self.cracker_version = self.cracker.get_firmware_version()
             else:
                 self.connect_status = False
         else:

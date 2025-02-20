@@ -292,7 +292,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
             return False
 
         if not force_update and self._operator.get_status():
-            self._operator.disconnect()
             return True
 
         self._hardware_model = self._operator.get_hardware_model()
@@ -333,12 +332,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
         except OSError as e:
             self._logger.error(f"Update cracker bin failed: {e.args}")
             return False
-        finally:
-            self._operator.disconnect()
 
     def get_firmware_info(self):
         if self._installed_bin_server_path is None or self._installed_bin_bitstream_path is None:
-            self._logger.error("The Cracker has not successfully installed any firmware.")
+            self._logger.warning("The Cracker has not successfully installed any firmware.")
 
         return (
             f"hardware model: {self._hardware_model}, "
@@ -360,6 +357,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
         :return: None
         """
+        self._operator.disconnect()
         try:
             if self._socket:
                 self._socket.close()
@@ -568,28 +566,45 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: The equipment response status code and the ID of the equipment.
         :rtype: tuple[int, str | None]
         """
-        status, res = self.send_with_command(protocol.Command.GET_ID)
-        return status, res.decode("ascii") if res is not None else None
+        return protocol.STATUS_OK, self._operator.get_sn()
 
-    def get_name(self) -> tuple[int, str | None]:
+    def get_hardware_model(self) -> tuple[int, str | None]:
         """
         Get the name of the equipment.
 
         :return: The equipment response status code and the name of the equipment.
         :rtype: tuple[int, str | None]
         """
-        status, res = self.send_with_command(protocol.Command.GET_NAME)
-        return status, res.decode("ascii") if res is not None else None
+        return protocol.STATUS_OK, self._operator.get_hardware_model()
 
-    def get_version(self) -> tuple[int, str | None]:
+    def get_firmware_version(self) -> tuple[int, str | None]:
         """
         Get the version of the equipment.
 
         :return: The equipment response status code and the version of the equipment.
         :rtype: tuple[int, str | None]
         """
-        status, res = self.send_with_command(protocol.Command.GET_VERSION)
-        return status, res.decode("ascii") if res is not None else None
+        server_pattern = r".*server-.+-(.+)\.bin"
+        bitstream_pattern = r".*bitstream-.+-(.+)\.bin"
+        if self._installed_bin_server_path is None or self._installed_bin_bitstream_path is None:
+            self._logger.warning(
+                "Can't find version info; "
+                "maybe the device has installed the firmware by another host. "
+                "You can restart the device and then reconnect to it "
+                "or reconnect it using connect(force_update_bin=True)."
+            )
+            return protocol.STATUS_ERROR, f"server version: {"Unknown"}, bitstream_version: {"Unknown"}"
+        server_match = re.match(server_pattern, self._installed_bin_server_path)
+        if server_match:
+            server_version = server_match.group(1)
+        else:
+            server_version = "Unknown"
+        bitstream_match = re.match(bitstream_pattern, self._installed_bin_bitstream_path)
+        if bitstream_match:
+            bitstream_version = bitstream_match.group(1)
+        else:
+            bitstream_version = "Unknown"
+        return protocol.STATUS_OK, f"server version: {server_version}, bitstream_version: {bitstream_version}"
 
     def osc_single(self) -> tuple[int, None]:
         payload = None

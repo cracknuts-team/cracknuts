@@ -448,7 +448,7 @@ class Acquisition(abc.ABC):
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
 
-        cracker_version = self.cracker.get_version()
+        cracker_version = self.cracker.get_firmware_version()
         if persistent:
             channel_names = [
                 str(k) for k, v in self.cracker.get_current_config().osc_analog_channel_enable.items() if v
