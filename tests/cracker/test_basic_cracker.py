@@ -35,7 +35,7 @@ def test_get_name():
 
 
 def test_scrat_analog_channel_enable():
-    assert basic_device.osc_set_analog_channel_enable({1: True}) is None
+    assert basic_device._osc_set_analog_channel_enable({1: True}) is None
 
 
 def test_scrat_analog_coupling():

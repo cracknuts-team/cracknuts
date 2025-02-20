@@ -187,7 +187,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def osc_analog_channel_a_enable_changed(self, change):
         enabled = bool(change.get("new"))
-        self.cracker.osc_set_analog_channel_enable(1, enabled)
+        self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(1)
         if enabled:
             self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_analog_gain[1])
 
@@ -195,7 +195,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def osc_analog_channel_b_enable_changed(self, change):
         enabled = bool(change.get("new"))
-        self.cracker.osc_set_analog_channel_enable(2, enabled)
+        self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(2)
         if enabled:
             self.cracker.osc_analog_gain(2, self.cracker.get_current_config().osc_analog_gain[2])
 
