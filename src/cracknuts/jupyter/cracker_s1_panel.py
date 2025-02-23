@@ -86,10 +86,10 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             self.nut_clock_enable = current_config.nut_clock_enable
 
         # osc
-        self.osc_analog_channel_a_enable = current_config.osc_analog_channel_enable.get(1, False)
-        self.osc_analog_channel_b_enable = current_config.osc_analog_channel_enable.get(2, True)
-        self.osc_analog_channel_a_gain = current_config.osc_analog_gain.get(1, 1)
-        self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(2, 1)
+        self.osc_analog_channel_a_enable = current_config.osc_analog_channel_enable.get(0, False)
+        self.osc_analog_channel_b_enable = current_config.osc_analog_channel_enable.get(1, True)
+        self.osc_analog_channel_a_gain = current_config.osc_analog_gain.get(0, 1)
+        self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(1, 1)
         if current_config.osc_sample_len is not None:
             self.osc_sample_len = current_config.osc_sample_len
         if current_config.osc_sample_delay is not None:
@@ -187,17 +187,17 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def osc_analog_channel_a_enable_changed(self, change):
         enabled = bool(change.get("new"))
-        self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(1)
+        self.cracker.osc_analog_enable(0) if enabled else self.cracker.osc_analog_disable(0)
         if enabled:
-            self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_analog_gain[1])
+            self.cracker.osc_analog_gain(0, self.cracker.get_current_config().osc_analog_gain[0])
 
     @traitlets.observe("osc_analog_channel_b_enable")
     @observe_interceptor
     def osc_analog_channel_b_enable_changed(self, change):
         enabled = bool(change.get("new"))
-        self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(2)
+        self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(1)
         if enabled:
-            self.cracker.osc_analog_gain(2, self.cracker.get_current_config().osc_analog_gain[2])
+            self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_analog_gain[1])
 
     @traitlets.observe("osc_trigger_source")
     @observe_interceptor
@@ -225,8 +225,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         name = change.get("name")
         channel = None
         if name == "osc_analog_channel_a_gain":
-            channel = 1
+            channel = 0
         elif name == "osc_analog_channel_b_gain":
-            channel = 2
+            channel = 1
         if channel is not None:
             self.cracker.osc_analog_gain(channel, change.get("new"))

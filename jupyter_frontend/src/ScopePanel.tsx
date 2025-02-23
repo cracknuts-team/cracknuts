@@ -7,13 +7,13 @@ import {CheckboxChangeEvent} from "antd/es/checkbox";
 import {FormattedMessage, useIntl} from "react-intl";
 
 interface SeriesData {
+    0: number[] | undefined;
     1: number[] | undefined;
-    2: number[] | undefined;
 }
 
 interface RangeData {
+    0: number[];
     1: number[];
-    2: number[];
 }
 
 interface ScopePanelProperties {
@@ -32,13 +32,13 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [yRange] = useModelState<RangeData>("y_range");
 
     const [customRangeModel, setCustomRangeModel] = useState<boolean>(false)
+    const [customC0YMin, setCustomC0YMin] = useState<number | undefined>(undefined)
+    const [customC0YMax, setCustomC0YMax] = useState<number | undefined>(undefined)
     const [customC1YMin, setCustomC1YMin] = useState<number | undefined>(undefined)
     const [customC1YMax, setCustomC1YMax] = useState<number | undefined>(undefined)
-    const [customC2YMin, setCustomC2YMin] = useState<number | undefined>(undefined)
-    const [customC2YMax, setCustomC2YMax] = useState<number | undefined>(undefined)
 
+    const [customC0YRangeLink, setCustomC0YRangeLink] = useState<boolean>(true)
     const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(true)
-    const [customC2YRangeLink, setCustomC2YRangeLink] = useState<boolean>(true)
 
     // const [customXRangeEnabled, setCustomXRangeEnabled] = useState<boolean>(false)
     const [customXMin, setCustomXMin] = useState<number | undefined>(undefined)
@@ -48,6 +48,28 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
 
     const intl = useIntl();
 
+    const setCustomC0YMinLink = (v: number) => {
+        if (customC0YRangeLink) {
+            const min = customC0YMin ? customC0YMin : 0
+            const max = customC0YMax ? customC0YMax : 0
+            const offset = v - min
+            setCustomC0YMax(max + offset)
+            setCustomC0YMin(v)
+        } else {
+            setCustomC0YMin(v)
+        }
+    };
+    const setCustomC0YMaxLink = (v: number) => {
+        if (customC0YRangeLink) {
+            const max = customC0YMax ? customC0YMax : 0
+            const min = customC0YMin ? customC0YMin : 0
+            const offset = v - max
+            setCustomC0YMin(min + offset)
+            setCustomC0YMax(v)
+        } else {
+            setCustomC0YMax(v)
+        }
+    };
     const setCustomC1YMinLink = (v: number) => {
         if (customC1YRangeLink) {
             const min = customC1YMin ? customC1YMin : 0
@@ -68,28 +90,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             setCustomC1YMax(v)
         } else {
             setCustomC1YMax(v)
-        }
-    };
-    const setCustomC2YMinLink = (v: number) => {
-        if (customC2YRangeLink) {
-            const min = customC2YMin ? customC2YMin : 0
-            const max = customC2YMax ? customC2YMax : 0
-            const offset = v - min
-            setCustomC2YMax(max + offset)
-            setCustomC2YMin(v)
-        } else {
-            setCustomC2YMin(v)
-        }
-    };
-    const setCustomC2YMaxLink = (v: number) => {
-        if (customC2YRangeLink) {
-            const max = customC2YMax ? customC2YMax : 0
-            const min = customC2YMin ? customC2YMin : 0
-            const offset = v - max
-            setCustomC2YMin(min + offset)
-            setCustomC2YMax(v)
-        } else {
-            setCustomC2YMax(v)
         }
     };
 
@@ -145,8 +145,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         yAxis: getEchartsYAxis(),
         series: [
           {
-                name: "channel 2",
-                data: seriesData["2"] ? seriesData["2"] : undefined,
+                name: "channel 1",
+                data: seriesData["1"] ? seriesData["1"] : undefined,
                 type: "line",
                 lineStyle: {
                     color: colors[1],
@@ -159,8 +159,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 yAxisIndex: 1,
             },
           {
-                name: "channel 1",
-                data: seriesData["1"] ? seriesData["1"] : undefined,
+                name: "channel 0",
+                data: seriesData["0"] ? seriesData["0"] : undefined,
                 type: "line",
                 lineStyle: {
                     color: colors[0],
@@ -188,8 +188,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     color: colors[0],
                 },
             },
-            min: customC1YMin ? customC1YMin : undefined,
-            max: customC1YMin ? customC1YMax : undefined,
+            min: customC0YMin ? customC0YMin : undefined,
+            max: customC0YMin ? customC0YMax : undefined,
         });
 
         yAxis.push({
@@ -202,8 +202,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     color: colors[1],
                 },
             },
-            min: customRangeModel ? customC2YMin : undefined,
-            max: customRangeModel ? customC2YMax : undefined,
+            min: customRangeModel ? customC1YMin : undefined,
+            max: customRangeModel ? customC1YMax : undefined,
         });
 
         return yAxis;
@@ -255,6 +255,28 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     };
 
     const chARangeIncrease = () => {
+      if (customC0YMax == undefined || customC0YMin == undefined) {
+        return
+      }
+      const range = customC0YMax - customC0YMin
+      const size = range * 0.1
+
+      setCustomC0YMin(Math.floor(customC0YMin - size));
+      setCustomC0YMax(Math.ceil(customC0YMax + size));
+    };
+
+    const chARangeDecrease = () => {
+      if (customC0YMax == undefined || customC0YMin == undefined) {
+        return
+      }
+      const range = customC0YMax - customC0YMin
+      const size = range * 0.1
+
+      setCustomC0YMin(Math.ceil(customC0YMin + size));
+      setCustomC0YMax(Math.floor(customC0YMax - size));
+    };
+
+    const chBRangeIncrease = () => {
       if (customC1YMax == undefined || customC1YMin == undefined) {
         return
       }
@@ -265,8 +287,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
       setCustomC1YMax(Math.ceil(customC1YMax + size));
     };
 
-    const chARangeDecrease = () => {
-      if (customC1YMax == undefined || customC1YMin == undefined) {
+    const chBRangeDecrease = () => {
+       if (customC1YMax == undefined || customC1YMin == undefined) {
         return
       }
       const range = customC1YMax - customC1YMin
@@ -276,53 +298,31 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
       setCustomC1YMax(Math.floor(customC1YMax - size));
     };
 
-    const chBRangeIncrease = () => {
-      if (customC2YMax == undefined || customC2YMin == undefined) {
-        return
-      }
-      const range = customC2YMax - customC2YMin
-      const size = range * 0.1
-
-      setCustomC2YMin(Math.floor(customC2YMin - size));
-      setCustomC2YMax(Math.ceil(customC2YMax + size));
-    };
-
-    const chBRangeDecrease = () => {
-       if (customC2YMax == undefined || customC2YMin == undefined) {
-        return
-      }
-      const range = customC2YMax - customC2YMin
-      const size = range * 0.1
-
-      setCustomC2YMin(Math.ceil(customC2YMin + size));
-      setCustomC2YMax(Math.floor(customC2YMax - size));
-    };
-
     const model = useModel();
 
     useEffect(() => {
 
         const updateCustomRangeOnCustom = () => {
             const yr = model.get("y_range")
+            const c0 = yr["0"];
             const c1 = yr["1"];
-            const c2 = yr["2"];
             if (customRangeModel) {
+                if (c0[0] && !customC0YMin && !customC0YMax) {
+                    setCustomC0YMin(c0[0])
+                    setCustomC0YMax(c0[1])
+                }
                 if (c1[0] && !customC1YMin && !customC1YMax) {
                     setCustomC1YMin(c1[0])
                     setCustomC1YMax(c1[1])
                 }
-                if (c2[0] && !customC2YMin && !customC2YMax) {
-                    setCustomC2YMin(c2[0])
-                    setCustomC2YMax(c2[1])
-                }
             } else {
+                if (!c0[0]) {
+                    setCustomC0YMin(undefined)
+                    setCustomC0YMax(undefined)
+                }
                 if (!c1[0]) {
                     setCustomC1YMin(undefined)
                     setCustomC1YMax(undefined)
-                }
-                if (!c2[0]) {
-                    setCustomC2YMin(undefined)
-                    setCustomC2YMax(undefined)
                 }
             }
         };
@@ -370,10 +370,10 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
                           console.error(chartRef.current)
+                            setCustomC0YMin(yRange[0][0]);
+                            setCustomC0YMax(yRange[0][1]);
                             setCustomC1YMin(yRange[1][0]);
                             setCustomC1YMax(yRange[1][1]);
-                            setCustomC2YMin(yRange[2][0]);
-                            setCustomC2YMax(yRange[2][1]);
                             setCustomRangeModel(!customRangeModel);
                         }}>
                     <FormattedMessage id={"cracker.scope.customRange"}/>
@@ -382,6 +382,30 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     <Button size={"small"} disabled={!customRangeModel} onClick={chARangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH A"} disabled className="site-input-split"
                            style={{width: 50, textAlign: 'center', pointerEvents: 'none'}}/>
+                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.min"})}
+                                 size={"small"}
+                                 value={customC0YMin} onChange={(v) => {
+                        setCustomC0YMinLink(Number(v))
+                    }} changeOnWheel/>
+                    <Button type={customC0YRangeLink ? "primary" : "default"}
+                            size={"small"}
+                            disabled={!customRangeModel}
+                            onClick={() => {
+                                setCustomC0YRangeLink(!customC0YRangeLink)
+                            }}>
+                        <LinkOutlined/>
+                    </Button>
+                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.max"})}
+                                 size={"small"}
+                                 value={customC0YMax} onChange={(v) => {
+                        setCustomC0YMaxLink(Number(v))
+                    }} changeOnWheel/>
+                   <Button size={"small"} disabled={!customRangeModel} onClick={chARangeIncrease}><PlusCircleOutlined /></Button>
+                </Space.Compact>
+                <Space.Compact>
+                  <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeDecrease}><MinusCircleOutlined /></Button>
+                    <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
+                           style={{width: 50, borderRight: 0, pointerEvents: 'none'}}/>
                     <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.min"})}
                                  size={"small"}
                                  value={customC1YMin} onChange={(v) => {
@@ -399,30 +423,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                                  size={"small"}
                                  value={customC1YMax} onChange={(v) => {
                         setCustomC1YMaxLink(Number(v))
-                    }} changeOnWheel/>
-                   <Button size={"small"} disabled={!customRangeModel} onClick={chARangeIncrease}><PlusCircleOutlined /></Button>
-                </Space.Compact>
-                <Space.Compact>
-                  <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeDecrease}><MinusCircleOutlined /></Button>
-                    <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
-                           style={{width: 50, borderRight: 0, pointerEvents: 'none'}}/>
-                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.min"})}
-                                 size={"small"}
-                                 value={customC2YMin} onChange={(v) => {
-                        setCustomC2YMinLink(Number(v))
-                    }} changeOnWheel/>
-                    <Button type={customC2YRangeLink ? "primary" : "default"}
-                            size={"small"}
-                            disabled={!customRangeModel}
-                            onClick={() => {
-                                setCustomC2YRangeLink(!customC2YRangeLink)
-                            }}>
-                        <LinkOutlined/>
-                    </Button>
-                    <InputNumber disabled={!customRangeModel} placeholder={intl.formatMessage({id: "cracker.scope.customRange.max"})}
-                                 size={"small"}
-                                 value={customC2YMax} onChange={(v) => {
-                        setCustomC2YMaxLink(Number(v))
                     }} changeOnWheel/>
                    <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeIncrease}><PlusCircleOutlined /></Button>
                 </Space.Compact>
