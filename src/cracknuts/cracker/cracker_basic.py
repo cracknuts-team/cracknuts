@@ -22,8 +22,8 @@ from cracknuts.cracker.operator import Operator
 
 class ConfigBasic:
     def __init__(self):
-        self.osc_analog_channel_enable = {1: False, 2: True}
-        self.osc_analog_gain = {1: 50, 2: 50}
+        self.osc_analog_channel_enable = {0: False, 1: True}
+        self.osc_analog_gain = {0: 50, 1: 50}
         self.osc_sample_len = 1024
         self.osc_sample_delay = 0
         self.osc_sample_rate = 48000
