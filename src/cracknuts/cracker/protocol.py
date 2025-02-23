@@ -160,6 +160,8 @@ class Command:
     CRACKER_CAN_TIMEOUT = 0x0254
     CRACKER_CA_DATA = 0x025A
 
+    GET_BITSTREAM_VERSION = 0x0007
+
 
 def _build_req_message(command: int, rfu: int = 0, payload: bytes | None = None):
     content = struct.pack(
