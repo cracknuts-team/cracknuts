@@ -25,7 +25,7 @@ def set_level(
             _LOG_LEVEL = logging.DEBUG
         elif level == "INFO":
             _LOG_LEVEL = logging.INFO
-        elif level == "WARN":
+        elif level == "WARN" or level == "WARNING":
             _LOG_LEVEL = logging.WARNING
         elif level == "ERROR":
             _LOG_LEVEL = logging.ERROR
