@@ -577,6 +577,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         return protocol.STATUS_OK, self._operator.get_hardware_model()
 
+    def get_bitstream_version(self):
+        return self.send_with_command(protocol.Command.GET_BITSTREAM_VERSION)
+
     def get_firmware_version(self) -> tuple[int, str | None]:
         """
         Get the version of the equipment.
@@ -584,27 +587,16 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: The equipment response status code and the version of the equipment.
         :rtype: tuple[int, str | None]
         """
-        server_pattern = r".*server-.+-(.+)\.bin"
-        bitstream_pattern = r".*bitstream-.+-(.+)\.bin"
-        if self._installed_bin_server_path is None or self._installed_bin_bitstream_path is None:
-            self._logger.warning(
-                "Can't find version info; "
-                "maybe the device has installed the firmware by another host. "
-                "You can restart the device and then reconnect to it "
-                "or reconnect it using connect(force_update_bin=True)."
-            )
-            return protocol.STATUS_ERROR, f"server version: {"Unknown"}, bitstream_version: {"Unknown"}"
-        server_match = re.match(server_pattern, self._installed_bin_server_path)
-        if server_match:
-            server_version = server_match.group(1)
-        else:
-            server_version = "Unknown"
-        bitstream_match = re.match(bitstream_pattern, self._installed_bin_bitstream_path)
-        if bitstream_match:
-            bitstream_version = bitstream_match.group(1)
-        else:
-            bitstream_version = "Unknown"
-        return protocol.STATUS_OK, f"server version: {server_version}, bitstream_version: {bitstream_version}"
+        bitstream_status, bitstream_version = self.get_bitstream_version()
+        server_version = self._operator.get_server_version()
+        operator_version = self._operator.get_version()
+
+        return (
+            protocol.STATUS_OK,
+            f"operator_version: {operator_version}, "
+            f"server_version: {server_version}, "
+            f"bitstream_version: {bitstream_version}",
+        )
 
     def osc_single(self) -> tuple[int, None]:
         payload = None
