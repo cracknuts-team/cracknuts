@@ -136,14 +136,14 @@ def start_mock_cracker(
 @main.command(name="welcome", help="Welcome to cracknuts.")
 def welcome():
     # ruff: noqa: W293 W291
-    welcome_str = r"""
+    welcome_str = rf"""
        ______                           __      _   __           __         
       / ____/   _____  ____ _  _____   / /__   / | / /  __  __  / /_   _____
      / /       / ___/ / __ `/ / ___/  / //_/  /  |/ /  / / / / / __/  / ___/
     / /___    / /    / /_/ / / /__   / ,<    / /|  /  / /_/ / / /_   (__  ) 
     \____/   /_/     \__,_/  \___/  /_/|_|  /_/ |_/   \__,_/  \__/  /____/  
                                                         
-    Welcome to CrackNuts! 🎉
+    Welcome to CrackNuts({cracknuts.version()})! 🎉
     
     Here are some commands to get you started:
     
