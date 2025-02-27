@@ -86,6 +86,8 @@ T = typing.TypeVar("T", bound=ConfigBasic)
 
 
 class CrackerBasic(ABC, typing.Generic[T]):
+    NON_PROTOCOL_ERROR = -1
+
     """
     The basic device class, provides support for the `CNP` protocol, configuration management, firmware maintenance,
     and other basic operations.

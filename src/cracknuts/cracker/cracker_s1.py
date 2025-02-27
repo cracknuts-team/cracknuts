@@ -1,5 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
-
+import re
 import struct
 
 from cracknuts.cracker import protocol, serial
@@ -12,7 +12,7 @@ class ConfigS1(ConfigBasic):
 
         self.nut_enable = False
         self.nut_clock_enable = False
-        self.nut_voltage = 3500
+        self.nut_voltage = 3.5
         self.nut_clock = 8000
         self.nut_voltage_raw: int | None = None
         self.nut_interface: int | None = None
@@ -41,7 +41,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     def sync_config_to_cracker(self):
         config = self.get_current_config()
         self._nut_set_enable(config.nut_enable)
-        self.nut_voltage_mv(config.nut_voltage)
+        self.nut_voltage(config.nut_voltage)
         self._nut_set_clock_enable(config.nut_clock_enable)
         self.nut_clock_freq(config.nut_clock)
         for k, v in config.osc_analog_channel_enable.items():
@@ -394,20 +394,37 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def nut_voltage_mv(self, voltage: int) -> tuple[int, None]:
+    def nut_voltage(self, voltage: float | str | int) -> tuple[int, None]:
         """
         Set nut voltage.
 
-        :param voltage: Nut voltage, in milli volts (mV).
-        :type voltage: int
+        :param voltage: Nut voltage can be a number or a string. If the input is a float,
+                        the voltage will be treated as a mV value. If the input is a string,
+                        you can specify the unit, ending with the value, using either mV or V.
+        :type voltage: float | str | int
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        if isinstance(voltage, str):
+            m = re.match(r"(\d+(?:\.\d+)?)([mM]?[vV])?$", voltage)
+            if not m:
+                self._logger.error(
+                    "Input format error: " "it should be a number or a string and end with a unit in V or mV."
+                )
+                return self.NON_PROTOCOL_ERROR, None
+            voltage = float(m.group(1))
+            if m.group(2):
+                unit = m.group(2)
+            else:
+                unit = "v"
+            if unit.lower() == "v":
+                voltage = voltage * 1000
+        voltage = int(voltage)
         payload = struct.pack(">I", voltage)
-        self._logger.debug(f"nut_voltage_mv payload: {payload.hex()}")
+        self._logger.debug(f"nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.nut_voltage = voltage
+            self._config.nut_voltage = voltage / 1000
 
         return status, None
 

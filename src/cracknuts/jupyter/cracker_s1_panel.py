@@ -24,7 +24,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     # nut
     nut_enable = traitlets.Bool(False).tag(sync=True)
-    nut_voltage = traitlets.Int(3300).tag(sync=True)
+    nut_voltage = traitlets.Float(3.3).tag(sync=True)
     nut_clock_enable = traitlets.Bool(False).tag(sync=True)
     nut_clock = traitlets.Int(65000).tag(sync=True)
 
@@ -143,12 +143,12 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         enabled = bool(change.get("new"))
         self.cracker.nut_voltage_enable() if enabled else self.cracker.nut_voltage_disable()
         if enabled:
-            self.cracker.nut_voltage_mv(self.cracker.get_current_config().nut_voltage)
+            self.cracker.nut_voltage(self.cracker.get_current_config().nut_voltage)
 
     @traitlets.observe("nut_voltage")
     @observe_interceptor
     def nut_voltage_change(self, change):
-        self.cracker.nut_voltage_mv(change.get("new"))
+        self.cracker.nut_voltage(change.get("new"))
 
     @traitlets.observe("nut_clock_enable")
     @observe_interceptor
