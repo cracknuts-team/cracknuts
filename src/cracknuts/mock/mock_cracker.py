@@ -39,6 +39,7 @@ class MockCracker:
         self._server_socket.bind((host, port))
         self._server_socket.listen()
         self._logger.debug("MockCracker initialized")
+        self._command_payload_cache = {}
 
     def start(self):
         try:
@@ -91,6 +92,8 @@ class MockCracker:
                 )
 
                 payload_data = conn.recv(length)
+                self._command_payload_cache[command] = payload_data
+
                 if len(payload_data) > 0:
                     self._logger.debug(f"Received payload:\n{hex_util.get_bytes_matrix(payload_data)}")
                 if command not in _handler_dict:
@@ -122,7 +125,7 @@ class MockCracker:
     @staticmethod
     def _unsupported(command):
         return protocol.build_response_message(
-            protocol.STATUS_COMMAND_UNSUPPORTED, f'Command [0x{format(command, '04x')}] not supported'.encode()
+            protocol.STATUS_OK, f'Command [0x{format(command, '04x')}] not supported'.encode()
         )
 
     @_handler(protocol.Command.GET_ID, has_payload=False)
@@ -206,3 +209,8 @@ class MockCracker:
     @_handler(protocol.Command.NUT_CLOCK_ENABLE)
     def nut_clock_enable(self, payload: bytes) -> bytes:
         return b""
+
+    @_handler(0xFFFF)
+    def get_command_payload_cache(self, payload: bytes) -> bytes:
+        command = struct.unpack(">I", payload)[0]
+        return self._command_payload_cache.get(command)
