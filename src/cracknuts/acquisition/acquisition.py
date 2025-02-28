@@ -454,7 +454,7 @@ class Acquisition(abc.ABC):
                 str(k) for k, v in self.cracker.get_current_config().osc_analog_channel_enable.items() if v
             ]
             if self.sample_length == -1:
-                sample_length = self.cracker.get_current_config().osc_sample_len
+                sample_length = self.cracker.get_current_config().osc_sample_length
             else:
                 sample_length = self.sample_length
 
@@ -660,7 +660,7 @@ class Acquisition(abc.ABC):
 
     def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
         if sample_length == -1:
-            sample_length = self.cracker.get_current_config().osc_sample_len
+            sample_length = self.cracker.get_current_config().osc_sample_length
         config = self.cracker.get_current_config()
         if config.osc_analog_channel_enable is None:
             raise Exception("Channel info can't be none.")

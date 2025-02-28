@@ -151,7 +151,7 @@ class CrackerG1(CrackerBasic[ConfigG1]):
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
-            self._config.osc_sample_len = length
+            self._config.osc_sample_length = length
 
     def osc_set_sample_rate(self, rate: int):
         """
@@ -165,7 +165,7 @@ class CrackerG1(CrackerBasic[ConfigG1]):
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
-            self._config.osc_sample_rate = rate
+            self._config.osc_sample_clock = rate
 
     def osc_set_analog_gain(self, channel: int, gain: int):
         payload = struct.pack(">BB", channel, gain)
