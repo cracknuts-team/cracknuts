@@ -28,7 +28,22 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_clock_enable = traitlets.Bool(False).tag(sync=True)
     nut_clock = traitlets.Int(65000).tag(sync=True)
 
-    # adc
+    nut_uart_enable = traitlets.Bool(False).tag(sync=True)
+    nut_uart_baudrate = traitlets.Int(115200).tag(sync=True)
+    nut_uart_bytesize = traitlets.Int(8).tag(sync=True)
+    nut_uart_parity = traitlets.Int(0).tag(sync=True)
+    nut_uart_stopbits = traitlets.Int(0).tag(sync=True)
+
+    nut_spi_enable = traitlets.Bool(False).tag(sync=True)
+    nut_spi_speed = traitlets.Int(10_000).tag(sync=True)
+    nut_spi_cpol = traitlets.Int(0).tag(sync=True)
+    nut_spi_cpha = traitlets.Int(0).tag(sync=True)
+
+    nut_i2c_enable = traitlets.Bool(False).tag(sync=True)
+    nut_i2c_dev_addr = traitlets.Unicode("0x00").tag(sync=True)
+    nut_i2c_speed = traitlets.Int(0).tag(sync=True)
+
+    # osc
     osc_analog_channel_a_enable = traitlets.Bool(False).tag(sync=True)
     osc_analog_channel_b_enable = traitlets.Bool(True).tag(sync=True)
     sync_sample = traitlets.Bool(False).tag(sync=True)
