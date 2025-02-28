@@ -118,7 +118,7 @@ class ScopeAcquisition:
         wave_dict = {}
         for c in enable_channels:
             status, wave = self._cracker.osc_get_analog_wave(
-                c, self._offset, self._cracker.get_current_config().osc_sample_len
+                c, self._offset, self._cracker.get_current_config().osc_sample_length
             )
             if status == protocol.STATUS_OK:
                 wave_dict[c] = wave

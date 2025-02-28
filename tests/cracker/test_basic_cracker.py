@@ -86,7 +86,7 @@ def test_scrat_trigger_delay():
 
 # cracknuts.cracker.cracker.Commands.OSC_SAMPLE_LENGTH
 def test_scrat_sample_len():
-    status, res = basic_device.osc_sample_len(1)
+    status, res = basic_device.osc_sample_length(1)
     assert status is protocol.STATUS_OK and res is None
 
 

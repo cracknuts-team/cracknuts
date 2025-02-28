@@ -47,9 +47,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         for k, v in config.osc_analog_channel_enable.items():
             self._osc_set_analog_channel_enable(k, v)
             self.osc_analog_gain(k, config.osc_analog_gain.get(k, False))
-        self.osc_sample_len(config.osc_sample_len)
+        self.osc_sample_length(config.osc_sample_length)
         self.osc_sample_delay(config.osc_sample_delay)
-        self.osc_sample_clock_rate(config.osc_sample_rate)
+        self.osc_sample_clock(config.osc_sample_clock)
         self.osc_sample_clock_phase(config.osc_sample_phase)
         self.osc_trigger_source(config.osc_analog_trigger_source)
         self.osc_trigger_mode(config.osc_trigger_mode)
@@ -98,23 +98,23 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         status, _ = self.send_with_command(protocol.Command.CRACKER_WRITE_REGISTER, payload=payload)
         return status, None
 
-    def osc_analog_enable(self, channel: int) -> tuple[int, None]:
+    def osc_analog_enable(self, channel: int | str) -> tuple[int, None]:
         """
         Enable osc analog.
 
-        :param channel: Osc analog.
-        :type channel: int
+        :param channel: Channel to enable, it can be 'A' or 'B', or 0, 1
+        :type channel: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
         return self._osc_set_analog_channel_enable(channel, True)
 
-    def osc_analog_disable(self, channel: int) -> tuple[int, None]:
+    def osc_analog_disable(self, channel: int | str) -> tuple[int, None]:
         """
         Disable osc analog.
 
-        :param channel: Osc analog.
-        :type channel: int
+        :param channel: Channel to enable, it can be 'A' or 'B', or 0, 1
+        :type channel: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
@@ -124,13 +124,25 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set analog channel enable.
 
-        :param channel: Channel to enable.
-        :type channel: int
+        :param channel: Channel to enable, it can be 'A' or 'B', or 0, 1
+        :type channel: int | str
         :param enable: Enable or disable.
         :type enable: bool
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        channels = ("A", "B")
+        if isinstance(channel, str):
+            channel = channel.upper()
+            if channel in channels:
+                channel = channels.index(channel)
+            else:
+                self._logger.error("Channel error, it should in 'A' or 'B'")
+                return self.NON_PROTOCOL_ERROR, None
+        else:
+            if channel > 1:
+                self._logger.error("Channel error, it should in 0 or 1")
+                return self.NON_PROTOCOL_ERROR, None
         final_enable = self._config.osc_analog_channel_enable | {channel: enable}
         mask = 0
         if final_enable.get(0):
@@ -158,15 +170,31 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.osc_analog_channel_enable = final_enable
         return status, None
 
-    def osc_trigger_mode(self, mode: int) -> tuple[int, None]:
+    def osc_trigger_mode(self, mode: int | str) -> tuple[int, None]:
         """
         Set trigger mode.
 
-        :param mode: Trigger mode. Trigger mode: 0 for edge, 1 for wave.
-        :type mode: int
+        :param mode: Trigger mode. Trigger mode can be one of ("EDGE", "PATTERN") or ("E", "P"),
+                     or the index of the string value.
+        :type mode: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        modes1 = ("EDGE", "PATTERN")
+        modes2 = ("E", "P")
+        if isinstance(mode, str):
+            mode = mode.upper()
+            if mode in modes1:
+                mode = modes1.index(mode)
+            elif mode in modes2:
+                mode = modes2.index(mode)
+            else:
+                self._logger.error(f"Mode must be one of {modes1} or {modes2} if specified as a string.")
+                return self.NON_PROTOCOL_ERROR, None
+        else:
+            if mode > 1:
+                self._logger.error(f"Unknown trigger mode: {mode}, it must be one of (0, 1)")
+                return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">B", mode)
         self._logger.debug(f"osc_trigger_mode payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_MODE, payload=payload)
@@ -179,25 +207,30 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set trigger source.
 
-        :param source: Trigger source: 'N', 'A', 'B', 'P', or 0, 1, 2, 3
-                       represent Nut, Channel A, Channel B, and Protocol, respectively.
+        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P') or ('Nut'、'ChA'、'ChB'、'Protocol')
+                       or a number in 0, 1, 2, 3, represent Nut, Channel A, Channel B, and Protocol, respectively.
         :type source: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        sources1 = ("N", "A", "B", "P")
+        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL")
         if isinstance(source, str):
-            if source == "N":
-                source = 0
-            elif source == "A":
-                source = 1
-            elif source == "B":
-                source = 2
-            elif source == "P":
-                source = 3
+            source = source.upper()
+            if source in sources1:
+                source = sources1.index(source)
+            elif source in sources2:
+                source = sources2.index(source)
             else:
                 self._logger.error(
-                    f"Invalid trigger source: {source}. " f"  It must be one of (N, A, B, P) if specified as a string."
+                    f"Invalid trigger source: {source}. it must be one of {sources1} or {sources2} "
+                    f"if specified as a string."
                 )
+                return self.NON_PROTOCOL_ERROR, None
+        else:
+            if source > 3:
+                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3)")
+                return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">B", source)
         self._logger.debug(f"osc_trigger_source payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_TRIGGER_SOURCE, payload=payload)
@@ -210,23 +243,30 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set trigger edge.
 
-        :param edge: Trigger edge. 'up', 'down', 'either' or 0, 1, 2 represent up, down, either, respectively.
-        :type edge: int
+        :param edge: Trigger edge. ('up', 'down', 'either') or ('u', 'd', 'e') or 0, 1, 2
+                     represent up, down, either, respectively.
+        :type edge: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        edges1 = ("UP", "DOWN", "EITHER")
+        edges2 = ("U", "D", "E")
         if isinstance(edge, str):
-            if edge == "up":
-                edge = 0
-            elif edge == "down":
-                edge = 1
-            elif edge == "either":
-                edge = 2
+            edge = edge.upper()
+            if edge in edges1:
+                edge = edges1.index(edge)
+            elif edge in edges2:
+                edge = edges2.index(edge)
             else:
-                raise ValueError(f"Unknown edge type: {edge}")
-        elif isinstance(edge, int):
-            if edge not in (0, 1, 2):
-                raise ValueError(f"Unknown edge type: {edge}")
+                self._logger.error(
+                    f"Invalid trigger edge: {edge}. it must be one of {edges1} or {edges2} "
+                    f"if specified as a string."
+                )
+                return self.NON_PROTOCOL_ERROR, None
+        if edge not in (0, 1, 2):
+            self._logger.error("Invalid trigger edge, it must be one of (0, 1, 2)")
+            return self.NON_PROTOCOL_ERROR, None
+
         payload = struct.pack(">B", edge)
         self._logger.debug(f"osc_trigger_edge payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE, payload=payload)
@@ -252,15 +292,39 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def osc_sample_delay(self, delay: int) -> tuple[int, None]:
+    def osc_sample_delay(self, delay: int | str) -> tuple[int, None]:
         """
         Set sample delay.
 
-        :param delay: Sample delay.
+        :param delay: Sample delay. It can be a number or a string, if the input is a string,
+                       you can specify the unit, ending with the value,
+                       using either 'k' (representing 1024) or 'm' (representing 1024^2).
+                       For example, "1k" means 1024 and "2m" means 2097152.
         :type delay: int
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        if isinstance(delay, str):
+            m = re.match(r"^(\d+)([kKmM])?$", delay)
+
+            if m:
+                delay = int(m.group(1))
+            else:
+                self._logger.error(
+                    "Input format error, it should be a number or a string "
+                    "ending with the value, using either k or m."
+                )
+                return self.NON_PROTOCOL_ERROR, None
+
+            if m.group(2):
+                unit = m.group(2).lower()
+                if unit == "k":
+                    delay *= 1024
+                elif unit == "m":
+                    delay *= 1024 * 1024
+                else:
+                    self._logger.error(f"Unknown unit: {unit}")
+                    return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">i", delay)
         self._logger.debug(f"osc_sample_delay payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_DELAY, payload=payload)
@@ -269,69 +333,112 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
-    def osc_sample_len(self, length: int) -> tuple[int, None]:
+    def osc_sample_length(self, length: int | str) -> tuple[int, None]:
         """
         Set sample length.
 
-        :param length: Sample length.
-        :type length: int
+        :param length: Sample length. It can be a number or a string, if the input is a string,
+                       you can specify the unit, ending with the value,
+                       using either 'k' (representing 1024) or 'm' (representing 1024^2).
+                       For example, "1k" means 1024 and "2m" means 2097152.
+        :type length: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        if isinstance(length, str):
+            m = re.match(r"^(\d+)([kKmM])?$", length)
+
+            if m:
+                length = int(m.group(1))
+            else:
+                self._logger.error(
+                    "Input format error, it should be a number or a string "
+                    "ending with the value, using either k or m."
+                )
+                return self.NON_PROTOCOL_ERROR, None
+
+            if m.group(2):
+                unit = m.group(2).lower()
+                if unit == "k":
+                    length *= 1024
+                elif unit == "m":
+                    length *= 1024 * 1024
+                else:
+                    self._logger.error(f"Unknown unit: {unit}")
+                    return self.NON_PROTOCOL_ERROR, None
+
         payload = struct.pack(">I", length)
-        self._logger.debug(f"osc_sample_len payload: {payload.hex()}")
+        self._logger.debug(f"osc_sample_length payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_LENGTH, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.osc_sample_len = length
+            self._config.osc_sample_length = length
 
         return status, None
 
-    def osc_sample_clock_rate(self, rate: int | str) -> tuple[int, None]:
+    def osc_sample_clock(self, clock: int | str) -> tuple[int, None]:
         """
         Set osc sample rate
 
-        :param rate: The sample rate in kHz, one of (65000, 48000, 24000, 12000, 8000, 4000)
-        :type rate: int | str
+        :param clock: The sample rate in kHz can be one of (65000, 48000, 24000, 12000, 8000, 4000)
+                      or a string in (65M, 48M, 24M, 12M, 8M, 4M).
+        :type clock: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        if isinstance(rate, str):
-            rate = rate.upper()
-            if rate == "65M":
-                rate = 65000
-            elif rate == "48M":
-                rate = 48000
-            elif rate == "24M":
-                rate = 24000
-            elif rate == "12M":
-                rate = 12000
-            elif rate == "8M":
-                rate = 8000
-            elif rate == "4M":
-                rate = 4000
+        if isinstance(clock, str):
+            clock = clock.upper()
+            if clock == "65M":
+                clock = 65000
+            elif clock == "48M":
+                clock = 48000
+            elif clock == "24M":
+                clock = 24000
+            elif clock == "12M":
+                clock = 12000
+            elif clock == "8M":
+                clock = 8000
+            elif clock == "4M":
+                clock = 4000
             else:
-                self._logger.error(f"UnSupport osc sample rate: {rate}, 65M or 48M or 24M or 12M or 8M or 4M")
-                return protocol.STATUS_ERROR, None
-
-        payload = struct.pack(">I", rate)
+                if re.match(r"^\d+$", clock):
+                    clock = int(clock)
+                else:
+                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 24M or 12M or 8M or 4M")
+                    return self.NON_PROTOCOL_ERROR, None
+        if clock not in (65000, 48000, 24000, 12000, 8000, 4000):
+            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 24000, 12000, 8000, 4000)")
+            return self.NON_PROTOCOL_ERROR, None
+        payload = struct.pack(">I", clock)
         self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_RATE, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.osc_sample_rate = rate
+            self._config.osc_sample_clock = clock
 
         return status, None
 
-    def osc_analog_gain(self, channel: int, gain: int) -> tuple[int, None]:
+    def osc_analog_gain(self, channel: int | str, gain: int) -> tuple[int, None]:
         """
         Set analog gain.
 
-        :param channel: Analog channel.
-        :type channel: int
+        :param channel: Analog channel, it can be 'A' or 'B', or 0, 1
+        :type channel: int | str
         :param gain: Analog gain.
         :type gain: int
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        channels = ("A", "B")
+        if isinstance(channel, str):
+            channel = channel.upper()
+            if channel in channels:
+                channel = channels.index(channel)
+            else:
+                self._logger.error("Channel error, it should in 'A' or 'B'")
+                return self.NON_PROTOCOL_ERROR, None
+        else:
+            if channel > 1:
+                self._logger.error("Channel error, it should in 0 or 1")
+                return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">BB", channel, gain)
         self._logger.debug(f"osc_analog_gain payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
@@ -406,7 +513,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         if isinstance(voltage, str):
-            m = re.match(r"(\d+(?:\.\d+)?)([mM]?[vV])?$", voltage)
+            m = re.match(r"^(\d+(?:\.\d+)?)([mM]?[vV])?$", voltage)
             if not m:
                 self._logger.error(
                     "Input format error: " "it should be a number or a string and end with a unit in V or mV."
