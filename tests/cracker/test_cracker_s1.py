@@ -1,256 +1,220 @@
 import logging
+import struct
+import threading
+import time
 
-import cracknuts.cracker.cracker_basic
-from cracknuts.cracker import protocol
+import pytest
+
+import cracknuts.mock as mock
 from cracknuts.cracker.cracker_s1 import CrackerS1
-from cracknuts.logger import set_level
+from cracknuts.cracker.protocol import Command
 
-# basic_device = CrackerS1(address=('192.168.0.10', 9761))
-basic_device = CrackerS1(address=('localhost', 9761))
 
+@pytest.fixture(scope='module')
+def mock_cracker():
+    def start_mock_cracker():
+        mock.start(logging_level=logging.WARNING)
 
-def setup_function():
-    set_level(logging.DEBUG, basic_device)
-    basic_device.connect(update_bin=False)
+    mock_thread = threading.Thread(target=start_mock_cracker)
+    mock_thread.daemon = True
+    mock_thread.start()
+    time.sleep(0.5)
+    yield
 
 
-def test_connection_with_update_bin():
-    basic_device.get_hardware_model()
+@pytest.fixture(scope='module')
+def cracker_s1(mock_cracker):
+    device = CrackerS1(address=('localhost', 9761))
+    # set_level(logging.INFO, device)
+    device.connect(update_bin=False)
+    yield device
+    device.disconnect()
 
 
-def test_echo():
-    assert basic_device.echo('11223344') == '11223344'
+def get_result_by_command(device, command):
+    _, r = device.send_with_command(0xFFFF, payload=struct.pack('>I', command))
+    return r
 
 
-def test_send_with_command():
-    assert basic_device.send_with_command(0x01, payload='11223344')[1].hex() == '11223344'
+def test_nut_voltage(cracker_s1):
+    s, _ = cracker_s1.nut_voltage("3.3")
+    assert s == 0 and cracker_s1.get_current_config().nut_voltage == 3.3
+    assert get_result_by_command(cracker_s1, Command.NUT_VOLTAGE) == struct.pack('>I', 3300)
 
+    s, _ = cracker_s1.nut_voltage("3.4v")
+    assert s == 0 and cracker_s1.get_current_config().nut_voltage == 3.4
+    assert get_result_by_command(cracker_s1, Command.NUT_VOLTAGE) == struct.pack('>I', 3400)
 
-def test_get_id():
-    assert basic_device.get_id() is not None
+    s, _ = cracker_s1.nut_voltage("3500mV")
+    assert s == 0 and cracker_s1.get_current_config().nut_voltage == 3.5
+    assert get_result_by_command(cracker_s1, Command.NUT_VOLTAGE) == struct.pack('>I', 3500)
 
+    s, _ = cracker_s1.nut_voltage("3.6")
+    assert s == 0 and cracker_s1.get_current_config().nut_voltage == 3.6
+    assert get_result_by_command(cracker_s1, Command.NUT_VOLTAGE) == struct.pack('>I', 3600)
 
-def test_get_name():
-    assert basic_device.get_hardware_model() is not None
+    s, _ = cracker_s1.nut_voltage("3.7K")
+    assert s == -1
 
 
-def test_scrat_analog_channel_enable():
-    assert basic_device._osc_set_analog_channel_enable({1: True}) is None
+def test_osc_sample_clock(cracker_s1):
+    clock_values = (65000, 48000, 24000, 12000, 8000, 4000)
 
+    for clock in clock_values:
+        s, _ = cracker_s1.osc_sample_clock(str(clock))
+        assert s == 0 and cracker_s1.get_current_config().osc_sample_clock == clock
+        assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_RATE) == struct.pack('>I', clock)
 
-def test_scrat_analog_coupling():
-    assert basic_device.osc_set_analog_coupling({1: 1}) is None
+        s, _ = cracker_s1.osc_sample_clock(clock)
+        assert s == 0 and cracker_s1.get_current_config().osc_sample_clock == clock
+        assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_RATE) == struct.pack('>I', clock)
 
+    clock_str_values = ("65M", "48M", "24M", "12M", "8M", "4M")
+    for i, clock in enumerate(clock_str_values):
+        s, _ = cracker_s1.osc_sample_clock(clock)
+        assert s == 0 and cracker_s1.get_current_config().osc_sample_clock == clock_values[i]
+        assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_RATE) == struct.pack('>I', clock_values[i])
 
-def test_scrat_analog_voltage():
-    assert basic_device.osc_set_analog_voltage(1, 1) is None
+    s, _ = cracker_s1.osc_sample_clock("69M")
+    assert s == -1
 
 
-def test_scrat_analog_bias_voltage():
-    assert basic_device.osc_set_analog_bias_voltage(1, 1) is None
+def test_osc_sample_length(cracker_s1):
+    s, _ = cracker_s1.osc_sample_length(1024)
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_length == 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_LENGTH) == struct.pack('>I', 1024)
 
+    s, _ = cracker_s1.osc_sample_length("1k")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_length == 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_LENGTH) == struct.pack('>I', 1024)
 
-def test_scrat_analog_gain():
-    assert basic_device.osc_analog_gain(1) is None
+    s, _ = cracker_s1.osc_sample_length("1K")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_length == 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_LENGTH) == struct.pack('>I', 1024)
 
+    s, _ = cracker_s1.osc_sample_length("1m")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_length == 1024 * 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_LENGTH) == struct.pack('>I', 1024 * 1024)
 
-def test_scrat_digital_channel_enable():
-    assert basic_device.osc_set_digital_channel_enable({1: True}) is None
+    s, _ = cracker_s1.osc_sample_length("1M")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_length == 1024 * 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_LENGTH) == struct.pack('>I', 1024 * 1024)
 
 
-def test_scrat_digital_voltage():
-    assert basic_device.osc_set_digital_voltage(1) is None
+def test_osc_sample_delay(cracker_s1):
+    s, _ = cracker_s1.osc_sample_delay(1024)
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_delay == 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_DELAY) == struct.pack('>I', 1024)
 
+    s, _ = cracker_s1.osc_sample_delay("1k")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_delay == 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_DELAY) == struct.pack('>I', 1024)
+
+    s, _ = cracker_s1.osc_sample_delay("1K")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_delay == 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_DELAY) == struct.pack('>I', 1024)
 
-def test_scrat_trigger_mode():
-    assert basic_device.osc_trigger_mode(1, 1) is None
+    s, _ = cracker_s1.osc_sample_delay("1m")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_delay == 1024 * 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_DELAY) == struct.pack('>I', 1024 * 1024)
 
+    s, _ = cracker_s1.osc_sample_delay("1M")
+    assert s == 0 and cracker_s1.get_current_config().osc_sample_delay == 1024 * 1024
+    assert get_result_by_command(cracker_s1, Command.OSC_SAMPLE_DELAY) == struct.pack('>I', 1024 * 1024)
 
-def test_scrat_analog_trigger_source():
-    assert basic_device.osc_trigger_source(1) is None
 
+def test_osc_trigger_mode(cracker_s1):
+    modes1 = ("EDGE", "PATTERN")
+    modes2 = ("E", "P")
+    for modes in modes1, modes2:
+        for mode in modes:
+            s, _ = cracker_s1.osc_trigger_mode(mode)
+            assert s == 0 and cracker_s1.get_current_config().osc_trigger_mode == modes.index(mode)
+            assert get_result_by_command(cracker_s1, Command.OSC_TRIGGER_MODE) == struct.pack('>B', modes.index(mode))
 
-def test_scrat_digital_trigger_source():
-    assert basic_device.osc_set_digital_trigger_source(1) is None
+            s, _ = cracker_s1.osc_trigger_mode(modes.index(mode))
+            assert s == 0 and cracker_s1.get_current_config().osc_trigger_mode == modes.index(mode)
+            assert get_result_by_command(cracker_s1, Command.OSC_TRIGGER_MODE) == struct.pack('>B', modes.index(mode))
 
+    s, _ = cracker_s1.osc_trigger_mode("x")
+    assert s == -1
 
-def test_scrat_analog_trigger_voltage():
-    assert basic_device.osc_set_analog_trigger_voltage(1) is None
+    s, _ = cracker_s1.osc_trigger_mode(5)
+    assert s == -1
 
 
-# Commands.OSC_SAMPLE_DELAY
-def test_scrat_trigger_delay():
-    status, res = basic_device.osc_sample_delay(1)
-    assert status is protocol.STATUS_OK and res is None
+def test_osc_trigger_source(cracker_s1):
+    sources1 = ('N', 'A', 'B', 'P')
+    sources2 = ('NUT', 'CHA', 'CHB', "PROTOCOL")
+    for sources in sources1, sources2:
+        for source in sources:
+            s, _ = cracker_s1.osc_trigger_source(source)
+            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_source == sources.index(source)
+            assert get_result_by_command(cracker_s1, Command.OSC_ANALOG_TRIGGER_SOURCE) == struct.pack('>B',
+                                                                                                       sources.index(
+                                                                                                           source))
 
+            s, _ = cracker_s1.osc_trigger_source(sources.index(source))
+            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_source == sources.index(source)
+            assert get_result_by_command(cracker_s1, Command.OSC_ANALOG_TRIGGER_SOURCE) == struct.pack('>B',
+                                                                                                       sources.index(
+                                                                                                           source))
 
-# cracknuts.cracker.cracker.Commands.OSC_SAMPLE_LENGTH
-def test_scrat_sample_len():
-    status, res = basic_device.osc_sample_len(1)
-    assert status is protocol.STATUS_OK and res is None
+    s, _ = cracker_s1.osc_trigger_source("x")
+    assert s == -1
 
+    s, _ = cracker_s1.osc_trigger_source(5)
+    assert s == -1
 
-def test_scrat_arm():
-    status, res = basic_device.osc_single()
-    assert status is protocol.STATUS_OK and res is None
 
+def test_osc_trigger_edge(cracker_s1):
+    edges1 = ('UP', 'DOWN', 'EITHER')
+    edges2 = ('U', 'D', 'E')
+    for edges in edges1, edges2, tuple(e.lower() for e in edges1), tuple(e.lower() for e in edges2):
+        for edge in edges:
+            s, _ = cracker_s1.osc_trigger_edge(edge)
+            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_edge == edges.index(edge)
+            assert get_result_by_command(cracker_s1, Command.OSC_TRIGGER_EDGE) == struct.pack('>B', edges.index(edge))
 
-def test_scrat_is_triggered():
-    status, res = basic_device.osc_is_triggered()
-    assert status is protocol.STATUS_OK and res is not None
+            s, _ = cracker_s1.osc_trigger_edge(edges.index(edge))
+            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_edge == edges.index(edge)
+            assert get_result_by_command(cracker_s1, Command.OSC_TRIGGER_EDGE) == struct.pack('>B', edges.index(edge))
 
+    s, _ = cracker_s1.osc_trigger_edge("x")
+    assert s == -1
 
-def test_scrat_get_analog_wave():
-    assert basic_device.osc_get_analog_wave(1, 0, 100) is not None
+    s, _ = cracker_s1.osc_trigger_edge(5)
+    assert s == -1
 
 
-def test_scrat_get_digital_wave():
-    assert basic_device.osc_get_digital_wave(1, 1, 1) is not None
+def test_osc_analog_gain(cracker_s1):
+    channels =  ('A', 'B')
+    for i, channel in enumerate(channels):
+        s, _ = cracker_s1.osc_analog_gain(channel, 10)
+        assert s == 0 and cracker_s1.get_current_config().osc_analog_gain[channels.index(channel)] == 10
+        assert get_result_by_command(cracker_s1, Command.OSC_ANALOG_GAIN) == struct.pack('>B', channels.index(channel)) + struct.pack('>B', 10)
 
+        s, _ = cracker_s1.osc_analog_gain(i, 10)
+        assert s == 0 and cracker_s1.get_current_config().osc_analog_gain[i] == 10
+        assert get_result_by_command(cracker_s1, Command.OSC_ANALOG_GAIN) == struct.pack('>B', i) + struct.pack('>B', 10)
 
-def test_cracker_nut_enable():
-    assert basic_device.nut_enable(1) is None
+    s, _ = cracker_s1.osc_analog_gain("x", 10)
+    assert s == -1
 
+    s, _ = cracker_s1.osc_analog_gain(2, 10)
+    assert s == -1
 
-def test_cracker_nut_disable():
-    assert basic_device.nut_enable(0) is not None
 
+def test_osc_analog_enable_disable(cracker_s1):
+    channels = ('A', 'B')
+    for i, channel in enumerate(channels):
+        m = 1 << i
 
-def test_cracker_nut_voltage():
-    assert basic_device.nut_voltage(3300) is not None
+        s, _ = cracker_s1.osc_analog_enable(channel)
+        assert s == 0 and cracker_s1.get_current_config().osc_analog_channel_enable[i] == True
 
+        assert struct.unpack(">I", get_result_by_command(cracker_s1, Command.OSC_ANALOG_CHANNEL_ENABLE))[0] & m == m
 
-def test_cracker_nut_voltage_raw():
-    assert basic_device.nut_voltage_raw(2) is not None
-
-
-def test_cracker_nut_gain_raw():
-    assert basic_device.osc_set_analog_gain_raw(1, 2) is not None
-
-
-# cracknuts.cracker.cracker.Commands.OSC_ANALOG_GAIN
-def test_cracker_nut_gain():
-    assert basic_device.osc_set_analog_gain_raw(1, 2) is not None
-
-
-def test_cracker_nut_interface():
-    assert basic_device.nut_interface({0: True}) is None
-
-
-def test_cracker_nut_timeout():
-    assert basic_device.nut_timeout(0) is None
-
-
-def test_cracker_serial_baud():
-    assert basic_device.cracker_serial_baud(0) is None
-
-
-def test_cracker_serial_width():
-    assert basic_device.cracker_serial_width(0) is None
-
-
-def test_cracker_serial_stop():
-    assert basic_device.cracker_serial_stop(0) is None
-
-
-def test_cracker_serial_odd_eve():
-    assert basic_device.cracker_serial_odd_eve(0) is None
-
-
-def test_cracker_set_key():
-    d = '01 00 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
-    d = d.replace(' ', '')
-    d = bytes.fromhex(d)
-    print(d)
-    r = basic_device.cracker_serial_data(len(d), d)
-    assert r is not None
-
-
-def test_cracker_encrypt():
-    d = '01 02 00 00 00 00 00 10 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff'
-    d = d.replace(' ', '')
-    d = bytes.fromhex(d)
-    for i in range(1000):
-        r = basic_device.cracker_serial_data(len(d), d)
-        assert r is not None
-
-
-### failed: timeout
-def test_cracker_spi_cpol():
-    assert basic_device.cracker_spi_cpol(1) is None
-
-
-### failed: timeout
-def test_cracker_spi_cpha():
-    assert basic_device.cracker_spi_cpha(1) is None
-
-
-### failed: timeout
-def test_cracker_spi_data_len():
-    assert basic_device.cracker_spi_data_len(1) is None
-
-
-### failed: timeout
-def test_cracker_spi_freq():
-    assert basic_device.cracker_spi_freq(1) is None
-
-
-### failed: timeout
-def test_cracker_spi_timeout():
-    assert basic_device.cracker_spi_timeout(1) is None
-
-
-### failed: timeout
-def test_cracker_spi_data():
-    assert basic_device.cracker_spi_data(1, b'aa') is not None
-
-
-### failed: timeout
-def test_cracker_i2c_freq():
-    assert basic_device.cracker_i2c_freq(1) is None
-
-
-### failed: timeout
-def test_cracker_i2c_timeout():
-    assert basic_device.cracker_i2c_timeout(1) is None
-
-
-### failed: timeout
-def test_cracker_i2c_data():
-    assert basic_device.cracker_i2c_data(1, b'bb') is not None
-
-
-### failed: timeout
-def test_cracker_ican_freq():
-    assert basic_device.cracker_can_freq(1) is None
-
-
-### failed: timeout
-def test_cracker_can_timeout():
-    assert basic_device.cracker_can_timeout(1) is None
-
-
-### failed: timeout
-def test_cracker_ican_data():
-    assert basic_device.cracker_can_data(1, b'bb') is not None
-
-
-def test_cracker_scrat_is_triggered():
-    assert basic_device.osc_is_triggered() is None
-
-
-def test_multiple_echo():
-    print(basic_device.get_id())
-    print(basic_device.get_hardware_model())
-    basic_device.disconnect()
-
-
-def test_write_register():
-    basic_device.register_write(0x43c00000, 0x200, 0x2705)
-
-
-if __name__ == '__main__':
-    setup_function()
-    # test_cracker_nut_interface()
-    test_cracker_nut_enable()
-    # test_cracker_nut_voltage()
+        s, _ = cracker_s1.osc_analog_disable(channel)
+        assert s == 0 and cracker_s1.get_current_config().osc_analog_channel_enable[i] == False
+        assert struct.unpack(">I", get_result_by_command(cracker_s1, Command.OSC_ANALOG_CHANNEL_ENABLE))[0] & m == 0

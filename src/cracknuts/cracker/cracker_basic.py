@@ -24,9 +24,9 @@ class ConfigBasic:
     def __init__(self):
         self.osc_analog_channel_enable = {0: False, 1: True}
         self.osc_analog_gain = {0: 50, 1: 50}
-        self.osc_sample_len = 1024
+        self.osc_sample_length = 1024
         self.osc_sample_delay = 0
-        self.osc_sample_rate = 48000
+        self.osc_sample_clock = 48000
         self.osc_sample_phase = 0
         self.osc_analog_trigger_source = 0
         self.osc_trigger_mode = 0
@@ -86,6 +86,8 @@ T = typing.TypeVar("T", bound=ConfigBasic)
 
 
 class CrackerBasic(ABC, typing.Generic[T]):
+    NON_PROTOCOL_ERROR = -1
+
     """
     The basic device class, provides support for the `CNP` protocol, configuration management, firmware maintenance,
     and other basic operations.
