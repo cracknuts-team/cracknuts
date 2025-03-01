@@ -164,7 +164,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             mask |= 1 << 7
         if final_enable.get(8):
             mask |= 1 << 8
-        payload = struct.pack(">I", mask)
+        payload = struct.pack(">B", mask)
         self._logger.debug(f"Scrat analog_channel_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
