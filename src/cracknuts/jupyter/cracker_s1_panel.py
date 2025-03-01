@@ -10,6 +10,7 @@ from cracknuts import logger
 from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
+import cracknuts.cracker.serial as serial
 
 
 class CrackerS1PanelWidget(MsgHandlerPanelWidget):
@@ -149,12 +150,12 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @traitlets.observe("uri")
     @observe_interceptor
-    def uri_on_change(self, change):
+    def uri_on_changed(self, change):
         self.cracker.set_uri(change.get("new"))
 
     @traitlets.observe("nut_enable")
     @observe_interceptor
-    def nut_enable_change(self, change):
+    def nut_enable_changed(self, change):
         enabled = bool(change.get("new"))
         self.cracker.nut_voltage_enable() if enabled else self.cracker.nut_voltage_disable()
         if enabled:
@@ -162,12 +163,12 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @traitlets.observe("nut_voltage")
     @observe_interceptor
-    def nut_voltage_change(self, change):
+    def nut_voltage_changed(self, change):
         self.cracker.nut_voltage(change.get("new"))
 
     @traitlets.observe("nut_clock_enable")
     @observe_interceptor
-    def nut_clock_enable_change(self, change):
+    def nut_clock_enable_changed(self, change):
         enabled = bool(change.get("new"))
         self.cracker.nut_clock_enable() if enabled else self.cracker.nut_clock_disable()
         if enabled:
@@ -175,27 +176,27 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @traitlets.observe("nut_clock")
     @observe_interceptor
-    def nut_clock_change(self, change):
+    def nut_clock_changed(self, change):
         self.cracker.nut_clock_freq(int(change.get("new")))
 
     @traitlets.observe("osc_sample_phase")
     @observe_interceptor
-    def osc_sample_phase_change(self, change):
+    def osc_sample_phase_changed(self, change):
         self.cracker.osc_sample_clock_phase(int(change.get("new")))
 
     @traitlets.observe("osc_sample_len")
     @observe_interceptor
-    def osc_sample_len_change(self, change):
+    def osc_sample_len_changed(self, change):
         self.cracker.osc_sample_length(int(change.get("new")))
 
     @traitlets.observe("osc_sample_delay")
     @observe_interceptor
-    def osc_sample_delay_change(self, change):
+    def osc_sample_delay_changed(self, change):
         self.cracker.osc_sample_delay(int(change.get("new")))
 
     @traitlets.observe("osc_sample_rate")
     @observe_interceptor
-    def osc_sample_rate_change(self, change):
+    def osc_sample_rate_changed(self, change):
         self.cracker.osc_sample_clock(int(change.get("new")))
 
     @traitlets.observe("osc_analog_channel_a_enable")
@@ -216,27 +217,27 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @traitlets.observe("osc_trigger_source")
     @observe_interceptor
-    def osc_set_trigger_source(self, change):
+    def osc_trigger_source_changed(self, change):
         self.cracker.osc_trigger_source(change.get("new"))
 
     @traitlets.observe("osc_trigger_mode")
     @observe_interceptor
-    def osc_set_trigger_mode(self, change):
+    def osc_trigger_mode_changed(self, change):
         self.cracker.osc_trigger_mode(change.get("new"))
 
     @traitlets.observe("osc_trigger_edge")
     @observe_interceptor
-    def osc_set_trigger_edge(self, change):
+    def osc_trigger_edge_changed(self, change):
         self.cracker.osc_trigger_edge(change.get("new"))
 
     @traitlets.observe("osc_trigger_edge_level")
     @observe_interceptor
-    def osc_set_trigger_edge_level(self, change):
+    def osc_trigger_edge_level_changed(self, change):
         self.cracker.osc_trigger_level(change.get("new"))
 
     @traitlets.observe("osc_analog_channel_a_gain", "osc_analog_channel_b_gain")
     @observe_interceptor
-    def osc_set_analog_channel_gain(self, change):
+    def osc_analog_channel_gain_changed(self, change):
         name = change.get("name")
         channel = None
         if name == "osc_analog_channel_a_gain":
@@ -245,3 +246,79 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             channel = 1
         if channel is not None:
             self.cracker.osc_analog_gain(channel, change.get("new"))
+
+    @traitlets.observe("nut_uart_enable")
+    @observe_interceptor
+    def nut_uart_enable_changed(self, change):
+        enabled = bool(change.get("new"))
+        self.cracker.uart_enable() if enabled else self.cracker.uart_disable()
+        if enabled:
+            self.cracker.uart_config(
+                serial.Baudrate(self.nut_uart_baudrate),
+                self.nut_uart_bytesize,
+                self.nut_uart_parity,
+                self.nut_uart_stopbits,
+            )
+
+    @traitlets.observe("nut_uart_baudrate")
+    @observe_interceptor
+    def nut_uart_baudrate_changed(self, change):
+        self.cracker.uart_config(
+            change.get("new"), self.nut_uart_bytesize, self.nut_uart_parity, self.nut_uart_stopbits
+        )
+
+    @traitlets.observe("nut_uart_bytesize")
+    @observe_interceptor
+    def nut_uart_bytesize_changed(self, change):
+        self.cracker.uart_config(self.nut_uart_baudrate, change("new"), self.nut_uart_parity, self.nut_uart_stopbits)
+
+    @traitlets.observe("nut_uart_parity")
+    @observe_interceptor
+    def nut_uart_parity_changed(self, change):
+        self.cracker.uart_config(self.nut_uart_baudrate, self.nut_uart_bytesize, change("new"), self.nut_uart_stopbits)
+
+    @traitlets.observe("nut_uart_stopbits")
+    @observe_interceptor
+    def nut_uart_stopbits_changed(self, change):
+        self.cracker.uart_config(self.nut_uart_baudrate, self.nut_uart_bytesize, self.nut_uart_parity, change("new"))
+
+    @traitlets.observe("nut_spi_enable")
+    @observe_interceptor
+    def nut_spi_enable_changed(self, change):
+        enabled = bool(change.get("new"))
+        self.cracker.spi_enable() if enabled else self.cracker.spi_disable()
+        if enabled:
+            self.cracker.spi_config(self.nut_spi_speed, self.nut_spi_cpol, self.nut_spi_cpha)
+
+    @traitlets.observe("nut_spi_speed")
+    @observe_interceptor
+    def nut_spi_speed_changed(self, change):
+        self.cracker.spi_config(change.get("new"), self.nut_spi_cpol, self.nut_spi_cpha)
+
+    @traitlets.observe("nut_spi_cpol")
+    @observe_interceptor
+    def nut_spi_cpol_changed(self, change):
+        self.cracker.spi_config(self.nut_spi_speed, change.get("new"), self.nut_spi_cpha)
+
+    @traitlets.observe("nut_spi_cpha")
+    @observe_interceptor
+    def nut_spi_cpha_changed(self, change):
+        self.cracker.spi_config(self.nut_spi_speed, self.nut_spi_cpol, change.get("new"))
+
+    @traitlets.observe("nut_i2c_enable")
+    @observe_interceptor
+    def nut_i2c_enable_changed(self, change):
+        enabled = bool(change.get("new"))
+        self.cracker.i2c_enable() if enabled else self.cracker.i2c_disable()
+        if enabled:
+            self.cracker.i2c_config(self.nut_i2c_dev_addr, self.nut_i2c_speed)
+
+    @traitlets.observe("nut_i2c_dev_addr")
+    @observe_interceptor
+    def nut_i2c_dev_addr_changed(self, change):
+        self.cracker.i2c_config(change.get("new"), self.nut_i2c_speed)
+
+    @traitlets.observe("nut_i2c_speed")
+    @observe_interceptor
+    def nut_i2c_speed_changed(self, change):
+        self.cracker.i2c_config(self.nut_i2c_dev_addr, change.get("new"))

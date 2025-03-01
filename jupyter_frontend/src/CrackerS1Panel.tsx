@@ -321,7 +321,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.uart.baudrate"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable} value={nutUartBaudrate}
+                          onChange={setNutUartBaudrate} options={[
                           {value: 9600, label: "9600"},
                           {value: 19200, label: "19200"},
                           {value: 38400, label: "38400"},
@@ -332,7 +333,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.uart.bytesize"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable}
+                          value={nutUartBytesize} onChange={setNutUartBytesize} options={[
                           {value: 5, label: "5"},
                           {value: 6, label: "6"},
                           {value: 7, label: "7"},
@@ -342,7 +344,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.uart.parity"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable}
+                          value={nutUartParity} onChange={setNutUartParity} options={[
                           {value: 0, label: intl.formatMessage({id: "cracker.config.nut.uart.parity.none"})},
                           {value: 1, label: intl.formatMessage({id: "cracker.config.nut.uart.parity.even"})},
                           {value: 2, label: intl.formatMessage({id: "cracker.config.nut.uart.parity.odd"})},
@@ -353,7 +356,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.uart.stopbits"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable}
+                          value={nutUartStopbits} onChange={setNutUartStopbits} options={[
                           {value: 1, label: "1"},
                           {value: 1.5, label: "1.5"},
                           {value: 2, label: "2"},
@@ -372,19 +376,23 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       </Checkbox>
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.speed"})}>
-                      <InputNumber size={"small"} disabled={!nutSpiEnable}/>
+                      <InputNumber value={nutSpiSpeed} onChange={(v) => {
+                          setNutSpiSpeed(Number(v));
+                        }} size={"small"} disabled={!nutSpiEnable}/>
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.cpol"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutSpiEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutSpiEnable}
+                           value={nutSpiCpol} onChange={setNutSpiCpol} options={[
                           {value: 0, label: intl.formatMessage({id: "cracker.config.nut.spi.cpol.low"})},
                           {value: 1, label: intl.formatMessage({id: "cracker.config.nut.spi.cpol.high"})},
                         ]}/>
                       </Space.Compact>
                     </Form.Item>
-                    <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.cpol"})}>
+                    <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.cpha"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutSpiEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutSpiEnable}
+                          value={nutSpiCpha} onChange={setNutSpiCpha} options={[
                           {value: 0, label: intl.formatMessage({id: "cracker.config.nut.spi.cpha.low"})},
                           {value: 1, label: intl.formatMessage({id: "cracker.config.nut.spi.cpha.high"})},
                         ]}/>
@@ -398,15 +406,17 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
               {/*    <Form layout={"inline"}>*/}
                     <Form.Item style={{marginRight: 1}}>
                       <Checkbox checked={nutI2cEnable} onChange={() => {setNutI2cEnable(!nutI2cEnable)}}>
-                        <FormattedMessage id={"cracker.config.nut.uart.enable"}/>
+                        <FormattedMessage id={"cracker.config.nut.i2c.enable"}/>
                       </Checkbox>
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.i2c.dev_addr"})}>
-                      <Input disabled={!nutI2cEnable} size={"small"} style={{width: 90}}/>
+                      <Input value={nutI2cDevAddr} onChange={(e: ChangeEvent<HTMLInputElement>) => setNutI2cDevAddr(e.target.value)}
+                             disabled={!nutI2cEnable} size={"small"} style={{width: 90}}/>
                     </Form.Item>
-                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.i2c.dev_addr"})}>
+                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.i2c.speed"})}>
                       <Space.Compact>
-                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutI2cEnable} options={[
+                        <Select size={"small"} style={{minWidth: 90}} disabled={!nutI2cEnable}
+                          value={nutI2cSpeed} onChange={setNutI2cSpeed} options={[
                           {value: 0, label: "100K"},
                           {value: 1, label: "400K"},
                           {value: 2, label: "1M"},
