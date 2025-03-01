@@ -8,6 +8,7 @@ import pytest
 import cracknuts.mock as mock
 from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.cracker.protocol import Command
+from cracknuts.logger import set_level
 
 
 @pytest.fixture(scope='module')
@@ -217,8 +218,8 @@ def test_osc_analog_enable_disable(cracker_s1):
         s, _ = cracker_s1.osc_analog_enable(channel)
         assert s == 0 and cracker_s1.get_current_config().osc_analog_channel_enable[i] == True
 
-        assert struct.unpack(">I", get_result_by_command(cracker_s1, Command.OSC_ANALOG_CHANNEL_ENABLE))[0] & m == m
+        assert struct.unpack(">B", get_result_by_command(cracker_s1, Command.OSC_ANALOG_CHANNEL_ENABLE))[0] & m == m
 
         s, _ = cracker_s1.osc_analog_disable(channel)
         assert s == 0 and cracker_s1.get_current_config().osc_analog_channel_enable[i] == False
-        assert struct.unpack(">I", get_result_by_command(cracker_s1, Command.OSC_ANALOG_CHANNEL_ENABLE))[0] & m == 0
+        assert struct.unpack(">B", get_result_by_command(cracker_s1, Command.OSC_ANALOG_CHANNEL_ENABLE))[0] & m == 0
