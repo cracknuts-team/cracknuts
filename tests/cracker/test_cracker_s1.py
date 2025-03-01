@@ -53,6 +53,10 @@ def test_nut_voltage(cracker_s1):
     assert s == 0 and cracker_s1.get_current_config().nut_voltage == 3.6
     assert get_result_by_command(cracker_s1, Command.NUT_VOLTAGE) == struct.pack('>I', 3600)
 
+    s, _ = cracker_s1.nut_voltage(3.6)
+    assert s == 0 and cracker_s1.get_current_config().nut_voltage == 3.6
+    assert get_result_by_command(cracker_s1, Command.NUT_VOLTAGE) == struct.pack('>I', 3600)
+
     s, _ = cracker_s1.nut_voltage("3.7K")
     assert s == -1
 
