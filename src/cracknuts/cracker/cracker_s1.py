@@ -527,6 +527,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 unit = "v"
             if unit.lower() == "v":
                 voltage = voltage * 1000
+        else:
+            voltage = voltage * 1000
         voltage = int(voltage)
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"nut_voltage payload: {payload.hex()}")

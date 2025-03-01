@@ -269,7 +269,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       <InputNumber style={{width: 90}}
                         disabled={!nutEnable}
                         addonAfter="V"
-                        step="100"
+                        step="0.1"
                         stringMode
                         size={"small"}
                         min={nutVoltageMin}
