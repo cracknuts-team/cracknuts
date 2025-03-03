@@ -252,35 +252,54 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def nut_uart_enable_changed(self, change):
         enabled = bool(change.get("new"))
         self.cracker.uart_enable() if enabled else self.cracker.uart_disable()
+        print(f"is enabled {enabled}")
         if enabled:
             self.cracker.uart_config(
                 serial.Baudrate(self.nut_uart_baudrate),
-                self.nut_uart_bytesize,
-                self.nut_uart_parity,
-                self.nut_uart_stopbits,
+                serial.Bytesize(self.nut_uart_bytesize),
+                serial.Parity(self.nut_uart_parity),
+                serial.Stopbits(self.nut_uart_stopbits),
             )
 
     @traitlets.observe("nut_uart_baudrate")
     @observe_interceptor
     def nut_uart_baudrate_changed(self, change):
         self.cracker.uart_config(
-            change.get("new"), self.nut_uart_bytesize, self.nut_uart_parity, self.nut_uart_stopbits
+            serial.Baudrate(change.get("new")),
+            serial.Bytesize(self.nut_uart_bytesize),
+            serial.Parity(self.nut_uart_parity),
+            serial.Stopbits(self.nut_uart_stopbits),
         )
 
     @traitlets.observe("nut_uart_bytesize")
     @observe_interceptor
     def nut_uart_bytesize_changed(self, change):
-        self.cracker.uart_config(self.nut_uart_baudrate, change("new"), self.nut_uart_parity, self.nut_uart_stopbits)
+        self.cracker.uart_config(
+            serial.Baudrate(self.nut_uart_baudrate),
+            serial.Bytesize(change.get("new")),
+            serial.Parity(self.nut_uart_parity),
+            serial.Stopbits(self.nut_uart_stopbits),
+        )
 
     @traitlets.observe("nut_uart_parity")
     @observe_interceptor
     def nut_uart_parity_changed(self, change):
-        self.cracker.uart_config(self.nut_uart_baudrate, self.nut_uart_bytesize, change("new"), self.nut_uart_stopbits)
+        self.cracker.uart_config(
+            serial.Baudrate(self.nut_uart_baudrate),
+            serial.Bytesize(self.nut_uart_bytesize),
+            serial.Parity(change.get("new")),
+            serial.Stopbits(self.nut_uart_stopbits),
+        )
 
     @traitlets.observe("nut_uart_stopbits")
     @observe_interceptor
     def nut_uart_stopbits_changed(self, change):
-        self.cracker.uart_config(self.nut_uart_baudrate, self.nut_uart_bytesize, self.nut_uart_parity, change("new"))
+        self.cracker.uart_config(
+            serial.Baudrate(self.nut_uart_baudrate),
+            serial.Bytesize(self.nut_uart_bytesize),
+            serial.Parity(self.nut_uart_parity),
+            serial.Stopbits(change.get("new")),
+        )
 
     @traitlets.observe("nut_spi_enable")
     @observe_interceptor
@@ -288,22 +307,28 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         enabled = bool(change.get("new"))
         self.cracker.spi_enable() if enabled else self.cracker.spi_disable()
         if enabled:
-            self.cracker.spi_config(self.nut_spi_speed, self.nut_spi_cpol, self.nut_spi_cpha)
+            self.cracker.spi_config(
+                self.nut_spi_speed, serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(self.nut_spi_cpha)
+            )
 
     @traitlets.observe("nut_spi_speed")
     @observe_interceptor
     def nut_spi_speed_changed(self, change):
-        self.cracker.spi_config(change.get("new"), self.nut_spi_cpol, self.nut_spi_cpha)
+        self.cracker.spi_config(change.get("new"), serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(self.nut_spi_cpha))
 
     @traitlets.observe("nut_spi_cpol")
     @observe_interceptor
     def nut_spi_cpol_changed(self, change):
-        self.cracker.spi_config(self.nut_spi_speed, change.get("new"), self.nut_spi_cpha)
+        self.cracker.spi_config(
+            self.nut_spi_speed, serial.SpiCpol(change.get("new")), serial.SpiCpha(self.nut_spi_cpha)
+        )
 
     @traitlets.observe("nut_spi_cpha")
     @observe_interceptor
     def nut_spi_cpha_changed(self, change):
-        self.cracker.spi_config(self.nut_spi_speed, self.nut_spi_cpol, change.get("new"))
+        self.cracker.spi_config(
+            self.nut_spi_speed, serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(change.get("new"))
+        )
 
     @traitlets.observe("nut_i2c_enable")
     @observe_interceptor
@@ -311,14 +336,14 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         enabled = bool(change.get("new"))
         self.cracker.i2c_enable() if enabled else self.cracker.i2c_disable()
         if enabled:
-            self.cracker.i2c_config(self.nut_i2c_dev_addr, self.nut_i2c_speed)
+            self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(self.nut_i2c_speed))
 
     @traitlets.observe("nut_i2c_dev_addr")
     @observe_interceptor
     def nut_i2c_dev_addr_changed(self, change):
-        self.cracker.i2c_config(change.get("new"), self.nut_i2c_speed)
+        self.cracker.i2c_config(int(change.get("new"), 16), serial.I2cSpeed(self.nut_i2c_speed))
 
     @traitlets.observe("nut_i2c_speed")
     @observe_interceptor
     def nut_i2c_speed_changed(self, change):
-        self.cracker.i2c_config(self.nut_i2c_dev_addr, change.get("new"))
+        self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(change.get("new")))

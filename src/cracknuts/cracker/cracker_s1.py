@@ -20,13 +20,25 @@ class ConfigS1(ConfigBasic):
         self.nut_timeout: int | None = None
 
         self.cracker_uart_enable: bool | None = False
-        self.cracker_uart_config: dict | None = {}
+        self.cracker_uart_config: dict | None = {
+            "baudrate": 115200,
+            "bytesize": serial.Bytesize.EIGHTBITS,
+            "parity": serial.Parity.PARITY_NONE,
+            "stopbits": serial.Stopbits.STOPBITS_ONE,
+        }
 
         self.cracker_spi_enable: bool | None = False
-        self.cracker_spi_config: dict | None = {}
+        self.cracker_spi_config: dict | None = {
+            "speed": 10_000,
+            "cpol": serial.SpiCpol.SPI_CPOL_LOW,
+            "cpha": serial.SpiCpha.SPI_CPHA_LOW,
+        }
 
         self.cracker_i2c_enable: bool | None = False
-        self.cracker_i2c_config: dict | None = {}
+        self.cracker_i2c_config: dict | None = {
+            "dev_addr": 0x00,
+            "speed": serial.I2cSpeed.STANDARD_100K,
+        }
 
     def __str__(self):
         return super().__str__()
