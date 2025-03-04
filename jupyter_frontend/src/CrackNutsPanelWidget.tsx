@@ -84,7 +84,7 @@ const render = createRender(() => {
     return (
         <IntlProvider locale={language} messages={messageMap[language]}>
             <ConfigProvider theme={{algorithm: algorithm}} locale={antLanguage}>
-                <div style={{
+                <div id={"cracknuts_widget"} style={{
                     padding: 20,
                     border: "1px solid #616161",
                     backgroundColor: backgroundColor,
