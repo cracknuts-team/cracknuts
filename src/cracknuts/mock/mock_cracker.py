@@ -95,7 +95,10 @@ class MockCracker:
                 self._command_payload_cache[command] = payload_data
 
                 if len(payload_data) > 0:
-                    self._logger.debug(f"Received payload:\n{hex_util.get_bytes_matrix(payload_data)}")
+                    if self._logger.isEnabledFor(logging.INFO):
+                        self._logger.info(f"Received payload: {hex_util.get_hex(payload_data)}")
+                    if self._logger.isEnabledFor(logging.DEBUG):
+                        self._logger.debug(f"Received payload:\n{hex_util.get_bytes_matrix(payload_data)}")
                 if command not in _handler_dict:
                     self._logger.warning(f'Get command not supported: 0x{format(command, '04x')}')
                     unsupported_res = self._unsupported(command)
