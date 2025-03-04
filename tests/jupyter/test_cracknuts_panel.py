@@ -1,5 +1,6 @@
 import logging
 import os.path
+import socket
 import struct
 import threading
 import time
@@ -26,7 +27,16 @@ def mock_cracker():
     yield
 
 
-# 启动 Jupyter Lab
+def wait_for_jupyter(port=8888, timeout=10):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(("localhost", port)) == 0:
+                return True
+        time.sleep(0.5)
+    return False
+
+
 @pytest.fixture(scope="module", autouse=True)
 def start_jupyter_lab(request):
     jupyter_process = subprocess.Popen(
@@ -34,7 +44,9 @@ def start_jupyter_lab(request):
          f"{os.path.dirname(request.fspath)}/test_cracknuts_panel.ipynb"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    # time.sleep(5)
+
+    if not wait_for_jupyter():
+        raise RuntimeError("Jupyter Lab 启动失败")
 
     yield
 
@@ -43,7 +55,7 @@ def start_jupyter_lab(request):
 
 
 @pytest.fixture(scope="module")
-def browser():
+def browser(start_jupyter_lab):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         # browser = p.chromium.launch()
@@ -82,15 +94,8 @@ def run_cell(mock_cracker, jupyter_page):
 
     jupyter_page.click(
         'jp-button[title="Run this cell and advance (Shift+Enter)"][data-command="notebook:run-cell-and-select-next"]')
-    # time.sleep(10)
-    print('wait for run result')
 
     jupyter_page.wait_for_selector("#cracknuts_widget", timeout=60000, state="attached")
-    print("======", jupyter_page.content().__contains__("cracknuts_widget"))
-    with open("d:/2.html", "w", encoding="utf-8") as f:
-        f.write(jupyter_page.content())
-
-    print("get widget...")
 
 
 def test_uart_enable_disable(run_cell, assert_cracker, jupyter_page):
