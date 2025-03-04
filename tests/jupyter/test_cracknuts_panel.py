@@ -87,15 +87,13 @@ def get_result_by_command(device, command):
 @pytest.fixture(scope="module")
 def run_cell(mock_cracker, jupyter_page):
     jupyter_page.goto('http://localhost:8888/lab/workspaces/auto-0/tree/test_cracknuts_panel.ipynb')
-    print('wait for run button')
-    jupyter_page.wait_for_selector(
-        'jp-button[title="Run this cell and advance (Shift+Enter)"][data-command="notebook:run-cell-and-select-next"]',
-        timeout=5000)
+
+    jupyter_page.click("div.jp-Cell:first-of-type", timeout=15000)
 
     jupyter_page.click(
-        'jp-button[title="Run this cell and advance (Shift+Enter)"][data-command="notebook:run-cell-and-select-next"]')
+        'jp-button[title="Run this cell and advance (Shift+Enter)"][data-command="notebook:run-cell-and-select-next"]', timeout=15000)
 
-    jupyter_page.wait_for_selector("#cracknuts_widget", timeout=60000, state="attached")
+    jupyter_page.wait_for_selector("#cracknuts_widget", timeout=15000, state="attached")
 
 
 def test_uart_enable_disable(run_cell, assert_cracker, jupyter_page):
