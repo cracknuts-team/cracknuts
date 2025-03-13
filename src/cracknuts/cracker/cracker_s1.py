@@ -519,7 +519,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         Set nut voltage.
 
         :param voltage: Nut voltage can be a number or a string. If the input is a float,
-                        the voltage will be treated as a mV value. If the input is a string,
+                        the voltage will be treated as a V value. If the input is a string,
                         you can specify the unit, ending with the value, using either mV or V.
         :type voltage: float | str | int
         :return: The device response status

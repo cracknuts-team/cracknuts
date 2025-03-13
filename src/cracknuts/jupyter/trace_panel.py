@@ -42,7 +42,9 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self.set_trace_dataset(ds)
 
     def _show_trace(self, channel_slice, trace_slice):
-        channel_indexes, trace_indexes, traces, data = self._trace_dataset.data[channel_slice, trace_slice]
+        channel_indexes, trace_indexes, traces, data = self._trace_dataset.trace_data_with_indices[
+            channel_slice, trace_slice
+        ]
 
         trace_series_list = []
 
