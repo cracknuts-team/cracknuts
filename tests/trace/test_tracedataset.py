@@ -33,7 +33,7 @@ def test_scarr_trace_dataset_load():
 def test_scarr_trace_dataset_data_slice():
     ds = ScarrTraceDataset.load(zarr_path)
     print(ds.info())
-    print(ds.data[0][0])
+    print(ds.data_with_indices[0][0])
     # print(ds.data[0][0])
     # print(type(ds.data[1][1]))
     # print(type(ds.data[1,1]))
@@ -69,5 +69,5 @@ def test_numpy_trace_dataset_data_slice():
     # print(ds.data[0:1][1:3][2].shape)
     # print(ds.data[0,1:3][2].shape)
     s = slice(0, 1)
-    print(ds.data[s,1:3][2].shape)
-    print(ds.data[0, 1][2])
+    print(ds.data_with_indices[s, 1:3][2].shape)
+    print(ds.data_with_indices[0, 1][2])
