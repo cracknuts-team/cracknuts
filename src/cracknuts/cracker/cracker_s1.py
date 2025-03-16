@@ -1127,7 +1127,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
 
-        payload = struct.pack(">BBBI", stopbits.value, parity.value, bytesize.value, baudrate.value)
+        payload = struct.pack(">BBBB", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
