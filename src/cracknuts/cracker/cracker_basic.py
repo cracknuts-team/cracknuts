@@ -5,7 +5,6 @@ import importlib.util
 import json
 import logging
 import os
-import re
 import socket
 import struct
 import threading
@@ -306,11 +305,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 )
                 return False
 
-            firmware_path = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "firmware")
+            _bin_server_path, _bin_bitstream_path = self._get_bin_file_path(self._hardware_model)
+
             if bin_server_path is None:
-                bin_server_path = self._get_bin_file_path(firmware_path, "server")
+                bin_server_path = _bin_server_path
             if bin_bitstream_path is None:
-                bin_bitstream_path = self._get_bin_file_path(firmware_path, "bitstream")
+                bin_bitstream_path = _bin_bitstream_path
 
             if bin_server_path is None:
                 self._logger.error(f"Can't find bin_server file for hardware model: {self._hardware_model}.")
@@ -345,13 +345,27 @@ class CrackerBasic(ABC, typing.Generic[T]):
             f"bin_bitstream: {self._installed_bin_bitstream_path}"
         )
 
-    def _get_bin_file_path(self, firmware_path: str, bin_type: str):
-        bin_file_name_pattern = rf"{bin_type}-{self._hardware_model}-.+\.bin"
-        for filename in os.listdir(firmware_path):
-            bin_match = re.search(bin_file_name_pattern, filename)
-            if bin_match:
-                return os.path.join(firmware_path, filename)
-        return None
+    def _get_bin_file_path(self, model: str):
+        firmware_path = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "firmware")
+        map_json_path = os.path.join(firmware_path, "map.json")
+        map_json = json.load(open(map_json_path))
+        if model not in map_json:
+            return None, None
+
+        bin_server_path = map_json[model]["server"]
+        if bin_server_path is not None:
+            bin_server_path = os.path.join(firmware_path, bin_server_path)
+        bin_bitstream_path = map_json[model]["bitstream"]
+        if bin_bitstream_path is not None:
+            bin_bitstream_path = os.path.join(firmware_path, bin_bitstream_path)
+        if not os.path.exists(bin_server_path) or not os.path.isfile(bin_server_path):
+            self._logger.error("Find bin server path, but it is not exist or not a file.")
+            bin_server_path = None
+        if not os.path.exists(bin_bitstream_path) or not os.path.isfile(bin_bitstream_path):
+            self._logger.error("Find bin_bitstream path, but it is not exist or not a file.")
+            bin_bitstream_path = None
+
+        return bin_server_path, bin_bitstream_path
 
     def disconnect(self) -> None:
         """
