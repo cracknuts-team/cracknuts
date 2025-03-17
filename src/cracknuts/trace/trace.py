@@ -613,7 +613,8 @@ class NumpyTraceDataset(TraceDataset):
             self._plaintext_array[channel_index, trace_index, :] = data
 
     def _get_trace_data_with_indices(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]:
-        c, t = self._parse_slice(channel_slice, trace_slice)
+        c = self._parse_slice(self._channel_count, channel_slice)
+        t = self._parse_slice(self._trace_count, trace_slice)
         if isinstance(channel_slice, int):
             channel_slice = slice(channel_slice, channel_slice + 1)
         if isinstance(trace_slice, int):
