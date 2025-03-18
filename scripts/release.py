@@ -125,7 +125,7 @@ def update_version(file_path, new_version):
     with open(file_path, "r+") as file:
         content = file.read()
         new_content = re.sub(
-            r'__version__\s*=\s*"\d+\.\d+\.\d+(?:-alpha\.\d+)?"', f'__version__ = "{new_version}"', content
+            r'__version__\s*=\s*"\d+\.\d+\.\d+(?:-(alpha|beta|rc)\.\d+)?"', f'__version__ = "{new_version}"', content
         )
         file.seek(0)
         file.write(new_content)
