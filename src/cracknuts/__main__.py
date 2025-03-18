@@ -54,7 +54,7 @@ def start_lab(workspace: str = None):
     if workspace is None:
         workspace = user_config.get_option("lab.workspace", ".")
     try:
-        subprocess.run(["jupyter", "lab", "--notebook-dir", workspace], check=True)
+        subprocess.run(["jupyter", "lab", "--ServerApp.root_dir", workspace], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Start Jupyter Lab failed: {e}")
 
