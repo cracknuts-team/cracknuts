@@ -30,7 +30,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_clock = traitlets.Int(65000).tag(sync=True)
 
     nut_uart_enable = traitlets.Bool(False).tag(sync=True)
-    nut_uart_baudrate = traitlets.Int(115200).tag(sync=True)
+    nut_uart_baudrate = traitlets.Int(4).tag(sync=True)
     nut_uart_bytesize = traitlets.Int(8).tag(sync=True)
     nut_uart_parity = traitlets.Int(0).tag(sync=True)
     nut_uart_stopbits = traitlets.Int(0).tag(sync=True)
@@ -252,7 +252,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def nut_uart_enable_changed(self, change):
         enabled = bool(change.get("new"))
         self.cracker.uart_enable() if enabled else self.cracker.uart_disable()
-        print(f"is enabled {enabled}")
+
         if enabled:
             self.cracker.uart_config(
                 serial.Baudrate(self.nut_uart_baudrate),

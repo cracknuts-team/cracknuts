@@ -323,11 +323,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       <Space.Compact>
                         <Select id={"cracker_config_uart_baudrate"} size={"small"} style={{minWidth: 90}} disabled={!nutUartEnable} value={nutUartBaudrate}
                           onChange={setNutUartBaudrate} options={[
-                          {value: 9600, label: "9600"},
-                          {value: 19200, label: "19200"},
-                          {value: 38400, label: "38400"},
-                          {value: 57600, label: "57600"},
-                          {value: 115200, label: "115200"},
+                          {value: 0, label: "9600"},
+                          {value: 1, label: "19200"},
+                          {value: 2, label: "38400"},
+                          {value: 3, label: "57600"},
+                          {value: 4, label: "115200"},
+                          {value: 5, label: "1000000"},
                         ]}/>
                       </Space.Compact>
                     </Form.Item>
