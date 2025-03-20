@@ -457,7 +457,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     )
             return status, resp_payload
         except OSError as e:
-            self._logger.error("Send message failed: %s, and msg: %s", e, message)
+            self._logger.error(
+                f"Send message failed: {e}, and msg, command :0x{message[7:9].hex()}"
+                f", payload: {hex_util.get_hex(message[10:])}"
+            )
             return protocol.STATUS_ERROR, None
         finally:
             self._command_lock.release()
@@ -486,7 +489,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         if self._logger.isEnabledFor(logging.INFO):
             self._logger.info(
                 f"Receive response for command: [0x{command:04x}] from {self._server_address}, "
-                f"status: {status}, payload: length: {0 if payload is None else len(payload)}, content: "
+                f"status: 0x{status:04X}, payload: length: {0 if payload is None else len(payload)}, content: "
                 f"{None if payload is None else hex_util.get_hex(
                                   payload, self._logger_info_payload_max_length)}"
             )
@@ -636,7 +639,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._logger.debug(f"scrat_is_triggered payload: {payload}")
         status, res = self.send_with_command(protocol.Command.OSC_IS_TRIGGERED, payload=payload)
         if status != protocol.STATUS_OK:
-            self._logger.error(f"Receive status code error [{status}]")
+            self._logger.error(f"is_triggered receive status code error [0x{status:04X}]")
             return status, False
         else:
             if res is None:
@@ -668,8 +671,24 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if wave_bytes is None:
                 return status, np.array([])
             else:
-                wave = struct.unpack(f"{sample_count}h", wave_bytes)
-                return status, np.array(wave, dtype=np.int16)
+                wbl = len(wave_bytes)
+                expect_wbl = sample_count * 2
+                if wbl != expect_wbl:
+                    self._logger.error(
+                        f"Wave bytes length error: require {expect_wbl} but get {wbl}:"
+                        f"\n{hex_util.get_hex(wave_bytes)}"
+                    )
+                    if wbl != 0:
+                        self._logger.error("Wave bytes length is not expected, will get actually length wave.")
+                        if wbl % 2 != 0:
+                            self._logger.error("Wave bytes length is a odd number, will get a even length wave.")
+                        wave = struct.unpack(f"{wbl//2}h", wave_bytes)
+                        return status, np.array(wave, dtype=np.int16)
+                    else:
+                        return status, np.array([])
+                else:
+                    wave = struct.unpack(f"{sample_count}h", wave_bytes)
+                    return status, np.array(wave, dtype=np.int16)
 
     def osc_get_digital_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
         payload = struct.pack(">BII", channel, offset, sample_count)

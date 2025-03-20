@@ -35,14 +35,58 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_uart_parity = traitlets.Int(0).tag(sync=True)
     nut_uart_stopbits = traitlets.Int(0).tag(sync=True)
 
+    @property
+    def nut_uart_config(self):
+        return {
+            "baudrate": serial.Baudrate(self.nut_uart_baudrate),
+            "bytesize": serial.Bytesize(self.nut_uart_bytesize),
+            "parity": serial.Parity(self.nut_uart_parity),
+            "stopbits": serial.Stopbits(self.nut_uart_stopbits),
+        }
+
+    @nut_uart_config.setter
+    def nut_uart_config(self, config):
+        self.nut_uart_baudrate = config["baudrate"].value
+        self.nut_uart_bytesize = config["bytesize"].value
+        self.nut_uart_parity = config["parity"].value
+        self.nut_uart_stopbits = config["stopbits"].value
+
     nut_spi_enable = traitlets.Bool(False).tag(sync=True)
     nut_spi_speed = traitlets.Int(10_000).tag(sync=True)
     nut_spi_cpol = traitlets.Int(0).tag(sync=True)
     nut_spi_cpha = traitlets.Int(0).tag(sync=True)
 
+    @property
+    def nut_spi_config(self):
+        return {
+            "speed": self.nut_spi_speed,
+            "cpol": serial.SpiCpol(self.nut_spi_cpol),
+            "cpha": serial.SpiCpha(self.nut_spi_cpha),
+        }
+
+    @nut_spi_config.setter
+    def nut_spi_config(self, config):
+        self.nut_spi_speed = config["speed"]
+        self.nut_spi_cpol = config["cpol"].value
+        self.nut_spi_cpha = config["cpha"].value
+
     nut_i2c_enable = traitlets.Bool(False).tag(sync=True)
     nut_i2c_dev_addr = traitlets.Unicode("0x00").tag(sync=True)
     nut_i2c_speed = traitlets.Int(0).tag(sync=True)
+
+    @property
+    def nut_i2c_config(self):
+        print(f"get config, addr: {self.nut_i2c_dev_addr}")
+        return {
+            "dev_addr": int(self.nut_i2c_dev_addr, 16),
+            "speed": serial.I2cSpeed(self.nut_i2c_speed),
+        }
+
+    @nut_i2c_config.setter
+    def nut_i2c_config(self, config):
+        print(f"set config, addr: {self.nut_i2c_dev_addr}")
+        self.nut_i2c_dev_addr = str(config["dev_addr"])
+        self.nut_i2c_speed = config["speed"].value
 
     # osc
     osc_analog_channel_a_enable = traitlets.Bool(False).tag(sync=True)
@@ -50,9 +94,18 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     sync_sample = traitlets.Bool(False).tag(sync=True)
     sync_args_times = traitlets.Int(1).tag(sync=True)
 
+    @property
+    def osc_analog_channel_enable(self):
+        return {0: self.osc_analog_channel_a_enable, 1: self.osc_analog_channel_b_enable}
+
+    @osc_analog_channel_enable.setter
+    def osc_analog_channel_enable(self, enable):
+        self.osc_analog_channel_a_enable = enable[0]
+        self.osc_analog_channel_b_enable = enable[1]
+
     osc_sample_rate = traitlets.Int(65000).tag(sync=True)
     osc_sample_phase = traitlets.Int(0).tag(sync=True)
-    osc_sample_len = traitlets.Int(1024).tag(sync=True)
+    osc_sample_length = traitlets.Int(1024).tag(sync=True)
     osc_sample_delay = traitlets.Int(1024).tag(sync=True)
 
     osc_trigger_source = traitlets.Int(0).tag(sync=True)
@@ -107,7 +160,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         self.osc_analog_channel_a_gain = current_config.osc_analog_gain.get(0, 1)
         self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(1, 1)
         if current_config.osc_sample_length is not None:
-            self.osc_sample_len = current_config.osc_sample_length
+            self.osc_sample_length = current_config.osc_sample_length
         if current_config.osc_sample_delay is not None:
             self.osc_sample_delay = current_config.osc_sample_delay
         if current_config.osc_sample_clock is not None:
