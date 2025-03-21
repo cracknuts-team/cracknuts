@@ -425,7 +425,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
                     f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(
-                        message, max_bytes_count=self._logger_info_payload_max_length
+                        message, max_bytes_count=self._logger_debug_payload_max_length
                     )}"
                 )
             self._socket.sendall(message)
@@ -453,7 +453,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
             else:
                 if self._logger.isEnabledFor(logging.DEBUG):
                     self._logger.debug(
-                        f"Receive payload from {self._server_address}: \n{hex_util.get_bytes_matrix(resp_payload)}"
+                        f"Receive payload from {self._server_address}: \n"
+                        f"{hex_util.get_bytes_matrix(resp_payload,
+                                                     max_bytes_count=self._logger_debug_payload_max_length)}"
                     )
             return status, resp_payload
         except OSError as e:
