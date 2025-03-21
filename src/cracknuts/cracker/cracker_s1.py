@@ -874,7 +874,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-        print(f"dev_addr: {dev_addr}")
         payload = struct.pack(">BB", dev_addr, speed.value)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)

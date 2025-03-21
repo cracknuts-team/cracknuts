@@ -76,7 +76,6 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @property
     def nut_i2c_config(self):
-        print(f"get config, addr: {self.nut_i2c_dev_addr}")
         return {
             "dev_addr": int(self.nut_i2c_dev_addr, 16),
             "speed": serial.I2cSpeed(self.nut_i2c_speed),
@@ -84,8 +83,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @nut_i2c_config.setter
     def nut_i2c_config(self, config):
-        print(f"set config, addr: {self.nut_i2c_dev_addr}")
-        self.nut_i2c_dev_addr = str(config["dev_addr"])
+        self.nut_i2c_dev_addr = hex(config["dev_addr"])
         self.nut_i2c_speed = config["speed"].value
 
     # osc
