@@ -88,7 +88,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   // osc
   const [oscSampleRate, setOscSampleRate] = useModelState<number>("osc_sample_rate");
   const [oscSamplePhase, setOscSamplePhase] = useModelState<number>("osc_sample_phase");
-  const [oscSampleLen, setOscSampleLen] = useModelState<number>("osc_sample_len");
+  const [oscSampleLength, setOscSampleLength] = useModelState<number>("osc_sample_length");
   const [oscSampleDelay, setOscSampleDelay] = useModelState<number>("osc_sample_delay");
   const [channelAEnable, setChannelAEnable] = useModelState<boolean>("osc_analog_channel_a_enable");
   const [channelBEnable, setChannelBEnable] = useModelState<boolean>("osc_analog_channel_b_enable");
@@ -537,11 +537,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             step="1"
                             size={"small"}
                             min={10}
-                            value={oscSampleLen}
-                            defaultValue={oscSampleLen}
+                            value={oscSampleLength}
+                            defaultValue={oscSampleLength}
                             onChange={(v: number | string | null) => {
                               if (v != null) {
-                                setOscSampleLen(Number(v));
+                                setOscSampleLength(Number(v));
                               }
                             }}
                             changeOnWheel

@@ -5,7 +5,7 @@ import math
 
 def get_bytes_matrix(data, max_line=32, max_bytes_count=None):
     if max_bytes_count is not None:
-        max_line = math.ceil(int(math.ceil(max_line / max_bytes_count)) / 2) * 2
+        max_line = math.ceil(int(math.ceil(max_bytes_count / max_line)) / 2) * 2
 
     hex_matrix = ""
 
