@@ -19,23 +19,23 @@ class ConfigS1(ConfigBasic):
         self.nut_interface: int | None = None
         self.nut_timeout: int | None = None
 
-        self.cracker_uart_enable: bool | None = False
-        self.cracker_uart_config: dict | None = {
+        self.nut_uart_enable: bool | None = False
+        self.nut_uart_config: dict | None = {
             "baudrate": 115200,
             "bytesize": serial.Bytesize.EIGHTBITS,
             "parity": serial.Parity.PARITY_NONE,
             "stopbits": serial.Stopbits.STOPBITS_ONE,
         }
 
-        self.cracker_spi_enable: bool | None = False
-        self.cracker_spi_config: dict | None = {
+        self.nut_spi_enable: bool | None = False
+        self.nut_spi_config: dict | None = {
             "speed": 10_000,
             "cpol": serial.SpiCpol.SPI_CPOL_LOW,
             "cpha": serial.SpiCpha.SPI_CPHA_LOW,
         }
 
-        self.cracker_i2c_enable: bool | None = False
-        self.cracker_i2c_config: dict | None = {
+        self.nut_i2c_enable: bool | None = False
+        self.nut_i2c_config: dict | None = {
             "dev_addr": 0x00,
             "speed": serial.I2cSpeed.STANDARD_100K,
         }
@@ -656,7 +656,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_spi_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_uart_enable = enable
+            self.get_current_config().nut_spi_enable = enable
         return status, res
 
     def spi_reset(self) -> tuple[int, None]:
@@ -709,7 +709,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_i2c_config = {
+            self.get_current_config().nut_spi_config = {
                 "speed": speed,
                 "cpol": cpol,
                 "cpha": cpha,
@@ -845,7 +845,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_i2c_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_uart_enable = enable
+            self.get_current_config().nut_i2c_enable = enable
         return status, res
 
     def i2c_reset(self) -> tuple[int, None]:
@@ -874,12 +874,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-
         payload = struct.pack(">BB", dev_addr, speed.value)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_i2c_config = {
+            self.get_current_config().nut_i2c_config = {
                 "dev_addr": dev_addr,
                 "speed": speed,
             }
@@ -1091,7 +1090,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_uart_enable = enable
+            self.get_current_config().nut_uart_enable = enable
         return status, res
 
     def uart_reset(self) -> tuple[int, None]:
@@ -1131,7 +1130,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().cracker_uart_config = {
+            self.get_current_config().nut_uart_config = {
                 "baudrate": baudrate,
                 "bytesize": bytesize,
                 "parity": parity,

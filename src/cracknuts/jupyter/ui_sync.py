@@ -1,7 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 from typing import Any
-from collections.abc import Callable
 
 
 class ConfigProxy:
@@ -15,13 +14,14 @@ class ConfigProxy:
             object.__setattr__(self, name, value)
             return
         config = object.__getattribute__(self, "_config")
-        listener_dict = object.__getattribute__(self, "_listener_dict")
         widget = object.__getattribute__(self, "_widget")
 
         setattr(config, name, value)
 
-        if name in listener_dict:
-            setattr(widget, name, listener_dict[name](value))
+        if hasattr(type(widget), name) and isinstance(getattr(type(widget), name), property):
+            prop = getattr(type(widget), name)
+            if prop.fset:
+                prop.fset(widget, value)
         elif name in dir(widget):
             setattr(widget, name, value)
 
@@ -31,14 +31,6 @@ class ConfigProxy:
         else:
             config = super().__getattribute__("_config")
             return getattr(config, name)
-
-    def bind(self, config_attr: str, widget_attr: str = None, formatter: Callable[[Any], Any] = None):
-        def listener(v):
-            self._observe = False
-            self._widget.__setattr__(widget_attr, v if formatter is None else formatter(v))
-            self._observe = True
-
-        self._listener_dict[config_attr] = listener
 
     def __str__(self):
         return self._config.__str__()
