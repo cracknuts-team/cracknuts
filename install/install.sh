@@ -53,6 +53,8 @@ fi
 # Activate the conda environment
 conda activate "$CONDA_ENV_NAME"
 
+conda init
+
 # Enable TUNA mirror for faster package downloads in China
 if [ "$ENABLE_CHINA_CONFIG" = true ]; then
     echo "Enabling conda TUNA mirror..."
@@ -102,8 +104,11 @@ conda activate cracknuts
 cracknuts tutorials
 EOF
 
+SHORTCUT_BASE_PATH="$HOME/.local/share/applications"
+mkdir -p "$SHORTCUT_BASE_PATH"
+
 # Create Cracknuts shortcut
-SHORTCUT_PATH="$HOME/.local/share/applications/cracknuts.desktop"
+SHORTCUT_PATH="$SHORTCUT_BASE_PATH/cracknuts.desktop"
 cat << EOF > "$SHORTCUT_PATH"
 [Desktop Entry]
 Version=1.0
@@ -116,7 +121,7 @@ Categories=Science
 EOF
 
 # Create Tutorials shortcut
-TUTORIALS_SHORTCUT_PATH="$HOME/.local/share/applications/cracknuts_tutorials.desktop"
+TUTORIALS_SHORTCUT_PATH="$SHORTCUT_BASE_PATH/cracknuts_tutorials.desktop"
 cat << EOF > "$TUTORIALS_SHORTCUT_PATH"
 [Desktop Entry]
 Version=1.0
