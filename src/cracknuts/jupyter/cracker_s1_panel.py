@@ -235,7 +235,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def osc_sample_phase_changed(self, change):
         self.cracker.osc_sample_clock_phase(int(change.get("new")))
 
-    @traitlets.observe("osc_sample_len")
+    @traitlets.observe("osc_sample_length")
     @observe_interceptor
     def osc_sample_len_changed(self, change):
         self.cracker.osc_sample_length(int(change.get("new")))
