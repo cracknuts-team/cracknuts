@@ -37,6 +37,7 @@
   "cracker.config.nut.spi.cpha": "Cpha",
   "cracker.config.nut.spi.cpha.low": "Low",
   "cracker.config.nut.spi.cpha.high": "High",
+  "cracker.config.nut.spi.autoSelect": "CS Auto Select",
   "cracker.config.nut.i2c.enable": "I2C",
   "cracker.config.nut.i2c.dev_addr": "Dev Addr",
   "cracker.config.nut.i2c.speed": "Speed",

@@ -55,6 +55,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_spi_speed = traitlets.Int(10_000).tag(sync=True)
     nut_spi_cpol = traitlets.Int(0).tag(sync=True)
     nut_spi_cpha = traitlets.Int(0).tag(sync=True)
+    nut_spi_auto_select = traitlets.Bool(True).tag(sync=True)
 
     @property
     def nut_spi_config(self):
@@ -62,6 +63,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             "speed": self.nut_spi_speed,
             "cpol": serial.SpiCpol(self.nut_spi_cpol),
             "cpha": serial.SpiCpha(self.nut_spi_cpha),
+            "auto_select": self.auto_select,
         }
 
     @nut_spi_config.setter
@@ -359,26 +361,47 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         self.cracker.spi_enable() if enabled else self.cracker.spi_disable()
         if enabled:
             self.cracker.spi_config(
-                self.nut_spi_speed, serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(self.nut_spi_cpha)
+                self.nut_spi_speed,
+                serial.SpiCpol(self.nut_spi_cpol),
+                serial.SpiCpha(self.nut_spi_cpha),
+                self.nut_spi_auto_select,
             )
 
     @traitlets.observe("nut_spi_speed")
     @observe_interceptor
     def nut_spi_speed_changed(self, change):
-        self.cracker.spi_config(change.get("new"), serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(self.nut_spi_cpha))
+        self.cracker.spi_config(
+            change.get("new"),
+            serial.SpiCpol(self.nut_spi_cpol),
+            serial.SpiCpha(self.nut_spi_cpha),
+            self.nut_spi_auto_select,
+        )
 
     @traitlets.observe("nut_spi_cpol")
     @observe_interceptor
     def nut_spi_cpol_changed(self, change):
         self.cracker.spi_config(
-            self.nut_spi_speed, serial.SpiCpol(change.get("new")), serial.SpiCpha(self.nut_spi_cpha)
+            self.nut_spi_speed,
+            serial.SpiCpol(change.get("new")),
+            serial.SpiCpha(self.nut_spi_cpha),
+            self.nut_spi_auto_select,
         )
 
     @traitlets.observe("nut_spi_cpha")
     @observe_interceptor
     def nut_spi_cpha_changed(self, change):
         self.cracker.spi_config(
-            self.nut_spi_speed, serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(change.get("new"))
+            self.nut_spi_speed,
+            serial.SpiCpol(self.nut_spi_cpol),
+            serial.SpiCpha(change.get("new")),
+            self.nut_spi_auto_select,
+        )
+
+    @traitlets.observe("nut_spi_auto_select")
+    @observe_interceptor
+    def nut_spi_auto_select_changed(self, change):
+        self.cracker.spi_config(
+            self.nut_spi_speed, serial.SpiCpol(self.nut_spi_cpol), serial.SpiCpha(self.nut_spi_cpha), change.get("new")
         )
 
     @traitlets.observe("nut_i2c_enable")
