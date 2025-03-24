@@ -63,7 +63,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             "speed": self.nut_spi_speed,
             "cpol": serial.SpiCpol(self.nut_spi_cpol),
             "cpha": serial.SpiCpha(self.nut_spi_cpha),
-            "auto_select": self.auto_select,
+            "auto_select": self.nut_spi_auto_select,
         }
 
     @nut_spi_config.setter

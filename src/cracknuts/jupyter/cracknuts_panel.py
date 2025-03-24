@@ -87,6 +87,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             connection_info = config.get("connection")
             config_info = config.get("config")
             acquisition_info = config.get("acquisition")
+
             self.cracker.load_config_from_str(config_info)
             self.cracker.set_uri(connection_info)
             self.acquisition.load_config_from_str(acquisition_info)

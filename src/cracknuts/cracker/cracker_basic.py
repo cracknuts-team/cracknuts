@@ -31,27 +31,28 @@ class ConfigBasic:
         self.osc_trigger_mode = 0
         self.osc_analog_trigger_edge = 0
         self.osc_analog_trigger_edge_level = 1
-        self.osc_analog_coupling: dict[int, int] = {}
-        self.osc_analog_voltage: dict[int, int] = {}
-        self.osc_analog_bias_voltage: dict[int, int] = {}
-        self.osc_digital_voltage: int | None = None
-        self.osc_digital_trigger_source: int | None = None
-        self.osc_analog_gain_raw: dict[int, int] = {}
-        self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
-        self.osc_clock_sample_divisor: tuple[int, int] | None = None
-        self.osc_clock_simple: tuple[int, int, int] | None = None
-        self.osc_clock_phase: int | None = None
-        self.osc_clock_divisor: int | None = None
+
+        # self.osc_analog_coupling: dict[int, int] = {}
+        # self.osc_analog_voltage: dict[int, int] = {}
+        # self.osc_analog_bias_voltage: dict[int, int] = {}
+        # self.osc_digital_voltage: int | None = None
+        # self.osc_digital_trigger_source: int | None = None
+        # self.osc_analog_gain_raw: dict[int, int] = {}
+        # self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
+        # self.osc_clock_sample_divisor: tuple[int, int] | None = None
+        # self.osc_clock_simple: tuple[int, int, int] | None = None
+        # self.osc_clock_phase: int | None = None
+        # self.osc_clock_divisor: int | None = None
         # The name list of fields whose value type is dict[int, Any]. When converting to a dictionary from JSON,
         # numbers are converted to strings, so this needs to be handled separately. The subclass should overwrite
         # this field when its field has a similar structure.
         self.int_dict_fields = (
             "osc_analog_channel_enable",
-            "osc_analog_coupling",
-            "osc_analog_voltage",
-            "osc_analog_bias_voltage",
+            # "osc_analog_coupling",
+            # "osc_analog_voltage",
+            # "osc_analog_bias_voltage",
             "osc_analog_gain",
-            "osc_analog_gain_raw",
+            # "osc_analog_gain_raw",
         )
 
     def __str__(self):
@@ -226,6 +227,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         force_update_bin: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
+        force_write_default_config: bool = False,
     ) -> None:
         """
         Connect to cracker device.
@@ -246,8 +248,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
         if bin_bitstream_path is None:
             bin_bitstream_path = self._bin_bitstream_path
 
-        if update_bin and not self._update_cracker_bin(force_update_bin, bin_server_path, bin_bitstream_path):
-            return
+        bin_updated = False
+        if update_bin:
+            success, bin_updated = self._update_cracker_bin(force_update_bin, bin_server_path, bin_bitstream_path)
+            if not success:
+                return
 
         if force_update_bin and self._socket and self._connection_status:
             # Reset the connection if forcing a bin update when it was previously connected.
@@ -265,7 +270,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
-            self.sync_config_to_cracker()
+            if (update_bin and bin_updated) or force_write_default_config:
+                # Sync the default configuration to the cracker when updating its firmware.
+                self.write_config_to_cracker(self.get_default_config())
+            self._config = self.get_current_config()
             self._logger.info("Synchronize the configuration to Cracker successfully.")
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
@@ -277,7 +285,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         force_update: bool = False,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-    ) -> bool:
+    ) -> tuple[bool, bool]:
         """
         Update cracker's firmwares: server.bin and bitstream.bin.
 
@@ -290,10 +298,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :type bin_bitstream_path: str | None
         """
         if not self._operator.connect():
-            return False
+            return False, False
 
         if not force_update and self._operator.get_status():
-            return True
+            return True, False
 
         self._hardware_model = self._operator.get_hardware_model()
 
@@ -303,7 +311,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     "The hardware model is unknown, and the Cracker bin cannot be updated. Alternatively, "
                     "you can specify the bin_server_path and bin_bitstream_path in the connect API."
                 )
-                return False
+                return False, False
 
             _bin_server_path, _bin_bitstream_path = self._get_bin_file_path(self._hardware_model)
 
@@ -330,10 +338,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if success:
                 self._installed_bin_server_path = bin_server_path
                 self._installed_bin_bitstream_path = bin_bitstream_path
-            return success
+            return success, success
         except OSError as e:
             self._logger.error(f"Update cracker bin failed: {e.args}")
-            return False
+            return False, False
 
     def get_firmware_info(self):
         if self._installed_bin_server_path is None or self._installed_bin_bitstream_path is None:
@@ -526,7 +534,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         return self._config
 
-    def sync_config_to_cracker(self):
+    def write_config_to_cracker(self, config: T):
         """
         Sync config to cracker.
 
@@ -578,7 +586,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: None
         """
         self._config.load_from_json(json_str)
-        self.sync_config_to_cracker()
+        self.write_config_to_cracker(self._config)
 
     def get_id(self) -> tuple[int, str | None]:
         """

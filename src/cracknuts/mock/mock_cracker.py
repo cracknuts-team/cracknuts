@@ -131,7 +131,7 @@ class MockCracker:
             protocol.STATUS_OK, f'Command [0x{format(command, '04x')}] not supported'.encode()
         )
 
-    @_handler(protocol.Command.GET_ID, has_payload=False)
+    @_handler(protocol.Command.GET_CONFIG, has_payload=False)
     def get_id(self) -> bytes:
         return b"mock_001"
 

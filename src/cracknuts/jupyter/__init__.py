@@ -14,8 +14,8 @@ from cracknuts.trace.trace import TraceDataset
 def display_cracknuts_panel(acq: "Acquisition"):
     acq.sample_length = -1  # ignore the sample_length of acquisition when use ui.
     cnpw = CracknutsPanelWidget(acquisition=acq)
-    cnpw.sync_config()
-    cnpw.bind()
+    # cnpw.sync_config()
+    # cnpw.bind()
     return cnpw
 
 

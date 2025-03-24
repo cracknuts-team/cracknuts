@@ -21,7 +21,7 @@ class ConfigS1(ConfigBasic):
 
         self.nut_uart_enable: bool | None = False
         self.nut_uart_config: dict | None = {
-            "baudrate": 115200,
+            "baudrate": serial.Baudrate.BAUDRATE_115200,
             "bytesize": serial.Bytesize.EIGHTBITS,
             "parity": serial.Parity.PARITY_NONE,
             "stopbits": serial.Stopbits.STOPBITS_ONE,
@@ -32,6 +32,7 @@ class ConfigS1(ConfigBasic):
             "speed": 10_000,
             "cpol": serial.SpiCpol.SPI_CPOL_LOW,
             "cpha": serial.SpiCpha.SPI_CPHA_LOW,
+            "auto_select": True,
         }
 
         self.nut_i2c_enable: bool | None = False
@@ -51,8 +52,66 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     def get_default_config(self) -> ConfigS1:
         return ConfigS1()
 
-    def sync_config_to_cracker(self):
-        config = self.get_current_config()
+    def get_current_config(self) -> ConfigS1 | None:
+        status, res = self.send_with_command(protocol.Command.GET_CONFIG)
+        if status == protocol.STATUS_OK:
+            return self._parse_config_bytes(res)
+        else:
+            self._logger.error(f"Get config from cracker error, return code 0x{status:02x}.")
+            return None
+
+    @staticmethod
+    def _parse_config_bytes(config_bytes: bytes):
+        bytes_format = {
+            "nut_enable": "?",
+            "nut_voltage": "I",
+            "nut_clock_enable": "?",
+            "nut_clock": "I",
+            "osc_sample_clock": "I",
+            "osc_sample_phase": "I",
+            "osc_sample_length": "I",
+            "osc_sample_delay": "I",
+            "osc_analog_channel_enable(int(0))": "?",
+            "osc_analog_gain(int(0))": "B",
+            "osc_analog_channel_enable(int(1))": "?",
+            "osc_analog_gain(int(1))": "B",
+            "osc_trigger_mode": "B",
+            "osc_analog_trigger_source": "B",
+            "osc_analog_trigger_edge": "B",
+            "osc_analog_trigger_edge_level": "H",
+            "nut_i2c_enable": "?",
+            "nut_i2c_config(dev_addr)": "B",
+            "nut_i2c_config(speed)": "B",
+            "nut_uart_enable": "?",
+            "nut_uart_config(stopbits)": "B",
+            "nut_uart_config(parity)": "B",
+            "nut_uart_config(bytesize)": "B",
+            "nut_uart_config(baudrate)": "B",
+            "nut_spi_enable": "?",
+            "nut_spi_config(speed)": "H",
+            "nut_spi_config(cpol)": "B",
+            "nut_spi_config(cpha)": "B",
+            "nut_spi_config(auto_select)": "?",
+        }
+        config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)
+        config = ConfigS1()
+        for i, k in enumerate(bytes_format.keys()):
+            m = re.match(r"(?P<function>\w+)\((?P<type>\w+)(?:\((?P<dict_key>\d+)\))?\)", k)
+            if m:
+                prop_key, dict_key_type, dict_key = m.group("function"), m.group("type"), m.group("dict_key")
+                dict_prop = getattr(config, prop_key)
+                if dict_prop is None:
+                    dict_prop = {}
+                    setattr(config, prop_key, dict_prop)
+                if dict_key_type is not None:
+                    if dict_key_type == "int":
+                        dict_key = int(dict_key)
+                dict_prop.update({dict_key: config_tuple[i]})
+            else:
+                setattr(config, k, config_tuple[i])
+        return config
+
+    def write_config_to_cracker(self, config: ConfigS1):
         self._nut_set_enable(config.nut_enable)
         self.nut_voltage(config.nut_voltage)
         self._nut_set_clock_enable(config.nut_clock_enable)
@@ -144,6 +203,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        self._config = self.get_current_config()
         channels = ("A", "B")
         if isinstance(channel, str):
             channel = channel.upper()
@@ -440,6 +500,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
+        self._config = self.get_current_config()
         channels = ("A", "B")
         if isinstance(channel, str):
             channel = channel.upper()
@@ -691,7 +752,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-
+        self._config = self.get_current_config()
         # System clock is 100e6
         # Clock divider is 2
         # psc max is 65535
@@ -878,6 +939,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
+        self._config = self.get_current_config()
         payload = struct.pack(">BB", dev_addr, speed.value)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)
@@ -1129,7 +1191,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-
+        self._config = self.get_current_config()
         payload = struct.pack(">BBBB", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)

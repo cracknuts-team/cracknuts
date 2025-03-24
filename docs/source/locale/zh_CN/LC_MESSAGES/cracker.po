@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-09 14:30+0800\n"
+"POT-Creation-Date: 2025-03-19 15:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -61,40 +61,13 @@ msgid ""
 "[:py:obj:`~cracknuts.cracker.cracker_basic.T`]"
 msgstr ""
 
-#: cracknuts.cracker.cracker_basic.CrackerBasic:1 of
+#: ../../docstring
+#: cracknuts.cracker.cracker_basic.CrackerBasic.NON_PROTOCOL_ERROR:1 of
 msgid ""
 "The basic device class, provides support for the `CNP` protocol, "
 "configuration management, firmware maintenance, and other basic "
 "operations."
 msgstr "基础设备类，提供 `CNP` 协议支持、配置管理、固件维护等基础操作。"
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic:4 of
-msgid ""
-"For firmware updates, in the `Cracker` architecture, the host computer "
-"will attempt to update the latest firmware files from the following "
-"directories each time it connects to the device:"
-msgstr "对于固件更新，在 `Cracker` 架构中，上位机在每次连接设备时都会尝试更新以下目录中的最新的固件文件："
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic:7 of
-msgid ""
-"The directory carried by the current package: <site-"
-"packages>/cracknuts/bin"
-msgstr "当前安装包所携带：<site-packages>/cracknuts/bin"
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic:8 of
-msgid "The user directory: ~/.cracknuts/bin"
-msgstr "用户目录: ~/.cracknuts/bin"
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic:9 of
-msgid "The working directory: <work-directory>/.bin"
-msgstr "工作目录：<work-directory>/.bin"
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic:11 of
-msgid ""
-"Users can obtain the latest firmware by updating `cracknuts`. After "
-"downloading the latest firmware from the official website, simply place "
-"it in the working directory or user directory."
-msgstr "用户可以通过更新`cracknuts`方式获取最新的固件，获取到官网下载最新固件后放置到工作目录或用户目录下即可。"
 
 #: ../../source/cracker.rst
 msgid "Parameters"
@@ -235,20 +208,28 @@ msgstr "获取默认配置。因为不同设备有不同的默认之，该方法
 msgid "The default config object(The specific subclass of CommonConfig)."
 msgstr "默认配置对象（CommonConfig 的具体实现类）"
 
+#: cracknuts.cracker.cracker_basic.CrackerBasic.get_firmware_version:1 of
+msgid "Get the version of the equipment."
+msgstr ""
+
+#: cracknuts.cracker.cracker_basic.CrackerBasic.get_firmware_version:3 of
+msgid "The equipment response status code and the version of the equipment."
+msgstr ""
+
+#: cracknuts.cracker.cracker_basic.CrackerBasic.get_hardware_model:1 of
+msgid "Get the name of the equipment."
+msgstr ""
+
+#: cracknuts.cracker.cracker_basic.CrackerBasic.get_hardware_model:3 of
+msgid "The equipment response status code and the name of the equipment."
+msgstr ""
+
 #: cracknuts.cracker.cracker_basic.CrackerBasic.get_id:1 of
 msgid "Get the ID of the equipment."
 msgstr ""
 
 #: cracknuts.cracker.cracker_basic.CrackerBasic.get_id:3 of
 msgid "The equipment response status code and the ID of the equipment."
-msgstr ""
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic.get_name:1 of
-msgid "Get the name of the equipment."
-msgstr ""
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic.get_name:3 of
-msgid "The equipment response status code and the name of the equipment."
 msgstr ""
 
 #: cracknuts.cracker.cracker_basic.CrackerBasic.get_operator:1 of
@@ -267,14 +248,6 @@ msgstr "获取URI格式的设备地址"
 msgid "URI. if cracker address is not specified, None is returned."
 msgstr "URI地址，如果 Cracker 地址没有指定则返回空。"
 
-#: cracknuts.cracker.cracker_basic.CrackerBasic.get_version:1 of
-msgid "Get the version of the equipment."
-msgstr ""
-
-#: cracknuts.cracker.cracker_basic.CrackerBasic.get_version:3 of
-msgid "The equipment response status code and the version of the equipment."
-msgstr ""
-
 #: cracknuts.cracker.cracker_basic.CrackerBasic.load_config_from_file:1 of
 msgid "Load config from a JSON file."
 msgstr "从JSON文件中加载配置。"
@@ -292,22 +265,31 @@ msgid "Force produce a wave data."
 msgstr ""
 
 #: cracknuts.cracker.cracker_basic.CrackerBasic.osc_force:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_disable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_enable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_disable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_enable:3
 #: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_freq:6
 #: cracknuts.cracker.cracker_s1.CrackerS1.nut_timeout_ms:6
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_mv:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage:8
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_disable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_enable:3
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_disable:6
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_enable:6
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_gain:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock:7
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock_phase:6
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock_rate:6
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_delay:6
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_len:6
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:9
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_edge:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_delay:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_length:9
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_edge:7
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_level:6
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_mode:6
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_mode:7
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_source:7
-#: cracknuts.cracker.cracker_s1.CrackerS1.register_write:11 of
+#: cracknuts.cracker.cracker_s1.CrackerS1.register_write:11
+#: cracknuts.cracker.cracker_s1.CrackerS1.spi_disable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.spi_enable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.uart_disable:3
+#: cracknuts.cracker.cracker_s1.CrackerS1.uart_enable:3 of
 msgid "The device response status"
 msgstr ""
 
@@ -345,17 +327,7 @@ msgid ""
 msgstr ""
 
 #: cracknuts.cracker.cracker_basic.CrackerBasic.osc_single:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_disable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_enable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_transmit:9
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_disable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_enable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_disable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_enable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.spi_disable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.spi_enable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.uart_disable:2
-#: cracknuts.cracker.cracker_s1.CrackerS1.uart_enable:2 of
+#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_transmit:9 of
 msgid ""
 ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`tuple\\`\\\\ "
 "\\\\\\[\\:py\\:class\\:\\`int\\`\\, \\:py\\:obj\\:\\`None\\`\\]`"
@@ -469,6 +441,14 @@ msgstr ""
 msgid "The device response status."
 msgstr "设置设备IP地址"
 
+#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_disable:1 of
+msgid "Disable the I2C"
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.i2c_enable:1 of
+msgid "Enable the I2C"
+msgstr ""
+
 #: cracknuts.cracker.cracker_s1.CrackerS1.i2c_receive:1 of
 msgid "Receive data through the I2C protocol."
 msgstr "通过I2C协议接收数据"
@@ -533,6 +513,16 @@ msgid ""
 "duration of 10 nanoseconds."
 msgstr "传输延迟，单位：纳秒，最小有效值：10纳秒。"
 
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_disable:1 of
+#, fuzzy
+msgid "Disable the nut clock."
+msgstr "设置NUT时钟。"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_enable:1 of
+#, fuzzy
+msgid "Enable the nut clock."
+msgstr "设置NUT时钟。"
+
 #: cracknuts.cracker.cracker_s1.CrackerS1.nut_clock_freq:1 of
 msgid "Set nut clock."
 msgstr "设置NUT时钟。"
@@ -550,13 +540,26 @@ msgstr "设置NUT时钟。"
 msgid "Nut timeout."
 msgstr ""
 
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_mv:1 of
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage:1 of
 msgid "Set nut voltage."
 msgstr "设置NUT时钟。"
 
-#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_mv:4 of
-msgid "Nut voltage, in milli volts (mV)."
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage:4 of
+msgid ""
+"Nut voltage can be a number or a string. If the input is a float, the "
+"voltage will be treated as a V value. If the input is a string, you can "
+"specify the unit, ending with the value, using either mV or V."
 msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_disable:1 of
+#, fuzzy
+msgid "Disable the nut voltage."
+msgstr "设置NUT时钟。"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.nut_voltage_enable:1 of
+#, fuzzy
+msgid "Enable the nut voltage."
+msgstr "设置NUT时钟。"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_disable:1 of
 msgid "Disable osc analog."
@@ -564,7 +567,7 @@ msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_disable:4
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_enable:4 of
-msgid "Osc analog."
+msgid "Channel to enable, it can be 'A' or 'B', or 0, 1"
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_enable:1 of
@@ -576,11 +579,21 @@ msgid "Set analog gain."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_gain:4 of
-msgid "Analog channel."
+msgid "Analog channel, it can be 'A' or 'B', or 0, 1"
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_analog_gain:7 of
 msgid "Analog gain."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock:1 of
+msgid "Set osc sample rate"
+msgstr "设置osc采样率"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock:4 of
+msgid ""
+"The sample rate in kHz can be one of (65000, 48000, 24000, 12000, 8000, "
+"4000) or a string in (65M, 48M, 24M, 12M, 8M, 4M)."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock_phase:1 of
@@ -591,42 +604,29 @@ msgstr "设置osc采样相位"
 msgid "Sample phase."
 msgstr "相位"
 
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock_rate:1 of
-msgid "Set osc sample rate"
-msgstr "设置osc采样率"
-
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_clock_rate:4 of
-msgid "The sample rate in kHz, one of (65000, 48000, 24000, 12000, 8000, 4000)"
-msgstr ""
-
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_delay:1 of
 #, fuzzy
 msgid "Set sample delay."
 msgstr "设置osc采样相位"
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_delay:4 of
-#, fuzzy
-msgid "Sample delay."
-msgstr "相位"
+msgid ""
+"Sample delay. It can be a number or a string, if the input is a string, "
+"you can specify the unit, ending with the value, using either 'k' "
+"(representing 1024) or 'm' (representing 1024^2). For example, \"1k\" "
+"means 1024 and \"2m\" means 2097152."
+msgstr ""
 
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_len:1 of
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_length:1 of
 msgid "Set sample length."
 msgstr "设置osc采样长度"
 
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_len:4 of
-msgid "Sample length."
-msgstr ""
-
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:1 of
-msgid "Set analog channel enable."
-msgstr ""
-
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:4 of
-msgid "Channel to enable."
-msgstr ""
-
-#: cracknuts.cracker.cracker_s1.CrackerS1.osc_set_analog_channel_enable:7 of
-msgid "Enable or disable."
+#: cracknuts.cracker.cracker_s1.CrackerS1.osc_sample_length:4 of
+msgid ""
+"Sample length. It can be a number or a string, if the input is a string, "
+"you can specify the unit, ending with the value, using either 'k' "
+"(representing 1024) or 'm' (representing 1024^2). For example, \"1k\" "
+"means 1024 and \"2m\" means 2097152."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_edge:1 of
@@ -635,8 +635,8 @@ msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_edge:4 of
 msgid ""
-"Trigger edge. 'up', 'down', 'either' or 0, 1, 2 represent up, down, "
-"either, respectively."
+"Trigger edge. ('up', 'down', 'either') or ('u', 'd', 'e') or 0, 1, 2 "
+"represent up, down, either, respectively."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_level:1 of
@@ -652,7 +652,9 @@ msgid "Set trigger mode."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_mode:4 of
-msgid "Trigger mode. Trigger mode: 0 for edge, 1 for wave."
+msgid ""
+"Trigger mode. Trigger mode can be one of (\"EDGE\", \"PATTERN\") or "
+"(\"E\", \"P\"), or the index of the string value."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_source:1 of
@@ -661,8 +663,9 @@ msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.osc_trigger_source:4 of
 msgid ""
-"Trigger source: 'N', 'A', 'B', 'P', or 0, 1, 2, 3 represent Nut, Channel "
-"A, Channel B, and Protocol, respectively."
+"Trigger source: It can be one of ('N', 'A', 'B', 'P') or "
+"('Nut'、'ChA'、'ChB'、'Protocol') or a number in 0, 1, 2, 3, represent Nut, "
+"Channel A, Channel B, and Protocol, respectively."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.register_read:1 of
@@ -706,6 +709,14 @@ msgstr ""
 #, fuzzy
 msgid "Clock phase."
 msgstr "相位"
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.spi_disable:1 of
+msgid "Disable the SPI"
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.spi_enable:1 of
+msgid "Enable the SPI"
+msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.spi_receive:1 of
 msgid "Receive data through the SPI protocol."
@@ -770,6 +781,14 @@ msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.uart_config:13 of
 msgid "The stopbits of the uart."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.uart_disable:1 of
+msgid "Disable the UART."
+msgstr ""
+
+#: cracknuts.cracker.cracker_s1.CrackerS1.uart_enable:1 of
+msgid "Enable the UART."
 msgstr ""
 
 #: cracknuts.cracker.cracker_s1.CrackerS1.uart_receive_fifo_clear:1 of
@@ -921,5 +940,76 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "The sample rate in kHz, one of (62500, 48000, 24000, 12000, 8000, 4000)"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "For firmware updates, in the `Cracker`"
+#~ " architecture, the host computer will "
+#~ "attempt to update the latest firmware"
+#~ " files from the following directories "
+#~ "each time it connects to the "
+#~ "device:"
+#~ msgstr "对于固件更新，在 `Cracker` 架构中，上位机在每次连接设备时都会尝试更新以下目录中的最新的固件文件："
+
+#~ msgid ""
+#~ "The directory carried by the current "
+#~ "package: <site-packages>/cracknuts/bin"
+#~ msgstr "当前安装包所携带：<site-packages>/cracknuts/bin"
+
+#~ msgid "The user directory: ~/.cracknuts/bin"
+#~ msgstr "用户目录: ~/.cracknuts/bin"
+
+#~ msgid "The working directory: <work-directory>/.bin"
+#~ msgstr "工作目录：<work-directory>/.bin"
+
+#~ msgid ""
+#~ "Users can obtain the latest firmware "
+#~ "by updating `cracknuts`. After downloading "
+#~ "the latest firmware from the official"
+#~ " website, simply place it in the "
+#~ "working directory or user directory."
+#~ msgstr "用户可以通过更新`cracknuts`方式获取最新的固件，获取到官网下载最新固件后放置到工作目录或用户目录下即可。"
+
+#~ msgid "Nut voltage, in milli volts (mV)."
+#~ msgstr ""
+
+#~ msgid "Osc analog."
+#~ msgstr ""
+
+#~ msgid "Analog channel."
+#~ msgstr ""
+
+#~ msgid "The sample rate in kHz, one of (65000, 48000, 24000, 12000, 8000, 4000)"
+#~ msgstr ""
+
+#~ msgid "Sample delay."
+#~ msgstr "相位"
+
+#~ msgid "Sample length."
+#~ msgstr ""
+
+#~ msgid "Set analog channel enable."
+#~ msgstr ""
+
+#~ msgid "Channel to enable."
+#~ msgstr ""
+
+#~ msgid "Enable or disable."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Trigger edge. 'up', 'down', 'either' or"
+#~ " 0, 1, 2 represent up, down, "
+#~ "either, respectively."
+#~ msgstr ""
+
+#~ msgid "Trigger mode. Trigger mode: 0 for edge, 1 for wave."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Trigger source: 'N', 'A', 'B', 'P', "
+#~ "or 0, 1, 2, 3 represent Nut, "
+#~ "Channel A, Channel B, and Protocol, "
+#~ "respectively."
 #~ msgstr ""
 
