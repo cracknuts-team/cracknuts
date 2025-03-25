@@ -108,7 +108,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                         dict_key = int(dict_key)
                 dict_prop.update({dict_key: config_tuple[i]})
             else:
-                setattr(config, k, config_tuple[i])
+                if k == "nut_voltage":
+                    setattr(config, k, config_tuple[i] / 1000)
+                else:
+                    setattr(config, k, config_tuple[i])
         return config
 
     def write_config_to_cracker(self, config: ConfigS1):
@@ -116,9 +119,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self.nut_voltage(config.nut_voltage)
         self._nut_set_clock_enable(config.nut_clock_enable)
         self.nut_clock_freq(config.nut_clock)
-        for k, v in config.osc_analog_channel_enable.items():
-            self._osc_set_analog_channel_enable(k, v)
-            self.osc_analog_gain(k, config.osc_analog_gain.get(k, False))
+
+        self._osc_set_channel_enable(config.osc_analog_channel_enable)
+        self._osc_analog_gain(config.osc_analog_gain)
         self.osc_sample_length(config.osc_sample_length)
         self.osc_sample_delay(config.osc_sample_delay)
         self.osc_sample_clock(config.osc_sample_clock)
@@ -127,6 +130,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self.osc_trigger_mode(config.osc_trigger_mode)
         self.osc_trigger_edge(config.osc_analog_trigger_edge)
         self.osc_trigger_level(config.osc_analog_trigger_edge_level)
+
+        self._spi_enable(config.nut_spi_enable)
+        self.spi_config(**config.nut_spi_config)
+        self._uart_enable(config.nut_uart_enable)
+        self.uart_config(**config.nut_uart_config)
+        self._i2c_enable(config.nut_i2c_enable)
+        self.i2c_config(**config.nut_i2c_config)
 
     def register_read(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """
@@ -192,7 +202,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._osc_set_analog_channel_enable(channel, False)
 
-    def _osc_set_analog_channel_enable(self, channel: int, enable: bool) -> tuple[int, None]:
+    def _osc_set_analog_channel_enable(self, channel: int | str, enable: bool) -> tuple[int, None]:
         """
         Set analog channel enable.
 
@@ -217,31 +227,30 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 self._logger.error("Channel error, it should in 0 or 1")
                 return self.NON_PROTOCOL_ERROR, None
         final_enable = self._config.osc_analog_channel_enable | {channel: enable}
+        self._osc_set_channel_enable(final_enable)
+
+    def _osc_set_channel_enable(self, enable: dict[int, bool]):
         mask = 0
-        if final_enable.get(0):
+        if enable.get(0):
             mask |= 1
-        if final_enable.get(1):
+        if enable.get(1):
             mask |= 1 << 1
-        if final_enable.get(2):
+        if enable.get(2):
             mask |= 1 << 2
-        if final_enable.get(3):
+        if enable.get(3):
             mask |= 1 << 3
-        if final_enable.get(4):
+        if enable.get(4):
             mask |= 1 << 4
-        if final_enable.get(5):
+        if enable.get(5):
             mask |= 1 << 5
-        if final_enable.get(6):
+        if enable.get(6):
             mask |= 1 << 6
-        if final_enable.get(7):
+        if enable.get(7):
             mask |= 1 << 7
-        if final_enable.get(8):
+        if enable.get(8):
             mask |= 1 << 8
         payload = struct.pack(">B", mask)
-        self._logger.debug(f"Scrat analog_channel_enable payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_channel_enable = final_enable
-        return status, None
+        return self.send_with_command(protocol.Command.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
 
     def osc_trigger_mode(self, mode: int | str) -> tuple[int, None]:
         """
@@ -500,7 +509,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        self._config = self.get_current_config()
         channels = ("A", "B")
         if isinstance(channel, str):
             channel = channel.upper()
@@ -514,12 +522,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 self._logger.error("Channel error, it should in 0 or 1")
                 return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">BB", channel, gain)
-        self._logger.debug(f"osc_analog_gain payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.osc_analog_gain[channel] = gain
+        return self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
 
-        return status, None
+    def _osc_analog_gain(self, gain: dict[int, int]) -> None:
+        for c, g in gain.items():
+            self.osc_analog_gain(c, g)
 
     def osc_sample_clock_phase(self, phase: int) -> tuple[int, None]:
         """

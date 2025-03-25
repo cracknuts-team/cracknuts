@@ -41,7 +41,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         self.acquisition.on_run_progress_changed(self.update_acq_run_progress)
         self.acq_status = self.acquisition.get_status()
 
-    def sync_config(self) -> None:
+    def sync_config_from_acquisition(self) -> None:
         if self.acquisition.trace_count != -1:
             # When acquisition.trace_count = -1, it indicates that the ACQUISITION is in test mode,
             # and in this mode, synchronization of the acquisition trace_count to the GUI is not required.
@@ -58,7 +58,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
             else self.acquisition.file_path
         )
 
-    def bind(self) -> None:
+    def listen_acquisition_config(self) -> None:
         ...
         # todo complete ui -> python sync
 

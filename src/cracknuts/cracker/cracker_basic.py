@@ -241,6 +241,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :type bin_server_path: str | None
         :param bin_bitstream_path: The bin_bitstream (firmware) file for updates.
         :type bin_bitstream_path: str | None
+        :param force_write_default_config: Whether to force update the configuration while the device is running
+                                           normally (by default, configuration updates are only performed when updating
+                                           the firmware).
         :return: None
         """
         if bin_server_path is None:

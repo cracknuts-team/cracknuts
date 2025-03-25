@@ -133,52 +133,60 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             _, self.cracker_name = self.cracker.get_hardware_model()
             _, self.cracker_version = self.cracker.get_firmware_version()
 
-    def sync_config(self) -> None:
+    def sync_config_from_cracker(self) -> None:
+        # connection
+        self._observe = False
+        connect_uri = None
+        if self.cracker.get_uri() is not None:
+            connect_uri = self.cracker.get_uri()
+
+        current_config = self.cracker.get_current_config()
+        self.update_cracker_config(current_config, connect_uri)
+        self._observe = True
+
+    def update_cracker_config(self, config, connect_uri) -> None:
         """
         Sync cracker current to panel(Jupyter widget UI)
         """
         # connection
         self._observe = False
-        if self.cracker.get_uri() is not None:
-            self.uri = self.cracker.get_uri()
-
-        current_config = self.cracker.get_current_config()
+        self.uri = connect_uri
 
         # nut
-        if current_config.nut_enable is not None:
-            self.nut_enable = current_config.nut_enable
-        if current_config.nut_voltage is not None:
-            self.nut_voltage = current_config.nut_voltage
-        if current_config.nut_clock is not None:
-            self.nut_clock = current_config.nut_clock
-        if current_config.nut_clock_enable is not None:
-            self.nut_clock_enable = current_config.nut_clock_enable
+        if config.nut_enable is not None:
+            self.nut_enable = config.nut_enable
+        if config.nut_voltage is not None:
+            self.nut_voltage = config.nut_voltage
+        if config.nut_clock is not None:
+            self.nut_clock = config.nut_clock
+        if config.nut_clock_enable is not None:
+            self.nut_clock_enable = config.nut_clock_enable
 
         # osc
-        self.osc_analog_channel_a_enable = current_config.osc_analog_channel_enable.get(0, False)
-        self.osc_analog_channel_b_enable = current_config.osc_analog_channel_enable.get(1, True)
-        self.osc_analog_channel_a_gain = current_config.osc_analog_gain.get(0, 1)
-        self.osc_analog_channel_b_gain = current_config.osc_analog_gain.get(1, 1)
-        if current_config.osc_sample_length is not None:
-            self.osc_sample_length = current_config.osc_sample_length
-        if current_config.osc_sample_delay is not None:
-            self.osc_sample_delay = current_config.osc_sample_delay
-        if current_config.osc_sample_clock is not None:
-            self.osc_sample_rate = current_config.osc_sample_clock
-        if current_config.osc_sample_phase is not None:
-            self.osc_sample_phase = current_config.osc_sample_phase
-        if current_config.osc_analog_trigger_source is not None:
-            self.osc_trigger_source = current_config.osc_analog_trigger_source
-        if current_config.osc_trigger_mode is not None:
-            self.osc_trigger_mode = current_config.osc_trigger_mode
-        if current_config.osc_analog_trigger_edge is not None:
-            self.osc_trigger_edge = current_config.osc_analog_trigger_edge
-        if current_config.osc_analog_trigger_edge_level is not None:
-            self.osc_trigger_edge_level = current_config.osc_analog_trigger_edge_level
+        self.osc_analog_channel_a_enable = config.osc_analog_channel_enable.get(0, False)
+        self.osc_analog_channel_b_enable = config.osc_analog_channel_enable.get(1, True)
+        self.osc_analog_channel_a_gain = config.osc_analog_gain.get(0, 1)
+        self.osc_analog_channel_b_gain = config.osc_analog_gain.get(1, 1)
+        if config.osc_sample_length is not None:
+            self.osc_sample_length = config.osc_sample_length
+        if config.osc_sample_delay is not None:
+            self.osc_sample_delay = config.osc_sample_delay
+        if config.osc_sample_clock is not None:
+            self.osc_sample_rate = config.osc_sample_clock
+        if config.osc_sample_phase is not None:
+            self.osc_sample_phase = config.osc_sample_phase
+        if config.osc_analog_trigger_source is not None:
+            self.osc_trigger_source = config.osc_analog_trigger_source
+        if config.osc_trigger_mode is not None:
+            self.osc_trigger_mode = config.osc_trigger_mode
+        if config.osc_analog_trigger_edge is not None:
+            self.osc_trigger_edge = config.osc_analog_trigger_edge
+        if config.osc_analog_trigger_edge_level is not None:
+            self.osc_trigger_edge_level = config.osc_analog_trigger_edge_level
 
         self._observe = True
 
-    def bind(self) -> None:
+    def listen_cracker_config(self) -> None:
         """
         Bind the cracker and crackerPanel objects so that when the configuration of cracker is set,
         the updated values are automatically synchronized with panel through a ProxyConfig object.

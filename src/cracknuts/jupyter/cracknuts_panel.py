@@ -37,18 +37,48 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             raise ValueError(f"can't find panel for cracker type: {type(cracker)}.")
         super().__init__(*args, **kwargs)
         self.language = user_config.get_option("language", fallback="en")
-        self._load_current_path_config()
+        # self._load_current_path_config()
+        workspace_config = self._get_workspace_config()
+        if workspace_config:
+            cracker_config = workspace_config.get("config")
+            if cracker_config:
+                self.update_cracker_config(cracker_config)
+            else:
+                self._logger.error(
+                    "Configuration file format error: The cracker configuration segment is missing. "
+                    "The configuration from the cracker or the default configuration will be used."
+                )
+                self.sync_config_from_cracker()
+                self.listen_cracker_config()
+
+            acquisition_config = workspace_config.get("acquisition")
+            if acquisition_config:
+                self.acquisition.load_config_from_str(workspace_config.get("acquisition"))
+            else:
+                self._logger.error(
+                    "Configuration file format error: Acquisition configuration segment is missing. "
+                    "The configuration from the acquisition object or "
+                    "the default configuration will be used."
+                )
+            self.sync_config_from_acquisition()
+            self.listen_acquisition_config()
+        else:
+            self.sync_config_from_cracker()
+            self.listen_cracker_config()
+            self.sync_config_from_acquisition()
+            self.listen_acquisition_config()
+
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
         self.reg_msg_handler("loadConfigButton", "onClick", self.load_config_button_click)
         self.reg_msg_handler("saveConfigButton", "onClick", self.save_config_button_click)
 
     def sync_config(self) -> None:
-        CrackerS1PanelWidget.sync_config(self)
-        AcquisitionPanelWidget.sync_config(self)
+        self.sync_config_from_cracker()
+        self.sync_config_from_acquisition()
 
-    def bind(self) -> None:
-        CrackerS1PanelWidget.bind(self)
-        AcquisitionPanelWidget.bind(self)
+    def listen_config(self) -> None:
+        self.listen_cracker_config()
+        self.listen_acquisition_config()
 
     def dump_config_button_click(self, args: dict[str, typing.Any]):
         self.send({"dumpConfigCompleted": self._dump_config()})
@@ -60,7 +90,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         self.cracker.load_config_from_str(config_info)
         self.cracker.set_uri(connection_info)
         self.acquisition.load_config_from_str(acquisition_info)
-        self.sync_config()
+        self.sync_config_from_cracker()
         self.send({"loadConfigCompleted": True})
 
     def save_config_button_click(self, args: dict[str, typing.Any]):
