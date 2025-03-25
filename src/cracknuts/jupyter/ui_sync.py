@@ -23,6 +23,8 @@ class ConfigProxy:
             if prop.fset:
                 prop.fset(widget, value)
         elif name in dir(widget):
+            print(f"set widget value: {widget}, {name}, {value}")
+            print(f"set widget value: {type(widget)}, {name}, {value}")
             setattr(widget, name, value)
 
     def __getattribute__(self, name):
@@ -41,6 +43,7 @@ class ConfigProxy:
 
 def observe_interceptor(func, signal="_observe"):
     def wrapper(self, *args, **kwargs):
+        print(f"observe_interceptor: {func}:: {getattr(self, signal)}")
         if getattr(self, signal):
             return func(self, *args, **kwargs)
 
