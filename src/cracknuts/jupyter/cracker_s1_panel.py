@@ -7,7 +7,7 @@ from typing import Any
 from traitlets import traitlets
 
 from cracknuts import logger
-from cracknuts.cracker.cracker_s1 import CrackerS1
+from cracknuts.cracker.cracker_s1 import CrackerS1, ConfigS1
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
 import cracknuts.cracker.serial as serial
@@ -35,73 +35,21 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_uart_parity = traitlets.Int(0).tag(sync=True)
     nut_uart_stopbits = traitlets.Int(0).tag(sync=True)
 
-    @property
-    def nut_uart_config(self):
-        return {
-            "baudrate": serial.Baudrate(self.nut_uart_baudrate),
-            "bytesize": serial.Bytesize(self.nut_uart_bytesize),
-            "parity": serial.Parity(self.nut_uart_parity),
-            "stopbits": serial.Stopbits(self.nut_uart_stopbits),
-        }
-
-    @nut_uart_config.setter
-    def nut_uart_config(self, config):
-        self.nut_uart_baudrate = config["baudrate"].value
-        self.nut_uart_bytesize = config["bytesize"].value
-        self.nut_uart_parity = config["parity"].value
-        self.nut_uart_stopbits = config["stopbits"].value
-
     nut_spi_enable = traitlets.Bool(False).tag(sync=True)
     nut_spi_speed = traitlets.Int(10_000).tag(sync=True)
     nut_spi_cpol = traitlets.Int(0).tag(sync=True)
     nut_spi_cpha = traitlets.Int(0).tag(sync=True)
     nut_spi_auto_select = traitlets.Bool(True).tag(sync=True)
 
-    @property
-    def nut_spi_config(self):
-        return {
-            "speed": self.nut_spi_speed,
-            "cpol": serial.SpiCpol(self.nut_spi_cpol),
-            "cpha": serial.SpiCpha(self.nut_spi_cpha),
-            "auto_select": self.nut_spi_auto_select,
-        }
-
-    @nut_spi_config.setter
-    def nut_spi_config(self, config):
-        self.nut_spi_speed = config["speed"]
-        self.nut_spi_cpol = config["cpol"].value
-        self.nut_spi_cpha = config["cpha"].value
-
     nut_i2c_enable = traitlets.Bool(False).tag(sync=True)
     nut_i2c_dev_addr = traitlets.Unicode("0x00").tag(sync=True)
     nut_i2c_speed = traitlets.Int(0).tag(sync=True)
-
-    @property
-    def nut_i2c_config(self):
-        return {
-            "dev_addr": int(self.nut_i2c_dev_addr, 16),
-            "speed": serial.I2cSpeed(self.nut_i2c_speed),
-        }
-
-    @nut_i2c_config.setter
-    def nut_i2c_config(self, config):
-        self.nut_i2c_dev_addr = hex(config["dev_addr"])
-        self.nut_i2c_speed = config["speed"].value
 
     # osc
     osc_analog_channel_a_enable = traitlets.Bool(False).tag(sync=True)
     osc_analog_channel_b_enable = traitlets.Bool(True).tag(sync=True)
     sync_sample = traitlets.Bool(False).tag(sync=True)
     sync_args_times = traitlets.Int(1).tag(sync=True)
-
-    @property
-    def osc_analog_channel_enable(self):
-        return {0: self.osc_analog_channel_a_enable, 1: self.osc_analog_channel_b_enable}
-
-    @osc_analog_channel_enable.setter
-    def osc_analog_channel_enable(self, enable):
-        self.osc_analog_channel_a_enable = enable[0]
-        self.osc_analog_channel_b_enable = enable[1]
 
     osc_sample_rate = traitlets.Int(65000).tag(sync=True)
     osc_sample_phase = traitlets.Int(0).tag(sync=True)
@@ -144,21 +92,21 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         self.update_cracker_config(current_config.__dict__, connect_uri)
         self._observe = True
 
-    def update_cracker_config(self, config: dict[str, object], connect_uri) -> None:
+    def update_cracker_config(self, config: dict[str, object] | ConfigS1, connect_uri) -> None:
         """
         Sync cracker current to panel(Jupyter widget UI)
         """
 
-        self._observe = False
         self.uri = connect_uri
+        if isinstance(config, ConfigS1):
+            config = config.__dict__
         for name, value in config.items():
-            if hasattr(CrackerS1PanelWidget, name) and isinstance(getattr(CrackerS1PanelWidget, name), property):
-                prop = getattr(CrackerS1PanelWidget, name)
-                if prop.fset:
-                    prop.fset(self, value)
-            elif name in dir(self):
-                setattr(CrackerS1PanelWidget, name, value)
-        self._observe = True
+            if name in dir(self):
+                setattr(self, name, value)
+            else:
+                self._logger.error(
+                    f"Failed to sync configuration to widget: the widget has no attribute named '{name}'."
+                )
 
     def listen_cracker_config(self) -> None:
         """
@@ -240,7 +188,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         enabled = bool(change.get("new"))
         self.cracker.osc_analog_enable(0) if enabled else self.cracker.osc_analog_disable(0)
         if enabled:
-            self.cracker.osc_analog_gain(0, self.cracker.get_current_config().osc_analog_gain[0])
+            self.cracker.osc_analog_gain(0, self.cracker.get_current_config().osc_analog_channel_0_gain)
 
     @traitlets.observe("osc_analog_channel_b_enable")
     @observe_interceptor
@@ -248,7 +196,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         enabled = bool(change.get("new"))
         self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(1)
         if enabled:
-            self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_analog_gain[1])
+            self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_analog_channel_1_gain)
 
     @traitlets.observe("osc_trigger_source")
     @observe_interceptor

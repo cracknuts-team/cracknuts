@@ -23,6 +23,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     cracker_model = traitlets.Unicode("s1").tag(sync=True)
     language = traitlets.Unicode("en").tag(sync=True)
+    need_sync_to_cracker = traitlets.Bool(False).tag(sync=True)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         if "acquisition" not in kwargs:
@@ -38,36 +39,37 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         super().__init__(*args, **kwargs)
         self.language = user_config.get_option("language", fallback="en")
         # self._load_current_path_config()
-        # workspace_config = self._get_workspace_config()
-        # if workspace_config:
-        #     cracker_config = workspace_config.get("config")
-        #     uri = workspace_config.get("connection")
-        #     if cracker_config:
-        #         self.update_cracker_config(cracker_config, uri)
-        #     else:
-        #         self._logger.error(
-        #             "Configuration file format error: The cracker configuration segment is missing. "
-        #             "The configuration from the cracker or the default configuration will be used."
-        #         )
-        #         self.sync_config_from_cracker()
-        #         self.listen_cracker_config()
-        #
-        #     acquisition_config = workspace_config.get("acquisition")
-        #     if acquisition_config:
-        #         self.acquisition.load_config_from_str(workspace_config.get("acquisition"))
-        #     else:
-        #         self._logger.error(
-        #             "Configuration file format error: Acquisition configuration segment is missing. "
-        #             "The configuration from the acquisition object or "
-        #             "the default configuration will be used."
-        #         )
-        #     self.sync_config_from_acquisition()
-        #     self.listen_acquisition_config()
-        # else:
-        #     self.sync_config_from_cracker()
-        #     self.listen_cracker_config()
-        #     self.sync_config_from_acquisition()
-        #     self.listen_acquisition_config()
+        workspace_config = self._get_workspace_config()
+        if workspace_config:
+            cracker_config = workspace_config.get("config")
+            uri = workspace_config.get("connection")
+            if cracker_config:
+                self.update_cracker_config(cracker_config, uri)
+                self.need_sync_to_cracker = True
+            else:
+                self._logger.error(
+                    "Configuration file format error: The cracker configuration segment is missing. "
+                    "The configuration from the cracker or the default configuration will be used."
+                )
+                self.sync_config_from_cracker()
+                self.listen_cracker_config()
+
+            acquisition_config = workspace_config.get("acquisition")
+            if acquisition_config:
+                self.acquisition.load_config_from_json(workspace_config.get("acquisition"))
+            else:
+                self._logger.error(
+                    "Configuration file format error: Acquisition configuration segment is missing. "
+                    "The configuration from the acquisition object or "
+                    "the default configuration will be used."
+                )
+            self.sync_config_from_acquisition()
+            self.listen_acquisition_config()
+        else:
+            self.sync_config_from_cracker()
+            self.listen_cracker_config()
+            self.sync_config_from_acquisition()
+            self.listen_acquisition_config()
 
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
         self.reg_msg_handler("loadConfigButton", "onClick", self.load_config_button_click)
@@ -96,16 +98,19 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     def save_config_button_click(self, args: dict[str, typing.Any]):
         current_config_path = self._get_workspace_config_path()
+        self._logger.error(current_config_path)
         with open(current_config_path, "w") as f:
+            self._logger.error(self._dump_config())
             f.write(self._dump_config())
 
     def _dump_config(self):
         return json.dumps(
             {
                 "connection": self.cracker.get_uri(),
-                "config": self.cracker.dump_config(),
-                "acquisition": self.acquisition.dump_config(),
-            }
+                "config": json.loads(self.cracker.dump_config()),
+                "acquisition": json.loads(self.acquisition.dump_config()),
+            },
+            indent=4,
         )
 
     def _load_current_path_config(self):

@@ -724,6 +724,14 @@ class Acquisition(abc.ABC):
         :param json_str: the JSON string
         """
         config = json.loads(json_str)
+        self.load_config_from_json(config)
+
+    def load_config_from_json(self, config: dict):
+        """
+        Load config from a JSON object.
+
+        :param config: the JSON object
+        """
         self.trace_count = config["trace_count"]
         self.sample_length = config["sample_length"]
         self.sample_offset = config["sample_offset"]

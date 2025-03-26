@@ -21,8 +21,10 @@ from cracknuts.cracker.operator import Operator
 
 class ConfigBasic:
     def __init__(self):
-        self.osc_analog_channel_enable = {0: False, 1: True}
-        self.osc_analog_gain = {0: 50, 1: 50}
+        self.osc_analog_channel_0_enable = False
+        self.osc_analog_channel_1_enable = True
+        self.osc_analog_channel_0_gain = 50
+        self.osc_analog_channel_1_gain = 50
         self.osc_sample_length = 1024
         self.osc_sample_delay = 0
         self.osc_sample_clock = 48000
@@ -31,29 +33,6 @@ class ConfigBasic:
         self.osc_trigger_mode = 0
         self.osc_analog_trigger_edge = 0
         self.osc_analog_trigger_edge_level = 1
-
-        # self.osc_analog_coupling: dict[int, int] = {}
-        # self.osc_analog_voltage: dict[int, int] = {}
-        # self.osc_analog_bias_voltage: dict[int, int] = {}
-        # self.osc_digital_voltage: int | None = None
-        # self.osc_digital_trigger_source: int | None = None
-        # self.osc_analog_gain_raw: dict[int, int] = {}
-        # self.osc_clock_base_freq_mul_div: tuple[int, int, int] | None = None
-        # self.osc_clock_sample_divisor: tuple[int, int] | None = None
-        # self.osc_clock_simple: tuple[int, int, int] | None = None
-        # self.osc_clock_phase: int | None = None
-        # self.osc_clock_divisor: int | None = None
-        # The name list of fields whose value type is dict[int, Any]. When converting to a dictionary from JSON,
-        # numbers are converted to strings, so this needs to be handled separately. The subclass should overwrite
-        # this field when its field has a similar structure.
-        self.int_dict_fields = (
-            "osc_analog_channel_enable",
-            # "osc_analog_coupling",
-            # "osc_analog_voltage",
-            # "osc_analog_bias_voltage",
-            "osc_analog_gain",
-            # "osc_analog_gain_raw",
-        )
 
     def __str__(self):
         return f"Config({", ".join([f"{k}: {v}" for k, v in self.__dict__.items() if not k.startswith("_")])})"
@@ -66,7 +45,7 @@ class ConfigBasic:
         Dump the configuration to a JSON string.
 
         """
-        return json.dumps({k: v for k, v in self.__dict__.items() if (k != "_binder" and k != "int_dict_fields")})
+        return json.dumps({k: v for k, v in self.__dict__.items() if not k.startswith("_")}, indent=4)
 
     def load_from_json(self, json_str: str) -> "ConfigBasic":
         """
@@ -75,8 +54,6 @@ class ConfigBasic:
 
         """
         for k, v in json.loads(json_str).items():
-            if k in self.int_dict_fields:
-                v = {int(_k): _v for _k, _v in v.items()}
             if v is not None:
                 self.__dict__[k] = v
         return self
@@ -276,8 +253,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
             if (update_bin and bin_updated) or force_write_default_config:
                 # Sync the default configuration to the cracker when updating its firmware.
                 self.write_config_to_cracker(self.get_default_config())
+                self._logger.info("Write default configuration to Cracker.")
             self._config = self.get_current_config()
-            self._logger.info("Synchronize the configuration to Cracker successfully.")
+            self._logger.info("Synchronize the configuration from Cracker.")
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
             self._socket = None
