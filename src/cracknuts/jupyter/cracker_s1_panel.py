@@ -64,8 +64,9 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     osc_analog_channel_a_gain = traitlets.Int(1).tag(sync=True)
     osc_analog_channel_b_gain = traitlets.Int(1).tag(sync=True)
 
+    panel_config_different_from_cracker_config = traitlets.Bool(False).tag(sync=True)
+
     def __init__(self, *args: Any, **kwargs: Any):
-        # todo optimize init param with specifically args and kwargs.
         super().__init__(*args, **kwargs)
         self._logger = logger.get_logger(self)
         self._observe: bool = True
@@ -79,34 +80,50 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         if self.connect_status:
             _, self.cracker_id = self.cracker.get_id()
             _, self.cracker_name = self.cracker.get_hardware_model()
-            _, self.cracker_version = self.cracker.get_firmware_version()
+            # _, self.cracker_version = self.cracker.get_firmware_version()
 
-    def sync_config_from_cracker(self) -> None:
+    def read_config_from_cracker(self) -> None:
         # connection
-        self._observe = False
         connect_uri = None
         if self.cracker.get_uri() is not None:
             connect_uri = self.cracker.get_uri()
 
-        current_config = self.cracker.get_current_config()
-        self.update_cracker_config(current_config.__dict__, connect_uri)
-        self._observe = True
+        cracker_config = self.cracker.get_current_config()
+        self.update_cracker_panel_config(cracker_config.__dict__, connect_uri)
 
-    def update_cracker_config(self, config: dict[str, object] | ConfigS1, connect_uri) -> None:
+    def write_config_to_cracker(self) -> None:
+        self.cracker.write_config_to_cracker(self.get_cracker_panel_config())
+        self.panel_config_different_from_cracker_config = False
+        self.listen_cracker_config()
+
+    def get_cracker_panel_config(self):
+        panel_config = ConfigS1()
+        self._logger.warning(f"xxxx {panel_config.__dict__.keys()}")
+        for prop in panel_config.__dict__.keys():
+            if hasattr(self, prop):
+                self._logger.warning(f"Sett config {prop}: {getattr(self, prop)}")
+                setattr(panel_config, prop, getattr(self, prop))
+            else:
+                self._logger.error(f"Failed to get configuration properties: the widget has no attribute named {prop}")
+        return panel_config
+
+    def update_cracker_panel_config(self, config: dict[str, object] | ConfigS1, connect_uri) -> None:
         """
         Sync cracker current to panel(Jupyter widget UI)
         """
 
+        self._observe = False
         self.uri = connect_uri
         if isinstance(config, ConfigS1):
             config = config.__dict__
         for name, value in config.items():
-            if name in dir(self):
+            if hasattr(self, name):
                 setattr(self, name, value)
             else:
                 self._logger.error(
                     f"Failed to sync configuration to widget: the widget has no attribute named '{name}'."
                 )
+        self._observe = True
 
     def listen_cracker_config(self) -> None:
         """
@@ -123,7 +140,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
                 self.connect_status = True
                 _, self.cracker_id = self.cracker.get_id()
                 _, self.cracker_name = self.cracker.get_hardware_model()
-                _, self.cracker_version = self.cracker.get_firmware_version()
+                # _, self.cracker_version = self.cracker.get_firmware_version()
             else:
                 self.connect_status = False
         else:
@@ -147,6 +164,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_voltage")
     @observe_interceptor
     def nut_voltage_changed(self, change):
+        self._logger.error(f"nut voltage changed: {change.get('old')} - {change.get('new')}")
+        self._logger.error(f"nut voltage changed: {change}")
         self.cracker.nut_voltage(change.get("new"))
 
     @traitlets.observe("nut_clock_enable")

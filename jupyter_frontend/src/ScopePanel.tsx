@@ -1,5 +1,5 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Button, Input, InputNumber, Radio, Space, Spin} from "antd";
+import {Button, Form, Input, InputNumber, Radio, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useRef, useState} from "react";
 import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
@@ -337,8 +337,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     return (
         <Spin indicator={<span></span>} spinning={disable}>
             {/* eslint @typescript-eslint/no-unused-vars: "off" */}
-            <Space>
-
+            <Form layout={"inline"}>
+              <Form.Item>
                 <Radio.Group
                     value={scopeStatus}
                     buttonStyle="solid"
@@ -347,6 +347,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     }}
                     size={"small"}
                     disabled={lockScopeOperation}
+                    style={{minWidth: 200}}
                 >
                     <Radio.Button value={0}>
                         <FormattedMessage id={"cracker.scope.stop"}/>
@@ -361,12 +362,15 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         <FormattedMessage id={"cracker.scope.repeat"}/>
                     </Radio.Button>
                 </Radio.Group>
-
+              </Form.Item>
+              <Form.Item>
                 <Button size={"small"} type={monitorStatus ? "primary" : "default"}
                         onClick={() => {
                             setMonitorStatus(!monitorStatus);
                         }}
                 ><FormattedMessage id={"cracker.scope.monitor"}/></Button>
+              </Form.Item>
+              <Form.Item>
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
                           console.error(chartRef.current)
@@ -378,6 +382,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         }}>
                     <FormattedMessage id={"cracker.scope.customRange"}/>
                 </Button>
+              </Form.Item>
+              <Form.Item>
                 <Space.Compact>
                     <Button size={"small"} disabled={!customRangeModel} onClick={chARangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH A"} disabled className="site-input-split"
@@ -402,6 +408,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     }} changeOnWheel/>
                    <Button size={"small"} disabled={!customRangeModel} onClick={chARangeIncrease}><PlusCircleOutlined /></Button>
                 </Space.Compact>
+              </Form.Item>
+              <Form.Item>
                 <Space.Compact>
                   <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeDecrease}><MinusCircleOutlined /></Button>
                     <Input size={"small"} placeholder={"CH B"} disabled className="site-input-split"
@@ -426,6 +434,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     }} changeOnWheel/>
                    <Button size={"small"} disabled={!customRangeModel} onClick={chBRangeIncrease}><PlusCircleOutlined /></Button>
                 </Space.Compact>
+              </Form.Item>
+              <Form.Item>
                 <Space.Compact>
                     <Button size={"small"} onClick={() => {
                         enableXRangeBrush(!xRangeBrushEnabled)
@@ -440,7 +450,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                         setCustomXRangeMax(Number(v))
                     }}/>
                 </Space.Compact>
-            </Space>
+              </Form.Item>
+            </Form>
             <ReactEcharts option={option} ref={chartRef} onChartReady = {onChartReady}
                           style={{
                               height: 350, marginTop: 5, padding: 8,

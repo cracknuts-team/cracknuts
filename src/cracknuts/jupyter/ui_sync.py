@@ -38,8 +38,12 @@ class ConfigProxy:
         return self._config.__repr__()
 
 
+_logger = logger.get_logger("observe_interceptor")
+
+
 def observe_interceptor(func, signal="_observe"):
     def wrapper(self, *args, **kwargs):
+        _logger.error(f"observe_interceptor is exec  {func}.... {getattr(self, signal)}")
         if getattr(self, signal):
             return func(self, *args, **kwargs)
 

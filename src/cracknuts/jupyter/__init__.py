@@ -40,7 +40,7 @@ def display_acquisition_panel(acq: "Acquisition"):
 
 def display_cracker_panel(cracker: "CrackerBasic"):
     cpw = CrackerS1PanelWidget(cracker=cracker)
-    cpw.sync_config_from_cracker()
+    cpw.read_config_from_cracker()
     cpw.listen_cracker_config()
     return cpw
 

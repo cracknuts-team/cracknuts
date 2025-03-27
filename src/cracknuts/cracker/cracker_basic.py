@@ -554,8 +554,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         with open(path) as f:
             content = f.readlines()
             config_json = json.loads("".join(content))
-            if "config" in config_json:
-                content = config_json["config"]
+            if "cracker" in config_json:
+                content = config_json["cracker"]
             self.load_config_from_str(content)
 
     def load_config_from_str(self, json_str: str) -> None:

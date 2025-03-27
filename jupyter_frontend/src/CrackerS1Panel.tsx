@@ -1,7 +1,21 @@
-import {Button, Checkbox, Col, Divider, Form, Input, InputNumber, Row, Select, Space, Spin, Tag, Upload,} from "antd";
+import {
+  Button,
+  Checkbox,
+  Col,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Tooltip,
+  Upload,
+} from "antd";
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {useModel, useModelState} from "@anywidget/react";
-import {DownloadOutlined, InfoCircleOutlined, SaveOutlined, UploadOutlined,} from "@ant-design/icons";
+import {DownloadOutlined, SaveOutlined, UploadOutlined,} from "@ant-design/icons";
 import AcquisitionPanel from "@/AcquisitionPanel.tsx";
 import {FormattedMessage, useIntl} from "react-intl";
 
@@ -17,9 +31,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [connectStatus] = useModelState<boolean>("connect_status");
   const [buttonBusy, setButtonBusy] = useState<boolean>(false);
 
-  const [crackerId] = useModelState<string>("cracker_id");
-  const [crackerName] = useModelState<string>("cracker_name");
-  const [crackerVersion] = useModelState<string>("cracker_version");
+  // const [crackerId] = useModelState<string>("cracker_id");
+  // const [crackerName] = useModelState<string>("cracker_name");
+  // const [crackerVersion] = useModelState<string>("cracker_version");
 
   const model = useModel();
 
@@ -101,6 +115,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [socAnalogChannelAGain, setOscAnalogChannelAGain] = useModelState<number>("osc_analog_channel_a_gain");
   const [socAnalogChannelBGain, setOscAnalogChannelBGain] = useModelState<number>("osc_analog_channel_b_gain");
 
+  const [panelConfigDifferentFromCrackerConfig] = useModelState<boolean>("panel_config_different_from_cracker_config");
+
   const dumpConfig = () => {
     model.send({source: "dumpConfigButton", event: "onClick", args: {}});
   };
@@ -124,6 +140,14 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
 
   const saveConfig = () => {
     model.send({source: "saveConfigButton", event: "onClick", args: {}});
+  };
+
+  const writeConfig = () => {
+    model.send({source: "writeConfigButton", event: "onClick", args: {}});
+  };
+
+  const readConfig = () => {
+    model.send({source: "readConfigButton", event: "onClick", args: {}});
   };
 
   const uploadProp = {
@@ -194,10 +218,10 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
 
   return (
     <div>
-      <Row>
-        <Col span={16}>
-          <Space size={"large"}>
-            <Space.Compact style={{width: "400"}} size={"small"}>
+      <Row justify="space-between">
+        <Col flex={"auto"}>
+          <Space size={"large"} style={{paddingTop: "5px", paddingBottom: "5px"}}>
+            <Space.Compact style={{maxWidth: "18em", minWidth: "18em"}} size={"small"}>
               <Input
                 addonBefore="cnp://"
                 value={getUri()}
@@ -210,42 +234,68 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     : intl.formatMessage({id: 'cracker.connect'})}
               </Button>
             </Space.Compact>
-            <span>
-              <Tag icon={<InfoCircleOutlined/>} color="success">
-                <FormattedMessage id={"cracker.id"}/>: {crackerId}
-              </Tag>
-            </span>
-            <span>
-              <Tag icon={<InfoCircleOutlined/>} color="success">
-                <FormattedMessage id={"cracker.name"}/>: {crackerName}
-              </Tag>
-            </span>
-            <span>
-              <Tag icon={<InfoCircleOutlined/>} color="success">
-                <FormattedMessage id={"cracker.version"}/>: {crackerVersion}
-              </Tag>
-            </span>
+            {/*<span>*/}
+            {/*  <Tag icon={<InfoCircleOutlined/>} color="success">*/}
+            {/*    <FormattedMessage id={"cracker.id"}/>: {crackerId}*/}
+            {/*  </Tag>*/}
+            {/*</span>*/}
+            {/*<span>*/}
+            {/*  <Tag icon={<InfoCircleOutlined/>} color="success">*/}
+            {/*    <FormattedMessage id={"cracker.name"}/>: {crackerName}*/}
+            {/*  </Tag>*/}
+            {/*</span>*/}
+            {/*<span>*/}
+            {/*  <Tag icon={<InfoCircleOutlined/>} color="success">*/}
+            {/*    <FormattedMessage id={"cracker.version"}/>: {crackerVersion}*/}
+            {/*  </Tag>*/}
+            {/*</span>*/}
           </Space>
         </Col>
-        <Col span={7} style={{textAlign: "right"}}>
-          <Space.Compact>
-            <Button icon={<SaveOutlined/>} size={"small"} onClick={saveConfig} type="primary">
-              <FormattedMessage id={"cracknuts.config.save"}/>
-            </Button>
-            <Upload {...uploadProp}>
-              <Button icon={<DownloadOutlined/>} size={"small"} type="primary">
-                <FormattedMessage id={"cracknuts.config.load"}/>
+        <Col style={{marginLeft: "auto"}}>
+          <Form layout={"inline"}>
+            <Form.Item>
+              <Tooltip title={panelConfigDifferentFromCrackerConfig ? "当前配置与设备不同步，写入当前控制面板中的配置信息到Cracker" : "写入当前控制面板中的配置信息到Cracker"}>
+                <Button icon={<SaveOutlined/>} size={"small"} onClick={writeConfig} color={panelConfigDifferentFromCrackerConfig ? "danger" : "primary"} variant="solid">
+                  写入配置
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={"读取Cracker中的配置信息到控制面板"}>
+                <Button icon={<SaveOutlined/>} size={"small"} onClick={readConfig} type="primary">
+                  读取配置
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={"保存控制面板中的配置到配置文件"}>
+                <Button icon={<SaveOutlined/>} size={"small"} onClick={saveConfig} type="primary">
+                  <FormattedMessage id={"cracknuts.config.save"}/>
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={"上传配置文件到控制面板"}>
+                <Upload {...uploadProp}>
+                  <Button icon={<DownloadOutlined/>} size={"small"} type="primary">
+                    <FormattedMessage id={"cracknuts.config.load"}/>
+                  </Button>
+                </Upload>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={"导出控制面板中的配置到配置文件"}>
+                <Button icon={<UploadOutlined/>} size={"small"} onClick={dumpConfig} type="primary">
+                  <FormattedMessage id={"cracknuts.config.dump"}/>
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Button size={"small"} variant="text" color="default" onClick={changeLanguage}>
+                <span style={{fontSize: '0.8em', width: 13, textAlign: 'center'}}>{language}</span>
               </Button>
-            </Upload>
-            <Button icon={<UploadOutlined/>} size={"small"} onClick={dumpConfig} type="primary">
-              <FormattedMessage id={"cracknuts.config.dump"}/>
-            </Button>
-          </Space.Compact>
-        </Col>
-        <Col span={1} style={{textAlign: "right"}}>
-            <Button size={"small"} variant="text" color="default" onClick={changeLanguage}>
-              <span style={{fontSize: '0.8em', width: 13, textAlign: 'center'}}>{language}</span>
-            </Button>
+            </Form.Item>
+          </Form>
         </Col>
       </Row>
       <Spin indicator={<span></span>} spinning={!connectStatus}>
