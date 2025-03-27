@@ -18,20 +18,20 @@ class ConfigS1(ConfigBasic):
         self.nut_timeout: int | None = None
 
         self.nut_uart_enable: bool = False
-        self.nut_uart_config_baudrate: serial.Baudrate = serial.Baudrate.BAUDRATE_115200
-        self.nut_uart_config_bytesize: serial.Bytesize = serial.Bytesize.EIGHTBITS
-        self.nut_uart_config_parity: serial.Parity = serial.Parity.PARITY_NONE
-        self.nut_uart_config_stopbits: serial.Stopbits = serial.Stopbits.STOPBITS_ONE
+        self.nut_uart_baudrate: serial.Baudrate = serial.Baudrate.BAUDRATE_115200
+        self.nut_uart_bytesize: serial.Bytesize = serial.Bytesize.EIGHTBITS
+        self.nut_uart_parity: serial.Parity = serial.Parity.PARITY_NONE
+        self.nut_uart_stopbits: serial.Stopbits = serial.Stopbits.STOPBITS_ONE
 
         self.nut_spi_enable: bool | None = False
-        self.nut_spi_config_speed: int = 10_000
-        self.nut_spi_config_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
-        self.nut_spi_config_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
-        self.nut_spi_config_auto_select: bool = True
+        self.nut_spi_speed: int = 10_000
+        self.nut_spi_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
+        self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
+        self.nut_spi_auto_select: bool = True
 
         self.nut_i2c_enable: bool = False
-        self.nut_i2c_config_dev_addr: int = 0x00
-        self.nut_i2c_config_speed: serial.I2cSpeed = serial.I2cSpeed.STANDARD_100K
+        self.nut_i2c_dev_addr: int = 0x00
+        self.nut_i2c_speed: serial.I2cSpeed = serial.I2cSpeed.STANDARD_100K
 
     def __str__(self):
         return super().__str__()
@@ -67,14 +67,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "osc_sample_phase": "I",
             "osc_sample_length": "I",
             "osc_sample_delay": "I",
-            "osc_analog_channel_0_enable": "?",
-            "osc_analog_channel_0_gain": "B",
-            "osc_analog_channel_1_enable": "?",
-            "osc_analog_channel_1_gain": "B",
+            "osc_channel_0_enable": "?",
+            "osc_channel_0_gain": "B",
+            "osc_channel_1_enable": "?",
+            "osc_channel_1_gain": "B",
             "osc_trigger_mode": "B",
-            "osc_analog_trigger_source": "B",
-            "osc_analog_trigger_edge": "B",
-            "osc_analog_trigger_edge_level": "H",
+            "osc_trigger_source": "B",
+            "osc_trigger_edge": "B",
+            "osc_trigger_edge_level": "H",
             "nut_i2c_enable": "?",
             "nut_i2c_config_dev_addr": "B",
             "nut_i2c_config_speed": "B",
@@ -104,36 +104,34 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._nut_set_clock_enable(config.nut_clock_enable)
         self.nut_clock_freq(config.nut_clock)
 
-        self._osc_set_analog_all_channel_enable(
-            {0: config.osc_analog_channel_0_enable, 1: config.osc_analog_channel_1_enable}
-        )
-        self.osc_analog_gain(0, config.osc_analog_channel_0_gain)
-        self.osc_analog_gain(1, config.osc_analog_channel_1_gain)
+        self._osc_set_analog_all_channel_enable({0: config.osc_channel_0_enable, 1: config.osc_channel_1_enable})
+        self.osc_analog_gain(0, config.osc_channel_0_gain)
+        self.osc_analog_gain(1, config.osc_channel_1_gain)
         self.osc_sample_length(config.osc_sample_length)
         self.osc_sample_delay(config.osc_sample_delay)
         self.osc_sample_clock(config.osc_sample_clock)
         self.osc_sample_clock_phase(config.osc_sample_phase)
-        self.osc_trigger_source(config.osc_analog_trigger_source)
+        self.osc_trigger_source(config.osc_trigger_source)
         self.osc_trigger_mode(config.osc_trigger_mode)
-        self.osc_trigger_edge(config.osc_analog_trigger_edge)
-        self.osc_trigger_level(config.osc_analog_trigger_edge_level)
+        self.osc_trigger_edge(config.osc_trigger_edge)
+        self.osc_trigger_level(config.osc_trigger_edge_level)
 
         self._spi_enable(config.nut_spi_enable)
         self.spi_config(
-            config.nut_spi_config_speed,
-            config.nut_spi_config_cpol,
-            config.nut_spi_config_cpha,
-            config.nut_spi_config_auto_select,
+            config.nut_spi_speed,
+            config.nut_spi_cpol,
+            config.nut_spi_cpha,
+            config.nut_spi_auto_select,
         )
         self._uart_enable(config.nut_uart_enable)
         self.uart_config(
-            config.nut_uart_config_baudrate,
-            config.nut_uart_config_bytesize,
-            config.nut_uart_config_parity,
-            config.nut_uart_config_stopbits,
+            config.nut_uart_baudrate,
+            config.nut_uart_bytesize,
+            config.nut_uart_parity,
+            config.nut_uart_stopbits,
         )
         self._i2c_enable(config.nut_i2c_enable)
-        self.i2c_config(config.nut_i2c_config_dev_addr, config.nut_i2c_config_speed)
+        self.i2c_config(config.nut_i2c_dev_addr, config.nut_i2c_speed)
 
     def register_read(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """
@@ -224,11 +222,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 self._logger.error("Channel error, it should in 0 or 1")
                 return self.NON_PROTOCOL_ERROR, None
         if channel == 0:
-            final_enable = {0: enable, 1: self._config.osc_analog_channel_1_enable}
+            final_enable = {0: enable, 1: self._config.osc_channel_1_enable}
         elif channel == 1:
-            final_enable = {0: self._config.osc_analog_channel_0_enable, 1: enable}
+            final_enable = {0: self._config.osc_channel_0_enable, 1: enable}
         else:
-            final_enable = {0: self._config.osc_analog_channel_0_enable, 1: self._config.osc_analog_channel_1_enable}
+            final_enable = {0: self._config.osc_channel_0_enable, 1: self._config.osc_channel_1_enable}
         self._osc_set_analog_all_channel_enable(final_enable)
 
     def _osc_set_analog_all_channel_enable(self, final_enable: dict[int, bool]):
@@ -319,7 +317,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"osc_trigger_source payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_ANALOG_TRIGGER_SOURCE, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.osc_analog_trigger_source = source
+            self._config.osc_trigger_source = source
 
         return status, None
 
@@ -355,7 +353,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"osc_trigger_edge payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.osc_analog_trigger_edge = edge
+            self._config.osc_trigger_edge = edge
 
         return status, None
 
@@ -372,7 +370,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"osc_trigger_level payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_TRIGGER_EDGE_LEVEL, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.osc_analog_trigger_edge_level = edge_level
+            self._config.osc_trigger_edge_level = edge_level
 
         return status, None
 
@@ -778,10 +776,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.nut_spi_config_speed = speed
-            self._config.nut_spi_config_cpol = cpol
-            self._config.nut_spi_config_cpha = cpha
-            self._config.nut_spi_config_auto_select = auto_select
+            self._config.nut_spi_speed = speed
+            self._config.nut_spi_cpol = cpol
+            self._config.nut_spi_cpha = cpha
+            self._config.nut_spi_auto_select = auto_select
         return status, res
 
     def _spi_transceive(
@@ -947,8 +945,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.nut_i2c_config_dev_addr = dev_addr
-            self._config.nut_i2c_config_speed = speed
+            self._config.nut_i2c_dev_addr = dev_addr
+            self._config.nut_i2c_speed = speed
         return status, res
 
     def _i2c_transceive(
@@ -1197,10 +1195,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
-            self._config.nut_uart_config_baudrate = baudrate
-            self._config.nut_uart_config_bytesize = bytesize
-            self._config.nut_uart_config_parity = parity
-            self._config.nut_uart_config_stopbits = stopbits
+            self._config.nut_uart_baudrate = baudrate
+            self._config.nut_uart_bytesize = bytesize
+            self._config.nut_uart_parity = parity
+            self._config.nut_uart_stopbits = stopbits
         return status, res
 
     def uart_transmit_receive(

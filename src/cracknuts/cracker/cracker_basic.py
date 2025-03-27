@@ -10,6 +10,7 @@ import struct
 import threading
 import typing
 from abc import ABC
+from enum import Enum
 
 import numpy as np
 
@@ -21,18 +22,18 @@ from cracknuts.cracker.operator import Operator
 
 class ConfigBasic:
     def __init__(self):
-        self.osc_analog_channel_0_enable = False
-        self.osc_analog_channel_1_enable = True
-        self.osc_analog_channel_0_gain = 50
-        self.osc_analog_channel_1_gain = 50
+        self.osc_channel_0_enable = False
+        self.osc_channel_1_enable = True
+        self.osc_channel_0_gain = 50
+        self.osc_channel_1_gain = 50
         self.osc_sample_length = 1024
         self.osc_sample_delay = 0
         self.osc_sample_clock = 48000
         self.osc_sample_phase = 0
-        self.osc_analog_trigger_source = 0
+        self.osc_trigger_source = 0
         self.osc_trigger_mode = 0
-        self.osc_analog_trigger_edge = 0
-        self.osc_analog_trigger_edge_level = 1
+        self.osc_trigger_edge = 0
+        self.osc_trigger_edge_level = 1
 
     def __str__(self):
         return f"Config({", ".join([f"{k}: {v}" for k, v in self.__dict__.items() if not k.startswith("_")])})"
@@ -45,7 +46,28 @@ class ConfigBasic:
         Dump the configuration to a JSON string.
 
         """
-        return json.dumps({k: v for k, v in self.__dict__.items() if not k.startswith("_")}, indent=4)
+        _logger = logger.get_logger("xxxx")
+        _logger.warning(f"ffffasfddsa: {self.__dict__.items()}")
+        x = {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+        _logger.warning(f"ffffasfddsa: {x}")
+
+        def enum_converter(obj):
+            if isinstance(obj, Enum):
+                return obj.value  # 也可以改成 obj.name
+            raise TypeError(f"Type {type(obj)} not serializable")
+
+        try:
+            json.dumps(
+                {k: v for k, v in self.__dict__.items() if not k.startswith("_")}, indent=4, default=enum_converter
+            )
+        except Exception as e:
+            _logger.error(e.args)
+
+        _logger.error("asdfadsffffffffffffffffffffffffffffffffffff")
+
+        return json.dumps(
+            {k: v for k, v in self.__dict__.items() if not k.startswith("_")}, indent=4, default=enum_converter
+        )
 
     def load_from_json(self, json_str: str) -> "ConfigBasic":
         """
@@ -536,7 +558,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: the content of JSON string or None if no path is specified.
         :rtype: str | None
         """
+        self._logger.warning("fffxxx ")
         config_json = self._config.dump_to_json()
+        self._logger.warning(f"fffffff {config_json}")
         if path is None:
             return config_json
         else:

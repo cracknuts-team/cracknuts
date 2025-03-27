@@ -105,15 +105,15 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [oscSamplePhase, setOscSamplePhase] = useModelState<number>("osc_sample_phase");
   const [oscSampleLength, setOscSampleLength] = useModelState<number>("osc_sample_length");
   const [oscSampleDelay, setOscSampleDelay] = useModelState<number>("osc_sample_delay");
-  const [channelAEnable, setChannelAEnable] = useModelState<boolean>("osc_analog_channel_a_enable");
-  const [channelBEnable, setChannelBEnable] = useModelState<boolean>("osc_analog_channel_b_enable");
+  const [channel0Enable, setChannel0Enable] = useModelState<boolean>("osc_channel_0_enable");
+  const [channel1Enable, setChannel1Enable] = useModelState<boolean>("osc_channel_1_enable");
 
   const [oscTriggerSource, setOscTriggerSource] = useModelState<number>("osc_trigger_source");
   const [oscTriggerMode, setOscTriggerMode] = useModelState<number>("osc_trigger_mode");
   const [oscTriggerEdge, setOscTriggerEdge] = useModelState<number>("osc_trigger_edge");
   const [oscTriggerEdgeLevel, setOscTriggerEdgeLevel] = useModelState<number>("osc_trigger_edge_level");
-  const [socAnalogChannelAGain, setOscAnalogChannelAGain] = useModelState<number>("osc_analog_channel_a_gain");
-  const [socAnalogChannelBGain, setOscAnalogChannelBGain] = useModelState<number>("osc_analog_channel_b_gain");
+  const [socChannel0Gain, setOscChannel0Gain] = useModelState<number>("osc_channel_0_gain");
+  const [socChannel1Gain, setOscChannel1Gain] = useModelState<number>("osc_channel_1_gain");
 
   const [panelConfigDifferentFromCrackerConfig] = useModelState<boolean>("panel_config_different_from_cracker_config");
 
@@ -531,9 +531,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                           <Space.Compact>
                             <Form.Item>
                               <Checkbox
-                                checked={channelAEnable}
+                                checked={channel0Enable}
                                 onChange={(v) => {
-                                  setChannelAEnable(v.target.checked);
+                                  setChannel0Enable(v.target.checked);
                                 }}
                               >
                                 <FormattedMessage id={"cracker.config.scope.channel.a.gain"}/>
@@ -546,11 +546,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 min={1}
                                 max={100}
                                 changeOnWheel
-                                disabled={!channelAEnable}
-                                value={socAnalogChannelAGain}
+                                disabled={!channel0Enable}
+                                value={socChannel0Gain}
                                 onChange={(v: number | string | null) => {
                                   if (v != null) {
-                                    setOscAnalogChannelAGain(Number(v));
+                                    setOscChannel0Gain(Number(v));
                                   }
                                 }}
                               />
@@ -561,9 +561,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                           <Space.Compact>
                             <Form.Item>
                               <Checkbox
-                                checked={channelBEnable}
+                                checked={channel1Enable}
                                 onChange={(v) => {
-                                  setChannelBEnable(v.target.checked);
+                                  setChannel1Enable(v.target.checked);
                                 }}
                               >
                                 <FormattedMessage id={"cracker.config.scope.channel.b.gain"}/>
@@ -576,11 +576,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 min={1}
                                 max={100}
                                 changeOnWheel
-                                disabled={!channelBEnable}
-                                value={socAnalogChannelBGain}
+                                disabled={!channel1Enable}
+                                value={socChannel1Gain}
                                 onChange={(v: number | string | null) => {
                                   if (v != null) {
-                                    setOscAnalogChannelBGain(Number(v));
+                                    setOscChannel1Gain(Number(v));
                                   }
                                 }}
                               />

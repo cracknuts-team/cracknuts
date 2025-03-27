@@ -2,6 +2,7 @@
 
 import pathlib
 import typing
+from enum import Enum
 from typing import Any
 
 from traitlets import traitlets
@@ -46,8 +47,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_i2c_speed = traitlets.Int(0).tag(sync=True)
 
     # osc
-    osc_analog_channel_a_enable = traitlets.Bool(False).tag(sync=True)
-    osc_analog_channel_b_enable = traitlets.Bool(True).tag(sync=True)
+    osc_channel_0_enable = traitlets.Bool(False).tag(sync=True)
+    osc_channel_1_enable = traitlets.Bool(True).tag(sync=True)
     sync_sample = traitlets.Bool(False).tag(sync=True)
     sync_args_times = traitlets.Int(1).tag(sync=True)
 
@@ -61,8 +62,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     osc_trigger_edge = traitlets.Int(0).tag(sync=True)
     osc_trigger_edge_level = traitlets.Int(0).tag(sync=True)
 
-    osc_analog_channel_a_gain = traitlets.Int(1).tag(sync=True)
-    osc_analog_channel_b_gain = traitlets.Int(1).tag(sync=True)
+    osc_channel_0_gain = traitlets.Int(1).tag(sync=True)
+    osc_channel_1_gain = traitlets.Int(1).tag(sync=True)
 
     panel_config_different_from_cracker_config = traitlets.Bool(False).tag(sync=True)
 
@@ -118,9 +119,13 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             config = config.__dict__
         for name, value in config.items():
             if hasattr(self, name):
+                if isinstance(value, Enum):
+                    value = value.value
+                if name == "nut_i2c_dev_addr":
+                    value = str(value)
                 setattr(self, name, value)
             else:
-                self._logger.error(
+                self._logger.warning(
                     f"Failed to sync configuration to widget: the widget has no attribute named '{name}'."
                 )
         self._observe = True
@@ -201,21 +206,21 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def osc_sample_rate_changed(self, change):
         self.cracker.osc_sample_clock(int(change.get("new")))
 
-    @traitlets.observe("osc_analog_channel_a_enable")
+    @traitlets.observe("osc_channel_0_enable")
     @observe_interceptor
     def osc_analog_channel_a_enable_changed(self, change):
         enabled = bool(change.get("new"))
         self.cracker.osc_analog_enable(0) if enabled else self.cracker.osc_analog_disable(0)
         if enabled:
-            self.cracker.osc_analog_gain(0, self.cracker.get_current_config().osc_analog_channel_0_gain)
+            self.cracker.osc_analog_gain(0, self.cracker.get_current_config().osc_channel_0_gain)
 
-    @traitlets.observe("osc_analog_channel_b_enable")
+    @traitlets.observe("osc_channel_1_enable")
     @observe_interceptor
     def osc_analog_channel_b_enable_changed(self, change):
         enabled = bool(change.get("new"))
         self.cracker.osc_analog_enable(1) if enabled else self.cracker.osc_analog_disable(1)
         if enabled:
-            self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_analog_channel_1_gain)
+            self.cracker.osc_analog_gain(1, self.cracker.get_current_config().osc_channel_1_gain)
 
     @traitlets.observe("osc_trigger_source")
     @observe_interceptor
@@ -237,14 +242,14 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def osc_trigger_edge_level_changed(self, change):
         self.cracker.osc_trigger_level(change.get("new"))
 
-    @traitlets.observe("osc_analog_channel_a_gain", "osc_analog_channel_b_gain")
+    @traitlets.observe("osc_channel_0_gain", "osc_channel_1_gain")
     @observe_interceptor
     def osc_analog_channel_gain_changed(self, change):
         name = change.get("name")
         channel = None
-        if name == "osc_analog_channel_a_gain":
+        if name == "osc_channel_0_gain":
             channel = 0
-        elif name == "osc_analog_channel_b_gain":
+        elif name == "osc_channel_1_gain":
             channel = 1
         if channel is not None:
             self.cracker.osc_analog_gain(channel, change.get("new"))

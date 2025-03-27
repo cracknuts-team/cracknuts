@@ -22,7 +22,7 @@ class ConfigProxy:
         if name in dir(widget):
             setattr(widget, name, value)
         else:
-            self._logger.error(f"Failed to sync configuration to widget: the widget has no attribute named '{name}'.")
+            self._logger.warning(f"Failed to sync configuration to widget: the widget has no attribute named '{name}'.")
 
     def __getattribute__(self, name):
         if name in ("_config", "_widget", "_logger"):
@@ -43,7 +43,6 @@ _logger = logger.get_logger("observe_interceptor")
 
 def observe_interceptor(func, signal="_observe"):
     def wrapper(self, *args, **kwargs):
-        _logger.error(f"observe_interceptor is exec  {func}.... {getattr(self, signal)}")
         if getattr(self, signal):
             return func(self, *args, **kwargs)
 

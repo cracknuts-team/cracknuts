@@ -118,7 +118,6 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     def save_config_button_click(self, args: dict[str, typing.Any]):
         current_config_path = self._get_workspace_config_path()
-        self._logger.error(current_config_path)
         with open(current_config_path, "w") as f:
             self._logger.error(self._dump_config())
             f.write(self._dump_config())
