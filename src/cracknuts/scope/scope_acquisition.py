@@ -112,9 +112,12 @@ class ScopeAcquisition:
 
     def _get_waves(self):
         config = self._cracker.get_current_config()
-        if config.osc_analog_channel_enable is None:
-            raise Exception("Channel info can't be none.")
-        enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
+        enable_channels = []
+        # disable this channel before cracker support channel enable.
+        # if config.osc_channel_0_enable:
+        #     enable_channels.append(0)
+        if config.osc_channel_1_enable:
+            enable_channels.append(1)
         wave_dict = {}
         for c in enable_channels:
             status, wave = self._cracker.osc_get_analog_wave(

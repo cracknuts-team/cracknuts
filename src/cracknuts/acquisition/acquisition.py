@@ -450,9 +450,13 @@ class Acquisition(abc.ABC):
 
         cracker_version = self.cracker.get_firmware_version()
         if persistent:
-            channel_names = [
-                str(k) for k, v in self.cracker.get_current_config().osc_analog_channel_enable.items() if v
-            ]
+            cracker_config = self.cracker.get_current_config()
+            channel_names = []
+            # disable this channel before cracker support channel enable.
+            # if cracker_config.osc_channel_0_enable:
+            #     channel_names.append("0")
+            if cracker_config.osc_channel_1_enable:
+                channel_names.append("1")
             if self.sample_length == -1:
                 sample_length = self.cracker.get_current_config().osc_sample_length
             else:
@@ -662,9 +666,13 @@ class Acquisition(abc.ABC):
         if sample_length == -1:
             sample_length = self.cracker.get_current_config().osc_sample_length
         config = self.cracker.get_current_config()
-        if config.osc_analog_channel_enable is None:
-            raise Exception("Channel info can't be none.")
-        enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
+
+        enable_channels = []
+        # disable this channel before cracker support channel enable.
+        # if config.osc_channel_0_enable:
+        #     enable_channels.append(0)
+        if config.osc_channel_1_enable:
+            enable_channels.append(1)
         wave_dict = {}
         for c in enable_channels:
             status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
