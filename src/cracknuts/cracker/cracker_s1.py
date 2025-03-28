@@ -25,7 +25,7 @@ class ConfigS1(ConfigBasic):
         self.nut_uart_stopbits: serial.Stopbits = serial.Stopbits.STOPBITS_ONE
 
         self.nut_spi_enable: bool | None = False
-        self.nut_spi_speed: int = 10_000
+        self.nut_spi_speed: float = 10_000.0
         self.nut_spi_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
         self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
         self.nut_spi_auto_select: bool = True
@@ -97,11 +97,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             v = config_tuple[i]
             default_value = getattr(config, k)
             if k == "nut_voltage":
-                setattr(config, k, v / 1000)
+                v = v / 1000
+            elif k == "nut_spi_speed":
+                v = round(100e6 / 2 / v, 2)
             elif default_value is not None and isinstance(default_value, Enum):
-                setattr(config, k, default_value.__class__(v))
-            else:
-                setattr(config, k, v)
+                v = default_value.__class__(v)
+
+            setattr(config, k, v)
 
         return config
 
@@ -743,10 +745,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def spi_config(
         self,
-        speed: int = 10_000,
-        cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW,
-        cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW,
-        auto_select: bool = True,
+        speed: int | None = None,
+        cpol: serial.SpiCpol | None = None,
+        cpha: serial.SpiCpha | None = None,
+        auto_select: bool | None = None,
     ) -> tuple[int, None]:
         """
         Config the SPI.
@@ -763,21 +765,33 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         self._update_config_from_cracker()
+
+        if speed is None:
+            speed = self._config.nut_spi_speed
+        if cpol is None:
+            cpol = self._config.nut_spi_cpol
+        if cpha is None:
+            cpha = self._config.nut_spi_cpha
+
         # System clock is 100e6
         # Clock divider is 2
         # psc max is 65535
         psc = 100e6 / 2 / speed
         if psc > 65535 or psc < 2:
-            return protocol.STATUS_COMMAND_UNSUPPORTED, None
+            self._logger.error("Not support speed.")
+            return self.NON_PROTOCOL_ERROR, None
 
         if not psc.is_integer():
-            _psc = psc
             psc = round(psc)
             if psc > 65535 or psc < 2:
-                return protocol.STATUS_COMMAND_UNSUPPORTED, None
+                return self.NON_PROTOCOL_ERROR, None
+            _speed = speed
+            speed = round(100e6 / 2 / psc, 2)
             self._logger.warning(
-                f"The speed: [{speed}] cannot calculate an integer Prescaler, " f"so the integer value is set to {psc}."
+                f"The speed: [{_speed}] cannot calculate an integer Prescaler, so the integer value is set to {speed}."
             )
+
+        speed = round(100e6 / 2 / psc, 2)
 
         payload = struct.pack(">HBB?", int(psc), cpol.value, cpha.value, auto_select)
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
@@ -934,8 +948,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def i2c_config(
         self,
-        dev_addr: int = 0x00,
-        speed: serial.I2cSpeed = serial.I2cSpeed.STANDARD_100K,
+        dev_addr: int | None = None,
+        speed: serial.I2cSpeed | None = None,
     ) -> tuple[int, None]:
         """
         Config the SPI.
@@ -948,6 +962,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         self._update_config_from_cracker()
+        if dev_addr is None:
+            dev_addr = self._config.nut_i2c_dev_addr
+        if speed is None:
+            speed = self._config.i2c_speed
+
         payload = struct.pack(">BB", dev_addr, speed.value)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)
@@ -1178,10 +1197,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def uart_config(
         self,
-        baudrate: serial.Baudrate = serial.Baudrate.BAUDRATE_115200,
-        bytesize: serial.Bytesize = serial.Bytesize.EIGHTBITS,
-        parity: serial.Parity = serial.Parity.PARITY_NONE,
-        stopbits: serial.Stopbits = serial.Stopbits.STOPBITS_ONE,
+        baudrate: serial.Baudrate | None = None,
+        bytesize: serial.Bytesize | None = None,
+        parity: serial.Parity | None = None,
+        stopbits: serial.Stopbits | None = None,
     ) -> tuple[int, None]:
         """
         Config uart.
@@ -1198,6 +1217,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         self._update_config_from_cracker()
+        if baudrate is None:
+            baudrate = self._config.nut_uart_baudrate
+        if bytesize is None:
+            bytesize = self._config.nut_uart_bytesize
+        if parity is None:
+            parity = self._config.nut_uart_parity
+        if stopbits is None:
+            stopbits = self._config.nut_uart_stopbits
+
         payload = struct.pack(">BBBB", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)

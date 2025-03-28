@@ -545,9 +545,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: the content of JSON string or None if no path is specified.
         :rtype: str | None
         """
-        self._logger.warning("fffxxx ")
         config_json = self._config.dump_to_json()
-        self._logger.warning(f"fffffff {config_json}")
         if path is None:
             return config_json
         else:

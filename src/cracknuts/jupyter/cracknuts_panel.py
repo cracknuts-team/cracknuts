@@ -109,10 +109,28 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     def load_config_button_click(self, args: dict[str, typing.Any]):
         connection_info = args.get("connection")
-        config_info = args.get("cracker")
+        config_file_cracker_config = args.get("cracker")
         acquisition_info = args.get("acquisition")
-        self.cracker.load_config_from_str(config_info)
-        self.cracker.set_uri(connection_info)
+        cracker_config = self.cracker.get_current_config()
+        for k, v in config_file_cracker_config.items():
+            if hasattr(cracker_config, k):
+                cv = getattr(cracker_config, k)
+                if isinstance(cv, Enum):
+                    cv = cv.value
+                if v != cv:
+                    self.panel_config_different_from_cracker_config = True
+                    self._logger.error(
+                        f"The configuration item {k} differs between the configuration file "
+                        f"({v}) and the cracker ({cv})."
+                    )
+                    break
+            else:
+                self._logger.error(
+                    f"Config has no attribute named {k}, " f"which comes from the JSON key in the config file."
+                )
+        self.stop_listen_cracker_config()
+        self.update_cracker_panel_config(config_file_cracker_config, connection_info)
+
         self.acquisition.load_config_from_str(acquisition_info)
         self.read_config_from_cracker()
         self.send({"loadConfigCompleted": True})

@@ -37,7 +37,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_uart_stopbits = traitlets.Int(0).tag(sync=True)
 
     nut_spi_enable = traitlets.Bool(False).tag(sync=True)
-    nut_spi_speed = traitlets.Int(10_000).tag(sync=True)
+    nut_spi_speed = traitlets.Float(10_000.0).tag(sync=True)
     nut_spi_cpol = traitlets.Int(0).tag(sync=True)
     nut_spi_cpha = traitlets.Int(0).tag(sync=True)
     nut_spi_auto_select = traitlets.Bool(True).tag(sync=True)
@@ -95,6 +95,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def write_config_to_cracker(self) -> None:
         self.cracker.write_config_to_cracker(self.get_cracker_panel_config())
         self.panel_config_different_from_cracker_config = False
+        self.read_config_from_cracker()
         self.listen_cracker_config()
 
     def get_cracker_panel_config(self):
@@ -145,10 +146,10 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         proxy_config = ConfigProxy(self.cracker.get_current_config(), self)
         self.cracker._config = proxy_config
 
-    # def stop_listen_cracker_config(self) -> None:
-    #     config = self.cracker._config
-    #     if isinstance(config, ConfigProxy):
-    #         self.cracker._config = config._config
+    def stop_listen_cracker_config(self) -> None:
+        config = self.cracker._config
+        if isinstance(config, ConfigProxy):
+            self.cracker._config = config._config
 
     def msg_connection_button_on_click(self, args: dict[str, typing.Any]):
         if args.get("action") == "connect":

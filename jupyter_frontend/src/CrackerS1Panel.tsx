@@ -428,7 +428,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       </Checkbox>
                     </Form.Item>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.speed"})}>
-                      <InputNumber id={"cracker_config_spi_speed"} value={nutSpiSpeed} onChange={(v) => {
+                      <InputNumber precision={2} id={"cracker_config_spi_speed"} value={nutSpiSpeed} onChange={(v) => {
                           setNutSpiSpeed(Number(v));
                         }} size={"small"} disabled={!nutSpiEnable}/>
                     </Form.Item>
