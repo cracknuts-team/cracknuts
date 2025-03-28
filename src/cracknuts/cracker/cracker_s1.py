@@ -2,6 +2,7 @@
 
 import re
 import struct
+from enum import Enum
 
 from cracknuts.cracker import protocol, serial
 from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
@@ -76,26 +77,32 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "osc_trigger_edge": "B",
             "osc_trigger_edge_level": "H",
             "nut_i2c_enable": "?",
-            "nut_i2c_config_dev_addr": "B",
-            "nut_i2c_config_speed": "B",
+            "nut_i2c_dev_addr": "B",
+            "nut_i2c_speed": "B",
             "nut_uart_enable": "?",
-            "nut_uart_config_stopbits": "B",
-            "nut_uart_config_parity": "B",
-            "nut_uart_config_bytesize": "B",
-            "nut_uart_config_baudrate": "B",
+            "nut_uart_stopbits": "B",
+            "nut_uart_parity": "B",
+            "nut_uart_bytesize": "B",
+            "nut_uart_baudrate": "B",
             "nut_spi_enable": "?",
-            "nut_spi_config_speed": "H",
-            "nut_spi_config_cpol": "B",
-            "nut_spi_config_cpha": "B",
-            "nut_spi_config_auto_select": "?",
+            "nut_spi_speed": "H",
+            "nut_spi_cpol": "B",
+            "nut_spi_cpha": "B",
+            "nut_spi_auto_select": "?",
         }
         config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)
         config = ConfigS1()
+
         for i, k in enumerate(bytes_format.keys()):
+            v = config_tuple[i]
+            default_value = getattr(config, k)
             if k == "nut_voltage":
-                setattr(config, k, config_tuple[i] / 1000)
+                setattr(config, k, v / 1000)
+            elif default_value is not None and isinstance(default_value, Enum):
+                setattr(config, k, default_value.__class__(v))
             else:
-                setattr(config, k, config_tuple[i])
+                setattr(config, k, v)
+
         return config
 
     def write_config_to_cracker(self, config: ConfigS1):

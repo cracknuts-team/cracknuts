@@ -5,6 +5,7 @@ import os
 import pathlib
 import sys
 import typing
+from enum import Enum
 
 import traitlets
 
@@ -48,8 +49,14 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                 for k, v in config_file_cracker_config.items():
                     if hasattr(cracker_config, k):
                         cv = getattr(cracker_config, k)
+                        if isinstance(cv, Enum):
+                            cv = cv.value
                         if v != cv:
                             self.panel_config_different_from_cracker_config = True
+                            self._logger.error(
+                                f"The configuration item {k} differs between the configuration file "
+                                f"({v}) and the cracker ({cv})."
+                            )
                             break
                     else:
                         self._logger.error(

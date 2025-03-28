@@ -15,7 +15,7 @@ import {
 } from "antd";
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {useModel, useModelState} from "@anywidget/react";
-import {DownloadOutlined, SaveOutlined, UploadOutlined,} from "@ant-design/icons";
+import {BlockOutlined, ExportOutlined, ImportOutlined, SaveOutlined, ThunderboltOutlined,} from "@ant-design/icons";
 import AcquisitionPanel from "@/AcquisitionPanel.tsx";
 import {FormattedMessage, useIntl} from "react-intl";
 
@@ -101,7 +101,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [nutI2cSpeed, setNutI2cSpeed] = useModelState<number>("nut_i2c_speed");
 
   // osc
-  const [oscSampleRate, setOscSampleRate] = useModelState<number>("osc_sample_rate");
+  const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");
   const [oscSamplePhase, setOscSamplePhase] = useModelState<number>("osc_sample_phase");
   const [oscSampleLength, setOscSampleLength] = useModelState<number>("osc_sample_length");
   const [oscSampleDelay, setOscSampleDelay] = useModelState<number>("osc_sample_delay");
@@ -255,14 +255,14 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
           <Form layout={"inline"}>
             <Form.Item>
               <Tooltip title={panelConfigDifferentFromCrackerConfig ? "当前配置与设备不同步，写入当前控制面板中的配置信息到Cracker" : "写入当前控制面板中的配置信息到Cracker"}>
-                <Button icon={<SaveOutlined/>} size={"small"} onClick={writeConfig} color={panelConfigDifferentFromCrackerConfig ? "danger" : "primary"} variant="solid">
+                <Button icon={<ThunderboltOutlined />} size={"small"} onClick={writeConfig} color={panelConfigDifferentFromCrackerConfig ? "danger" : "primary"} variant="solid">
                   写入配置
                 </Button>
               </Tooltip>
             </Form.Item>
             <Form.Item>
               <Tooltip title={"读取Cracker中的配置信息到控制面板"}>
-                <Button icon={<SaveOutlined/>} size={"small"} onClick={readConfig} type="primary">
+                <Button icon={<BlockOutlined />} size={"small"} onClick={readConfig} type="primary">
                   读取配置
                 </Button>
               </Tooltip>
@@ -277,7 +277,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
             <Form.Item>
               <Tooltip title={"上传配置文件到控制面板"}>
                 <Upload {...uploadProp}>
-                  <Button icon={<DownloadOutlined/>} size={"small"} type="primary">
+                  <Button icon={<ImportOutlined />} size={"small"} type="primary">
                     <FormattedMessage id={"cracknuts.config.load"}/>
                   </Button>
                 </Upload>
@@ -285,7 +285,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
             </Form.Item>
             <Form.Item>
               <Tooltip title={"导出控制面板中的配置到配置文件"}>
-                <Button icon={<UploadOutlined/>} size={"small"} onClick={dumpConfig} type="primary">
+                <Button icon={<ExportOutlined />} size={"small"} onClick={dumpConfig} type="primary">
                   <FormattedMessage id={"cracknuts.config.dump"}/>
                 </Button>
               </Tooltip>
@@ -503,8 +503,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 {value: 8000, label: "8  M"},
                                 {value: 4000, label: "4  M"},
                               ]}
-                              value={oscSampleRate}
-                              onChange={setOscSampleRate}
+                              value={oscSampleClock}
+                              onChange={setOscSampleClock}
                               style={{width: 80}}
                             ></Select>
                             <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}

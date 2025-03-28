@@ -46,24 +46,11 @@ class ConfigBasic:
         Dump the configuration to a JSON string.
 
         """
-        _logger = logger.get_logger("xxxx")
-        _logger.warning(f"ffffasfddsa: {self.__dict__.items()}")
-        x = {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
-        _logger.warning(f"ffffasfddsa: {x}")
 
         def enum_converter(obj):
             if isinstance(obj, Enum):
                 return obj.value  # 也可以改成 obj.name
             raise TypeError(f"Type {type(obj)} not serializable")
-
-        try:
-            json.dumps(
-                {k: v for k, v in self.__dict__.items() if not k.startswith("_")}, indent=4, default=enum_converter
-            )
-        except Exception as e:
-            _logger.error(e.args)
-
-        _logger.error("asdfadsffffffffffffffffffffffffffffffffffff")
 
         return json.dumps(
             {k: v for k, v in self.__dict__.items() if not k.startswith("_")}, indent=4, default=enum_converter

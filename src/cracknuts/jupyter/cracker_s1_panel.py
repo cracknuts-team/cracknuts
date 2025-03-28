@@ -52,7 +52,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     sync_sample = traitlets.Bool(False).tag(sync=True)
     sync_args_times = traitlets.Int(1).tag(sync=True)
 
-    osc_sample_rate = traitlets.Int(65000).tag(sync=True)
+    osc_sample_clock = traitlets.Int(65000).tag(sync=True)
     osc_sample_phase = traitlets.Int(0).tag(sync=True)
     osc_sample_length = traitlets.Int(1024).tag(sync=True)
     osc_sample_delay = traitlets.Int(1024).tag(sync=True)
@@ -70,7 +70,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self._logger = logger.get_logger(self)
-        self._observe: bool = True
+        self.observe: bool = True
         self.cracker: CrackerS1 | None = None
         if "cracker" in kwargs:
             self.cracker: CrackerS1 = kwargs["cracker"]
@@ -99,11 +99,16 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     def get_cracker_panel_config(self):
         panel_config = ConfigS1()
-        self._logger.warning(f"xxxx {panel_config.__dict__.keys()}")
         for prop in panel_config.__dict__.keys():
+            default_value = getattr(panel_config, prop)
             if hasattr(self, prop):
-                self._logger.warning(f"Sett config {prop}: {getattr(self, prop)}")
-                setattr(panel_config, prop, getattr(self, prop))
+                v = getattr(self, prop)
+                if prop == "nut_i2c_dev_addr":
+                    v = int(v)
+                if default_value is not None and isinstance(default_value, Enum):
+                    setattr(panel_config, prop, default_value.__class__(v))
+                else:
+                    setattr(panel_config, prop, v)
             else:
                 self._logger.error(f"Failed to get configuration properties: the widget has no attribute named {prop}")
         return panel_config
@@ -113,11 +118,13 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         Sync cracker current to panel(Jupyter widget UI)
         """
 
-        self._observe = False
+        self.observe = False
         self.uri = connect_uri
         if isinstance(config, ConfigS1):
             config = config.__dict__
         for name, value in config.items():
+            if name.startswith("_"):
+                continue
             if hasattr(self, name):
                 if isinstance(value, Enum):
                     value = value.value
@@ -128,7 +135,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
                 self._logger.warning(
                     f"Failed to sync configuration to widget: the widget has no attribute named '{name}'."
                 )
-        self._observe = True
+        self.observe = True
 
     def listen_cracker_config(self) -> None:
         """
@@ -137,6 +144,11 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         """
         proxy_config = ConfigProxy(self.cracker.get_current_config(), self)
         self.cracker._config = proxy_config
+
+    # def stop_listen_cracker_config(self) -> None:
+    #     config = self.cracker._config
+    #     if isinstance(config, ConfigProxy):
+    #         self.cracker._config = config._config
 
     def msg_connection_button_on_click(self, args: dict[str, typing.Any]):
         if args.get("action") == "connect":
