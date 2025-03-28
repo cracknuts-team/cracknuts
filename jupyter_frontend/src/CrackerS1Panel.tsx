@@ -254,28 +254,28 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
         <Col style={{marginLeft: "auto"}}>
           <Form layout={"inline"}>
             <Form.Item>
-              <Tooltip title={panelConfigDifferentFromCrackerConfig ? "当前配置与设备不同步，写入当前控制面板中的配置信息到Cracker" : "写入当前控制面板中的配置信息到Cracker"}>
+              <Tooltip title={panelConfigDifferentFromCrackerConfig ? intl.formatMessage({id: "cracknuts.config.write.tooltip.different"}) : intl.formatMessage({id: "cracknuts.config.write.tooltip"})}>
                 <Button icon={<ThunderboltOutlined />} size={"small"} onClick={writeConfig} color={panelConfigDifferentFromCrackerConfig ? "danger" : "primary"} variant="solid">
-                  写入配置
+                  <FormattedMessage id={"cracknuts.config.write"}/>
                 </Button>
               </Tooltip>
             </Form.Item>
             <Form.Item>
-              <Tooltip title={"读取Cracker中的配置信息到控制面板"}>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.read.tooltip"})}>
                 <Button icon={<BlockOutlined />} size={"small"} onClick={readConfig} type="primary">
-                  读取配置
+                  <FormattedMessage id={"cracknuts.config.read"}/>
                 </Button>
               </Tooltip>
             </Form.Item>
             <Form.Item>
-              <Tooltip title={"保存控制面板中的配置到配置文件"}>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.save.tooltip"})}>
                 <Button icon={<SaveOutlined/>} size={"small"} onClick={saveConfig} type="primary">
                   <FormattedMessage id={"cracknuts.config.save"}/>
                 </Button>
               </Tooltip>
             </Form.Item>
             <Form.Item>
-              <Tooltip title={"上传配置文件到控制面板"}>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.load.tooltip"})}>
                 <Upload {...uploadProp}>
                   <Button icon={<ImportOutlined />} size={"small"} type="primary">
                     <FormattedMessage id={"cracknuts.config.load"}/>
@@ -284,7 +284,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
               </Tooltip>
             </Form.Item>
             <Form.Item>
-              <Tooltip title={"导出控制面板中的配置到配置文件"}>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.dump.tooltip"})}>
                 <Button icon={<ExportOutlined />} size={"small"} onClick={dumpConfig} type="primary">
                   <FormattedMessage id={"cracknuts.config.dump"}/>
                 </Button>

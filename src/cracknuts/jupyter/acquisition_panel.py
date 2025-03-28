@@ -58,6 +58,10 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
             else self.acquisition.file_path
         )
 
+    def before_test(self): ...
+
+    def before_run(self): ...
+
     def listen_acquisition_config(self) -> None:
         ...
         # todo complete ui -> python sync
@@ -73,6 +77,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         if status == "pause":
             self.acquisition.pause()
         elif status == "test":
+            self.before_test()
             self.acquisition.test(
                 sample_offset=self.sample_offset,
                 trigger_judge_wait_time=self.trigger_judge_wait_time,
@@ -80,6 +85,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
                 do_error_max_count=self.do_error_max_count,
             )
         elif status == "run":
+            self.before_run()
             self.acquisition.run(
                 count=self.trace_count,
                 sample_offset=self.sample_offset,

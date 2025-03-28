@@ -96,13 +96,11 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
         self.reg_msg_handler("writeConfigButton", "onClick", self.write_config_button_click)
         self.reg_msg_handler("readConfigButton", "onClick", self.read_config_button_click)
 
-    # def sync_config(self) -> None:
-    #     self.read_config_from_cracker()
-    #     self.sync_config_from_acquisition()
-    #
-    # def listen_config(self) -> None:
-    #     self.listen_cracker_config()
-    #     self.listen_acquisition_config()
+    def before_test(self):
+        self.write_config_to_cracker()
+
+    def before_run(self):
+        self.write_config_to_cracker()
 
     def dump_config_button_click(self, args: dict[str, typing.Any]):
         self.send({"dumpConfigCompleted": self._dump_config()})
