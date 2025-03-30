@@ -676,6 +676,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW,
         cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW,
         auto_select: bool = True,
+        csn_dly: bool = True,
     ) -> tuple[int, None]:
         """
         Config the SPI.
@@ -687,7 +688,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :param cpha: Clock phase.
         :type cpha: serial.SpiCpha
         :param auto_select: Chip select auto select.
-        :type auto_select: bool
+        :type auto_select: bool,
+        :param csn_dly: In delay mode, does the chip select signal remain low throughout the delay phase?
+                        True: CS stays low. False: CS behaves normally and goes high.
         :return: The device response status.
         :rtype: tuple[int, None]
         """
@@ -708,7 +711,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 f"The speed: [{speed}] cannot calculate an integer Prescaler, " f"so the integer value is set to {psc}."
             )
 
-        payload = struct.pack(">HBB?", int(psc), cpol.value, cpha.value, auto_select)
+        payload = struct.pack(">HBB??", int(psc), cpol.value, cpha.value, auto_select, csn_dly)
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
@@ -717,6 +720,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 "cpol": cpol,
                 "cpha": cpha,
                 "auto_select": auto_select,
+                "csn_dly": csn_dly,
             }
         return status, res
 
