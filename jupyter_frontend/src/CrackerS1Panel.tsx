@@ -94,7 +94,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [nutSpiSpeed, setNutSpiSpeed] = useModelState<number>("nut_spi_speed");
   const [nutSpiCpol, setNutSpiCpol] = useModelState<number>("nut_spi_cpol");
   const [nutSpiCpha, setNutSpiCpha] = useModelState<number>("nut_spi_cpha");
-  const [nutSpiAutoSelect, setSpiAutoSelect] = useModelState<boolean>("nut_spi_auto_select");
+  const [nutSpiAutoSelect, setNutSpiAutoSelect] = useModelState<boolean>("nut_spi_auto_select");
+  const [nutSpiCsnDly, setNutSpiCsnDly] = useModelState<boolean>("nut_spi_csn_dly");
 
   const [nutI2cEnable, setNutI2cEnable] = useModelState<boolean>("nut_i2c_enable");
   const [nutI2cDevAddr, setNutI2cDevAddr] = useModelState<string>("nut_i2c_dev_addr");
@@ -451,9 +452,18 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                       </Space.Compact>
                     </Form.Item>
                     <Form.Item style={{marginRight: 1}}>
-                      <Checkbox id={"cracker_config_spi_auto_select"} checked={nutSpiAutoSelect} onChange={() => {setSpiAutoSelect(!nutSpiAutoSelect)}}>
-                        <FormattedMessage id={"cracker.config.nut.spi.autoSelect"}/>
-                      </Checkbox>
+                      <Tooltip title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.autoSelect.tooltip"}) : null}>
+                        <Checkbox id={"cracker_config_spi_auto_select"} checked={nutSpiAutoSelect} onChange={() => {setNutSpiAutoSelect(!nutSpiAutoSelect)}} disabled={!nutSpiEnable}>
+                          <FormattedMessage id={"cracker.config.nut.spi.autoSelect"}/>
+                        </Checkbox>
+                      </Tooltip>
+                    </Form.Item>
+                    <Form.Item style={{marginRight: 1}}>
+                      <Tooltip title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.csnDly.tooltip"}) : null}>
+                        <Checkbox id={"cracker_config_spi_csn_dly"} checked={nutSpiCsnDly} onChange={() => {setNutSpiCsnDly(!nutSpiCsnDly)}} disabled={!nutSpiEnable}>
+                          <FormattedMessage id={"cracker.config.nut.spi.csnDly"}/>
+                        </Checkbox>
+                      </Tooltip>
                     </Form.Item>
               {/*    </Form>*/}
               {/*  </Col>*/}

@@ -29,6 +29,7 @@ class ConfigS1(ConfigBasic):
         self.nut_spi_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
         self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
         self.nut_spi_auto_select: bool = True
+        self.nut_spi_csn_dly: bool = True
 
         self.nut_i2c_enable: bool = False
         self.nut_i2c_dev_addr: int = 0x00
@@ -88,6 +89,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "nut_spi_cpol": "B",
             "nut_spi_cpha": "B",
             "nut_spi_auto_select": "?",
+            "nut_spi_csn_dly": "?",
         }
 
         config = ConfigS1()
@@ -95,7 +97,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         try:
             config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)
         except Exception as e:
-            self._logger.error(f"Parse config bytes error: {e.args}, Default configuration will be used.")
+            self._logger.error(
+                f"Parse config bytes error: {e.args}, origin bytes is: [{config_bytes.hex(' ')}], "
+                f"Default configuration will be used."
+            )
             return config
 
         for i, k in enumerate(bytes_format.keys()):
@@ -799,7 +804,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             _speed = speed
             speed = round(100e6 / 2 / psc, 2)
             self._logger.warning(
-                f"The speed: [{_speed}] cannot calculate an integer Prescaler, so the integer value is set to {speed}."
+                f"The speed: [{_speed}] cannot calculate an integer Prescaler, "
+                f"so the integer value is set to {speed} and psc is {psc}."
             )
 
         speed = round(100e6 / 2 / psc, 2)
@@ -814,6 +820,24 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_spi_auto_select = auto_select
             self._config.nut_spi_csn_dly = csn_dly
         return status, res
+
+    @staticmethod
+    def _find_divisors(clock):
+        if clock <= 0:
+            raise ValueError("Input must be a positive integer.")
+
+        n = clock / 2
+
+        divisors = []
+
+        for i in range(1, int(n**0.5) + 1):
+            q, b = divmod(n, i)
+            if b == 0 and 2 < q < 65535:
+                divisors.append(int(i))
+                if i != n // i:
+                    divisors.append(int(n // i))
+
+        return sorted(divisors)
 
     def _spi_transceive(
         self, tx_data: bytes | str | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool
