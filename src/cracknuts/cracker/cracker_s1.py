@@ -57,8 +57,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         for k, v in self.get_current_config().__dict__.items():
             setattr(self._config, k, v)
 
-    @staticmethod
-    def _parse_config_bytes(config_bytes: bytes):
+    def _parse_config_bytes(self, config_bytes: bytes):
         bytes_format = {
             "nut_enable": "?",
             "nut_voltage": "I",
@@ -90,20 +89,29 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "nut_spi_cpha": "B",
             "nut_spi_auto_select": "?",
         }
-        config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)
+
         config = ConfigS1()
+
+        try:
+            config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)
+        except Exception as e:
+            self._logger.error(f"Parse config bytes error: {e.args}, Default configuration will be used.")
+            return config
 
         for i, k in enumerate(bytes_format.keys()):
             v = config_tuple[i]
-            default_value = getattr(config, k)
-            if k == "nut_voltage":
-                v = v / 1000
-            elif k == "nut_spi_speed":
-                v = round(100e6 / 2 / v, 2)
-            elif default_value is not None and isinstance(default_value, Enum):
-                v = default_value.__class__(v)
+            if not hasattr(config, k):
+                self._logger.warning(f"Parse config bytes error: {k} is not a valid config key.")
+            else:
+                default_value = getattr(config, k)
+                if k == "nut_voltage":
+                    v = v / 1000
+                elif k == "nut_spi_speed":
+                    v = round(100e6 / 2 / v, 2)
+                elif default_value is not None and isinstance(default_value, Enum):
+                    v = default_value.__class__(v)
 
-            setattr(config, k, v)
+                setattr(config, k, v)
 
         return config
 
