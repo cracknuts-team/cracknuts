@@ -40,8 +40,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_spi_speed = traitlets.Float(10_000.0).tag(sync=True)
     nut_spi_cpol = traitlets.Int(0).tag(sync=True)
     nut_spi_cpha = traitlets.Int(0).tag(sync=True)
-    nut_spi_auto_select = traitlets.Bool(True).tag(sync=True)
-    nut_spi_csn_dly = traitlets.Bool(True).tag(sync=True)
+    nut_spi_csn_auto = traitlets.Bool(True).tag(sync=True)
+    nut_spi_csn_delay = traitlets.Bool(True).tag(sync=True)
 
     nut_i2c_enable = traitlets.Bool(False).tag(sync=True)
     nut_i2c_dev_addr = traitlets.Unicode("0x00").tag(sync=True)
@@ -79,10 +79,10 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             raise ValueError("cracker is required")
         self.reg_msg_handler("connectButton", "onClick", self.msg_connection_button_on_click)
         self.connect_status = self.cracker.get_connection_status()
-        if self.connect_status:
-            _, self.cracker_id = self.cracker.get_id()
-            _, self.cracker_name = self.cracker.get_hardware_model()
-            # _, self.cracker_version = self.cracker.get_firmware_version()
+        # if self.connect_status:
+        # _, self.cracker_id = self.cracker.get_id()
+        # _, self.cracker_name = self.cracker.get_hardware_model()
+        # _, self.cracker_version = self.cracker.get_firmware_version()
 
     def read_config_from_cracker(self) -> None:
         # connection
@@ -332,8 +332,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
                 self.nut_spi_speed,
                 serial.SpiCpol(self.nut_spi_cpol),
                 serial.SpiCpha(self.nut_spi_cpha),
-                self.nut_spi_auto_select,
-                self.nut_spi_csn_dly,
+                self.nut_spi_csn_auto,
+                self.nut_spi_csn_delay,
             )
 
         self.cracker.spi_enable() if enabled else self.cracker.spi_disable()
@@ -345,8 +345,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             change.get("new"),
             serial.SpiCpol(self.nut_spi_cpol),
             serial.SpiCpha(self.nut_spi_cpha),
-            self.nut_spi_auto_select,
-            self.nut_spi_csn_dly,
+            self.nut_spi_csn_auto,
+            self.nut_spi_csn_delay,
         )
 
     @traitlets.observe("nut_spi_cpol")
@@ -356,8 +356,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             self.nut_spi_speed,
             serial.SpiCpol(change.get("new")),
             serial.SpiCpha(self.nut_spi_cpha),
-            self.nut_spi_auto_select,
-            self.nut_spi_csn_dly,
+            self.nut_spi_csn_auto,
+            self.nut_spi_csn_delay,
         )
 
     @traitlets.observe("nut_spi_cpha")
@@ -367,11 +367,11 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             self.nut_spi_speed,
             serial.SpiCpol(self.nut_spi_cpol),
             serial.SpiCpha(change.get("new")),
-            self.nut_spi_auto_select,
-            self.nut_spi_csn_dly,
+            self.nut_spi_csn_auto,
+            self.nut_spi_csn_delay,
         )
 
-    @traitlets.observe("nut_spi_auto_select")
+    @traitlets.observe("nut_spi_csn_auto")
     @observe_interceptor
     def nut_spi_auto_select_changed(self, change):
         self.cracker.spi_config(
@@ -379,17 +379,17 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             serial.SpiCpol(self.nut_spi_cpol),
             serial.SpiCpha(self.nut_spi_cpha),
             change.get("new"),
-            self.nut_spi_csn_dly,
+            self.nut_spi_csn_delay,
         )
 
-    @traitlets.observe("nut_spi_csn_dly")
+    @traitlets.observe("nut_spi_csn_delay")
     @observe_interceptor
     def nut_spi_csn_dly_changed(self, change):
         self.cracker.spi_config(
             self.nut_spi_speed,
             serial.SpiCpol(self.nut_spi_cpol),
             serial.SpiCpha(self.nut_spi_cpha),
-            self.nut_spi_auto_select,
+            self.nut_spi_csn_auto,
             change.get("new"),
         )
 

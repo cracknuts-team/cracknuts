@@ -761,8 +761,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         speed: int | None = None,
         cpol: serial.SpiCpol | None = None,
         cpha: serial.SpiCpha | None = None,
-        auto_select: bool | None = None,
-        csn_dly: bool | None = None,
+        csn_auto: bool | None = None,
+        csn_delay: bool | None = None,
     ) -> tuple[int, None]:
         """
         Config the SPI.
@@ -773,9 +773,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type cpol: serial.SpiCpol
         :param cpha: Clock phase.
         :type cpha: serial.SpiCpha
-        :param auto_select: Chip select auto select.
-        :type auto_select: bool,
-        :param csn_dly: In delay mode, does the chip select signal remain low throughout the delay phase?
+        :param csn_auto: In delay mode, does the chip select signal remain low throughout the delay phase?
+                         Deselecting this option means that during the DELAY, the CS (Chip Select) signal is
+                         normally pulled high.
+                         Selecting this option indicates that during the DELAY, the CS signal is fixed at low.
+        :type csn_auto: bool,
+        :param csn_delay: In delay mode, does the chip select signal remain low throughout the delay phase?
                         True: CS stays low. False: CS behaves normally and goes high.
         :return: The device response status.
         :rtype: tuple[int, None]
@@ -810,15 +813,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         speed = round(100e6 / 2 / psc, 2)
 
-        payload = struct.pack(">HBB??", int(psc), cpol.value, cpha.value, auto_select, csn_dly)
+        payload = struct.pack(">HBB??", int(psc), cpol.value, cpha.value, csn_auto, csn_delay)
         self._logger.debug(f"cracker_spi_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.nut_spi_speed = speed
             self._config.nut_spi_cpol = cpol
             self._config.nut_spi_cpha = cpha
-            self._config.nut_spi_auto_select = auto_select
-            self._config.nut_spi_csn_dly = csn_dly
+            self._config.nut_spi_auto_select = csn_auto
+            self._config.nut_spi_csn_dly = csn_delay
         return status, res
 
     @staticmethod
