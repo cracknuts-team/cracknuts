@@ -39,6 +39,8 @@
   "cracker.config.nut.uart.stopbits": "停止位",
   "cracker.config.nut.spi.enable": "SPI",
   "cracker.config.nut.spi.speed": "速率",
+  "cracker.config.nut.spi.speed.tooltip": "设置SPI Speed 会根据根据您输入的数值自动转换SCK的整数倍，并反推出真实速率，可能导致您输入的和预想值不一致，这个需要回车后下发数据",
+  "cracker.config.nut.spi.speed.error.notSupportSpeed": "不支持的SPI速度：{speed}",
   "cracker.config.nut.spi.cpol": "时钟极性",
   "cracker.config.nut.spi.cpol.low": "低",
   "cracker.config.nut.spi.cpol.high": "高",

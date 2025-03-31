@@ -39,6 +39,8 @@
   "cracker.config.nut.uart.stopbits": "Stopbits",
   "cracker.config.nut.spi.enable": "SPI",
   "cracker.config.nut.spi.speed": "Speed",
+  "cracker.config.nut.spi.speed.tooltip": "Setting the SPI speed will automatically convert the input value to the nearest integer multiple of SCK and calculate the actual rate. This may cause a discrepancy between the input value and the expected value. The data will be sent after pressing Enter.",
+  "cracker.config.nut.spi.speed.error.notSupportSpeed": "Not support SPI speed：{speed}",
   "cracker.config.nut.spi.cpol": "Cpol",
   "cracker.config.nut.spi.cpol.low": "Low",
   "cracker.config.nut.spi.cpol.high": "High",

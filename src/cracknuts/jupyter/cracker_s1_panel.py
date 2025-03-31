@@ -38,6 +38,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     nut_spi_enable = traitlets.Bool(False).tag(sync=True)
     nut_spi_speed = traitlets.Float(10_000.0).tag(sync=True)
+    nut_spi_speed_error = traitlets.Unicode("").tag(sync=True)
+    nut_spi_speed_has_error = traitlets.Bool(False).tag(sync=True)
     nut_spi_cpol = traitlets.Int(0).tag(sync=True)
     nut_spi_cpha = traitlets.Int(0).tag(sync=True)
     nut_spi_csn_auto = traitlets.Bool(True).tag(sync=True)
@@ -341,13 +343,21 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_spi_speed")
     @observe_interceptor
     def nut_spi_speed_changed(self, change):
-        self.cracker.spi_config(
+        self.nut_spi_speed_has_error = False
+        self.nut_spi_speed_error = ""
+        status, res = self.cracker.spi_config(
             change.get("new"),
             serial.SpiCpol(self.nut_spi_cpol),
             serial.SpiCpha(self.nut_spi_cpha),
             self.nut_spi_csn_auto,
             self.nut_spi_csn_delay,
         )
+        if status != 0:
+            if "Not support" in res:
+                err_msg = "NotSupportSpeed"
+            else:
+                err_msg = res
+            self.send({"api": "nut_spi_speed", "errorMessage": err_msg, "speed": change.get("new")})
 
     @traitlets.observe("nut_spi_cpol")
     @observe_interceptor

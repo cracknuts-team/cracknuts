@@ -763,7 +763,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         cpha: serial.SpiCpha | None = None,
         csn_auto: bool | None = None,
         csn_delay: bool | None = None,
-    ) -> tuple[int, None]:
+    ) -> tuple[int, None | str]:
         """
         Config the SPI.
 
@@ -798,12 +798,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         psc = 100e6 / 2 / speed
         if psc > 65535 or psc < 2:
             self._logger.error("Not support speed.")
-            return self.NON_PROTOCOL_ERROR, None
+            return self.NON_PROTOCOL_ERROR, f"Not support speed {speed}."
 
         if not psc.is_integer():
             psc = round(psc)
             if psc > 65535 or psc < 2:
-                return self.NON_PROTOCOL_ERROR, None
+                self._logger.error(f"Not support  speed {speed}.")
+                return self.NON_PROTOCOL_ERROR, f"Not support speed {speed}."
             _speed = speed
             speed = round(100e6 / 2 / psc, 2)
             self._logger.warning(

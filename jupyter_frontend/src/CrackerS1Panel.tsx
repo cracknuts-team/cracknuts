@@ -12,6 +12,7 @@ import {
   Spin,
   Tooltip,
   Upload,
+  Modal, Alert
 } from "antd";
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {useModel, useModelState} from "@anywidget/react";
@@ -118,6 +119,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
 
   const [panelConfigDifferentFromCrackerConfig] = useModelState<boolean>("panel_config_different_from_cracker_config");
 
+  const [hasError, setHasError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const closeErrorModal = () => {
+    setHasError(false);
+  };
+
   const dumpConfig = () => {
     model.send({source: "dumpConfigButton", event: "onClick", args: {}});
   };
@@ -198,6 +205,21 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
         dumpConfigCompleted(msg["dumpConfigCompleted"]);
       } else if ("loadConfigCompleted" in msg) {
         loadConfigCompleted();
+      } else if ("errorMessage" in msg) {
+        setHasError(true)
+        if (msg["api"] == "nut_spi_speed") {
+          if (msg["errorMessage"] == "NotSupportSpeed") {
+            setErrorMsg(intl.formatMessage({
+              id: "cracker.config.nut.spi.speed.error.notSupportSpeed"
+            }, {
+              speed: msg["speed"]
+            }));
+          } else {
+            setErrorMsg(msg["errorMessage"]);
+          }
+        } else {
+          setErrorMsg(msg["errorMessage"])
+        }
       }
     };
     model.on("msg:custom", customCallback);
@@ -428,11 +450,13 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         <FormattedMessage id={"cracker.config.nut.spi.enable"}/>
                       </Checkbox>
                     </Form.Item>
-                    <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.speed"})}>
-                      <InputNumber precision={2} id={"cracker_config_spi_speed"} value={nutSpiSpeed} onChange={(v) => {
-                          setNutSpiSpeed(Number(v));
-                        }} size={"small"} disabled={!nutSpiEnable}/>
-                    </Form.Item>
+                    <Tooltip title={nutSpiEnable ? "设置SPI Speed 会根据根据您输入的数值自动转换SCK的整数倍，并反推出真实速率，可能导致您输入的和预想值不一致，这个需要回车后下发数据" : null}>
+                      <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.speed"})}>
+                        <InputNumber precision={2} id={"cracker_config_spi_speed"} value={nutSpiSpeed}
+                          onPressEnter={(e) => {setNutSpiSpeed(Number((e.target as HTMLInputElement).value))}} controls={false}
+                                     size={"small"} disabled={!nutSpiEnable}/>
+                      </Form.Item>
+                    </Tooltip>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.cpol"})}>
                       <Space.Compact>
                         <Select id={"cracker_config_spi_cpol"} size={"small"} style={{minWidth: 90}} disabled={!nutSpiEnable}
@@ -451,20 +475,29 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         ]}/>
                       </Space.Compact>
                     </Form.Item>
-                    <Form.Item style={{marginRight: 1}}>
-                      <Tooltip title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.autoSelect.tooltip"}) : null}>
-                        <Checkbox id={"cracker_config_spi_auto_select"} checked={nutSpiCsnAuto} onChange={() => {setNutSpiCsnAuto(!nutSpiCsnAuto)}} disabled={!nutSpiEnable}>
+                    <Tooltip
+                      title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.autoSelect.tooltip"}) : null}>
+                      <Form.Item style={{marginRight: 1}}>
+                        <Checkbox id={"cracker_config_spi_auto_select"} checked={nutSpiCsnAuto} onChange={() => {
+                          setNutSpiCsnAuto(!nutSpiCsnAuto)
+                        }} disabled={!nutSpiEnable}>
                           <FormattedMessage id={"cracker.config.nut.spi.autoSelect"}/>
                         </Checkbox>
-                      </Tooltip>
-                    </Form.Item>
-                    <Form.Item style={{marginRight: 1}}>
-                      <Tooltip title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.csnDly.tooltip"}) : null}>
-                        <Checkbox id={"cracker_config_spi_csn_dly"} checked={nutSpiCsnDelay} onChange={() => {setNutSpiCsnDelay(!nutSpiCsnDelay)}} disabled={!nutSpiEnable}>
+                      </Form.Item>
+                    </Tooltip>
+
+                    <Tooltip
+                      title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.csnDly.tooltip"}) : null}>
+
+                      <Form.Item style={{marginRight: 1}}>
+                        <Checkbox id={"cracker_config_spi_csn_dly"} checked={nutSpiCsnDelay} onChange={() => {
+                          setNutSpiCsnDelay(!nutSpiCsnDelay)
+                        }} disabled={!nutSpiEnable}>
                           <FormattedMessage id={"cracker.config.nut.spi.csnDly"}/>
                         </Checkbox>
-                      </Tooltip>
-                    </Form.Item>
+                      </Form.Item>
+                    </Tooltip>
+
               {/*    </Form>*/}
               {/*  </Col>*/}
               {/*</Row>*/}
@@ -702,6 +735,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
           </Col>
         </Row>
       </Spin>
+      <Modal title="Error" open={hasError} onOk={closeErrorModal} onCancel={closeErrorModal}>
+        <Alert message={errorMsg} type="error" showIcon />
+      </Modal>
     </div>
   );
 };
