@@ -15,7 +15,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     _css = ""
 
     acq_status = traitlets.Int(0).tag(sync=True)
-    acq_run_progress = traitlets.Dict({"finished": 0, "total": 1}).tag(sync=True)
+    acq_run_progress = traitlets.Dict({"finished": 0, "total": -1}).tag(sync=True)
 
     trace_count = traitlets.Int(1000).tag(sync=True)
     sample_offset = traitlets.Int(0).tag(sync=True)
