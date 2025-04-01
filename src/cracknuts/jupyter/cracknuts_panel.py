@@ -126,8 +126,10 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                 self._logger.error(
                     f"Config has no attribute named {k}, " f"which comes from the JSON key in the config file."
                 )
-        self.stop_listen_cracker_config()
-        self.update_cracker_panel_config(config_file_cracker_config, connection_info)
+
+        if self.panel_config_different_from_cracker_config:
+            self.stop_listen_cracker_config()
+            self.update_cracker_panel_config(config_file_cracker_config, connection_info)
 
         self.acquisition.load_config_from_str(acquisition_info)
         self.read_config_from_cracker()
