@@ -50,7 +50,7 @@ class ConfigBasic:
 
         def enum_converter(obj):
             if isinstance(obj, Enum):
-                return obj.value  # 也可以改成 obj.name
+                return obj.value
             raise TypeError(f"Type {type(obj)} not serializable")
 
         return json.dumps(

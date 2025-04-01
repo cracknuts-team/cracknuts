@@ -1,6 +1,8 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import dataclasses
+from dataclasses import dataclass
 import datetime
 import json
 import os.path
@@ -14,6 +16,18 @@ import numpy as np
 from cracknuts import logger
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.trace.trace import ScarrTraceDataset, NumpyTraceDataset
+
+
+@dataclass
+class AcquisitionConfig:
+    trace_count: int = 1
+    sample_length: int = 1024
+    sample_offset: int = 0
+    trigger_judge_timeout: float = 0.005
+    trigger_judge_wait_time: float = 0.05
+    do_error_max_count: int = 1
+    file_path: str = ""
+    file_format: str = "scarr"
 
 
 class AcqProgress:
@@ -700,20 +714,22 @@ class Acquisition(abc.ABC):
         :param path: the path to the JSON file
         :return: the content of JSON string or None if no path is specified.
         """
-        config = {
-            "trace_count": self.trace_count,
-            "sample_length": self.sample_length,
-            "sample_offset": self.sample_offset,
-            "trigger_judge_timeout": self.trigger_judge_timeout,
-            "trigger_judge_wait_time": self.trigger_judge_wait_time,
-            "do_error_max_count": self.do_error_max_count,
-            "trace_file_path": self.file_path,
-        }
+        config = AcquisitionConfig(
+            self.trace_count,
+            self.sample_length,
+            self.sample_offset,
+            self.trigger_judge_timeout,
+            self.trigger_judge_wait_time,
+            self.do_error_max_count,
+            self.file_path,
+            self.file_format,
+        )
+
         if path is None:
-            return json.dumps(config)
+            return json.dumps(dataclasses.astuple(config))
         else:
             with open(path, "w") as f:
-                json.dump(config, f)
+                json.dump(dataclasses.astuple(config), f)
 
     def load_config_from_file(self, path: str) -> None:
         """
@@ -745,7 +761,8 @@ class Acquisition(abc.ABC):
         self.trigger_judge_timeout = config["trigger_judge_timeout"]
         self.trigger_judge_wait_time = config["trigger_judge_wait_time"]
         self.do_error_max_count = config["do_error_max_count"]
-        self.file_path = config["trace_file_path"]
+        self.file_path = config["file_path"]
+        self.file_format = config["file_format"]
 
     def is_running(self):
         return self._status != self.STATUS_STOPPED

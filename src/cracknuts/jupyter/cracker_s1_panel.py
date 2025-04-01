@@ -103,7 +103,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         self.read_config_from_cracker()
         self.listen_cracker_config()
 
-    def get_cracker_panel_config(self):
+    def get_cracker_panel_config(self) -> ConfigS1:
         panel_config = ConfigS1()
         for prop in panel_config.__dict__.keys():
             default_value = getattr(panel_config, prop)

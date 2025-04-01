@@ -148,7 +148,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             config.nut_spi_csn_auto,
             config.nut_spi_csn_delay,
         )
-        self._logger.warning("====================after spi_config........")
         self._spi_enable(config.nut_spi_enable)
 
         self.uart_config(

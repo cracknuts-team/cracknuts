@@ -146,13 +146,19 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             f.write(self._dump_config())
 
     def _dump_config(self):
+        def enum_converter(obj):
+            if isinstance(obj, Enum):
+                return obj.value
+            raise TypeError(f"Type {type(obj)} not serializable")
+
         return json.dumps(
             {
-                "connection": self.cracker.get_uri(),
-                "cracker": json.loads(self.cracker.dump_config()),
-                "acquisition": json.loads(self.acquisition.dump_config()),
+                "connection": self.uri,
+                "cracker": self.get_cracker_panel_config().__dict__,
+                "acquisition": self.get_acquisition_panel_config().__dict__,
             },
             indent=4,
+            default=enum_converter,
         )
 
     def _load_current_path_config(self):

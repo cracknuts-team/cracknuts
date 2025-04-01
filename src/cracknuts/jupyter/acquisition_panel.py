@@ -4,7 +4,7 @@ import pathlib
 import typing
 from typing import Any
 
-from cracknuts.acquisition.acquisition import Acquisition
+from cracknuts.acquisition.acquisition import Acquisition, AcquisitionConfig
 from traitlets import traitlets
 
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
@@ -65,6 +65,18 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     def listen_acquisition_config(self) -> None:
         ...
         # todo complete ui -> python sync
+
+    def get_acquisition_panel_config(self) -> AcquisitionConfig:
+        return AcquisitionConfig(
+            self.trace_count,
+            self.sample_length,
+            self.sample_offset,
+            self.trigger_judge_timeout,
+            self.trigger_judge_wait_time,
+            self.do_error_max_count,
+            self.file_path,
+            self.file_format,
+        )
 
     def update_acq_status(self, status) -> None:
         self.acq_status = status
