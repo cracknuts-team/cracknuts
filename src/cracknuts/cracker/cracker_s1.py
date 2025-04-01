@@ -4,6 +4,7 @@ import re
 import struct
 from enum import Enum
 
+
 from cracknuts.cracker import protocol, serial
 from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
 
@@ -28,8 +29,8 @@ class ConfigS1(ConfigBasic):
         self.nut_spi_speed: float = 10_000.0
         self.nut_spi_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
         self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
-        self.nut_spi_auto_select: bool = True
-        self.nut_spi_csn_dly: bool = True
+        self.nut_spi_csn_auto: bool = True
+        self.nut_spi_csn_delay: bool = True
 
         self.nut_i2c_enable: bool = False
         self.nut_i2c_dev_addr: int = 0x00
@@ -49,7 +50,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     def get_current_config(self) -> ConfigS1 | None:
         status, res = self.send_with_command(protocol.Command.GET_CONFIG)
         if status == protocol.STATUS_OK:
-            return self._parse_config_bytes(res)
+            # === Since the device does not support the channel enable function,
+            # the information is temporarily saved to the host software. ===
+            # return self._parse_config_bytes(res)
+            config = self._parse_config_bytes(res)
+            config.osc_channel_0_enable = self._channel_enable.osc_channel_0_enable
+            config.osc_channel_1_enable = self._channel_enable.osc_channel_1_enable
+            return config
+            # === end ===
         else:
             self._logger.error(f"Get config from cracker error, return code 0x{status:02x}.")
             return None
@@ -88,8 +96,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "nut_spi_speed": "H",
             "nut_spi_cpol": "B",
             "nut_spi_cpha": "B",
-            "nut_spi_auto_select": "?",
-            "nut_spi_csn_dly": "?",
+            "nut_spi_csn_auto": "?",
+            "nut_spi_csn_delay": "?",
         }
 
         config = ConfigS1()
@@ -121,11 +129,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return config
 
     def write_config_to_cracker(self, config: ConfigS1):
-        self._nut_set_enable(config.nut_enable)
-        self.nut_voltage(config.nut_voltage)
-        self._nut_set_clock_enable(config.nut_clock_enable)
-        self.nut_clock_freq(config.nut_clock)
-
         self._osc_set_analog_all_channel_enable({0: config.osc_channel_0_enable, 1: config.osc_channel_1_enable})
         self.osc_analog_gain(0, config.osc_channel_0_gain)
         self.osc_analog_gain(1, config.osc_channel_1_gain)
@@ -138,22 +141,32 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self.osc_trigger_edge(config.osc_trigger_edge)
         self.osc_trigger_level(config.osc_trigger_edge_level)
 
-        self._spi_enable(config.nut_spi_enable)
         self.spi_config(
             config.nut_spi_speed,
             config.nut_spi_cpol,
             config.nut_spi_cpha,
-            config.nut_spi_auto_select,
+            config.nut_spi_csn_auto,
+            config.nut_spi_csn_delay,
         )
-        self._uart_enable(config.nut_uart_enable)
+        self._logger.warning("====================after spi_config........")
+        self._spi_enable(config.nut_spi_enable)
+
         self.uart_config(
             config.nut_uart_baudrate,
             config.nut_uart_bytesize,
             config.nut_uart_parity,
             config.nut_uart_stopbits,
         )
-        self._i2c_enable(config.nut_i2c_enable)
+        self._uart_enable(config.nut_uart_enable)
+
         self.i2c_config(config.nut_i2c_dev_addr, config.nut_i2c_speed)
+        self._i2c_enable(config.nut_i2c_enable)
+
+        self.nut_voltage(config.nut_voltage)
+        self._nut_set_enable(config.nut_enable)
+
+        self.nut_clock_freq(config.nut_clock)
+        self._nut_set_clock_enable(config.nut_clock_enable)
 
     def register_read(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """
@@ -230,7 +243,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        self._update_config_from_cracker()
+
+        # === Since the device does not support the channel enable function,
+        # the information is temporarily saved to the host software. ===
+        # config = self.get_current_config()
+        # === end ===
+        config = self._channel_enable
+
         channels = ("A", "B")
         if isinstance(channel, str):
             channel = channel.upper()
@@ -244,12 +263,20 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 self._logger.error("Channel error, it should in 0 or 1")
                 return self.NON_PROTOCOL_ERROR, None
         if channel == 0:
-            final_enable = {0: enable, 1: self._config.osc_channel_1_enable}
+            final_enable = {0: enable, 1: config.osc_channel_1_enable}
         elif channel == 1:
-            final_enable = {0: self._config.osc_channel_0_enable, 1: enable}
+            final_enable = {0: config.osc_channel_0_enable, 1: enable}
         else:
-            final_enable = {0: self._config.osc_channel_0_enable, 1: self._config.osc_channel_1_enable}
-        self._osc_set_analog_all_channel_enable(final_enable)
+            final_enable = {0: config.osc_channel_0_enable, 1: config.osc_channel_1_enable}
+        # === Since the device does not support the channel enable function,
+        # the information is temporarily saved to the host software. ===
+        # status, res = self._osc_set_analog_all_channel_enable(final_enable)
+        # if status == protocol.STATUS_OK:
+        #     self._config.osc_channel_0_enable = config.osc_channel_0_enable
+        #     self._config.osc_channel_1_enable = config.osc_channel_1_enable
+        self._channel_enable.osc_channel_0_enable = final_enable[0]
+        self._channel_enable.osc_channel_1_enable = final_enable[1]
+        # === end ===
 
     def _osc_set_analog_all_channel_enable(self, final_enable: dict[int, bool]):
         mask = 0
@@ -742,7 +769,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_spi_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().nut_spi_enable = enable
+            self._config.nut_spi_enable = enable
         return status, res
 
     def spi_reset(self) -> tuple[int, None]:
@@ -758,7 +785,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def spi_config(
         self,
-        speed: int | None = None,
+        speed: float | None = None,
         cpol: serial.SpiCpol | None = None,
         cpha: serial.SpiCpha | None = None,
         csn_auto: bool | None = None,
@@ -783,14 +810,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-        self._update_config_from_cracker()
 
-        if speed is None:
-            speed = self._config.nut_spi_speed
-        if cpol is None:
-            cpol = self._config.nut_spi_cpol
-        if cpha is None:
-            cpha = self._config.nut_spi_cpha
+        if speed is None or cpol is None or csn_auto is None:
+            config = self.get_current_config()
+            if speed is None:
+                speed = config.nut_spi_speed
+            if cpol is None:
+                cpol = config.nut_spi_cpol
+            if cpha is None:
+                cpha = config.nut_spi_cpha
 
         # System clock is 100e6
         # Clock divider is 2
@@ -821,8 +849,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_spi_speed = speed
             self._config.nut_spi_cpol = cpol
             self._config.nut_spi_cpha = cpha
-            self._config.nut_spi_auto_select = csn_auto
-            self._config.nut_spi_csn_dly = csn_delay
+            self._config.nut_spi_csn_auto = csn_auto
+            self._config.nut_spi_csn_delay = csn_delay
         return status, res
 
     @staticmethod
@@ -972,7 +1000,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_i2c_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().nut_i2c_enable = enable
+            self._config.nut_i2c_enable = enable
         return status, res
 
     def i2c_reset(self) -> tuple[int, None]:
@@ -1001,11 +1029,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-        self._update_config_from_cracker()
-        if dev_addr is None:
-            dev_addr = self._config.nut_i2c_dev_addr
-        if speed is None:
-            speed = self._config.i2c_speed
+
+        if dev_addr is None or speed is None:
+            config = self.get_current_config()
+            if dev_addr is None:
+                dev_addr = config.nut_i2c_dev_addr
+            if speed is None:
+                speed = config.nut_i2c_speed
 
         payload = struct.pack(">BB", dev_addr, speed.value)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
@@ -1221,7 +1251,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_enable payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_ENABLE, payload=payload)
         if status == protocol.STATUS_OK:
-            self.get_current_config().nut_uart_enable = enable
+            self._config.nut_uart_enable = enable
         return status, res
 
     def uart_reset(self) -> tuple[int, None]:
@@ -1256,15 +1286,17 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: The device response status.
         :rtype: tuple[int, None]
         """
-        self._update_config_from_cracker()
-        if baudrate is None:
-            baudrate = self._config.nut_uart_baudrate
-        if bytesize is None:
-            bytesize = self._config.nut_uart_bytesize
-        if parity is None:
-            parity = self._config.nut_uart_parity
-        if stopbits is None:
-            stopbits = self._config.nut_uart_stopbits
+
+        if baudrate is None or bytesize is None or parity is None or stopbits is None:
+            config = self.get_current_config()
+            if baudrate is None:
+                baudrate = config.nut_uart_baudrate
+            if bytesize is None:
+                bytesize = config.nut_uart_bytesize
+            if parity is None:
+                parity = config.nut_uart_parity
+            if stopbits is None:
+                stopbits = config.nut_uart_stopbits
 
         payload = struct.pack(">BBBB", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")

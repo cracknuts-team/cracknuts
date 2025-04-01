@@ -668,9 +668,8 @@ class Acquisition(abc.ABC):
         config = self.cracker.get_current_config()
 
         enable_channels = []
-        # disable this channel before cracker support channel enable.
-        # if config.osc_channel_0_enable:
-        #     enable_channels.append(0)
+        if config.osc_channel_0_enable:
+            enable_channels.append(0)
         if config.osc_channel_1_enable:
             enable_channels.append(1)
         wave_dict = {}

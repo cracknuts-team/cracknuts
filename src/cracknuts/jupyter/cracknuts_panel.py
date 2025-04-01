@@ -53,7 +53,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                             cv = cv.value
                         if v != cv:
                             self.panel_config_different_from_cracker_config = True
-                            self._logger.error(
+                            self._logger.warning(
                                 f"The configuration item {k} differs between the configuration file "
                                 f"({v}) and the cracker ({cv})."
                             )

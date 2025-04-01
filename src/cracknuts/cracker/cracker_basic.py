@@ -10,6 +10,7 @@ import struct
 import threading
 import typing
 from abc import ABC
+from dataclasses import dataclass
 from enum import Enum
 
 import numpy as np
@@ -71,6 +72,17 @@ class ConfigBasic:
 T = typing.TypeVar("T", bound=ConfigBasic)
 
 
+# === Since the device does not support the channel enable function,
+# the information is temporarily saved to the host software. ===
+@dataclass
+class _ChannelConfig:
+    osc_channel_0_enable: bool = False
+    osc_channel_1_enable: bool = True
+
+
+# === end ===
+
+
 class CrackerBasic(ABC, typing.Generic[T]):
     NON_PROTOCOL_ERROR = -1
 
@@ -115,6 +127,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._hardware_model = None
         self._installed_bin_server_path = None
         self._installed_bin_bitstream_path = None
+        # === Since the device does not support the channel enable function,
+        # the information is temporarily saved to the host software. ===
+        self._channel_enable = _ChannelConfig()
+        # === end ===
 
     def set_address(self, address: tuple[str, int] | str) -> None:
         """

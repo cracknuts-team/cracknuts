@@ -49,6 +49,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_i2c_dev_addr = traitlets.Unicode("0x00").tag(sync=True)
     nut_i2c_speed = traitlets.Int(0).tag(sync=True)
 
+    nut_timeout = traitlets.Int(0).tag(sync=True)
+
     # osc
     osc_channel_0_enable = traitlets.Bool(False).tag(sync=True)
     osc_channel_1_enable = traitlets.Bool(True).tag(sync=True)
@@ -127,6 +129,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         if isinstance(config, ConfigS1):
             config = config.__dict__
         for name, value in config.items():
+            if value is None:
+                continue
             if name.startswith("_"):
                 continue
             if hasattr(self, name):
@@ -274,8 +278,6 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def nut_uart_enable_changed(self, change):
         enabled = bool(change.get("new"))
-        self.cracker.uart_enable() if enabled else self.cracker.uart_disable()
-
         if enabled:
             self.cracker.uart_config(
                 serial.Baudrate(self.nut_uart_baudrate),
@@ -283,6 +285,8 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
                 serial.Parity(self.nut_uart_parity),
                 serial.Stopbits(self.nut_uart_stopbits),
             )
+
+        self.cracker.uart_enable() if enabled else self.cracker.uart_disable()
 
     @traitlets.observe("nut_uart_baudrate")
     @observe_interceptor
@@ -328,7 +332,6 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def nut_spi_enable_changed(self, change):
         enabled = bool(change.get("new"))
-
         if enabled:
             self.cracker.spi_config(
                 self.nut_spi_speed,
@@ -337,7 +340,6 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
                 self.nut_spi_csn_auto,
                 self.nut_spi_csn_delay,
             )
-
         self.cracker.spi_enable() if enabled else self.cracker.spi_disable()
 
     @traitlets.observe("nut_spi_speed")
@@ -383,7 +385,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     @traitlets.observe("nut_spi_csn_auto")
     @observe_interceptor
-    def nut_spi_auto_select_changed(self, change):
+    def nut_spi_csn_auto_changed(self, change):
         self.cracker.spi_config(
             self.nut_spi_speed,
             serial.SpiCpol(self.nut_spi_cpol),
@@ -407,9 +409,9 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def nut_i2c_enable_changed(self, change):
         enabled = bool(change.get("new"))
-        self.cracker.i2c_enable() if enabled else self.cracker.i2c_disable()
         if enabled:
             self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(self.nut_i2c_speed))
+        self.cracker.i2c_enable() if enabled else self.cracker.i2c_disable()
 
     @traitlets.observe("nut_i2c_dev_addr")
     @observe_interceptor
