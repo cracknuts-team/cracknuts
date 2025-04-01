@@ -6,6 +6,7 @@
   "acquisition.traceCount": "采集轮数",
   "acquisition.triggerJudgeWaitTime": "触发判断等待时长",
   "acquisition.triggerJudgeTimeout": "触发判断超时",
+  "acquisition.traceFetchInterval": "采集频率",
   "acquisition.doErrorCountMax": "do异常最大次数",
   "acquisition.fileFormat": "保存格式",
   "acquisition.filePath": "保存路径",
@@ -80,6 +81,7 @@
   "cracker.scope.customRange.max": "上限",
   "cracker.scope.zoomBrush": "框选缩放",
   "cracker.scope.zoomBrush.customRange": "指定区间",
+  "cracker.scope.monitorPeriod": "监视周期",
   "cracker.scope.echarts.toolbox.saveAsImage": "保存为图片",
   "cracker.scope.echarts.toolbox.dataZoom.back": "还原",
   "cracker.scope.echarts.toolbox.dataZoom.zoom": "缩放"

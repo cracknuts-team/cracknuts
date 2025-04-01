@@ -26,10 +26,11 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
     scope_status = traitlets.Int(0).tag(sync=True)
     monitor_status = traitlets.Bool(False).tag(sync=True)
     lock_scope_operation = traitlets.Bool(False).tag(sync=True)
+    monitor_period = traitlets.Float(1.0).tag(sync=True)
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-        self._logger = logger
+        self._logger = logger.get_logger(self)
         if not hasattr(self, "acquisition"):
             self._acquisition: Acquisition | None = None
             if "acquisition" in kwargs and isinstance(kwargs["acquisition"], Acquisition):
@@ -40,10 +41,9 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
         # 0 means scope_acquisition is effective, 1 means acquisition is effective,
         # and by default, scope_acquisition is effective.
         self._effect_acq = 0
-        self._scope_acquisition = ScopeAcquisition(self._acquisition.cracker)
+        self._scope_acquisition = ScopeAcquisition(self._acquisition.cracker, trace_fetch_interval=self.monitor_period)
         self._acquisition.on_status_changed(self._change_acquisition_source)
         self._scope_acquisition.on_status_changed(self._change_scope_acquisition_status)
-        self._monitor_period = 0.1
 
     def _change_acquisition_source(self, status: int) -> None:
         # Listen the acquisition thread status change and update scope monitor status.
@@ -94,6 +94,11 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
         if change.get("new"):
             self.start_monitor()
 
+    @traitlets.observe("monitor_period")
+    def monitor_period_changed(self, change) -> None:
+        if change.get("new"):
+            self._scope_acquisition.trace_fetch_interval = change["new"]
+
     def run(self, status: int) -> None:
         if not self.lock_scope_operation:
             self._scope_acquisition.run(status)
@@ -114,7 +119,7 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
                 if not self._acquisition.is_running():
                     self.monitor_status = False
             self.update(wave)
-            time.sleep(self._monitor_period)
+            time.sleep(self.monitor_period)
 
     def start_monitor(self) -> None:
         self.monitor_status = True

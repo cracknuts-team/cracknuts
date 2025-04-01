@@ -12,7 +12,13 @@ from cracknuts.cracker import protocol
 
 
 class ScopeAcquisition:
-    def __init__(self, cracker: CrackerBasic, interval: float = 0.05, repeat_interval: float = 0.1):
+    def __init__(
+        self,
+        cracker: CrackerBasic,
+        interval: float = 0.05,
+        repeat_interval: float = 0.1,
+        trace_fetch_interval: float = 0.1,
+    ):
         self._logger = logger.get_logger(self)
         self._status: int = 0  # 0 stop, 1 normal, 2 single, 3 repeat
         self._cracker: CrackerBasic = cracker
@@ -22,6 +28,7 @@ class ScopeAcquisition:
         self._interval: float = interval
         self._trigger_judge_wait_time: float = 0.01
         self._repeat_interval: float = repeat_interval
+        self.trace_fetch_interval = trace_fetch_interval
         self._status_change_listener: list[typing.Callable[[int], None]] = []
 
     def on_status_changed(self, callback: typing.Callable[[int], None]) -> None:
@@ -109,6 +116,7 @@ class ScopeAcquisition:
                 self._last_waves = self._get_waves()
             else:
                 self._logger.error(f"scope_acquisition error: {self._status}")
+            time.sleep(self.trace_fetch_interval)
 
     def _get_waves(self):
         config = self._cracker.get_current_config()

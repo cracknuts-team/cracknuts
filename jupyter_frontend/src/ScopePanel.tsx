@@ -1,5 +1,5 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Button, Form, Input, InputNumber, Radio, Space, Spin} from "antd";
+import {Button, Form, Input, InputNumber, Radio, Select, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useRef, useState} from "react";
 import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
@@ -28,6 +28,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
     const [lockScopeOperation] = useModelState<boolean>("lock_scope_operation");
     const [scopeStatus, setScopeStatus] = useModelState<number>("scope_status");
+    const [monitorPeriod, setMonitorPeriod] = useModelState<number>("monitor_period")
 
     const [yRange] = useModelState<RangeData>("y_range");
 
@@ -451,6 +452,20 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     }}/>
                 </Space.Compact>
               </Form.Item>
+              <Form.Item label={intl.formatMessage({id: "cracker.scope.monitorPeriod"})}>
+              <Select size={"small"} style={{width: 70}} options={[
+                {value: 1, label: "1s"},
+                {value: 2, label: "2s"},
+                {value: 3, label: "3s"},
+                {value: 4, label: "4s"},
+                {value: 5, label: "5s"},
+                {value: 10, label: "10s"},
+                {value: 15, label: "15s"},
+                {value: 20, label: "20s"},
+                {value: 25, label: "25s"},
+                {value: 30, label: "30s"},
+              ]} onChange={setMonitorPeriod} value={monitorPeriod}/>
+            </Form.Item>
             </Form>
             <ReactEcharts option={option} ref={chartRef} onChartReady = {onChartReady}
                           style={{

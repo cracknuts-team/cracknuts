@@ -25,6 +25,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     do_error_max_count = traitlets.Int(1).tag(sync=True)
     file_format = traitlets.Unicode("scarr").tag(sync=True)
     file_path = traitlets.Unicode("").tag(sync=True)
+    trace_fetch_interval = traitlets.Float(2.0).tag(sync=True)
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -95,6 +96,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
                 trigger_judge_wait_time=self.trigger_judge_wait_time,
                 trigger_judge_timeout=self.trigger_judge_timeout,
                 do_error_max_count=self.do_error_max_count,
+                trace_fetch_interval=self.trace_fetch_interval,
             )
         elif status == "run":
             self.before_run()
@@ -110,3 +112,8 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
             )
         else:
             self.acquisition.stop()
+
+    @traitlets.observe("trace_fetch_interval")
+    def trace_fetch_interval_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.trace_fetch_interval = change["new"]

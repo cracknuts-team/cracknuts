@@ -64,6 +64,7 @@ class Acquisition(abc.ABC):
         do_error_max_count: int = -1,
         file_format: str = "scarr",
         file_path: str = "auto",
+        trace_fetch_interval: float = 0,
     ):
         """
         :param cracker: The controlled Cracker object.
@@ -116,6 +117,7 @@ class Acquisition(abc.ABC):
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
+        self.trace_fetch_interval = trace_fetch_interval
 
     def get_status(self):
         return self._status
@@ -260,6 +262,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
+        trace_fetch_interval: float = 2.0,
     ):
         """
         Start test mode in background.
@@ -294,6 +297,7 @@ class Acquisition(abc.ABC):
                 trigger_judge_timeout=trigger_judge_timeout,
                 do_error_max_count=do_error_max_count,
                 do_error_handler_strategy=do_error_handler_strategy,
+                trace_fetch_interval=trace_fetch_interval,
             )
 
     def test_sync(
@@ -380,6 +384,7 @@ class Acquisition(abc.ABC):
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
         file_path: str | None = "auto",
+        trace_fetch_interval: float = 0.1,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -396,6 +401,7 @@ class Acquisition(abc.ABC):
                 "do_error_handler_strategy": do_error_handler_strategy,
                 "file_format": file_format,
                 "file_path": file_path,
+                "trace_fetch_interval": trace_fetch_interval,
             },
         ).start()
 
@@ -412,6 +418,7 @@ class Acquisition(abc.ABC):
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
         file_path: str | None = "auto",
+        trace_fetch_interval: float = 0.1,
     ):
         if self._status > 0:
             self._logger.warning(
@@ -445,6 +452,8 @@ class Acquisition(abc.ABC):
             self.file_format = file_format
         if file_path is not None:
             self.file_path = file_path
+        if trace_fetch_interval is not None:
+            self.trace_fetch_interval = trace_fetch_interval
         self.pre_init()
         self.init()
         self._post_init()
@@ -573,7 +582,8 @@ class Acquisition(abc.ABC):
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
             # Reduce the execution frequency in test mode.
             if not persistent:
-                time.sleep(2)
+                if self.trace_fetch_interval is not None and self.trace_fetch_interval != 0:
+                    time.sleep(self.trace_fetch_interval)
 
         if dataset is not None:
             dataset.dump()

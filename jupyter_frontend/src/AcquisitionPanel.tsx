@@ -20,6 +20,7 @@ const AcquisitionPanel: React.FC = () => {
   const [doErrorCountMax, setDoErrorCountMax] = useModelState<number>("do_error_max_count");
   const [fileFormat, setFileFormat] = useModelState<string>("file_format");
   const [filePath, setFilePath] = useModelState<string>("file_path");
+  const [traceFetchInterval, setTraceFetchInterval] = useModelState<string>("trace_fetch_interval");
 
   const model = useModel();
 
@@ -128,6 +129,20 @@ const AcquisitionPanel: React.FC = () => {
                 }}
                 changeOnWheel
               />
+            </Form.Item>
+            <Form.Item label={intl.formatMessage({id: "acquisition.traceFetchInterval"})}>
+              <Select size={"small"} style={{width: 70}} options={[
+                {value: 1, label: "1s"},
+                {value: 2, label: "2s"},
+                {value: 3, label: "3s"},
+                {value: 4, label: "4s"},
+                {value: 5, label: "5s"},
+                {value: 10, label: "10s"},
+                {value: 15, label: "15s"},
+                {value: 20, label: "20s"},
+                {value: 25, label: "25s"},
+                {value: 30, label: "30s"},
+              ]} onChange={setTraceFetchInterval} value={traceFetchInterval}/>
             </Form.Item>
             <Form.Item label={intl.formatMessage({id: "acquisition.doErrorCountMax"})}>
               <InputNumber
