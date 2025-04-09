@@ -4,6 +4,7 @@ import pathlib
 import typing
 
 import numpy as np
+
 from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset
 from traitlets import traitlets
 
@@ -14,7 +15,23 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
     _css = ""
 
-    trace_series_list: list[dict] = traitlets.List([])
+    chart_size: dict[str, int] = traitlets.Dict({"width": 0, "height": 0}).tag(sync=True)
+    trace_query: dict[str, int] = traitlets.Dict({"xMin": 0, "xMax": 0, "yMin": 0, "yMax": 0}).tag(sync=True)
+
+    trace_series = traitlets.Dict(
+        {
+            "seriesDataList": [],
+            "xData": [],
+            "xMin": 0,
+            "xMax": 0,
+            "totalXMin": 0,
+            "totalXMax": 0,
+            "yMin": 0,
+            "yMax": 0,
+            "totalYMin": 0,
+            "totalYMax": 0,
+        }
+    )
 
     _DEFAULT_SHOW_INDEX_THRESHOLD = 3
 
@@ -26,16 +43,17 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._auto_sync = False
 
     def _repr_mimebundle_(self, **kwargs: dict) -> tuple[dict, dict] | None:
-        self.send_state("trace_series_list")
+        self.send_state("trace_series")
         self._auto_sync = True
         return super()._repr_mimebundle_(**kwargs)
 
     def set_emphasis(self, value: bool) -> None:
-        if self._emphasis != value:
-            self._emphasis = value
-            self.trace_series_list = [{**series, "emphasis": not value} for series in self.trace_series_list]
-            if self._auto_sync:
-                self.send_state("trace_series_list")
+        ...
+        # if self._emphasis != value:
+        #     self._emphasis = value
+        #     self.trace_series_list = [{**series, "emphasis": not value} for series in self.trace_series_list]
+        #     if self._auto_sync:
+        #         self.send_state("trace_series_list")
 
     def set_numpy_data(self, trace: np.ndarray, data: np.ndarray = None) -> None:
         ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
@@ -46,20 +64,32 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             channel_slice, trace_slice
         ]
 
-        trace_series_list = []
+        series_data_list = []
 
         for c, channel_index in enumerate(channel_indexes):
             for t, trace_index in enumerate(trace_indexes):
-                trace_series_list.append(
+                series_data_list.append(
                     {
                         "name": str(channel_index) + "-" + str(trace_index),
                         "data": traces[c, t],
                         "emphasis": not self._emphasis,
                     }
                 )
-        self.trace_series_list = trace_series_list
+
+        self.trace_series = {
+            "seriesDataList": series_data_list,
+            "xData": range(traces.shape[-1]),
+            "xMin": 0,
+            "xMax": 0,
+            "totalXMin": 0,
+            "totalXMax": 0,
+            "yMin": 0,
+            "yMax": 0,
+            "totalYMin": 0,
+            "totalYMax": 0,
+        }
         if self._auto_sync:
-            self.send_state("trace_series_list")
+            self.send_state("trace_series")
 
     def show_default_trace(self):
         trace_count = self._trace_dataset.trace_count
@@ -75,46 +105,48 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._show_trace(slice(0, self._trace_dataset.channel_count), slice(0, self._trace_dataset.trace_count))
 
     def highlight(self, *indexes: int) -> None:
-        self._emphasis = False
-        x = [
-            {**series, "emphasis": True, "color": "red" if i in indexes else "gray", "z": 100 if i in indexes else 1}
-            for i, series in enumerate(self.trace_series_list)
-        ]
-        self.trace_series_list = x
-        if self._auto_sync:
-            self.send_state("trace_series_list")
+        ...
+        # self._emphasis = False
+        # x = [
+        #     {**series, "emphasis": True, "color": "red" if i in indexes else "gray", "z": 100 if i in indexes else 1}
+        #     for i, series in enumerate(self.trace_series_list)
+        # ]
+        # self.trace_series_list = x
+        # if self._auto_sync:
+        #     self.send_state("trace_series_list")
 
     def set_numpy_data_highlight(self, trace: np.ndarray, data: np.ndarray = None, highlight_indexes=None):
-        if highlight_indexes is None:
-            highlight_indexes = []
-        ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
-        self._trace_dataset = ds
-        trace_series_list = []
-
-        for t, trace_index in enumerate(range(ds.trace_count)):
-            if t not in highlight_indexes:
-                trace_series_list.append(
-                    {
-                        "name": str(0) + "-" + str(trace_index),
-                        "data": trace[t],
-                        "emphasis": not self._emphasis,
-                        "color": "gray",
-                    }
-                )
-        for t, trace_index in enumerate(range(ds.trace_count)):
-            if t in highlight_indexes:
-                trace_series_list.append(
-                    {
-                        "name": str(0) + "-" + str(trace_index),
-                        "data": trace[t],
-                        "emphasis": not self._emphasis,
-                        "color": "red",
-                        "z": 100,
-                    }
-                )
-        self.trace_series_list = trace_series_list
-        if self._auto_sync:
-            self.send_state("trace_series_list")
+        ...
+        # if highlight_indexes is None:
+        #     highlight_indexes = []
+        # ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
+        # self._trace_dataset = ds
+        # trace_series_list = []
+        #
+        # for t, trace_index in enumerate(range(ds.trace_count)):
+        #     if t not in highlight_indexes:
+        #         trace_series_list.append(
+        #             {
+        #                 "name": str(0) + "-" + str(trace_index),
+        #                 "data": trace[t],
+        #                 "emphasis": not self._emphasis,
+        #                 "color": "gray",
+        #             }
+        #         )
+        # for t, trace_index in enumerate(range(ds.trace_count)):
+        #     if t in highlight_indexes:
+        #         trace_series_list.append(
+        #             {
+        #                 "name": str(0) + "-" + str(trace_index),
+        #                 "data": trace[t],
+        #                 "emphasis": not self._emphasis,
+        #                 "color": "red",
+        #                 "z": 100,
+        #             }
+        #         )
+        # self.trace_series_list = trace_series_list
+        # if self._auto_sync:
+        #     self.send_state("trace_series_list")
 
     def set_trace_dataset(
         self, trace_dataset: TraceDataset, show_all_trace=False, channel_slice=None, trace_slice=None

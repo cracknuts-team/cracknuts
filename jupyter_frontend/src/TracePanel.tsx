@@ -1,51 +1,110 @@
-import React from "react";
+import React, {useEffect, useRef} from "react";
 import {useModelState} from "@anywidget/react";
 import ReactEcharts from "echarts-for-react";
 
-interface TraceSeries {
+interface SeriesData {
     color: string;
     name: string;
-    emphasis: boolean;
     data: Array<number>;
-    index: Array<number>;
+    emphasis: boolean;
     z: number;
 }
 
+interface TraceSeries {
+    seriesDataList: Array<SeriesData>,
+    xData: Array<number>,
+    xMin: number;
+    xMax: number;
+    totalXMin: number;
+    totalXMax: number;
+    yMin: number;
+    yMax: number;
+    totalYMin: number;
+    totalYMax: number;
+}
+
+// interface TraceQuery {
+//     xMin: number;
+//     xMax: number;
+//     yMin: number;
+//     yMax: number;
+// }
+
+interface ChartSize {
+    width: number;
+    height: number;
+}
+
 const TracePanel: React.FC = () => {
-    const [traceSeriesList] = useModelState<Array<TraceSeries>>("trace_series_list");
+    const [traceSeries] = useModelState<TraceSeries>("trace_series");
+    const [, setChartSize] = useModelState<ChartSize>("chart_size");
+
+    const chartRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        console.log("==", chartRef.current);
+        if (!chartRef.current || typeof ResizeObserver === 'undefined') return
+
+        const observer = new ResizeObserver(([entry]) => {
+          const { width, height } = entry.contentRect
+          setChartSize({
+              width: width,
+              height: height
+          })
+        })
+
+        observer.observe(chartRef.current)
+
+        return () => observer.disconnect()
+    }, [])
+
+    console.info(traceSeries)
 
     const getLegends = () => {
         const legends: Array<string> = [];
-        traceSeriesList.forEach((traceSeries) => {
-            legends.push(traceSeries.name);
-        });
+
+        if (traceSeries && traceSeries.seriesDataList) {
+            traceSeries.seriesDataList.forEach((seriesData) => {
+                legends.push(seriesData.name);
+            });
+        }
 
         return legends;
     };
 
-    const getSeries = (): Array<any> => {
-        const series: Array<any> = [];
+    const getSeries = (): Array<object> => {
+        const series: Array<object> = [];
 
-        traceSeriesList.forEach((traceSeries) => {
-            series.push({
-                name: traceSeries.name,
-                type: "line",
-                data: traceSeries.data,
-                symbol: "none",
-                lineStyle: {
-                    width: 1,
-                    color: traceSeries.color,
-                },
-                emphasis: {
-                    disabled: traceSeries.emphasis,
-                    focus: "series",
-                },
-                z: traceSeries.z
+        if (traceSeries && traceSeries.seriesDataList) {
+            traceSeries.seriesDataList.forEach((seriesData) => {
+                series.push({
+                    name: seriesData.name,
+                    type: "line",
+                    data: seriesData.data,
+                    symbol: "none",
+                    lineStyle: {
+                        width: 1,
+                        color: seriesData.color,
+                    },
+                    emphasis: {
+                        disabled: false,
+                        focus: "series",
+                    },
+                    z: seriesData.z
+                });
             });
-        });
+        }
 
         return series;
     };
+
+    const getXData = () => {
+        if (traceSeries && traceSeries.xData) {
+            return traceSeries.xData
+        } else {
+            return []
+        }
+    }
 
     const option = {
         grid: {
@@ -60,17 +119,7 @@ const TracePanel: React.FC = () => {
             },
             confine: true,
             triggerOn: "click",
-            enterable: true,
-            formatter: function (params: Array<any>) {
-                let htmlStr =
-                    '<div style="height: auto;max-height: 180px;overflow-y: auto;"><p>' + params[0].axisValue + "</p>";
-                for (let i = 0; i < params.length; i++) {
-                    htmlStr +=
-                        '<p style="color: #666;">' + params[i].marker + params[i].seriesName + ":&nbsp;" + params[i].value + "</p>";
-                }
-                htmlStr += "</div>";
-                return htmlStr;
-            },
+            enterable: true
         },
         animation: false,
         toolbox: {
@@ -127,15 +176,19 @@ const TracePanel: React.FC = () => {
             axisLine: {
                 show: false,
             },
+            data: getXData()
         },
 
         yAxis: {},
         series: getSeries(),
     };
 
+    console.info(option)
+
     return (
-        <div>
+        <div ref={chartRef}>
             <ReactEcharts option={option} notMerge={true} style={{height: 400}}/>
+            <so
         </div>
     );
 };
