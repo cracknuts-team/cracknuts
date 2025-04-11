@@ -13,7 +13,7 @@ from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 class TracePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
-    _css = ""
+    _css = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.css"
 
     chart_size: dict[str, int] = traitlets.Dict({"width": 0, "height": 0}).tag(sync=True)
     trace_query: dict[str, int] = traitlets.Dict({"xMin": 0, "xMax": 0, "yMin": 0, "yMax": 0}).tag(sync=True)
@@ -22,16 +22,15 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         {
             "seriesDataList": [],
             "xData": [],
-            "xMin": 0,
-            "xMax": 0,
-            "totalXMin": 0,
-            "totalXMax": 0,
-            "yMin": 0,
-            "yMax": 0,
-            "totalYMin": 0,
-            "totalYMax": 0,
         }
     )
+
+    range_start = traitlets.Float(0).tag(sync=True)
+    range_end = traitlets.Float(100).tag(sync=True)
+
+    selected_end = traitlets.Int(0).tag(sync=True)
+    selected_start = traitlets.Int(0).tag(sync=True)
+    selected_range = traitlets.Tuple((0, 0)).tag(sync=True)
 
     _DEFAULT_SHOW_INDEX_THRESHOLD = 3
 
@@ -59,37 +58,80 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
         self.set_trace_dataset(ds)
 
-    def _show_trace(self, channel_slice, trace_slice):
+    def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
         channel_indexes, trace_indexes, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
 
+        self._trace_cache = {
+            "channel_indexes": channel_indexes,
+            "trace_indexes": trace_indexes,
+            "traces": traces,
+        }
+        if display_range is None:
+            display_range = 0, self._trace_dataset.sample_count
+        self._show_trace_by_range(display_range)
+        # series_data_list = []
+        # if display_range is not None:
+        #     display_range = 0, self._trace_dataset.sample_count
+        #
+        # x_idx = None
+        # for c, channel_index in enumerate(channel_indexes):
+        #     for t, trace_index in enumerate(trace_indexes):
+        #         x_idx, y_data = self._get_by_range(traces, *display_range)
+        #         series_data_list.append(
+        #             {
+        #                 "name": str(channel_index) + "-" + str(trace_index),
+        #                 "data": y_data,
+        #                 "emphasis": not self._emphasis,
+        #             }
+        #         )
+        #
+        # self.trace_series = {
+        #     "seriesDataList": series_data_list,
+        #     "xData": x_idx,
+        # }
+        # if self._auto_sync:
+        #     self.send_state("trace_series")
+
+    def _get_by_range(self, trace: np.ndarray, start, end):
+        print(trace.shape)
+        _trace = trace[start:end]
+        x_idx = np.arange(start, end)
+        print(_trace.shape)
+        return x_idx, _trace
+
+    def _show_trace_by_range(self, display_range: tuple[int, int]):
+        channel_indexes, trace_indexes, traces = (
+            self._trace_cache["channel_indexes"],
+            self._trace_cache["trace_indexes"],
+            self._trace_cache["traces"],
+        )
+
         series_data_list = []
 
+        x_idx = None
         for c, channel_index in enumerate(channel_indexes):
             for t, trace_index in enumerate(trace_indexes):
+                x_idx, y_data = self._get_by_range(traces, *display_range)
                 series_data_list.append(
                     {
                         "name": str(channel_index) + "-" + str(trace_index),
-                        "data": traces[c, t],
+                        "data": y_data,
                         "emphasis": not self._emphasis,
                     }
                 )
 
         self.trace_series = {
             "seriesDataList": series_data_list,
-            "xData": range(traces.shape[-1]),
-            "xMin": 0,
-            "xMax": 0,
-            "totalXMin": 0,
-            "totalXMax": 0,
-            "yMin": 0,
-            "yMax": 0,
-            "totalYMin": 0,
-            "totalYMax": 0,
+            "xData": x_idx,
         }
+        print(self.trace_series)
         if self._auto_sync:
             self.send_state("trace_series")
+
+    def change_range(self, start, end):
+        self._show_trace_by_range((start, end))
 
     def show_default_trace(self):
         trace_count = self._trace_dataset.trace_count
@@ -164,6 +206,29 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     def open_numpy_file(self, path: str): ...
 
     def open_zarr(self, path: str): ...
+
+    @traitlets.observe("selected_start")
+    def selected_start_changed(self, change) -> None:
+        print(f"s: {change.get('new')}")
+        if change.get("new") is not None:
+            self.range_start = change["new"] / (self._trace_dataset.sample_count - 1) * 100
+            self.change_range(self.range_start, self.range_end)
+
+    @traitlets.observe("selected_end")
+    def selected_end_changed(self, change) -> None:
+        print(f"e: {change.get('new')}")
+        if change.get("new") is not None:
+            self.range_end = change["new"] / (self._trace_dataset.sample_count - 1) * 100
+            self.change_range(self.range_start, self.range_end)
+
+    @traitlets.observe("selected_range")
+    def selected_range_changed(self, change) -> None:
+        print(f"r: {change.get('new')}")
+        if change.get("new") is not None:
+            s, e = change.get("new")
+            self.range_end = e / (self._trace_dataset.sample_count - 1) * 100
+            self.range_start = s / (self._trace_dataset.sample_count - 1) * 100
+            self.change_range(self.range_start, self.range_end)
 
 
 class ShowTrace:
