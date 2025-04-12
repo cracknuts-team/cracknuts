@@ -2,8 +2,7 @@ import React, {useEffect, useRef} from "react";
 import {useModelState} from "@anywidget/react";
 import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
-import type { ECharts } from "echarts";
-import {Slider as AntSlider} from "antd"
+import type {ECharts} from "echarts";
 
 interface SeriesData {
     color: string;
@@ -39,27 +38,22 @@ interface BrushEndParams {
 
 const TracePanel: React.FC = () => {
 
-    // const [selectedStart, setSelectedStart] = useModelState<number>("selected_start");
-    // const [selectedEnd, setSelectedEnd] = useModelState<number>("selected_end");
-    // const selectedStartRef = useRef<number>(selectedStart);
-    // const selectedEndRef = useRef<number>(selectedEnd);
-
     const [, setSelectedRange] = useModelState<Array<number>>("selected_range");
-
-    // const [start, setStart] = useModelState<number>("range_start")
-    // const [end, setEnd] = useModelState<number>("range_end")
-
-    // const [, series] = useModelState<SeriesData>("series");
+    const [, setPercentRange] = useModelState<Array<number>>("percent_range");
 
     const [traceSeries] = useModelState<TraceSeries>("trace_series");
     const [, setChartSize] = useModelState<ChartSize>("chart_size");
 
-
-
-
     const chartBoxRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+
+        // Since the chart component is not initialized, it uses the window size.
+        setChartSize({
+            width: window.innerWidth,
+            height: window.innerHeight
+        })
+
         if (!chartBoxRef.current || typeof ResizeObserver === 'undefined') {
             return
         }
@@ -77,21 +71,11 @@ const TracePanel: React.FC = () => {
     const chartRef = useRef<ReactEcharts>(null);
     const brushAreasRef = useRef<Array<number>>([0, 0])
 
-    // useEffect(() => {
-    //     if (!chartRef.current) {
-    //         return
-    //     }
-    //     chartRef.current?.getEchartsInstance().on("brushSelected", (params: any) => {
-    //         brushAreasRef.current = params.areas;
-    //         console.log("刷选区域更新", params.batch?.[0]?.areas?.[0]?.coordRange);
-    //     });
-    // }, []);
-
-
     const onChartReady = (chart: ECharts) => {
         chart.on("brushEnd", (params) => {
             const brushParams = params as BrushEndParams;
 
+            console.log(brushParams);
             if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
                 const [new_start, new_end] = brushParams.areas[0].coordRange
 
@@ -101,7 +85,7 @@ const TracePanel: React.FC = () => {
         });
 
         // 监听回车键
-        const handleKeyDown = (e) => {
+        const handleKeyDown = (e: { altKey: any; key: string; }) => {
             if (e.altKey && e.key === 'Enter') {
                 console.log("按下回车，当前 brush 区域为：", brushAreasRef.current);
             }
@@ -149,7 +133,7 @@ const TracePanel: React.FC = () => {
                         color: seriesData.color,
                     },
                     emphasis: {
-                        disabled: false,
+                        disabled: true,
                         focus: "series",
                     },
                     z: seriesData.z
@@ -262,12 +246,7 @@ const TracePanel: React.FC = () => {
     return (
       <div ref={chartBoxRef}>
           <ReactEcharts ref={chartRef} option={option} notMerge={true} style={{height: 400}}/>
-          <Slider start={traceSeries.percentRange[0]} end={traceSeries.percentRange[1]} onChange={(s, e) => {console.info(s, e)}}/>
-          <AntSlider min={traceSeries.percentRange[0]} max={traceSeries.percentRange[1]}
-                     range={{draggableTrack: true}}
-                     onChange={(r: any) => {console.info(r)}}
-                     onChangeComplete={(r: any) => {console.info("complete: ", r)}}
-          />
+          <Slider start={traceSeries.percentRange[0]} end={traceSeries.percentRange[1]} onChange={(s, e) => {setPercentRange([s, e])}}/>
       </div>
     );
 };

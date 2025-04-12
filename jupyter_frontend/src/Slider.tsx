@@ -23,6 +23,24 @@ export default function Slider({
   const [interStart, setInterStart] = useState(start);
   const [interEnd, setInterEnd] = useState(end);
 
+  const interStartRef = useRef<number>(interStart)
+  const interEndRef = useRef<number>(interEnd)
+
+  useEffect(() => {
+      setInterStart(start);
+  }, [start]);
+
+  useEffect(() => {
+      setInterEnd(end);
+  }, [end]);
+
+  useEffect(() => {
+    interStartRef.current = interStart
+  }, [interStart]);
+  useEffect(() => {
+    interEndRef.current = interEnd
+  }, [interEnd]);
+
   useEffect(() => {
     const updateTrackWidth = () => {
       if (trackRef.current) {
@@ -40,18 +58,18 @@ export default function Slider({
   }, []);
 
 
-  const widthPercent = end - start;
+  const widthPercent = interEnd - interStart;
 
   const thumbStyle = useMemo(() => {
     if (trackWidth === 0) return {}; // 等待初始化
 
-    const percentWidth = end - start;
+    const percentWidth = interEnd - interStart;
     const pxWidth = (percentWidth / 100) * trackWidth;
 
     const visualWidth = Math.max(pxWidth, minThumbWidthPx);
     const extra = visualWidth - pxWidth;
 
-    const leftPx = (start / 100) * trackWidth - extra / 2;
+    const leftPx = (interStart / 100) * trackWidth - extra / 2;
 
     return {
       position: 'absolute' as const,
@@ -59,14 +77,14 @@ export default function Slider({
       left: `${leftPx}px`,
       transform: 'translateY(-50%)',
     };
-  }, [start, end, trackWidth, minThumbWidthPx]);
+  }, [interStart, interEnd, trackWidth, minThumbWidthPx]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!trackRef.current) return;
 
     const trackRect = trackRef.current.getBoundingClientRect();
-    const thumbLeft = (start / 100) * trackRect.width;
+    const thumbLeft = (interStart / 100) * trackRect.width;
     dragOffsetRef.current = ((e.clientX - trackRect.left - thumbLeft) / trackRect.width) * 100;
 
     setDragging(true);
@@ -79,16 +97,19 @@ export default function Slider({
       let newStart = ((moveEvent.clientX - trackRect.left) / trackRect.width) * 100;
       newStart -= dragOffsetRef.current;
 
-      const width = end - start;
+      const width = interEnd - interStart;
       newStart = Math.max(0, Math.min(100 - width, newStart));
       const newEnd = newStart + width;
 
-      if (onChange) {
-        onChange(newStart, newEnd)
-      }
+      setInterStart(newStart);
+      setInterEnd(newEnd);
+
     };
 
     const onMouseUp = () => {
+      if (onChange) {
+        onChange(interStartRef.current, interEndRef.current)
+      }
       setDragging(false);
       document.body.style.cursor = '';
       document.removeEventListener('mousemove', onMouseMove);
@@ -111,6 +132,8 @@ export default function Slider({
     newStart = Math.max(0, Math.min(100 - widthPercent, newStart));
     const newEnd = newStart + widthPercent;
 
+    setInterStart(newStart);
+    setInterEnd(newEnd);
     if (onChange) {
       onChange(newStart, newEnd)
     }
