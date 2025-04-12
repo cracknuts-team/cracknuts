@@ -3,6 +3,7 @@ import {useModelState} from "@anywidget/react";
 import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
 import type { ECharts } from "echarts";
+import {Slider as AntSlider} from "antd"
 
 interface SeriesData {
     color: string;
@@ -15,6 +16,7 @@ interface SeriesData {
 interface TraceSeries {
     seriesDataList: Array<SeriesData>,
     xData: Array<number>,
+    percentRange: Array<number>,
 }
 
 // interface TraceQuery {
@@ -37,17 +39,17 @@ interface BrushEndParams {
 
 const TracePanel: React.FC = () => {
 
-    const [selectedStart, setSelectedStart] = useModelState<number>("selected_start");
-    const [selectedEnd, setSelectedEnd] = useModelState<number>("selected_end");
-    const selectedStartRef = useRef<number>(selectedStart);
-    const selectedEndRef = useRef<number>(selectedEnd);
+    // const [selectedStart, setSelectedStart] = useModelState<number>("selected_start");
+    // const [selectedEnd, setSelectedEnd] = useModelState<number>("selected_end");
+    // const selectedStartRef = useRef<number>(selectedStart);
+    // const selectedEndRef = useRef<number>(selectedEnd);
 
     const [, setSelectedRange] = useModelState<Array<number>>("selected_range");
 
-    const [start, setStart] = useModelState<number>("range_start")
-    const [end, setEnd] = useModelState<number>("range_end")
+    // const [start, setStart] = useModelState<number>("range_start")
+    // const [end, setEnd] = useModelState<number>("range_end")
 
-    const [, series] = useModelState<SeriesData>("series");
+    // const [, series] = useModelState<SeriesData>("series");
 
     const [traceSeries] = useModelState<TraceSeries>("trace_series");
     const [, setChartSize] = useModelState<ChartSize>("chart_size");
@@ -85,19 +87,15 @@ const TracePanel: React.FC = () => {
     //     });
     // }, []);
 
+
     const onChartReady = (chart: ECharts) => {
         chart.on("brushEnd", (params) => {
             const brushParams = params as BrushEndParams;
-            if (brushParams && brushParams.areas && brushParams.areas.length > 1 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
-                const [s, e] = brushParams.areas[0].coordRange
-                if (s == selectedStartRef.current) {
-                    setSelectedEnd(e);
-                } else if (e == selectedEndRef.current) {
-                    setSelectedStart(s)
-                } else {
-                    setSelectedStart(s)
-                    setSelectedEnd(e)
-                }
+
+            if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
+                const [new_start, new_end] = brushParams.areas[0].coordRange
+
+                setSelectedRange([new_start, new_end])
             }
 
         });
@@ -118,7 +116,6 @@ const TracePanel: React.FC = () => {
     };
 
     useEffect(() => {
-        console.info("====", chartRef.current?.getEchartsInstance)
         const cleanup = chartRef.current?.getEchartsInstance && onChartReady(chartRef.current.getEchartsInstance());
         return () => {
             cleanup?.();
@@ -265,7 +262,12 @@ const TracePanel: React.FC = () => {
     return (
       <div ref={chartBoxRef}>
           <ReactEcharts ref={chartRef} option={option} notMerge={true} style={{height: 400}}/>
-          <Slider start={start} setStart={setStart} end={end} setEnd={setEnd}/>
+          <Slider start={traceSeries.percentRange[0]} end={traceSeries.percentRange[1]} onChange={(s, e) => {console.info(s, e)}}/>
+          <AntSlider min={traceSeries.percentRange[0]} max={traceSeries.percentRange[1]}
+                     range={{draggableTrack: true}}
+                     onChange={(r: any) => {console.info(r)}}
+                     onChangeComplete={(r: any) => {console.info("complete: ", r)}}
+          />
       </div>
     );
 };

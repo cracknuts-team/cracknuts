@@ -4,16 +4,14 @@ import './Slider.css';
 interface SliderProps {
   start: number;
   end: number;
-  setStart: (val: number) => void;
-  setEnd: (val: number) => void;
+  onChange?: (start: number, end: number) => void;
   minThumbWidthPx?: number;
 }
 
 export default function Slider({
-  start = 0,
-  end = 100,
-  setStart,
-  setEnd,
+  start,
+  end,
+  onChange = undefined,
   minThumbWidthPx = 10,
 }: SliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -21,6 +19,9 @@ export default function Slider({
   const [dragging, setDragging] = useState(false);
 
   const [trackWidth, setTrackWidth] = useState(0);
+
+  const [interStart, setInterStart] = useState(start);
+  const [interEnd, setInterEnd] = useState(end);
 
   useEffect(() => {
     const updateTrackWidth = () => {
@@ -82,8 +83,9 @@ export default function Slider({
       newStart = Math.max(0, Math.min(100 - width, newStart));
       const newEnd = newStart + width;
 
-      setStart(newStart);
-      setEnd(newEnd);
+      if (onChange) {
+        onChange(newStart, newEnd)
+      }
     };
 
     const onMouseUp = () => {
@@ -109,8 +111,9 @@ export default function Slider({
     newStart = Math.max(0, Math.min(100 - widthPercent, newStart));
     const newEnd = newStart + widthPercent;
 
-    setStart(newStart);
-    setEnd(newEnd);
+    if (onChange) {
+      onChange(newStart, newEnd)
+    }
 
   };
 

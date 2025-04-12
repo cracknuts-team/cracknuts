@@ -18,18 +18,11 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     chart_size: dict[str, int] = traitlets.Dict({"width": 0, "height": 0}).tag(sync=True)
     trace_query: dict[str, int] = traitlets.Dict({"xMin": 0, "xMax": 0, "yMin": 0, "yMax": 0}).tag(sync=True)
 
-    trace_series = traitlets.Dict(
-        {
-            "seriesDataList": [],
-            "xData": [],
-        }
-    )
+    trace_series = traitlets.Dict({"seriesDataList": [], "xData": [], "percentRange": [0, 100]})
 
     range_start = traitlets.Float(0).tag(sync=True)
     range_end = traitlets.Float(100).tag(sync=True)
 
-    selected_end = traitlets.Int(0).tag(sync=True)
-    selected_start = traitlets.Int(0).tag(sync=True)
     selected_range = traitlets.Tuple((0, 0)).tag(sync=True)
 
     _DEFAULT_SHOW_INDEX_THRESHOLD = 3
@@ -70,7 +63,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         }
         if display_range is None:
             display_range = 0, self._trace_dataset.sample_count
-        self._show_trace_by_range(display_range)
+        self._show_trace_by_range(*display_range)
         # series_data_list = []
         # if display_range is not None:
         #     display_range = 0, self._trace_dataset.sample_count
@@ -95,13 +88,11 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         #     self.send_state("trace_series")
 
     def _get_by_range(self, trace: np.ndarray, start, end):
-        print(trace.shape)
-        _trace = trace[start:end]
+        _trace = trace[:, :, start:end]
         x_idx = np.arange(start, end)
-        print(_trace.shape)
         return x_idx, _trace
 
-    def _show_trace_by_range(self, display_range: tuple[int, int]):
+    def _show_trace_by_range(self, start: int, end: int):
         channel_indexes, trace_indexes, traces = (
             self._trace_cache["channel_indexes"],
             self._trace_cache["trace_indexes"],
@@ -113,11 +104,11 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         x_idx = None
         for c, channel_index in enumerate(channel_indexes):
             for t, trace_index in enumerate(trace_indexes):
-                x_idx, y_data = self._get_by_range(traces, *display_range)
+                x_idx, y_data = self._get_by_range(traces, start, end)
                 series_data_list.append(
                     {
                         "name": str(channel_index) + "-" + str(trace_index),
-                        "data": y_data,
+                        "data": y_data[c, t],
                         "emphasis": not self._emphasis,
                     }
                 )
@@ -125,13 +116,16 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self.trace_series = {
             "seriesDataList": series_data_list,
             "xData": x_idx,
+            "percentRange": [
+                start / (self._trace_dataset.sample_count - 1) * 100,
+                end / (self._trace_dataset.sample_count - 1) * 100,
+            ],
         }
-        print(self.trace_series)
         if self._auto_sync:
             self.send_state("trace_series")
 
     def change_range(self, start, end):
-        self._show_trace_by_range((start, end))
+        self._show_trace_by_range(start, end)
 
     def show_default_trace(self):
         trace_count = self._trace_dataset.trace_count
@@ -207,28 +201,28 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     def open_zarr(self, path: str): ...
 
-    @traitlets.observe("selected_start")
-    def selected_start_changed(self, change) -> None:
-        print(f"s: {change.get('new')}")
-        if change.get("new") is not None:
-            self.range_start = change["new"] / (self._trace_dataset.sample_count - 1) * 100
-            self.change_range(self.range_start, self.range_end)
-
-    @traitlets.observe("selected_end")
-    def selected_end_changed(self, change) -> None:
-        print(f"e: {change.get('new')}")
-        if change.get("new") is not None:
-            self.range_end = change["new"] / (self._trace_dataset.sample_count - 1) * 100
-            self.change_range(self.range_start, self.range_end)
+    # @traitlets.observe("selected_start")
+    # def selected_start_changed(self, change) -> None:
+    #     print(f"s: {change.get('new')}")
+    #     if change.get("new") is not None:
+    #         self.range_start = change["new"] / (self._trace_dataset.sample_count - 1) * 100
+    #         self.change_range(self.selected_start, self.selected_end)
+    #
+    # @traitlets.observe("selected_end")
+    # def selected_end_changed(self, change) -> None:
+    #     print(f"e: {change.get('new')}")
+    #     if change.get("new") is not None:
+    #         self.range_end = change["new"] / (self._trace_dataset.sample_count - 1) * 100
+    #         self.change_range(self.selected_start, self.selected_end)
 
     @traitlets.observe("selected_range")
     def selected_range_changed(self, change) -> None:
         print(f"r: {change.get('new')}")
         if change.get("new") is not None:
             s, e = change.get("new")
-            self.range_end = e / (self._trace_dataset.sample_count - 1) * 100
-            self.range_start = s / (self._trace_dataset.sample_count - 1) * 100
-            self.change_range(self.range_start, self.range_end)
+            # self.range_end = e / (self._trace_dataset.sample_count - 1) * 100
+            # self.range_start = s / (self._trace_dataset.sample_count - 1) * 100
+            self.change_range(s, e)
 
 
 class ShowTrace:
