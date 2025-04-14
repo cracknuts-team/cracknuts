@@ -19,8 +19,8 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
 
     series_data = traitlets.Dict({}).tag(sync=True)
 
-    custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"1": (0, 0), "2": (0, 0)}).tag(sync=True)
-    y_range: dict[int, tuple[int, int]] = traitlets.Dict({1: (None, None), 2: (None, None)}).tag(sync=True)
+    custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"0": (0, 0), "1": (0, 0)}).tag(sync=True)
+    y_range: dict[int, tuple[int, int]] = traitlets.Dict({0: (None, None), 1: (None, None)}).tag(sync=True)
     combine_y_range = traitlets.Bool(False).tag(sync=True)
 
     scope_status = traitlets.Int(0).tag(sync=True)
@@ -66,22 +66,22 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
 
     def update(self, series_data: dict[int, np.ndarray]) -> None:
         (
+            mn0,
+            mx0,
+        ) = None, None
+        (
             mn1,
             mx1,
         ) = None, None
-        (
-            mn2,
-            mx2,
-        ) = None, None
 
+        if 0 in series_data.keys():
+            c0 = series_data[0]
+            mn0, mx0 = np.min(c0), np.max(c0)
         if 1 in series_data.keys():
             c1 = series_data[1]
             mn1, mx1 = np.min(c1), np.max(c1)
-        if 2 in series_data.keys():
-            c2 = series_data[2]
-            mn2, mx2 = np.min(c2), np.max(c2)
 
-        self.y_range = {1: (mn1, mx1), 2: (mn2, mx2)}
+        self.y_range = {0: (mn0, mx0), 1: (mn1, mx1)}
 
         self.series_data = {k: v.tolist() for k, v in series_data.items()}
 
