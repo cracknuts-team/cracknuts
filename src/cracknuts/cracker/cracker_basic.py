@@ -132,6 +132,30 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._channel_enable = _ChannelConfig()
         # === end ===
 
+    def change_ip(self, new_ip: str, new_mask: str, new_gateway: str) -> bool:
+        """
+        Change the IP address of the device.
+
+        :param new_ip: The new IP address of the device.
+        :type new_ip: str
+        :param new_mask: The new IP address of the device.
+        :type new_mask: str
+        :param new_gateway: The new IP address of the device.
+        :type new_gateway: str
+        :return: True if the IP address is changed, False otherwise.
+        """
+        op = self.get_operator()
+        if op.connect():
+            if op.set_ip(new_ip, new_mask, new_gateway):
+                self.set_address(new_ip)
+                if self._connection_status:
+                    self.connect()
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def set_address(self, address: tuple[str, int] | str) -> None:
         """
         Set the device address in tuple format.
@@ -246,6 +270,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :param force_write_default_config: Whether to force update the configuration while the device is running
                                            normally (by default, configuration updates are only performed when updating
                                            the firmware).
+        :type force_write_default_config: bool
         :return: None
         """
         if bin_server_path is None:
@@ -328,10 +353,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
             if bin_server_path is None:
                 self._logger.error(f"Can't find bin_server file for hardware model: {self._hardware_model}.")
-                return False
+                return False, False
             if bin_bitstream_path is None:
                 self._logger.error(f"Can't find bin_bitstream file for hardware model: {self._hardware_model}.")
-                return False
+                return False, False
 
         try:
             bin_server = open(bin_server_path, "rb").read()

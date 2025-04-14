@@ -32,15 +32,18 @@ class Operator:
     Config `Cracker` device daemo process
     """
 
+    NON_PROTOCOL_ERROR = -1
+    SOCKET_TIMEOUT_ERROR = -2
+
     def __init__(self, host: str, port: int = protocol.DEFAULT_OPERATOR_PORT):
         self._logger = logger.get_logger(self)
         self._socket: socket.socket | None = None
         self._server_address = (host, port)
         self._command_lock = threading.Lock()
         self._connection_status = False
-        self._ignore_error_print = False  # This is used to ignore connection errors after changing the IP.
+        self._ignore_socket_timeout_error = False  # This is used to ignore connection errors after changing the IP.
 
-    def connect(self):
+    def connect(self, connect_timeout: float = 5.0) -> bool:
         """
         Connect to Cracker daemon service.
         """
@@ -51,13 +54,14 @@ class Operator:
             try:
                 if not self._socket:
                     self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self._socket.settimeout(5)
+                self._socket.settimeout(connect_timeout)
                 self._socket.connect(self._server_address)
                 self._logger.info(f"Connected to cracker operator server: {self._server_address}")
                 self._connection_status = True
                 return True
             except OSError as e:
-                self._logger.error("Connection failed: %s", e)
+                if not (type(e) is TimeoutError and self._ignore_socket_timeout_error):
+                    self._logger.error(f"Connection failed: {e}, and connect_timeout is {connect_timeout}")
                 self._connection_status = False
                 self._socket = None
                 return False
@@ -65,11 +69,12 @@ class Operator:
     def disconnect(self):
         try:
             if self._socket:
-                self._socket.close()
+                self._socket.shutdown(socket.SHUT_RDWR)
             self._logger.info(f"Disconnect from {self._server_address}")
         except OSError as e:
             self._logger.error("Disconnection failed: %s", e)
         finally:
+            self._socket.close()
             self._socket = None
             self._connection_status = False
 
@@ -127,19 +132,34 @@ class Operator:
             gateway = socket.inet_ntoa(res[8:12])
             return ip, mask, gateway
 
-    def set_ip(self, ip, mask, gateway):
+    def set_ip(self, ip, mask, gateway, ignore_reconnect_check: bool = False) -> bool:
         ip_byte = socket.inet_aton(ip)
         mask_byte = socket.inet_aton(mask)
         gate_byte = socket.inet_aton(gateway)
-        self._ignore_error_print = True
+        self._ignore_socket_timeout_error = True
+        if self._socket is None or not self._connection_status:
+            self.connect()
+        if self._socket is not None:
+            self._socket.settimeout(1)
+        else:
+            return False
         status, res = self.send_and_receive(
             protocol.build_send_message(Command.SET_IP, payload=ip_byte + mask_byte + gate_byte)
         )
-        self._ignore_error_print = False
-        if status != protocol.STATUS_OK:
+        if status != self.SOCKET_TIMEOUT_ERROR:
             self._logger.error(f"Set ip failed: {res}")
             return False
-        return True
+        self._server_address = (ip, protocol.DEFAULT_OPERATOR_PORT)
+        self.disconnect()
+        if not ignore_reconnect_check:
+            try_connect_count = 10
+            while try_connect_count > 0:
+                if self.connect(connect_timeout=30):
+                    break
+            self._ignore_socket_timeout_error = False
+            return self._connection_status
+        else:
+            return True
 
     def start_server(self):
         status, res = self.send_and_receive(protocol.build_send_message(Command.START_SERVER))
@@ -177,7 +197,7 @@ class Operator:
             return False
         return True
 
-    def send_and_receive(self, message) -> tuple[int, bytes | None]:
+    def send_and_receive(self, message) -> tuple[int, bytes | None | str]:
         """
         Send message to socket
         :param message:
@@ -219,11 +239,15 @@ class Operator:
                     )
             return status, resp_payload
         except OSError as e:
-            if self._ignore_error_print:
-                return protocol.STATUS_OK, None
+            if self._ignore_socket_timeout_error:
+                if type(e) is TimeoutError:
+                    return self.SOCKET_TIMEOUT_ERROR, str(e.args)
+                else:
+                    self._logger.error(f"Send message failed: {e}, and msg: {message}", e, message)
+                    return self.NON_PROTOCOL_ERROR, str(e.args)
             else:
-                self._logger.error("Send message failed: %s, and msg: %s", e, message)
-                return protocol.STATUS_ERROR, None
+                self._logger.error(f"Send message failed: {e}, and msg: {message}", e, message)
+                return self.NON_PROTOCOL_ERROR, str(e.args)
         finally:
             self._command_lock.release()
 
