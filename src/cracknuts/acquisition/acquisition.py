@@ -1,6 +1,8 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import dataclasses
+from dataclasses import dataclass
 import datetime
 import json
 import os.path
@@ -14,6 +16,18 @@ import numpy as np
 from cracknuts import logger
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.trace.trace import ScarrTraceDataset, NumpyTraceDataset
+
+
+@dataclass
+class AcquisitionConfig:
+    trace_count: int = 1
+    sample_length: int = 1024
+    sample_offset: int = 0
+    trigger_judge_timeout: float = 0.005
+    trigger_judge_wait_time: float = 0.05
+    do_error_max_count: int = 1
+    file_path: str = ""
+    file_format: str = "scarr"
 
 
 class AcqProgress:
@@ -50,6 +64,7 @@ class Acquisition(abc.ABC):
         do_error_max_count: int = -1,
         file_format: str = "scarr",
         file_path: str = "auto",
+        trace_fetch_interval: float = 0,
     ):
         """
         :param cracker: The controlled Cracker object.
@@ -102,6 +117,7 @@ class Acquisition(abc.ABC):
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
+        self.trace_fetch_interval = trace_fetch_interval
 
     def get_status(self):
         return self._status
@@ -246,6 +262,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
+        trace_fetch_interval: float = 2.0,
     ):
         """
         Start test mode in background.
@@ -280,6 +297,7 @@ class Acquisition(abc.ABC):
                 trigger_judge_timeout=trigger_judge_timeout,
                 do_error_max_count=do_error_max_count,
                 do_error_handler_strategy=do_error_handler_strategy,
+                trace_fetch_interval=trace_fetch_interval,
             )
 
     def test_sync(
@@ -366,6 +384,7 @@ class Acquisition(abc.ABC):
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
         file_path: str | None = "auto",
+        trace_fetch_interval: float = 0.1,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -382,6 +401,7 @@ class Acquisition(abc.ABC):
                 "do_error_handler_strategy": do_error_handler_strategy,
                 "file_format": file_format,
                 "file_path": file_path,
+                "trace_fetch_interval": trace_fetch_interval,
             },
         ).start()
 
@@ -398,6 +418,7 @@ class Acquisition(abc.ABC):
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "scarr",
         file_path: str | None = "auto",
+        trace_fetch_interval: float = 0.1,
     ):
         if self._status > 0:
             self._logger.warning(
@@ -431,6 +452,8 @@ class Acquisition(abc.ABC):
             self.file_format = file_format
         if file_path is not None:
             self.file_path = file_path
+        if trace_fetch_interval is not None:
+            self.trace_fetch_interval = trace_fetch_interval
         self.pre_init()
         self.init()
         self._post_init()
@@ -450,9 +473,13 @@ class Acquisition(abc.ABC):
 
         cracker_version = self.cracker.get_firmware_version()
         if persistent:
-            channel_names = [
-                str(k) for k, v in self.cracker.get_current_config().osc_analog_channel_enable.items() if v
-            ]
+            cracker_config = self.cracker.get_current_config()
+            channel_names = []
+            # disable this channel before cracker support channel enable.
+            # if cracker_config.osc_channel_0_enable:
+            #     channel_names.append("0")
+            if cracker_config.osc_channel_1_enable:
+                channel_names.append("1")
             if self.sample_length == -1:
                 sample_length = self.cracker.get_current_config().osc_sample_length
             else:
@@ -555,7 +582,8 @@ class Acquisition(abc.ABC):
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
             # Reduce the execution frequency in test mode.
             if not persistent:
-                time.sleep(2)
+                if self.trace_fetch_interval is not None and self.trace_fetch_interval != 0:
+                    time.sleep(self.trace_fetch_interval)
 
         if dataset is not None:
             dataset.dump()
@@ -662,9 +690,12 @@ class Acquisition(abc.ABC):
         if sample_length == -1:
             sample_length = self.cracker.get_current_config().osc_sample_length
         config = self.cracker.get_current_config()
-        if config.osc_analog_channel_enable is None:
-            raise Exception("Channel info can't be none.")
-        enable_channels = [k for k, v in config.osc_analog_channel_enable.items() if v]
+
+        enable_channels = []
+        if config.osc_channel_0_enable:
+            enable_channels.append(0)
+        if config.osc_channel_1_enable:
+            enable_channels.append(1)
         wave_dict = {}
         for c in enable_channels:
             status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
@@ -693,20 +724,22 @@ class Acquisition(abc.ABC):
         :param path: the path to the JSON file
         :return: the content of JSON string or None if no path is specified.
         """
-        config = {
-            "trace_count": self.trace_count,
-            "sample_length": self.sample_length,
-            "sample_offset": self.sample_offset,
-            "trigger_judge_timeout": self.trigger_judge_timeout,
-            "trigger_judge_wait_time": self.trigger_judge_wait_time,
-            "do_error_max_count": self.do_error_max_count,
-            "trace_file_path": self.file_path,
-        }
+        config = AcquisitionConfig(
+            self.trace_count,
+            self.sample_length,
+            self.sample_offset,
+            self.trigger_judge_timeout,
+            self.trigger_judge_wait_time,
+            self.do_error_max_count,
+            self.file_path,
+            self.file_format,
+        )
+
         if path is None:
-            return json.dumps(config)
+            return json.dumps(dataclasses.astuple(config))
         else:
             with open(path, "w") as f:
-                json.dump(config, f)
+                json.dump(dataclasses.astuple(config), f)
 
     def load_config_from_file(self, path: str) -> None:
         """
@@ -724,13 +757,22 @@ class Acquisition(abc.ABC):
         :param json_str: the JSON string
         """
         config = json.loads(json_str)
+        self.load_config_from_json(config)
+
+    def load_config_from_json(self, config: dict):
+        """
+        Load config from a JSON object.
+
+        :param config: the JSON object
+        """
         self.trace_count = config["trace_count"]
         self.sample_length = config["sample_length"]
         self.sample_offset = config["sample_offset"]
         self.trigger_judge_timeout = config["trigger_judge_timeout"]
         self.trigger_judge_wait_time = config["trigger_judge_wait_time"]
         self.do_error_max_count = config["do_error_max_count"]
-        self.file_path = config["trace_file_path"]
+        self.file_path = config["file_path"]
+        self.file_format = config["file_format"]
 
     def is_running(self):
         return self._status != self.STATUS_STOPPED

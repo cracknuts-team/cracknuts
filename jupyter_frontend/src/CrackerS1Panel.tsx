@@ -1,7 +1,22 @@
-import {Button, Checkbox, Col, Divider, Form, Input, InputNumber, Row, Select, Space, Spin, Tag, Upload,} from "antd";
+import {
+  Button,
+  Checkbox,
+  Col,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Tooltip,
+  Upload,
+  Modal, Alert
+} from "antd";
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {useModel, useModelState} from "@anywidget/react";
-import {DownloadOutlined, InfoCircleOutlined, SaveOutlined, UploadOutlined,} from "@ant-design/icons";
+import {BlockOutlined, ExportOutlined, ImportOutlined, SaveOutlined, ThunderboltOutlined,} from "@ant-design/icons";
 import AcquisitionPanel from "@/AcquisitionPanel.tsx";
 import {FormattedMessage, useIntl} from "react-intl";
 
@@ -17,9 +32,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [connectStatus] = useModelState<boolean>("connect_status");
   const [buttonBusy, setButtonBusy] = useState<boolean>(false);
 
-  const [crackerId] = useModelState<string>("cracker_id");
-  const [crackerName] = useModelState<string>("cracker_name");
-  const [crackerVersion] = useModelState<string>("cracker_version");
+  // const [crackerId] = useModelState<string>("cracker_id");
+  // const [crackerName] = useModelState<string>("cracker_name");
+  // const [crackerVersion] = useModelState<string>("cracker_version");
 
   const model = useModel();
 
@@ -55,9 +70,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
     }
   }
 
-  if (connectStatusChanged != undefined) {
-    connectStatusChanged(connectStatus);
-  }
+  useEffect(() => {
+    if (connectStatusChanged != undefined) {
+      connectStatusChanged(connectStatus);
+    }
+  }, []);
+
 
   function disconnect(): void {
     model.send({source: "connectButton", event: "onClick", args: {action: "disconnect"}});
@@ -80,26 +98,35 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [nutSpiSpeed, setNutSpiSpeed] = useModelState<number>("nut_spi_speed");
   const [nutSpiCpol, setNutSpiCpol] = useModelState<number>("nut_spi_cpol");
   const [nutSpiCpha, setNutSpiCpha] = useModelState<number>("nut_spi_cpha");
-  const [nutSpiAutoSelect, setSpiAutoSelect] = useModelState<boolean>("nut_spi_auto_select");
+  const [nutSpiCsnAuto, setNutSpiCsnAuto] = useModelState<boolean>("nut_spi_csn_auto");
+  const [nutSpiCsnDelay, setNutSpiCsnDelay] = useModelState<boolean>("nut_spi_csn_delay");
 
   const [nutI2cEnable, setNutI2cEnable] = useModelState<boolean>("nut_i2c_enable");
   const [nutI2cDevAddr, setNutI2cDevAddr] = useModelState<string>("nut_i2c_dev_addr");
   const [nutI2cSpeed, setNutI2cSpeed] = useModelState<number>("nut_i2c_speed");
 
   // osc
-  const [oscSampleRate, setOscSampleRate] = useModelState<number>("osc_sample_rate");
+  const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");
   const [oscSamplePhase, setOscSamplePhase] = useModelState<number>("osc_sample_phase");
   const [oscSampleLength, setOscSampleLength] = useModelState<number>("osc_sample_length");
   const [oscSampleDelay, setOscSampleDelay] = useModelState<number>("osc_sample_delay");
-  const [channelAEnable, setChannelAEnable] = useModelState<boolean>("osc_analog_channel_a_enable");
-  const [channelBEnable, setChannelBEnable] = useModelState<boolean>("osc_analog_channel_b_enable");
+  const [channel0Enable, setChannel0Enable] = useModelState<boolean>("osc_channel_0_enable");
+  const [channel1Enable, setChannel1Enable] = useModelState<boolean>("osc_channel_1_enable");
 
   const [oscTriggerSource, setOscTriggerSource] = useModelState<number>("osc_trigger_source");
   const [oscTriggerMode, setOscTriggerMode] = useModelState<number>("osc_trigger_mode");
   const [oscTriggerEdge, setOscTriggerEdge] = useModelState<number>("osc_trigger_edge");
   const [oscTriggerEdgeLevel, setOscTriggerEdgeLevel] = useModelState<number>("osc_trigger_edge_level");
-  const [socAnalogChannelAGain, setOscAnalogChannelAGain] = useModelState<number>("osc_analog_channel_a_gain");
-  const [socAnalogChannelBGain, setOscAnalogChannelBGain] = useModelState<number>("osc_analog_channel_b_gain");
+  const [socChannel0Gain, setOscChannel0Gain] = useModelState<number>("osc_channel_0_gain");
+  const [socChannel1Gain, setOscChannel1Gain] = useModelState<number>("osc_channel_1_gain");
+
+  const [panelConfigDifferentFromCrackerConfig] = useModelState<boolean>("panel_config_different_from_cracker_config");
+
+  const [hasError, setHasError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const closeErrorModal = () => {
+    setHasError(false);
+  };
 
   const dumpConfig = () => {
     model.send({source: "dumpConfigButton", event: "onClick", args: {}});
@@ -124,6 +151,14 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
 
   const saveConfig = () => {
     model.send({source: "saveConfigButton", event: "onClick", args: {}});
+  };
+
+  const writeConfig = () => {
+    model.send({source: "writeConfigButton", event: "onClick", args: {}});
+  };
+
+  const readConfig = () => {
+    model.send({source: "readConfigButton", event: "onClick", args: {}});
   };
 
   const uploadProp = {
@@ -173,6 +208,21 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
         dumpConfigCompleted(msg["dumpConfigCompleted"]);
       } else if ("loadConfigCompleted" in msg) {
         loadConfigCompleted();
+      } else if ("errorMessage" in msg) {
+        setHasError(true)
+        if (msg["api"] == "nut_spi_speed") {
+          if (msg["errorMessage"] == "NotSupportSpeed") {
+            setErrorMsg(intl.formatMessage({
+              id: "cracker.config.nut.spi.speed.error.notSupportSpeed"
+            }, {
+              speed: msg["speed"]
+            }));
+          } else {
+            setErrorMsg(msg["errorMessage"]);
+          }
+        } else {
+          setErrorMsg(msg["errorMessage"])
+        }
       }
     };
     model.on("msg:custom", customCallback);
@@ -194,10 +244,10 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
 
   return (
     <div>
-      <Row>
-        <Col span={16}>
-          <Space size={"large"}>
-            <Space.Compact style={{width: "400"}} size={"small"}>
+      <Row justify="space-between">
+        <Col flex={"auto"}>
+          <Space size={"large"} style={{paddingTop: "5px", paddingBottom: "5px"}}>
+            <Space.Compact style={{maxWidth: "18em", minWidth: "18em"}} size={"small"}>
               <Input
                 addonBefore="cnp://"
                 value={getUri()}
@@ -210,42 +260,68 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     : intl.formatMessage({id: 'cracker.connect'})}
               </Button>
             </Space.Compact>
-            <span>
-              <Tag icon={<InfoCircleOutlined/>} color="success">
-                <FormattedMessage id={"cracker.id"}/>: {crackerId}
-              </Tag>
-            </span>
-            <span>
-              <Tag icon={<InfoCircleOutlined/>} color="success">
-                <FormattedMessage id={"cracker.name"}/>: {crackerName}
-              </Tag>
-            </span>
-            <span>
-              <Tag icon={<InfoCircleOutlined/>} color="success">
-                <FormattedMessage id={"cracker.version"}/>: {crackerVersion}
-              </Tag>
-            </span>
+            {/*<span>*/}
+            {/*  <Tag icon={<InfoCircleOutlined/>} color="success">*/}
+            {/*    <FormattedMessage id={"cracker.id"}/>: {crackerId}*/}
+            {/*  </Tag>*/}
+            {/*</span>*/}
+            {/*<span>*/}
+            {/*  <Tag icon={<InfoCircleOutlined/>} color="success">*/}
+            {/*    <FormattedMessage id={"cracker.name"}/>: {crackerName}*/}
+            {/*  </Tag>*/}
+            {/*</span>*/}
+            {/*<span>*/}
+            {/*  <Tag icon={<InfoCircleOutlined/>} color="success">*/}
+            {/*    <FormattedMessage id={"cracker.version"}/>: {crackerVersion}*/}
+            {/*  </Tag>*/}
+            {/*</span>*/}
           </Space>
         </Col>
-        <Col span={7} style={{textAlign: "right"}}>
-          <Space.Compact>
-            <Button icon={<SaveOutlined/>} size={"small"} onClick={saveConfig} type="primary">
-              <FormattedMessage id={"cracknuts.config.save"}/>
-            </Button>
-            <Upload {...uploadProp}>
-              <Button icon={<DownloadOutlined/>} size={"small"} type="primary">
-                <FormattedMessage id={"cracknuts.config.load"}/>
+        <Col style={{marginLeft: "auto"}}>
+          <Form layout={"inline"}>
+            <Form.Item>
+              <Tooltip title={panelConfigDifferentFromCrackerConfig ? intl.formatMessage({id: "cracknuts.config.write.tooltip.different"}) : intl.formatMessage({id: "cracknuts.config.write.tooltip"})}>
+                <Button icon={<ThunderboltOutlined />} size={"small"} onClick={writeConfig} color={panelConfigDifferentFromCrackerConfig ? "danger" : "primary"} variant="solid">
+                  <FormattedMessage id={"cracknuts.config.write"}/>
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.read.tooltip"})}>
+                <Button icon={<BlockOutlined />} size={"small"} onClick={readConfig} type="primary">
+                  <FormattedMessage id={"cracknuts.config.read"}/>
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.save.tooltip"})}>
+                <Button icon={<SaveOutlined/>} size={"small"} onClick={saveConfig} type="primary">
+                  <FormattedMessage id={"cracknuts.config.save"}/>
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.load.tooltip"})}>
+                <Upload {...uploadProp}>
+                  <Button icon={<ImportOutlined />} size={"small"} type="primary">
+                    <FormattedMessage id={"cracknuts.config.load"}/>
+                  </Button>
+                </Upload>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Tooltip title={intl.formatMessage({id: "cracknuts.config.dump.tooltip"})}>
+                <Button icon={<ExportOutlined />} size={"small"} onClick={dumpConfig} type="primary">
+                  <FormattedMessage id={"cracknuts.config.dump"}/>
+                </Button>
+              </Tooltip>
+            </Form.Item>
+            <Form.Item>
+              <Button size={"small"} variant="text" color="default" onClick={changeLanguage}>
+                <span style={{fontSize: '0.8em', width: 13, textAlign: 'center'}}>{language}</span>
               </Button>
-            </Upload>
-            <Button icon={<UploadOutlined/>} size={"small"} onClick={dumpConfig} type="primary">
-              <FormattedMessage id={"cracknuts.config.dump"}/>
-            </Button>
-          </Space.Compact>
-        </Col>
-        <Col span={1} style={{textAlign: "right"}}>
-            <Button size={"small"} variant="text" color="default" onClick={changeLanguage}>
-              <span style={{fontSize: '0.8em', width: 13, textAlign: 'center'}}>{language}</span>
-            </Button>
+            </Form.Item>
+          </Form>
         </Col>
       </Row>
       <Spin indicator={<span></span>} spinning={!connectStatus}>
@@ -377,11 +453,13 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         <FormattedMessage id={"cracker.config.nut.spi.enable"}/>
                       </Checkbox>
                     </Form.Item>
-                    <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.speed"})}>
-                      <InputNumber id={"cracker_config_spi_speed"} value={nutSpiSpeed} onChange={(v) => {
-                          setNutSpiSpeed(Number(v));
-                        }} size={"small"} disabled={!nutSpiEnable}/>
-                    </Form.Item>
+                    <Tooltip title={nutSpiEnable ? "设置SPI Speed 会根据根据您输入的数值自动转换SCK的整数倍，并反推出真实速率，可能导致您输入的和预想值不一致，这个需要回车后下发数据" : null}>
+                      <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.speed"})}>
+                        <InputNumber precision={2} id={"cracker_config_spi_speed"} value={nutSpiSpeed}
+                          onPressEnter={(e) => {setNutSpiSpeed(Number((e.target as HTMLInputElement).value))}} controls={false}
+                                     size={"small"} disabled={!nutSpiEnable}/>
+                      </Form.Item>
+                    </Tooltip>
                     <Form.Item label={intl.formatMessage({id: "cracker.config.nut.spi.cpol"})}>
                       <Space.Compact>
                         <Select id={"cracker_config_spi_cpol"} size={"small"} style={{minWidth: 90}} disabled={!nutSpiEnable}
@@ -400,11 +478,29 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         ]}/>
                       </Space.Compact>
                     </Form.Item>
-                    <Form.Item style={{marginRight: 1}}>
-                      <Checkbox id={"cracker_config_spi_auto_select"} checked={nutSpiAutoSelect} onChange={() => {setSpiAutoSelect(!nutSpiAutoSelect)}}>
-                        <FormattedMessage id={"cracker.config.nut.spi.autoSelect"}/>
-                      </Checkbox>
-                    </Form.Item>
+                    <Tooltip
+                      title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.autoSelect.tooltip"}) : null}>
+                      <Form.Item style={{marginRight: 1}}>
+                        <Checkbox id={"cracker_config_spi_auto_select"} checked={nutSpiCsnAuto} onChange={() => {
+                          setNutSpiCsnAuto(!nutSpiCsnAuto)
+                        }} disabled={!nutSpiEnable}>
+                          <FormattedMessage id={"cracker.config.nut.spi.autoSelect"}/>
+                        </Checkbox>
+                      </Form.Item>
+                    </Tooltip>
+
+                    <Tooltip
+                      title={nutSpiEnable ? intl.formatMessage({id: "cracker.config.nut.spi.csnDly.tooltip"}) : null}>
+
+                      <Form.Item style={{marginRight: 1}}>
+                        <Checkbox id={"cracker_config_spi_csn_dly"} checked={nutSpiCsnDelay} onChange={() => {
+                          setNutSpiCsnDelay(!nutSpiCsnDelay)
+                        }} disabled={!nutSpiEnable}>
+                          <FormattedMessage id={"cracker.config.nut.spi.csnDly"}/>
+                        </Checkbox>
+                      </Form.Item>
+                    </Tooltip>
+
               {/*    </Form>*/}
               {/*  </Col>*/}
               {/*</Row>*/}
@@ -453,8 +549,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 {value: 8000, label: "8  M"},
                                 {value: 4000, label: "4  M"},
                               ]}
-                              value={oscSampleRate}
-                              onChange={setOscSampleRate}
+                              value={oscSampleClock}
+                              onChange={setOscSampleClock}
                               style={{width: 80}}
                             ></Select>
                             <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}
@@ -481,9 +577,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                           <Space.Compact>
                             <Form.Item>
                               <Checkbox
-                                checked={channelAEnable}
+                                checked={channel0Enable}
                                 onChange={(v) => {
-                                  setChannelAEnable(v.target.checked);
+                                  setChannel0Enable(v.target.checked);
                                 }}
                               >
                                 <FormattedMessage id={"cracker.config.scope.channel.a.gain"}/>
@@ -496,11 +592,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 min={1}
                                 max={100}
                                 changeOnWheel
-                                disabled={!channelAEnable}
-                                value={socAnalogChannelAGain}
+                                disabled={!channel0Enable}
+                                value={socChannel0Gain}
                                 onChange={(v: number | string | null) => {
                                   if (v != null) {
-                                    setOscAnalogChannelAGain(Number(v));
+                                    setOscChannel0Gain(Number(v));
                                   }
                                 }}
                               />
@@ -511,9 +607,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                           <Space.Compact>
                             <Form.Item>
                               <Checkbox
-                                checked={channelBEnable}
+                                checked={channel1Enable}
                                 onChange={(v) => {
-                                  setChannelBEnable(v.target.checked);
+                                  setChannel1Enable(v.target.checked);
                                 }}
                               >
                                 <FormattedMessage id={"cracker.config.scope.channel.b.gain"}/>
@@ -526,11 +622,11 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 min={1}
                                 max={100}
                                 changeOnWheel
-                                disabled={!channelBEnable}
-                                value={socAnalogChannelBGain}
+                                disabled={!channel1Enable}
+                                value={socChannel1Gain}
                                 onChange={(v: number | string | null) => {
                                   if (v != null) {
-                                    setOscAnalogChannelBGain(Number(v));
+                                    setOscChannel1Gain(Number(v));
                                   }
                                 }}
                               />
@@ -642,6 +738,9 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
           </Col>
         </Row>
       </Spin>
+      <Modal title="Error" open={hasError} onOk={closeErrorModal} onCancel={closeErrorModal}>
+        <Alert message={errorMsg} type="error" showIcon />
+      </Modal>
     </div>
   );
 };

@@ -131,7 +131,7 @@ class MockCracker:
             protocol.STATUS_OK, f'Command [0x{format(command, '04x')}] not supported'.encode()
         )
 
-    @_handler(protocol.Command.GET_ID, has_payload=False)
+    @_handler(protocol.Command.GET_CONFIG, has_payload=False)
     def get_id(self) -> bytes:
         return b"mock_001"
 
@@ -194,7 +194,7 @@ class MockCracker:
     def osc_clock_sample_phase(self) -> bytes: ...
 
     @_handler(protocol.Command.OSC_ANALOG_TRIGGER_SOURCE, has_payload=False)
-    def osc_analog_trigger_source(self) -> bytes: ...
+    def osc_trigger_source(self) -> bytes: ...
 
     @_handler(protocol.Command.OSC_TRIGGER_MODE, has_payload=False)
     def osc_trigger_mode(self) -> bytes: ...
