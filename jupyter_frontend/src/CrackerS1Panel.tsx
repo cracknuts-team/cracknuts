@@ -70,9 +70,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
     }
   }
 
-  if (connectStatusChanged != undefined) {
-    connectStatusChanged(connectStatus);
-  }
+  useEffect(() => {
+    if (connectStatusChanged != undefined) {
+      connectStatusChanged(connectStatus);
+    }
+  }, []);
+
 
   function disconnect(): void {
     model.send({source: "connectButton", event: "onClick", args: {action: "disconnect"}});
