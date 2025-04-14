@@ -203,6 +203,8 @@ class ScarrTraceDataset(TraceDataset):
         self._create_time: int | None = create_time
         self._version: str | None = version
 
+        self._logger = logger.get_logger(self)
+
         if zarr_kwargs is None:
             zarr_kwargs = {}
         if zarr_trace_group_kwargs is None:
@@ -305,9 +307,20 @@ class ScarrTraceDataset(TraceDataset):
             raise ValueError("channel index out range")
         if trace_index not in range(0, self._trace_count):
             raise ValueError("trace, index out of range")
+        if self._sample_count != trace.shape[0]:
+            self._logger.error(
+                f"Trace sample count {trace.shape[0]} does not match the previously "
+                f"defined value {self._sample_count}, so the trace will be ignored."
+            )
+            return
         channel_index = self._channel_names.index(channel_name)
         self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
         if self._data_length != 0 and data is not None:
+            if self._data_length != data.shape[0]:
+                self._logger.error(
+                    f"Trace data length {data.shape[0]} does not match the previously "
+                    f"defined value {self._data_length}, so the data will be ignored."
+                )
             self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_index] = data
 
     def get_origin_data(self) -> zarr.hierarchy.Group:

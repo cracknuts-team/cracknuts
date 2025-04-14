@@ -20,10 +20,10 @@ class ConfigG1(ConfigBasic):
         self.osc_sample_delay = 0
         self.osc_sample_rate = 65000
         self.osc_sample_phase = 0
-        self.osc_analog_trigger_source = 0
+        self.osc_trigger_source = 0
         self.osc_trigger_mode = 0
-        self.osc_analog_trigger_edge = 0
-        self.osc_analog_trigger_edge_level = 1
+        self.osc_trigger_edge = 0
+        self.osc_trigger_edge_level = 1
 
 
 class CrackerG1(CrackerBasic[ConfigG1]):
@@ -103,7 +103,7 @@ class CrackerG1(CrackerBasic[ConfigG1]):
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
-            self._config.osc_analog_trigger_source = source
+            self._config.osc_trigger_source = source
 
     def osc_set_trigger_edge(self, edge: int | str):
         if isinstance(edge, str):
@@ -124,7 +124,7 @@ class CrackerG1(CrackerBasic[ConfigG1]):
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
-            self._config.osc_analog_trigger_edge = edge
+            self._config.osc_trigger_edge = edge
 
     def osc_set_trigger_edge_level(self, edge_level: int):
         payload = struct.pack(">H", edge_level)
@@ -133,7 +133,7 @@ class CrackerG1(CrackerBasic[ConfigG1]):
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
         else:
-            self._config.osc_analog_trigger_edge_level = edge_level
+            self._config.osc_trigger_edge_level = edge_level
 
     def osc_set_sample_delay(self, delay: int):
         payload = struct.pack(">i", delay)

@@ -4,7 +4,7 @@ import pathlib
 import typing
 from typing import Any
 
-from cracknuts.acquisition.acquisition import Acquisition
+from cracknuts.acquisition.acquisition import Acquisition, AcquisitionConfig
 from traitlets import traitlets
 
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
@@ -15,7 +15,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     _css = ""
 
     acq_status = traitlets.Int(0).tag(sync=True)
-    acq_run_progress = traitlets.Dict({"finished": 0, "total": 1}).tag(sync=True)
+    acq_run_progress = traitlets.Dict({"finished": 0, "total": -1}).tag(sync=True)
 
     trace_count = traitlets.Int(1000).tag(sync=True)
     sample_offset = traitlets.Int(0).tag(sync=True)
@@ -25,6 +25,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     do_error_max_count = traitlets.Int(1).tag(sync=True)
     file_format = traitlets.Unicode("scarr").tag(sync=True)
     file_path = traitlets.Unicode("").tag(sync=True)
+    trace_fetch_interval = traitlets.Float(2.0).tag(sync=True)
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -41,7 +42,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         self.acquisition.on_run_progress_changed(self.update_acq_run_progress)
         self.acq_status = self.acquisition.get_status()
 
-    def sync_config(self) -> None:
+    def sync_config_from_acquisition(self) -> None:
         if self.acquisition.trace_count != -1:
             # When acquisition.trace_count = -1, it indicates that the ACQUISITION is in test mode,
             # and in this mode, synchronization of the acquisition trace_count to the GUI is not required.
@@ -58,9 +59,25 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
             else self.acquisition.file_path
         )
 
-    def bind(self) -> None:
+    def before_test(self): ...
+
+    def before_run(self): ...
+
+    def listen_acquisition_config(self) -> None:
         ...
         # todo complete ui -> python sync
+
+    def get_acquisition_panel_config(self) -> AcquisitionConfig:
+        return AcquisitionConfig(
+            self.trace_count,
+            self.sample_length,
+            self.sample_offset,
+            self.trigger_judge_timeout,
+            self.trigger_judge_wait_time,
+            self.do_error_max_count,
+            self.file_path,
+            self.file_format,
+        )
 
     def update_acq_status(self, status) -> None:
         self.acq_status = status
@@ -73,13 +90,16 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         if status == "pause":
             self.acquisition.pause()
         elif status == "test":
+            self.before_test()
             self.acquisition.test(
                 sample_offset=self.sample_offset,
                 trigger_judge_wait_time=self.trigger_judge_wait_time,
                 trigger_judge_timeout=self.trigger_judge_timeout,
                 do_error_max_count=self.do_error_max_count,
+                trace_fetch_interval=self.trace_fetch_interval,
             )
         elif status == "run":
+            self.before_run()
             self.acquisition.run(
                 count=self.trace_count,
                 sample_offset=self.sample_offset,
@@ -92,3 +112,8 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
             )
         else:
             self.acquisition.stop()
+
+    @traitlets.observe("trace_fetch_interval")
+    def trace_fetch_interval_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.trace_fetch_interval = change["new"]

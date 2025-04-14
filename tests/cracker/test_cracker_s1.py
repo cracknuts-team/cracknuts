@@ -154,13 +154,13 @@ def test_osc_trigger_source(cracker_s1):
     for sources in sources1, sources2:
         for source in sources:
             s, _ = cracker_s1.osc_trigger_source(source)
-            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_source == sources.index(source)
+            assert s == 0 and cracker_s1.get_current_config().osc_trigger_source == sources.index(source)
             assert get_result_by_command(cracker_s1, Command.OSC_ANALOG_TRIGGER_SOURCE) == struct.pack('>B',
                                                                                                        sources.index(
                                                                                                            source))
 
             s, _ = cracker_s1.osc_trigger_source(sources.index(source))
-            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_source == sources.index(source)
+            assert s == 0 and cracker_s1.get_current_config().osc_trigger_source == sources.index(source)
             assert get_result_by_command(cracker_s1, Command.OSC_ANALOG_TRIGGER_SOURCE) == struct.pack('>B',
                                                                                                        sources.index(
                                                                                                            source))
@@ -178,11 +178,11 @@ def test_osc_trigger_edge(cracker_s1):
     for edges in edges1, edges2, tuple(e.lower() for e in edges1), tuple(e.lower() for e in edges2):
         for edge in edges:
             s, _ = cracker_s1.osc_trigger_edge(edge)
-            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_edge == edges.index(edge)
+            assert s == 0 and cracker_s1.get_current_config().osc_trigger_edge == edges.index(edge)
             assert get_result_by_command(cracker_s1, Command.OSC_TRIGGER_EDGE) == struct.pack('>B', edges.index(edge))
 
             s, _ = cracker_s1.osc_trigger_edge(edges.index(edge))
-            assert s == 0 and cracker_s1.get_current_config().osc_analog_trigger_edge == edges.index(edge)
+            assert s == 0 and cracker_s1.get_current_config().osc_trigger_edge == edges.index(edge)
             assert get_result_by_command(cracker_s1, Command.OSC_TRIGGER_EDGE) == struct.pack('>B', edges.index(edge))
 
     s, _ = cracker_s1.osc_trigger_edge("x")

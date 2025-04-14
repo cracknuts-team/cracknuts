@@ -5,6 +5,7 @@ import os
 import pathlib
 import sys
 import typing
+from enum import Enum
 
 import traitlets
 
@@ -37,44 +38,129 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             raise ValueError(f"can't find panel for cracker type: {type(cracker)}.")
         super().__init__(*args, **kwargs)
         self.language = user_config.get_option("language", fallback="en")
-        self._load_current_path_config()
+        # self._load_current_path_config()
+        workspace_config = self._get_workspace_config()
+        if workspace_config:
+            config_file_cracker_config = workspace_config.get("cracker")
+            # uri = workspace_config.get("connection")
+            uri = cracker.get_uri()
+            cracker_config = cracker.get_current_config()
+            if config_file_cracker_config:
+                for k, v in config_file_cracker_config.items():
+                    if hasattr(cracker_config, k):
+                        cv = getattr(cracker_config, k)
+                        if isinstance(cv, Enum):
+                            cv = cv.value
+                        if v != cv:
+                            self.panel_config_different_from_cracker_config = True
+                            self._logger.warning(
+                                f"The configuration item {k} differs between the configuration file "
+                                f"({v}) and the cracker ({cv})."
+                            )
+                            break
+                    else:
+                        self._logger.error(
+                            f"Config has no attribute named {k}, " f"which comes from the JSON key in the config file."
+                        )
+                if not self.panel_config_different_from_cracker_config:
+                    self.listen_cracker_config()
+                self.update_cracker_panel_config(config_file_cracker_config, uri)
+            else:
+                self._logger.error(
+                    "Configuration file format error: The cracker configuration segment is missing. "
+                    "The configuration from the cracker or the default configuration will be used."
+                )
+                self.read_config_from_cracker()
+                self.listen_cracker_config()
+
+            acquisition_config = workspace_config.get("acquisition")
+            if acquisition_config:
+                self.acquisition.load_config_from_json(workspace_config.get("acquisition"))
+            else:
+                self._logger.error(
+                    "Configuration file format error: Acquisition configuration segment is missing. "
+                    "The configuration from the acquisition object or "
+                    "the default configuration will be used."
+                )
+            self.sync_config_from_acquisition()
+            self.listen_acquisition_config()
+        else:
+            self.read_config_from_cracker()
+            self.listen_cracker_config()
+            self.sync_config_from_acquisition()
+            self.listen_acquisition_config()
+
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
         self.reg_msg_handler("loadConfigButton", "onClick", self.load_config_button_click)
         self.reg_msg_handler("saveConfigButton", "onClick", self.save_config_button_click)
+        self.reg_msg_handler("writeConfigButton", "onClick", self.write_config_button_click)
+        self.reg_msg_handler("readConfigButton", "onClick", self.read_config_button_click)
 
-    def sync_config(self) -> None:
-        CrackerS1PanelWidget.sync_config(self)
-        AcquisitionPanelWidget.sync_config(self)
+    def before_test(self):
+        self.write_config_to_cracker()
 
-    def bind(self) -> None:
-        CrackerS1PanelWidget.bind(self)
-        AcquisitionPanelWidget.bind(self)
+    def before_run(self):
+        self.write_config_to_cracker()
 
     def dump_config_button_click(self, args: dict[str, typing.Any]):
         self.send({"dumpConfigCompleted": self._dump_config()})
 
     def load_config_button_click(self, args: dict[str, typing.Any]):
         connection_info = args.get("connection")
-        config_info = args.get("config")
+        config_file_cracker_config = args.get("cracker")
         acquisition_info = args.get("acquisition")
-        self.cracker.load_config_from_str(config_info)
-        self.cracker.set_uri(connection_info)
+        cracker_config = self.cracker.get_current_config()
+        for k, v in config_file_cracker_config.items():
+            if hasattr(cracker_config, k):
+                cv = getattr(cracker_config, k)
+                if isinstance(cv, Enum):
+                    cv = cv.value
+                if v != cv:
+                    self.panel_config_different_from_cracker_config = True
+                    self._logger.error(
+                        f"The configuration item {k} differs between the configuration file "
+                        f"({v}) and the cracker ({cv})."
+                    )
+                    break
+            else:
+                self._logger.error(
+                    f"Config has no attribute named {k}, " f"which comes from the JSON key in the config file."
+                )
+
+        if self.panel_config_different_from_cracker_config:
+            self.stop_listen_cracker_config()
+            self.update_cracker_panel_config(config_file_cracker_config, connection_info)
+
         self.acquisition.load_config_from_str(acquisition_info)
-        self.sync_config()
+        self.read_config_from_cracker()
         self.send({"loadConfigCompleted": True})
+
+    def write_config_button_click(self, args: dict[str, typing.Any]):
+        self.write_config_to_cracker()
+
+    def read_config_button_click(self, args: dict[str, typing.Any]):
+        self.read_config_from_cracker()
 
     def save_config_button_click(self, args: dict[str, typing.Any]):
         current_config_path = self._get_workspace_config_path()
         with open(current_config_path, "w") as f:
+            self._logger.error(self._dump_config())
             f.write(self._dump_config())
 
     def _dump_config(self):
+        def enum_converter(obj):
+            if isinstance(obj, Enum):
+                return obj.value
+            raise TypeError(f"Type {type(obj)} not serializable")
+
         return json.dumps(
             {
-                "connection": self.cracker.get_uri(),
-                "config": self.cracker.dump_config(),
-                "acquisition": self.acquisition.dump_config(),
-            }
+                "connection": self.uri,
+                "cracker": self.get_cracker_panel_config().__dict__,
+                "acquisition": self.get_acquisition_panel_config().__dict__,
+            },
+            indent=4,
+            default=enum_converter,
         )
 
     def _load_current_path_config(self):
@@ -85,8 +171,9 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
         if config is not None:
             connection_info = config.get("connection")
-            config_info = config.get("config")
+            config_info = config.get("cracker")
             acquisition_info = config.get("acquisition")
+
             self.cracker.load_config_from_str(config_info)
             self.cracker.set_uri(connection_info)
             self.acquisition.load_config_from_str(acquisition_info)

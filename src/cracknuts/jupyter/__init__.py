@@ -14,8 +14,8 @@ from cracknuts.trace.trace import TraceDataset
 def display_cracknuts_panel(acq: "Acquisition"):
     acq.sample_length = -1  # ignore the sample_length of acquisition when use ui.
     cnpw = CracknutsPanelWidget(acquisition=acq)
-    cnpw.sync_config()
-    cnpw.bind()
+    # cnpw.sync_config()
+    # cnpw.listen_config()
     return cnpw
 
 
@@ -34,14 +34,14 @@ def display_scope_panel(acq: "Acquisition"):
 def display_acquisition_panel(acq: "Acquisition"):
     acq.sample_length = -1  # ignore the sample_length of acquisition when use ui.
     acqw = AcquisitionPanelWidget(acquisition=acq)
-    acqw.sync_config()
+    acqw.sync_config_from_acquisition()
     return acqw
 
 
 def display_cracker_panel(cracker: "CrackerBasic"):
     cpw = CrackerS1PanelWidget(cracker=cracker)
-    cpw.sync_config()
-    cpw.bind()
+    cpw.read_config_from_cracker()
+    cpw.listen_cracker_config()
     return cpw
 
 

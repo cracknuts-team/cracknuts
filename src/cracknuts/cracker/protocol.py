@@ -68,7 +68,7 @@ class Command:
 
     """
 
-    GET_ID = 0x0001
+    GET_CONFIG = 0x0001
     GET_NAME = 0x0002
     GET_VERSION = 0x0003
 
