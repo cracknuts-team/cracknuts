@@ -1,4 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
+
 from enum import Enum
 from typing import Any
 from cracknuts import logger

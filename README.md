@@ -17,6 +17,20 @@ Just run `pip install cracknuts` or run `pip install cracknuts[jupyter]` if you 
 Then run `cracknuts --version`, and it will print the version of `cracknuts`.
 Congratulations, the installation was successful, and you can now start using `CrackNuts` for research and learning.
 
+Or, you can install it using the quick install script. It will install `Miniconda` and create an environment named `cracknuts`.
+
+*Windows*
+
+```shell
+curl https://raw.githubusercontent.com/cracknuts-team/cracknuts/refs/heads/main/install/win-install.ps1 -o "cracknuts-win-install.ps1"; powershell -ExecutionPolicy Bypass -File ".\cracknuts-win-install.ps1"; del "cracknuts-win-install.ps1"
+```
+
+*Linux*
+
+```shell
+curl -sSL https://raw.githubusercontent.com/cracknuts-team/cracknuts/refs/heads/main/install/install.sh | bash
+```
+
 ## Usage
 
 Visit [CrackNuts](https://cracknuts.io) More details.  

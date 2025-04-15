@@ -374,7 +374,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
               <Form.Item>
                 <Button size={"small"} type={!customRangeModel ? "default" : "primary"}
                         onClick={() => {
-                          console.error(chartRef.current)
                             setCustomC0YMin(yRange[0][0]);
                             setCustomC0YMax(yRange[0][1]);
                             setCustomC1YMin(yRange[1][0]);
