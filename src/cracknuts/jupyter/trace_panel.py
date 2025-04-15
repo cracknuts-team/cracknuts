@@ -2,6 +2,7 @@
 
 import pathlib
 import typing
+from dataclasses import dataclass, field
 
 import numpy as np
 from numpy import ndarray
@@ -12,13 +13,45 @@ from traitlets import traitlets
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
+@dataclass
+class _TraceSeriesData:
+    name: str
+    data: ndarray
+    color: None | str
+    channel_index: int
+    trace_index: int
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "data": self.data,
+            "color": self.color,
+            "channel_index": self.channel_index,
+            "trace_index": self.trace_index,
+        }
+
+
+@dataclass
+class _TraceSeries:
+    series_data_list: list[_TraceSeriesData] = field(default_factory=list)
+    x_data: np.ndarray = np.empty(0)
+    percent_range: list = field(default_factory=lambda: [0, 100])
+
+    def to_dict(self) -> dict:
+        return {
+            "seriesDataList": [s.to_dict() for s in self.series_data_list],
+            "xData": self.x_data,
+            "percentRange": self.percent_range,
+        }
+
+
 class TracePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
     _css = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.css"
 
     chart_size: dict[str, int] = traitlets.Dict({"width": 0, "height": 0}).tag(sync=True)
 
-    trace_series = traitlets.Dict({"seriesDataList": [], "xData": [], "percentRange": [0, 100]})
+    trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
 
     range_start = traitlets.Float(0).tag(sync=True)
     range_end = traitlets.Float(100).tag(sync=True)
@@ -34,12 +67,17 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_dataset: TraceDataset | None = None
         self.show_trace: ShowTrace = ShowTrace(self._show_trace)
         self._auto_sync = False
-        self._trace_cache: dict[str, list | ndarray | None] = {
-            "channel_indexes": None,
-            "trace_indexes": None,
-            "traces": None,
-            "x_index": None,
-        }
+        self._trace_series: _TraceSeries | None = None
+        self._trace_cache_channel_indices: ndarray | None = None
+        self._trace_cache_trace_indices: ndarray | None = None
+        self._trace_cache_traces: ndarray | None = None
+        self._trace_cache_x_indices: ndarray | None = None
+        self._trace_cache_x_range_start: int | None = None
+        self._trace_cache_x_range_end: int | None = None
+        self._trace_cache_trace_highlight_indices: dict[int, list[int]] | None = None
+
+        self._trace_series_color_background = "gray"
+        self._trace_series_color_highlight = "red"
 
     def _repr_mimebundle_(self, **kwargs: dict) -> tuple[dict, dict] | None:
         self.send_state("trace_series")
@@ -59,41 +97,34 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self.set_trace_dataset(ds)
 
     def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
-        channel_indexes, trace_indexes, traces, data = self._trace_dataset.trace_data_with_indices[
+        channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
 
-        self._trace_cache = {
-            "channel_indexes": channel_indexes,
-            "trace_indexes": trace_indexes,
-            "traces": traces,
-        }
+        self._trace_cache_channel_indices = channel_indexes
+        self._trace_cache_trace_indices = trace_indices
+        self._trace_cache_traces = traces
 
         if display_range is None:
-            display_range = 0, self._trace_dataset.sample_count
-        self.change_range(*display_range)
-        # series_data_list = []
-        # if display_range is not None:
-        #     display_range = 0, self._trace_dataset.sample_count
-        #
-        # x_idx = None
-        # for c, channel_index in enumerate(channel_indexes):
-        #     for t, trace_index in enumerate(trace_indexes):
-        #         x_idx, y_data = self._get_by_range(traces, *display_range)
-        #         series_data_list.append(
-        #             {
-        #                 "name": str(channel_index) + "-" + str(trace_index),
-        #                 "data": y_data,
-        #                 "emphasis": not self._emphasis,
-        #             }
-        #         )
-        #
-        # self.trace_series = {
-        #     "seriesDataList": series_data_list,
-        #     "xData": x_idx,
-        # }
-        # if self._auto_sync:
-        #     self.send_state("trace_series")
+            self._trace_cache_x_indices = [0, self._trace_dataset.sample_count - 1]
+        else:
+            self._trace_cache_x_indices = display_range
+
+        [start, end] = self._trace_cache_x_indices
+
+        trace_series = self._get_trace_series_by_index_range(start, end)
+
+        self._trace_series = trace_series | {
+            "percentRange": [
+                start / (self._trace_dataset.sample_count - 1) * 100,
+                end / (self._trace_dataset.sample_count - 1) * 100,
+            ],
+        }
+        if self._auto_sync:
+            self._trace_series_send_state()
+
+    def _trace_series_send_state(self):
+        self.trace_series = self._trace_series.to_dict()
 
     def _get_by_range(self, trace: np.ndarray, start, end):
         pixel = self.chart_size["width"]
@@ -129,9 +160,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         return down_index.reshape(sample_count * 2), down_value.reshape(sample_count * 2)
 
     def change_range(self, start: int, end: int):
-        real_index = self._trace_cache.get("x_index")
-        if real_index is not None:
-            start, end = real_index[start], real_index[end]
+        if self._trace_cache_x_indices is not None:
+            start, end = self._trace_cache_x_indices[start], self._trace_cache_x_indices[end]
 
         trace_series = self._get_trace_series_by_index_range(start, end)
 
@@ -156,36 +186,39 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if self._auto_sync:
             self.send_state("trace_series")
 
-    def _get_trace_series_by_index_range(self, start: int, end: int) -> dict[str, ndarray]:
-        channel_indexes, trace_indexes, traces = (
-            self._trace_cache["channel_indexes"],
-            self._trace_cache["trace_indexes"],
-            self._trace_cache["traces"],
-        )
-
+    def _get_trace_series_by_index_range(self, start: int, end: int) -> _TraceSeries:
         series_data_list = []
-        # time_start = time.time()
+
         x_idx = None
-        for c, channel_index in enumerate(channel_indexes):
-            for t, trace_index in enumerate(trace_indexes):
-                x_idx, y_data = self._get_by_range(traces[c, t, :], start, end)
+        for c, channel_index in enumerate(self._trace_cache_channel_indices):
+            for t, trace_index in enumerate(self._trace_cache_trace_indices):
+                x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 series_data_list.append(
-                    {
-                        "name": str(channel_index) + "-" + str(trace_index),
-                        "data": y_data,
-                        "emphasis": not self._emphasis,
-                    }
+                    _TraceSeriesData(
+                        name=str(channel_index) + "-" + str(trace_index),
+                        data=y_data,
+                        color=self._trace_series_color_background,
+                        trace_index=t,
+                        channel_index=c,
+                    )
                 )
-        # print(f"cost: {time.time() - time_start}s, series length: {len(series_data_list)},
-        # sample length: {series_data_list[0]["data"].shape}")
 
-        if x_idx is not None:
-            self._trace_cache["x_index"] = x_idx
+        self._trace_cache_x_indices = x_idx
 
-        return {
-            "seriesDataList": series_data_list,
-            "xData": x_idx,
-        }
+        return _TraceSeries(series_data_list=series_data_list, x_data=x_idx)
+
+    def _get_highlight_color(self, channel_index: int, trace_index: int) -> None | str:
+        if self._trace_cache_trace_highlight_indices is None:
+            return None
+        else:
+            if channel_index in self._trace_cache_trace_highlight_indices:
+                trace_indices = self._trace_cache_trace_indices[channel_index]
+                if trace_index in trace_indices:
+                    return self._trace_series_color_highlight
+                else:
+                    return self._trace_series_color_background
+            else:
+                return self._trace_series_color_background
 
     def show_default_trace(self):
         trace_count = self._trace_dataset.trace_count
@@ -200,16 +233,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     def show_all_trace(self):
         self._show_trace(slice(0, self._trace_dataset.channel_count), slice(0, self._trace_dataset.trace_count))
 
-    def highlight(self, *indexes: int) -> None:
-        ...
-        # self._emphasis = False
-        # x = [
-        #     {**series, "emphasis": True, "color": "red" if i in indexes else "gray", "z": 100 if i in indexes else 1}
-        #     for i, series in enumerate(self.trace_series_list)
-        # ]
-        # self.trace_series_list = x
-        # if self._auto_sync:
-        #     self.send_state("trace_series_list")
+    def highlight(self, indices: dict[int, list : [int]] | list[int]) -> None:
+        if isinstance(indices, list):
+            indices = {0: indices}
+        self._trace_series_color_highlight = indices
+        for series in self.trace_series["seriesDataList"]:
+            series["color"] = self._get_highlight_color(series["name"], series["xData"])
 
     def set_numpy_data_highlight(self, trace: np.ndarray, data: np.ndarray = None, highlight_indexes=None):
         ...

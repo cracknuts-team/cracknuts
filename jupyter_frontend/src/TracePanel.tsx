@@ -8,7 +8,6 @@ interface SeriesData {
     color: string;
     name: string;
     data: Array<number>;
-    emphasis: boolean;
     z: number;
 }
 
