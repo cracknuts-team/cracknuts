@@ -40,16 +40,14 @@ class _TraceSeries:
     series_data_list: list[_TraceSeriesData] = field(default_factory=list)
     x_data: np.ndarray = field(default_factory=lambda: np.empty(0))
     percent_range: list = field(default_factory=lambda: [0, 100])
+    range: list = field(default_factory=lambda: [0, 0])
 
     def to_dict(self) -> dict:
-        # for i, series_data in enumerate(self.series_data_list):
-        #     if series_data.color == 'red':
-        #         print(i, series_data.name)
-        # print([s.to_dict() for s in self.series_data_list])
         return {
             "seriesDataList": [s.to_dict() for s in self.series_data_list],
             "xData": self.x_data,
             "percentRange": self.percent_range,
+            "range": self.range,
         }
 
 
@@ -67,6 +65,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     selected_range = traitlets.Tuple((0, 0)).tag(sync=True)
     percent_range = traitlets.Tuple((0, 100)).tag(sync=True)
 
+    overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
+
     _DEFAULT_SHOW_INDEX_THRESHOLD = 3
 
     _DEFAULT_SERIES_Z = 2
@@ -78,6 +78,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_dataset: TraceDataset | None = None
         self.show_trace: ShowTrace = ShowTrace(self._show_trace)
         self._auto_sync = False
+        self._overview_trace_series: _TraceSeries | None = None
         self._trace_series: _TraceSeries | None = None
         self._trace_cache_channel_indices: list | None = None
         self._trace_cache_trace_indices: list | None = None
@@ -128,8 +129,44 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if self._auto_sync:
             self._trace_series_send_state()
 
+        self._update_overview_trace()
+
+    def _update_overview_trace(self):
+        if self._trace_cache_trace_highlight_indices is not None:
+            overview_channel_index, overview_trace_indices = list(self._trace_cache_trace_highlight_indices.items())[0]
+            overview_trace_index = overview_trace_indices[0]
+        else:
+            overview_channel_index = self._trace_cache_channel_indices[0]
+            overview_trace_index = self._trace_cache_trace_indices[0]
+
+        x_idx, y_data = self._get_by_range(
+            self._trace_cache_traces[overview_channel_index, overview_trace_index, :],
+            0,
+            self._trace_dataset.sample_count,
+        )
+        self._overview_trace_series = _TraceSeries(
+            series_data_list=[
+                _TraceSeriesData(
+                    name=str(overview_channel_index) + "-" + str(overview_trace_index),
+                    data=y_data,
+                    trace_index=overview_trace_index,
+                    channel_index=overview_channel_index,
+                    z=self._DEFAULT_SERIES_Z,
+                    color="blue",
+                )
+            ],
+            x_data=x_idx,
+        )
+
+        self._overview_trace_series.range = self._trace_cache_x_range_start, self._trace_cache_x_range_end
+
+        if self._auto_sync:
+            self.overview_trace_series = self._overview_trace_series.to_dict()
+
     def _trace_series_send_state(self):
         self.trace_series = self._trace_series.to_dict()
+        self.overview_trace_series = self._overview_trace_series.to_dict()
+        print(self.overview_trace_series)
 
     def _get_by_range(self, trace: np.ndarray, start, end):
         pixel = self.chart_size["width"]
@@ -177,6 +214,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             end / (self._trace_dataset.sample_count - 1) * 100,
         ]
 
+        self._overview_trace_series.range = [start, end]
+
         if self._auto_sync:
             self._trace_series_send_state()
 
@@ -190,6 +229,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_series = self._get_trace_series_by_index_range(start, end)
 
         self._trace_series.percent_range = [percent_start, percent_end]
+        self._overview_trace_series.range = [start, end]
 
         if self._auto_sync:
             self._trace_series_send_state()
@@ -250,14 +290,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     @staticmethod
     def _generate_colors(count):
-        print(count)
         colors = []
         for i in range(count):
             hue = i / count
             r, g, b = colorsys.hls_to_rgb(hue, 0.5, 0.7)
             hex_color = f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
             colors.append(hex_color)
-        print(colors)
         return colors
 
     def show_default_trace(self):
