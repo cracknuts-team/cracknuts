@@ -68,13 +68,10 @@ const TracePanel: React.FC = () => {
     }, [])
 
     const chartRef = useRef<ReactEcharts>(null);
-    const brushAreasRef = useRef<Array<number>>([0, 0])
 
     const onChartReady = (chart: ECharts) => {
         chart.on("brushEnd", (params) => {
             const brushParams = params as BrushEndParams;
-
-            console.log(brushParams);
             if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
                 const [new_start, new_end] = brushParams.areas[0].coordRange
 
@@ -82,40 +79,26 @@ const TracePanel: React.FC = () => {
             }
 
         });
-
-        // 监听回车键
-        const handleKeyDown = (e: { altKey: any; key: string; }) => {
-            if (e.altKey && e.key === 'Enter') {
-                console.log("按下回车，当前 brush 区域为：", brushAreasRef.current);
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-
-        // 清理事件监听
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
     };
 
     useEffect(() => {
-        const cleanup = chartRef.current?.getEchartsInstance && onChartReady(chartRef.current.getEchartsInstance());
-        return () => {
-            cleanup?.();
-        };
+        if (chartRef.current?.getEchartsInstance) {
+            onChartReady(chartRef.current.getEchartsInstance());
+        }
+        return () => {}
     }, []);
 
-    const getLegends = () => {
-        const legends: Array<string> = [];
-
-        if (traceSeries && traceSeries.seriesDataList) {
-            traceSeries.seriesDataList.forEach((seriesData) => {
-                legends.push(seriesData.name);
-            });
-        }
-
-        return legends;
-    };
+    // const getLegends = () => {
+    //     const legends: Array<string> = [];
+    //
+    //     if (traceSeries && traceSeries.seriesDataList) {
+    //         traceSeries.seriesDataList.forEach((seriesData) => {
+    //             legends.push(seriesData.name);
+    //         });
+    //     }
+    //
+    //     return legends;
+    // };
 
     const getSeries = (): Array<object> => {
         const series: Array<object> = [];
@@ -213,16 +196,16 @@ const TracePanel: React.FC = () => {
         //         realtime: false,
         //     },
         // ],
-        legend: {
-            data: getLegends(),
-            type: "scroll",
-            pageButtonPosition: "start",
-            orient: "horizontal",
-            // left: 115,
-            // right: 125,
-            top: 30,
-            // bottom: 10,
-        },
+        // legend: {
+        //     data: getLegends(),
+        //     type: "scroll",
+        //     pageButtonPosition: "start",
+        //     orient: "horizontal",
+        //     // left: 115,
+        //     // right: 125,
+        //     top: 30,
+        //     // bottom: 10,
+        // },
         xAxis: {
             type: "category",
             axisTick: {
