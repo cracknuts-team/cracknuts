@@ -53,7 +53,7 @@ class _TraceSeries:
 
 class TracePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
-    _css = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.css"
+    # _css = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.css"
 
     chart_size: dict[str, int] = traitlets.Dict({"width": 0, "height": 0}).tag(sync=True)
 
@@ -64,6 +64,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     selected_range = traitlets.Tuple((0, 0)).tag(sync=True)
     percent_range = traitlets.Tuple((0, 100)).tag(sync=True)
+    overview_select_range = traitlets.Tuple((0, 0)).tag(sync=True)
 
     overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
 
@@ -166,7 +167,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     def _trace_series_send_state(self):
         self.trace_series = self._trace_series.to_dict()
         self.overview_trace_series = self._overview_trace_series.to_dict()
-        print(self.overview_trace_series)
 
     def _get_by_range(self, trace: np.ndarray, start, end):
         pixel = self.chart_size["width"]
@@ -215,6 +215,19 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         ]
 
         self._overview_trace_series.range = [start, end]
+
+        if self._auto_sync:
+            self._trace_series_send_state()
+
+    def _overview_selected_range_changed(self, start: int, end: int):
+        self._trace_cache_x_range_start = start
+        self._trace_cache_x_range_end = end
+        self._trace_series = self._get_trace_series_by_index_range(start, end)
+
+        self._trace_series.percent_range = [
+            start / (self._trace_dataset.sample_count - 1) * 100,
+            end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
 
         if self._auto_sync:
             self._trace_series_send_state()
@@ -425,6 +438,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if change.get("new") is not None:
             s, e = change.get("new")
             self.change_range(s, e)
+
+    @traitlets.observe("overview_select_range")
+    def overview_select_range_changed(self, change) -> None:
+        if change.get("new") is not None:
+            s, e = change.get("new")
+            self._overview_selected_range_changed(s, e)
 
     @traitlets.observe("percent_range")
     def percent_range_changed(self, change) -> None:
