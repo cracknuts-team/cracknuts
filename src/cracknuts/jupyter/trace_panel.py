@@ -40,7 +40,7 @@ class _TraceSeriesData:
 @dataclass
 class _TraceSeries:
     series_data_list: list[_TraceSeriesData] = field(default_factory=list)
-    x_data: np.ndarray = field(default_factory=lambda: np.empty(0))
+    x_data: ndarray[int] = field(default_factory=lambda: np.empty(0))
     percent_range: list = field(default_factory=lambda: [0, 100])
     range: list = field(default_factory=lambda: [0, 0])
 
@@ -169,7 +169,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             x_data=x_idx,
         )
 
-        self._overview_trace_series.range = self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        self._overview_trace_series.range = [
+            self._trace_cache_x_indices[self._trace_cache_x_range_start],
+            self._trace_cache_x_indices[self._trace_cache_x_range_end if self._trace_cache_x_range_end < 0 else -1],
+        ]
 
         if self._auto_sync:
             self.overview_trace_series = self._overview_trace_series.to_dict()
@@ -220,25 +223,20 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_series = self._get_trace_series_by_index_range(start, end)
 
         percent_start = start / (self._trace_dataset.sample_count - 1) * 100
-        percent_end = (end / (self._trace_dataset.sample_count - 1) * 100,)
+        percent_end = end / (self._trace_dataset.sample_count - 1) * 100
         self._trace_series.percent_range = [percent_start, percent_end]
 
         self._overview_trace_series.range = [
-            self._overview_trace_series.x_data.shape[0] * percent_start,
-            self._overview_trace_series.x_data.shape[0] * percent_end,
+            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_start / 100),
+            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_end / 100),
         ]
 
         if self._auto_sync:
             self._trace_series_send_state()
 
     def _overview_selected_range_changed(self, start: int, end: int):
-        if self._trace_cache_x_indices is not None:
-            start = round(
-                start / (self._overview_trace_series.x_data.shape[0] - 1) * (self._trace_dataset.sample_count - 1)
-            )
-            end = round(
-                end / (self._overview_trace_series.x_data.shape[0] - 1) * (self._trace_dataset.sample_count - 1)
-            )
+        start = self._overview_trace_series.x_data[start]
+        end = self._overview_trace_series.x_data[end]
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
         self._trace_series = self._get_trace_series_by_index_range(start, end)
@@ -262,10 +260,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         self._trace_series.percent_range = [percent_start, percent_end]
 
-        overview_start = self._overview_trace_series.x_data.shape[0] * percent_start / 100
-        overview_end = self._overview_trace_series.x_data.shape[0] * percent_end / 100
-        self._overview_trace_series.range = [overview_start, overview_end]
-
+        self._overview_trace_series.range = [
+            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_start / 100),
+            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_end / 100),
+        ]
         if self._auto_sync:
             self._trace_series_send_state()
 
