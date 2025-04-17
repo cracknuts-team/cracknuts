@@ -1,8 +1,9 @@
 import React, {useEffect, useRef, useState} from "react";
-import {useModelState} from "@anywidget/react";
+import {useModel, useModelState} from "@anywidget/react";
 import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
 import type {ECharts} from "echarts";
+import {useIntl} from "react-intl";
 
 interface SeriesData {
   color: string;
@@ -61,12 +62,9 @@ const TracePanel: React.FC = () => {
 
   const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>(traceSeries.percentRange)
 
-  // const setSliderRange = (start: number, end: number) => {
-  //   if (overviewTraceSeries && overviewTraceSeries.seriesDataList && overviewTraceSeries.seriesDataList.length > 0) {
-  //     const seriesDataLen = overviewTraceSeries.seriesDataList[0].data.length;
-  //     setSliderPercentRange([start / (seriesDataLen - 1) * 100, end / (seriesDataLen - 1) * 100])
-  //   }
-  // }
+  const anyWidgetModel = useModel();
+
+  const intl = useIntl();
 
   useEffect(() => {
 
@@ -96,9 +94,8 @@ const TracePanel: React.FC = () => {
     chart.on("brushEnd", (params) => {
       const brushParams = params as BrushEndParams;
       if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
-        const [new_start, new_end] = brushParams.areas[0].coordRange
-
-        setSelectedRange([new_start, new_end])
+        const [newStart, newEnd] = brushParams.areas[0].coordRange
+        setSelectedRange([newStart, newEnd])
       }
 
     });
@@ -198,7 +195,23 @@ const TracePanel: React.FC = () => {
     toolbox: {
       show: true,
       feature: {
-        saveAsImage: {show: true},
+        saveAsImage: {
+          show: true,
+          title: intl.formatMessage({id: "cracker.scope.echarts.toolbox.saveAsImage"})
+        },
+        myReset: {
+            show: true,
+            title: intl.formatMessage({id: "cracker.scope.echarts.toolbox.myReset"}),
+            icon: 'M3.8,33.4 M47,18.9h9.8V8.7 M56.3,20.1 C52.1,9,40.5,0.6,26.8,2.1C12.6,3.7,1.6,16.2,2.1,30.6 M13,41.1H3.1v10.2 M3.7,39.9c4.2,11.1,15.8,19.5,29.5,18 c14.2-1.6,25.2-14.1,24.7-28.5',
+            onclick: function (){
+                anyWidgetModel.send({source: "reset", event: "onClick"});
+            }
+        },
+        brush: {
+          title: {
+            lineX: intl.formatMessage({id: "cracker.scope.echarts.toolbox.brush.lineX"}),
+          }
+        }
       },
     },
 
@@ -290,23 +303,11 @@ const TracePanel: React.FC = () => {
         && brushParams.areas[0].coordRange
         && brushParams.areas[0].coordRange.length == 2) {
         const [newStart, newEnd] = brushParams.areas[0].coordRange
+        console.info([newStart, newEnd])
         setOverviewSelectedRange([newStart, newEnd])
       }
 
     });
-    // chart.on('brushSelected', function (params) {
-    //   const brushParams = params as BrushSelectedParams;
-    //   if (brushParams && brushParams.batch && brushParams.batch.length > 0 && brushParams.batch[0].areas
-    //     && brushParams.batch[0].areas && brushParams.batch[0].areas.length > 0
-    //     && brushParams.batch[0].areas[0].coordRange
-    //     && brushParams.batch[0].areas[0].coordRange.length == 2
-    //   ) {
-    //     console.info("Brush selected", brushParams.batch[0].areas[0].coordRange);
-    //     const [newStart, newEnd] = brushParams.batch[0].areas[0].coordRange;
-    //     // _setOverviewRange([newStart, newEnd])
-    //     setSliderRange(newStart, newEnd)
-    //   }
-    // });
   };
 
   useEffect(() => {
@@ -330,8 +331,8 @@ const TracePanel: React.FC = () => {
           coordRange: [overviewRange[0], overviewRange[1]]
         }
       ],
-      throttleType: 'fixRate',
-      throttleDelay: 0
+      removeOnClick: false,
+      transformable: false
     });
   }, [overviewRange]);
 
@@ -348,14 +349,26 @@ const TracePanel: React.FC = () => {
           coordRange: [overviewTraceSeries.range[0], overviewTraceSeries.range[1]]
         }
       ],
-      throttleType: 'fixRate',
-      throttleDelay: 0
+      removeOnClick: false,
+      transformable: false
     });
   }, [overviewTraceSeries]);
 
   useEffect(() => {
     setSliderPercentRange(traceSeries.percentRange)
   }, [traceSeries]);
+
+  useEffect(() => {
+    overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
+      type: 'takeGlobalCursor',
+      key: 'brush',
+      brushOption: {
+          brushType: 'lineX',
+          brushMode: 'single',
+          removeOnClick: false,
+      }
+    });
+  }, [overviewTraceSeries]);
 
   return (
     <div ref={chartBoxRef}>
