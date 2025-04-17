@@ -1,7 +1,7 @@
-import React, {useEffect, useRef} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useModelState} from "@anywidget/react";
 import ReactEcharts from "echarts-for-react";
-// import Slider from "@/Slider.tsx";
+import Slider from "@/Slider.tsx";
 import type {ECharts} from "echarts";
 
 interface SeriesData {
@@ -29,11 +29,19 @@ interface BrushEndParams {
   }[];
 }
 
+// interface BrushSelectedParams {
+//   batch?: {
+//     areas: {
+//       coordRange?: [number, number];
+//     }[]
+//   }[];
+// }
+
 const TracePanel: React.FC = () => {
 
   const [, setSelectedRange] = useModelState<Array<number>>("selected_range");
   const [, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
-  // const [, setPercentRange] = useModelState<Array<number>>("percent_range");
+  const [, setPercentRange] = useModelState<Array<number>>("percent_range");
 
   const [traceSeries] = useModelState<TraceSeries>("trace_series");
   const [, setChartSize] = useModelState<ChartSize>("chart_size");
@@ -42,17 +50,23 @@ const TracePanel: React.FC = () => {
 
   const [overviewTraceSeries] = useModelState<TraceSeries>("overview_trace_series");
 
-  // const [overviewRange, _setOverviewRange] = useState<Array<number>>(overviewTraceSeries.range)
+  const [overviewRange, _setOverviewRange] = useState<Array<number>>(overviewTraceSeries.range)
 
-  // const setOverviewRange = (percentStart: number, percentEnd: number) => {
+  const setOverviewRange = (percentStart: number, percentEnd: number) => {
+    if (overviewTraceSeries && overviewTraceSeries.seriesDataList && overviewTraceSeries.seriesDataList.length > 0) {
+      const seriesDataLen = overviewTraceSeries.seriesDataList[0].data.length;
+      _setOverviewRange([(seriesDataLen - 1) * percentStart / 100, (seriesDataLen - 1) * percentEnd / 100])
+    }
+  };
+
+  const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>(traceSeries.percentRange)
+
+  // const setSliderRange = (start: number, end: number) => {
   //   if (overviewTraceSeries && overviewTraceSeries.seriesDataList && overviewTraceSeries.seriesDataList.length > 0) {
   //     const seriesDataLen = overviewTraceSeries.seriesDataList[0].data.length;
-  //     console.info("update overview range: ", percentStart, percentEnd);
-  //     console.info("update overview range: ", [(seriesDataLen - 1) * percentStart / 100, (seriesDataLen - 1) * percentEnd / 100]);
-  //     _setOverviewRange([(seriesDataLen - 1) * percentStart / 100, (seriesDataLen - 1) * percentEnd / 100])
+  //     setSliderPercentRange([start / (seriesDataLen - 1) * 100, end / (seriesDataLen - 1) * 100])
   //   }
-  //
-  // };
+  // }
 
   useEffect(() => {
 
@@ -220,7 +234,9 @@ const TracePanel: React.FC = () => {
         borderColor: '#007bff',
         borderWidth: 1,
         color: 'rgba(0, 123, 255, 0.2)'
-      }
+      },
+      throttleType: 'fixRate',
+      throttleDelay: 0
     },
     toolbox: {
       show: false
@@ -270,13 +286,27 @@ const TracePanel: React.FC = () => {
   const onOverviewChartReady = (chart: ECharts) => {
     chart.on("brushEnd", (params) => {
       const brushParams = params as BrushEndParams;
-      if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
-        const [new_start, new_end] = brushParams.areas[0].coordRange
-        // console.info(new_start, new_end)
-        setOverviewSelectedRange([new_start, new_end])
+      if (brushParams && brushParams.areas && brushParams.areas.length > 0
+        && brushParams.areas[0].coordRange
+        && brushParams.areas[0].coordRange.length == 2) {
+        const [newStart, newEnd] = brushParams.areas[0].coordRange
+        setOverviewSelectedRange([newStart, newEnd])
       }
 
     });
+    // chart.on('brushSelected', function (params) {
+    //   const brushParams = params as BrushSelectedParams;
+    //   if (brushParams && brushParams.batch && brushParams.batch.length > 0 && brushParams.batch[0].areas
+    //     && brushParams.batch[0].areas && brushParams.batch[0].areas.length > 0
+    //     && brushParams.batch[0].areas[0].coordRange
+    //     && brushParams.batch[0].areas[0].coordRange.length == 2
+    //   ) {
+    //     console.info("Brush selected", brushParams.batch[0].areas[0].coordRange);
+    //     const [newStart, newEnd] = brushParams.batch[0].areas[0].coordRange;
+    //     // _setOverviewRange([newStart, newEnd])
+    //     setSliderRange(newStart, newEnd)
+    //   }
+    // });
   };
 
   useEffect(() => {
@@ -287,21 +317,24 @@ const TracePanel: React.FC = () => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   if (overviewRange == undefined) {
-  //     return
-  //   }
-  //   overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
-  //     type: 'brush',
-  //     areas: [
-  //       {
-  //         brushType: 'lineX',
-  //         xAxisIndex: 0,
-  //         coordRange: [overviewRange[0], overviewRange[1]]
-  //       }
-  //     ]
-  //   });
-  // }, [overviewRange]);
+  useEffect(() => {
+    if (overviewRange == undefined) {
+      return
+    }
+    overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
+      type: 'brush',
+      areas: [
+        {
+          brushType: 'lineX',
+          xAxisIndex: 0,
+          coordRange: [overviewRange[0], overviewRange[1]]
+        }
+      ],
+      throttleType: 'fixRate',
+      throttleDelay: 0
+    });
+  }, [overviewRange]);
+
   useEffect(() => {
     if (overviewTraceSeries == undefined) {
       return
@@ -314,29 +347,26 @@ const TracePanel: React.FC = () => {
           xAxisIndex: 0,
           coordRange: [overviewTraceSeries.range[0], overviewTraceSeries.range[1]]
         }
-      ]
+      ],
+      throttleType: 'fixRate',
+      throttleDelay: 0
     });
   }, [overviewTraceSeries]);
-  // overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
-  //   type: 'brush',
-  //   areas: [
-  //     {
-  //       brushType: 'lineX',
-  //       xAxisIndex: 0,
-  //       coordRange: [overviewTraceSeries.range[0], overviewTraceSeries.range[1]]
-  //     }
-  //   ]
-  // });
+
+  useEffect(() => {
+    setSliderPercentRange(traceSeries.percentRange)
+  }, [traceSeries]);
 
   return (
     <div ref={chartBoxRef}>
       <ReactEcharts ref={chartRef} option={option} notMerge={true} style={{height: 400}}/>
       <ReactEcharts ref={overviewChartRef} option={overviewOption} notMerge={true} style={{height: 60}}/>
-      {/*<Slider start={traceSeries.percentRange[0]} end={traceSeries.percentRange[1]} onChange={(s, e) => {*/}
-      {/*  setPercentRange([s, e]);*/}
-      {/*  console.log(s, e);*/}
-      {/*  setOverviewRange(s, e)*/}
-      {/*}}/>*/}
+      <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
+        setPercentRange([s, e]);
+        setOverviewRange(s, e)
+      }} onChange={(s, e) => {
+        setOverviewRange(s, e);
+      }}/>
     </div>
   );
 };

@@ -53,7 +53,7 @@ class _TraceSeries:
 
 class TracePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.js"
-    # _css = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.css"
+    _css = pathlib.Path(__file__).parent / "static" / "TracePanelWidget.css"
 
     chart_size: dict[str, int] = traitlets.Dict({"width": 0, "height": 0}).tag(sync=True)
 
@@ -136,12 +136,22 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if self._trace_cache_trace_highlight_indices is not None:
             overview_channel_index, overview_trace_indices = list(self._trace_cache_trace_highlight_indices.items())[0]
             overview_trace_index = overview_trace_indices[0]
+            print(f"have highlight {overview_channel_index} - {overview_trace_index}")
         else:
             overview_channel_index = self._trace_cache_channel_indices[0]
             overview_trace_index = self._trace_cache_trace_indices[0]
+            print(f"have no highlight {overview_channel_index} - {overview_trace_index}")
+            print(f"have no highlight {self._trace_cache_channel_indices} - {self._trace_cache_trace_indices}")
+            print(f"have no highlight {self._trace_cache_traces.shape}")
+            print(
+                f"have no highlight {type(self._trace_cache_channel_indices)} = {type(self._trace_cache_trace_indices)}"
+            )
+
+        c_idx = self._trace_cache_channel_indices.index(overview_channel_index)
+        t_idx = self._trace_cache_trace_indices.index(overview_trace_index)
 
         x_idx, y_data = self._get_by_range(
-            self._trace_cache_traces[overview_channel_index, overview_trace_index, :],
+            self._trace_cache_traces[c_idx, t_idx, :],
             0,
             self._trace_dataset.sample_count,
         )
@@ -274,8 +284,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                         name=str(channel_index) + "-" + str(trace_index),
                         data=y_data,
                         color=color,
-                        trace_index=t,
-                        channel_index=c,
+                        trace_index=trace_index,
+                        channel_index=channel_index,
                         z=self._DEFAULT_SERIES_Z
                         if z_increase == 0
                         else self._DEFAULT_SERIES_Z + z_increase + c * len(self._trace_cache_trace_indices) + t,
@@ -344,6 +354,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_cache_trace_highlight_indices = indices
 
         series_indices = [(series.channel_index, series.trace_index) for series in self._trace_series.series_data_list]
+        print(f"shown indices {series_indices}")
         for channel_index in indices.keys():
             for trace_index in indices[channel_index]:
                 if (channel_index, trace_index) not in series_indices:
@@ -382,6 +393,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         if self._auto_sync:
             self._trace_series_send_state()
+
+        self._update_overview_trace()
 
     def set_numpy_data_highlight(self, trace: np.ndarray, data: np.ndarray = None, highlight_indexes=None):
         ...

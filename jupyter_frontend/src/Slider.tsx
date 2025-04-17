@@ -5,6 +5,7 @@ interface SliderProps {
   start: number;
   end: number;
   onChange?: (start: number, end: number) => void;
+  onChangeFinish?: (start: number, end: number) => void;
   minThumbWidthPx?: number;
 }
 
@@ -12,6 +13,7 @@ export default function Slider({
   start,
   end,
   onChange = undefined,
+  onChangeFinish = undefined,
   minThumbWidthPx = 10,
 }: SliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -103,12 +105,18 @@ export default function Slider({
 
       setInterStart(newStart);
       setInterEnd(newEnd);
+      if (onChange) {
+        onChange(newStart, newEnd)
+      }
 
     };
 
     const onMouseUp = () => {
       if (onChange) {
         onChange(interStartRef.current, interEndRef.current)
+      }
+      if (onChangeFinish) {
+        onChangeFinish(interStartRef.current, interEndRef.current)
       }
       setDragging(false);
       document.body.style.cursor = '';
@@ -137,7 +145,9 @@ export default function Slider({
     if (onChange) {
       onChange(newStart, newEnd)
     }
-
+    if (onChangeFinish) {
+      onChangeFinish(newStart, newEnd)
+    }
   };
 
   const handleThumbClick = (e: React.MouseEvent) => {
