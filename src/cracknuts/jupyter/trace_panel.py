@@ -1,4 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
+
 import colorsys
 import pathlib
 import typing
