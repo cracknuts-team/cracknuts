@@ -169,9 +169,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             x_data=x_idx,
         )
 
+        percent_start = self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100
+        percent_end = self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100
+
         self._overview_trace_series.range = [
-            self._trace_cache_x_indices[self._trace_cache_x_range_start],
-            self._trace_cache_x_indices[self._trace_cache_x_range_end if self._trace_cache_x_range_end < 0 else -1],
+            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_start / 100),
+            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_end / 100),
         ]
 
         if self._auto_sync:
@@ -186,8 +189,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if pixel is None or pixel == 0:
             pixel = 1920
         x_idx, y_data = self._down_sample(trace, start, end, pixel)
-        # if d > 0:
-        #     print(d, y_data.shape)
         return x_idx, y_data
 
     @staticmethod
@@ -285,7 +286,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             for t, trace_index in enumerate(self._trace_cache_trace_indices):
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 color, z_increase = self._get_highlight_color(
-                    c, t, None if highlight_colors is None else highlight_colors[color_i]
+                    channel_index, trace_index, None if highlight_colors is None else highlight_colors[color_i]
                 )
                 if z_increase > 0:
                     color_i += 1
