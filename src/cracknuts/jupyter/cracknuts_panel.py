@@ -143,6 +143,8 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     def save_config_button_click(self, args: dict[str, typing.Any]):
         current_config_path = self._get_workspace_config_path()
+        if current_config_path is None:
+            return
         with open(current_config_path, "w") as f:
             self._logger.error(self._dump_config())
             f.write(self._dump_config())
@@ -182,6 +184,8 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
 
     def _get_workspace_config(self):
         current_config_path = self._get_workspace_config_path()
+        if current_config_path is None:
+            return
         if current_config_path is not None and os.path.exists(current_config_path):
             with open(current_config_path) as f:
                 try:
@@ -191,8 +195,7 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                     self._logger.error(f"Load workspace config file failed: {e.args}")
                     return None
 
-    @staticmethod
-    def _get_workspace_config_path():
+    def _get_workspace_config_path(self):
         global_vars = sys.modules["__main__"].__dict__
 
         ipynb_path = None
@@ -203,7 +206,13 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             ipynb_path = global_vars["__session__"]
 
         if ipynb_path is not None:
-            return os.path.join(os.path.dirname(ipynb_path), "." + os.path.basename(ipynb_path)[:-6] + ".cncfg")
+            config_path = os.path.join(os.path.dirname(ipynb_path), ".config")
+            if not os.path.exists(config_path):
+                os.makedirs(config_path)
+            elif os.path.isfile(config_path):
+                self._logger.error(f"The config directory ({config_path}) already exists, and is not a directory.")
+                return None
+            return os.path.join(os.path.dirname(ipynb_path), ".config", os.path.basename(ipynb_path)[:-6] + ".json")
 
     @traitlets.observe("language")
     def on_language_change(self, change):
