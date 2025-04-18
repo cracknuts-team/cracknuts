@@ -165,15 +165,56 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             self.cracker.connect()
             if self.cracker.get_connection_status():
                 self.connect_status = True
-                _, self.cracker_id = self.cracker.get_id()
-                _, self.cracker_name = self.cracker.get_hardware_model()
+                # _, self.cracker_id = self.cracker.get_id()
+                # _, self.cracker_name = self.cracker.get_hardware_model()
                 # _, self.cracker_version = self.cracker.get_firmware_version()
+                self._compare_config(cracker_config=self.cracker.get_current_config())
             else:
                 self.connect_status = False
         else:
             self.cracker.disconnect()
             self.connect_status = False
         self.send({"connectFinished": self.connect_status})
+
+    def _compare_config(self, cracker_config: ConfigS1):
+        """
+        Compare config between current configuration in panel and
+        the configuration from cracker after connect from panel.
+
+        """
+        panel_cracker_config = self.get_cracker_panel_config().__dict__
+
+        # uri = workspace_config.get("connection")
+        if panel_cracker_config:
+            for k, v in panel_cracker_config.items():
+                # Skip comparison for ignored configuration items.
+                if k in ("nut_timeout",):
+                    continue
+                if hasattr(cracker_config, k):
+                    cv = getattr(cracker_config, k)
+                    if isinstance(cv, Enum):
+                        cv = cv.value
+                    if v != cv:
+                        self.panel_config_different_from_cracker_config = True
+                        self._logger.warning(
+                            f"The configuration item {k} differs between the configuration file "
+                            f"({v}) and the cracker ({cv})."
+                        )
+                        break
+                else:
+                    self._logger.error(
+                        f"Config has no attribute named {k}, "
+                        f"which comes from the JSON key in the panel configuration."
+                    )
+            if not self.panel_config_different_from_cracker_config:
+                self.listen_cracker_config()
+        else:
+            self._logger.error(
+                "Configuration file format error: The cracker configuration segment is missing. "
+                "The configuration from the cracker or the default configuration will be used."
+            )
+            self.read_config_from_cracker()
+            self.listen_cracker_config()
 
     @traitlets.observe("uri")
     @observe_interceptor
@@ -313,7 +354,6 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_uart_parity")
     @observe_interceptor
     def nut_uart_parity_changed(self, change):
-        print(f"parity {change.get("new")}")
         self.cracker.uart_config(
             serial.Baudrate(self.nut_uart_baudrate),
             serial.Bytesize(self.nut_uart_bytesize),
