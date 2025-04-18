@@ -48,6 +48,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return ConfigS1()
 
     def get_current_config(self) -> ConfigS1 | None:
+        if not self._connection_status:
+            return None
         status, res = self.send_with_command(protocol.Command.GET_CONFIG)
         if status == protocol.STATUS_OK:
             # === Since the device does not support the channel enable function,
