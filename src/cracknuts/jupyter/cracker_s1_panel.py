@@ -313,6 +313,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_uart_parity")
     @observe_interceptor
     def nut_uart_parity_changed(self, change):
+        print(f"parity {change.get("new")}")
         self.cracker.uart_config(
             serial.Baudrate(self.nut_uart_baudrate),
             serial.Bytesize(self.nut_uart_bytesize),

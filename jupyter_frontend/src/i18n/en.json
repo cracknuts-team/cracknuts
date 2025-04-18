@@ -84,6 +84,9 @@
   "cracker.scope.zoomBrush.customRange": "Custom Range",
   "cracker.scope.monitorPeriod": "Monitor Period",
   "cracker.scope.echarts.toolbox.saveAsImage": "Save As Image",
-  "cracker.scope.echarts.toolbox.dataZoom.back": "Zoom",
-  "cracker.scope.echarts.toolbox.dataZoom.zoom": "Back"
+  "cracker.scope.echarts.toolbox.dataZoom.back": "Back",
+  "cracker.scope.echarts.toolbox.dataZoom.zoom": "Zoom",
+  "trace.echarts.toolbox.saveAsImage": "Save As Image",
+  "trace.echarts.toolbox.brush.lineX": "Zoom",
+  "trace.echarts.toolbox.myReset": "Rest"
 }
