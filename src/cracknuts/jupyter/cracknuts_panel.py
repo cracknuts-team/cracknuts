@@ -45,33 +45,38 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             # uri = workspace_config.get("connection")
             uri = cracker.get_uri()
             cracker_config = cracker.get_current_config()
-            if config_file_cracker_config:
-                for k, v in config_file_cracker_config.items():
-                    if hasattr(cracker_config, k):
-                        cv = getattr(cracker_config, k)
-                        if isinstance(cv, Enum):
-                            cv = cv.value
-                        if v != cv:
-                            self.panel_config_different_from_cracker_config = True
-                            self._logger.warning(
-                                f"The configuration item {k} differs between the configuration file "
-                                f"({v}) and the cracker ({cv})."
+            if cracker_config is not None:
+                if config_file_cracker_config:
+                    for k, v in config_file_cracker_config.items():
+                        # Skip comparison for ignored configuration items.
+                        if k in ("nut_timeout",):
+                            continue
+                        if hasattr(cracker_config, k):
+                            cv = getattr(cracker_config, k)
+                            if isinstance(cv, Enum):
+                                cv = cv.value
+                            if v != cv:
+                                self.panel_config_different_from_cracker_config = True
+                                self._logger.warning(
+                                    f"The configuration item {k} differs between the configuration file "
+                                    f"({v}) and the cracker ({cv})."
+                                )
+                                break
+                        else:
+                            self._logger.error(
+                                f"Config has no attribute named {k}, "
+                                f"which comes from the JSON key in the config file."
                             )
-                            break
-                    else:
-                        self._logger.error(
-                            f"Config has no attribute named {k}, " f"which comes from the JSON key in the config file."
-                        )
-                if not self.panel_config_different_from_cracker_config:
+                    if not self.panel_config_different_from_cracker_config:
+                        self.listen_cracker_config()
+                    self.update_cracker_panel_config(config_file_cracker_config, uri)
+                else:
+                    self._logger.error(
+                        "Configuration file format error: The cracker configuration segment is missing. "
+                        "The configuration from the cracker or the default configuration will be used."
+                    )
+                    self.read_config_from_cracker()
                     self.listen_cracker_config()
-                self.update_cracker_panel_config(config_file_cracker_config, uri)
-            else:
-                self._logger.error(
-                    "Configuration file format error: The cracker configuration segment is missing. "
-                    "The configuration from the cracker or the default configuration will be used."
-                )
-                self.read_config_from_cracker()
-                self.listen_cracker_config()
 
             acquisition_config = workspace_config.get("acquisition")
             if acquisition_config:
