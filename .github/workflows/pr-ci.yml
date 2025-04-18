@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - v*
 jobs:
   checkout:
     runs-on: ubuntu-latest
