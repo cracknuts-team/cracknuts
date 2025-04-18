@@ -83,6 +83,6 @@
   "cracker.scope.zoomBrush.customRange": "指定区间",
   "cracker.scope.monitorPeriod": "监视周期",
   "cracker.scope.echarts.toolbox.saveAsImage": "保存为图片",
-  "cracker.scope.echarts.toolbox.dataZoom.back": "还原",
-  "cracker.scope.echarts.toolbox.dataZoom.zoom": "缩放"
+  "cracker.scope.echarts.toolbox.brush.lineX": "缩放",
+  "cracker.scope.echarts.toolbox.myReset": "重置"
 }
