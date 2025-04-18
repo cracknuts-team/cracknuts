@@ -77,6 +77,8 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
                     )
                     self.read_config_from_cracker()
                     self.listen_cracker_config()
+            else:
+                self.update_cracker_panel_config(config_file_cracker_config, uri)
 
             acquisition_config = workspace_config.get("acquisition")
             if acquisition_config:
