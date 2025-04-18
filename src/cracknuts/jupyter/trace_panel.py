@@ -40,7 +40,7 @@ class _TraceSeriesData:
 @dataclass
 class _TraceSeries:
     series_data_list: list[_TraceSeriesData] = field(default_factory=list)
-    x_data: ndarray[int] = field(default_factory=lambda: np.empty(0))
+    x_data: ndarray = field(default_factory=lambda: np.empty(0))
     percent_range: list = field(default_factory=lambda: [0, 100])
     range: list = field(default_factory=lambda: [0, 0])
 
@@ -236,8 +236,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_series_send_state()
 
     def _overview_selected_range_changed(self, start: int, end: int):
-        start = self._overview_trace_series.x_data[start]
-        end = self._overview_trace_series.x_data[end]
+        start = int(self._overview_trace_series.x_data[start])
+        end = int(self._overview_trace_series.x_data[end])
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
         self._trace_series = self._get_trace_series_by_index_range(start, end)
