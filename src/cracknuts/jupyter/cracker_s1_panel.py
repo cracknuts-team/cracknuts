@@ -264,7 +264,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def osc_sample_delay_changed(self, change):
         self.cracker.osc_sample_delay(int(change.get("new")))
 
-    @traitlets.observe("osc_sample_rate")
+    @traitlets.observe("osc_sample_clock")
     @observe_interceptor
     def osc_sample_rate_changed(self, change):
         self.cracker.osc_sample_clock(int(change.get("new")))
