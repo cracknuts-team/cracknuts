@@ -197,11 +197,11 @@ const TracePanel: React.FC = () => {
       feature: {
         saveAsImage: {
           show: true,
-          title: intl.formatMessage({id: "cracker.scope.echarts.toolbox.saveAsImage"})
+          title: intl.formatMessage({id: "trace.echarts.toolbox.saveAsImage"})
         },
         myReset: {
             show: true,
-            title: intl.formatMessage({id: "cracker.scope.echarts.toolbox.myReset"}),
+            title: intl.formatMessage({id: "trace.echarts.toolbox.myReset"}),
             icon: 'M3.8,33.4 M47,18.9h9.8V8.7 M56.3,20.1 C52.1,9,40.5,0.6,26.8,2.1C12.6,3.7,1.6,16.2,2.1,30.6 M13,41.1H3.1v10.2 M3.7,39.9c4.2,11.1,15.8,19.5,29.5,18 c14.2-1.6,25.2-14.1,24.7-28.5',
             onclick: function (){
                 anyWidgetModel.send({source: "reset", event: "onClick"});
@@ -209,7 +209,7 @@ const TracePanel: React.FC = () => {
         },
         brush: {
           title: {
-            lineX: intl.formatMessage({id: "cracker.scope.echarts.toolbox.brush.lineX"}),
+            lineX: intl.formatMessage({id: "trace.echarts.toolbox.brush.lineX"}),
           }
         }
       },

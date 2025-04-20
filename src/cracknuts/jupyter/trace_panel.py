@@ -135,10 +135,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
         ]
 
+        self._update_overview_trace()
+
         if self._auto_sync:
             self._trace_series_send_state()
-
-        self._update_overview_trace()
 
     def _update_overview_trace(self):
         if self._trace_cache_trace_highlight_indices is not None:
@@ -182,6 +182,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self.overview_trace_series = self._overview_trace_series.to_dict()
 
     def _trace_series_send_state(self):
+        if self._trace_series is None:
+            return
         self.trace_series = self._trace_series.to_dict()
         self.overview_trace_series = self._overview_trace_series.to_dict()
 
