@@ -58,6 +58,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             config = self._parse_config_bytes(res)
             config.osc_channel_0_enable = self._channel_enable.osc_channel_0_enable
             config.osc_channel_1_enable = self._channel_enable.osc_channel_1_enable
+            # Cracker only supports sampling length in multiples of 1024,
+            # record actual length to truncate waveform data later.
+            config.osc_sample_length = self._osc_sample_length
             return config
             # === end ===
         else:
@@ -498,7 +501,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 else:
                     self._logger.error(f"Unknown unit: {unit}")
                     return self.NON_PROTOCOL_ERROR, None
-
+        # Cracker only supports sampling length in multiples of 1024,
+        # record actual length to truncate waveform data later.
+        self._osc_sample_length = length
         payload = struct.pack(">I", length)
         self._logger.debug(f"osc_sample_length payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.OSC_SAMPLE_LENGTH, payload=payload)
