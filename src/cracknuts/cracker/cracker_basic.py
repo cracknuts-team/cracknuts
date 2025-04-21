@@ -690,12 +690,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 res_code = int.from_bytes(res, "big")
                 return status, res_code == 4
 
-    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray]:
+    def osc_get_wave(self, channel: int | str, offset: int, sample_count: int) -> tuple[int, np.ndarray | None]:
+        return self.osc_get_analog_wave(channel, offset, sample_count)
+
+    def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray | None]:
         """
         Get the analog wave.
 
-        :param channel: the channel of the analog wave.
-        :type channel: int
+        :param channel: The channel of the analog wave. It can be either 0, 1, or 'A', 'B'.
+        :type channel: int|str
         :param offset: the offset of the analog wave.
         :type offset: int
         :param sample_count: the sample count of the analog wave.
@@ -703,6 +706,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: the analog wave.
         :rtype: tuple[int, np.ndarray]
         """
+        if isinstance(channel, str):
+            channels = ("A", "B")
+            if channel not in channels:
+                self._logger.error(f"Invalid channel: {channel}. it must be one of {channels}.")
+                return self.NON_PROTOCOL_ERROR, None
+            channel = channels.index(channel)
         payload = struct.pack(">BII", channel, offset, sample_count)
         self._logger.debug(f"scrat_get_analog_wave payload: {payload.hex()}")
         status, wave_bytes = self.send_with_command(protocol.Command.OSC_GET_ANALOG_WAVES, payload=payload)
