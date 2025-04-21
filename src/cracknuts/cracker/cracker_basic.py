@@ -131,6 +131,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         # the information is temporarily saved to the host software. ===
         self._channel_enable = _ChannelConfig()
         # === end ===
+        # Cracker only supports sampling length in multiples of 1024,
+        # record actual length to truncate waveform data later.
+        self._osc_sample_length: int | None = None
 
     def change_ip(self, new_ip: str, new_mask: str, new_gateway: str) -> bool:
         """
