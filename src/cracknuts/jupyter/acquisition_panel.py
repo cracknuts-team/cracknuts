@@ -1,9 +1,11 @@
 # Copyright 2024 CrackNuts. All rights reserved.
-
+import os
 import pathlib
 import typing
+from dataclasses import dataclass
 from typing import Any
-
+import platform
+from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition, AcquisitionConfig
 from traitlets import traitlets
 
@@ -12,7 +14,7 @@ from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "AcquisitionPanelWidget.js"
-    _css = ""
+    _css = pathlib.Path(__file__).parent / "static" / "AcquisitionPanelWidget.css"
 
     acq_status = traitlets.Int(0).tag(sync=True)
     acq_run_progress = traitlets.Dict({"finished": 0, "total": -1}).tag(sync=True)
@@ -29,7 +31,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-
+        self._logger = logger.get_logger(self)
         if not hasattr(self, "acquisition"):
             self.acquisition: Acquisition | None = None
             if "acquisition" in kwargs and isinstance(kwargs["acquisition"], Acquisition):
@@ -38,6 +40,8 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
                 raise ValueError("acquisition is required")
 
         self.reg_msg_handler("acqStatusButton", "onChange", self.msg_acq_status_changed)
+        self.reg_msg_handler("fileSelector", "getDefaultDirectoryInfo", self.msg_get_default_directory_info)
+        self.reg_msg_handler("fileSelector", "getDirectoryList", self.msg_get_directory_list)
         self.acquisition.on_status_changed(self.update_acq_status)
         self.acquisition.on_run_progress_changed(self.update_acq_run_progress)
         self.acq_status = self.acquisition.get_status()
@@ -113,7 +117,94 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         else:
             self.acquisition.stop()
 
+    def msg_get_default_directory_info(self, args: dict[str, typing.Any]) -> None:
+        init_directory = args.get("initDirectory")
+        if init_directory is None:
+            init_directory = os.path.abspath(os.path.expanduser("~"))
+        init_directory = init_directory.replace("\\", "/")
+        default_directory_info = _DefaultDirectoryInfo(
+            self._get_partitions(), init_directory, self._get_directory_list(init_directory)
+        )
+
+        self.send({"defaultDirectoryInfo": default_directory_info.to_dict()})
+
+    def msg_get_directory_list(self, args: dict[str, typing.Any]) -> None:
+        path: str = args.get("path")
+        self._logger.info(f"get directory list: {path}")
+        if path is None:
+            return
+        path = path.replace("\\", "/")
+        directory_list = self._get_directory_list(path)
+        self._logger.info(f"directory list: {directory_list}")
+        self.send({"directoryList": [d.to_dict() for d in directory_list]})
+
     @traitlets.observe("trace_fetch_interval")
     def trace_fetch_interval_changed(self, change) -> None:
         if change.get("new"):
             self.acquisition.trace_fetch_interval = change["new"]
+
+    def _get_partitions(self) -> list[str]:
+        partitions = []
+        system = platform.system()
+
+        if system == "Windows":
+            import string
+            from ctypes import windll
+
+            try:
+                bitmask = windll.kernel32.GetLogicalDrives()
+                for letter in string.ascii_uppercase:
+                    if bitmask & 1:
+                        partitions.append(f"{letter}:/")
+                    bitmask >>= 1
+            except Exception as e:
+                self._logger.error(f"Error getting partitions on Windows: {e}")
+        elif system == "Linux":
+            try:
+                with open("/proc/mounts") as f:
+                    for line in f:
+                        if line.startswith("/dev/"):
+                            parts = line.split()
+                            partitions.append(parts[1])
+            except Exception as e:
+                self._logger.error(f"Error getting partitions on Linux: {e}")
+
+        return partitions
+
+    def _get_directory_list(self, directory: str) -> list["_DirectoryListNode"]:
+        directory_list = []
+        try:
+            path = pathlib.Path(directory)
+            if path.is_dir():
+                for item in path.iterdir():
+                    directory_list.append(_DirectoryListNode(name=item.name, type="folder"))
+        except Exception as e:
+            self._logger.error(f"Error accessing directory {directory}: {e}")
+
+        return directory_list
+
+
+@dataclass
+class _DirectoryListNode:
+    name: str
+    type: str
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "type": self.type,
+        }
+
+
+@dataclass
+class _DefaultDirectoryInfo:
+    partitions: list[str]
+    path: str
+    directory_list: list[_DirectoryListNode]
+
+    def to_dict(self):
+        return {
+            "partitions": self.partitions,
+            "path": self.path,
+            "directoryList": [item.to_dict() for item in self.directory_list],
+        }
