@@ -20,7 +20,7 @@ from cracknuts.utils import user_config
 
 class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackNutsPanelWidget.js"
-    _css = ""
+    _css = pathlib.Path(__file__).parent / "static" / "CrackNutsPanelWidget.css"
 
     cracker_model = traitlets.Unicode("s1").tag(sync=True)
     language = traitlets.Unicode("en").tag(sync=True)
