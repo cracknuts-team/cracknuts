@@ -83,6 +83,20 @@ class _ChannelConfig:
 # === end ===
 
 
+def connection_status_check(func):
+    """
+    This is a decorator to check the connection status of the cracker device. user should use this directly.
+    """
+
+    def wrapper(self: "CrackerBasic", *args, **kwargs):
+        if not self._connection_status:
+            self._logger.error("Cracker is not connected.")
+            return self.NON_PROTOCOL_ERROR, None
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 class CrackerBasic(ABC, typing.Generic[T]):
     NON_PROTOCOL_ERROR = -1
 
@@ -135,6 +149,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         # record actual length to truncate waveform data later.
         self._osc_sample_length: int | None = None
 
+    @connection_status_check
     def change_ip(self, new_ip: str, new_mask: str, new_gateway: str) -> bool:
         """
         Change the IP address of the device.
@@ -212,9 +227,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
         self._server_address = host, int(port)
 
+    @connection_status_check
     def set_logging_level(self, level: str) -> None:
         """
-        Set logging level.
+        Set the Cracker OS logging level.
 
         :param level: The logging level, debug, info, warning, error,
         """
@@ -415,6 +431,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
         :return: None
         """
+        if not self._connection_status:
+            return
         self._operator.disconnect()
         try:
             if self._socket:
@@ -556,6 +574,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         ...
 
+    @connection_status_check
     def get_current_config(self) -> T:
         """
         Get current configuration of `Cracker`.
@@ -568,6 +587,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         return self._config
 
+    @connection_status_check
     def write_config_to_cracker(self, config: T):
         """
         Sync config to cracker.
@@ -580,6 +600,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         ...
 
+    @connection_status_check
     def dump_config(self, path=None) -> str | None:
         """
         Dump the current config to a JSON file if a path is specified, or to a JSON string if no path is specified.
@@ -589,13 +610,14 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: the content of JSON string or None if no path is specified.
         :rtype: str | None
         """
-        config_json = self._config.dump_to_json()
+        config_json = self.get_current_config().dump_to_json()
         if path is None:
             return config_json
         else:
             with open(path, "w") as f:
                 f.write(config_json)
 
+    @connection_status_check
     def load_config_from_file(self, path: str) -> None:
         """
         Load config from a JSON file.
@@ -611,6 +633,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 content = config_json["cracker"]
             self.load_config_from_str(content)
 
+    @connection_status_check
     def load_config_from_str(self, json_str: str) -> None:
         """
         Load config from a JSON string.
@@ -622,6 +645,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._config.load_from_json(json_str)
         self.write_config_to_cracker(self._config)
 
+    @connection_status_check
     def get_id(self) -> tuple[int, str | None]:
         """
         Get the ID of the equipment.
@@ -631,6 +655,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         return protocol.STATUS_OK, self._operator.get_sn()
 
+    @connection_status_check
     def get_hardware_model(self) -> tuple[int, str | None]:
         """
         Get the name of the equipment.
@@ -640,9 +665,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         return protocol.STATUS_OK, self._operator.get_hardware_model()
 
+    @connection_status_check
     def get_bitstream_version(self):
         return self.send_with_command(protocol.Command.GET_BITSTREAM_VERSION)
 
+    @connection_status_check
     def get_firmware_version(self) -> tuple[int, str | None]:
         """
         Get the version of the equipment.
@@ -661,12 +688,14 @@ class CrackerBasic(ABC, typing.Generic[T]):
             f"bitstream_version: {bitstream_version}",
         )
 
+    @connection_status_check
     def osc_single(self) -> tuple[int, None]:
         payload = None
         self._logger.debug("scrat_sample_len payload: %s", payload)
         status, res = self.send_with_command(protocol.Command.OSC_SINGLE, payload=payload)
         return status, None
 
+    @connection_status_check
     def osc_force(self) -> tuple[int, None]:
         """
         Force produce a wave data.
@@ -678,6 +707,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._logger.debug(f"scrat_force payload: {payload}")
         return self.send_with_command(protocol.Command.OSC_FORCE, payload=payload)
 
+    @connection_status_check
     def osc_is_triggered(self) -> tuple[int, bool]:
         payload = None
         self._logger.debug(f"scrat_is_triggered payload: {payload}")
@@ -696,6 +726,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
     def osc_get_wave(self, channel: int | str, offset: int, sample_count: int) -> tuple[int, np.ndarray | None]:
         return self.osc_get_analog_wave(channel, offset, sample_count)
 
+    @connection_status_check
     def osc_get_analog_wave(self, channel: int, offset: int, sample_count: int) -> tuple[int, np.ndarray | None]:
         """
         Get the analog wave.

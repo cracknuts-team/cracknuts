@@ -4,9 +4,8 @@ import re
 import struct
 from enum import Enum
 
-
 from cracknuts.cracker import protocol, serial
-from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic
+from cracknuts.cracker.cracker_basic import ConfigBasic, CrackerBasic, connection_status_check
 
 
 class ConfigS1(ConfigBasic):
@@ -28,7 +27,7 @@ class ConfigS1(ConfigBasic):
         self.nut_spi_enable: bool | None = False
         self.nut_spi_speed: float = 10_000.0
         self.nut_spi_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
-        self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
+        self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_FIRST
         self.nut_spi_csn_auto: bool = True
         self.nut_spi_csn_delay: bool = True
 
@@ -47,9 +46,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     def get_default_config(self) -> ConfigS1:
         return ConfigS1()
 
+    @connection_status_check
     def get_current_config(self) -> ConfigS1 | None:
-        if not self._connection_status:
-            return None
         status, res = self.send_with_command(protocol.Command.GET_CONFIG)
         if status == protocol.STATUS_OK:
             # === Since the device does not support the channel enable function,
@@ -71,7 +69,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         for k, v in self.get_current_config().__dict__.items():
             setattr(self._config, k, v)
 
-    def _parse_config_bytes(self, config_bytes: bytes):
+    def _parse_config_bytes(self, config_bytes: bytes) -> ConfigS1 | None:
+        if config_bytes is None:
+            return None
         bytes_format = {
             "nut_enable": "?",
             "nut_voltage": "I",
@@ -133,6 +133,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return config
 
+    @connection_status_check
     def write_config_to_cracker(self, config: ConfigS1):
         self._osc_set_analog_all_channel_enable({0: config.osc_channel_0_enable, 1: config.osc_channel_1_enable})
         self.osc_analog_gain(0, config.osc_channel_0_gain)
@@ -172,6 +173,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self.nut_clock_freq(config.nut_clock)
         self._nut_set_clock_enable(config.nut_clock_enable)
 
+    @connection_status_check
     def register_read(self, base_address: int, offset: int) -> tuple[int, bytes | None]:
         """
         Read register.
@@ -191,6 +193,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             return status, res
 
+    @connection_status_check
     def register_write(self, base_address: int, offset: int, data: bytes | int | str) -> tuple[int, None]:
         """
         Write register.
@@ -236,6 +239,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._osc_set_analog_channel_enable(channel, False)
 
+    @connection_status_check
     def _osc_set_analog_channel_enable(self, channel: int | str, enable: bool) -> tuple[int, None]:
         """
         Set analog channel enable.
@@ -282,6 +286,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._channel_enable.osc_channel_1_enable = final_enable[1]
         # === end ===
 
+    @connection_status_check
     def _osc_set_analog_all_channel_enable(self, final_enable: dict[int, bool]):
         mask = 0
         if final_enable.get(0):
@@ -305,6 +310,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">B", mask)
         return self.send_with_command(protocol.Command.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
 
+    @connection_status_check
     def osc_trigger_mode(self, mode: int | str) -> tuple[int, None]:
         """
         Set trigger mode.
@@ -338,6 +344,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def osc_trigger_source(self, source: int | str) -> tuple[int, None]:
         """
         Set trigger source.
@@ -374,6 +381,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def osc_trigger_edge(self, edge: int | str) -> tuple[int, None]:
         """
         Set trigger edge.
@@ -427,6 +435,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def osc_sample_delay(self, delay: int | str) -> tuple[int, None]:
         """
         Set sample delay.
@@ -468,6 +477,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def osc_sample_length(self, length: int | str) -> tuple[int, None]:
         """
         Set sample length.
@@ -512,6 +522,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def osc_sample_clock(self, clock: int | str) -> tuple[int, None]:
         """
         Set osc sample rate
@@ -553,6 +564,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def osc_analog_gain(self, channel: int | str, gain: int) -> tuple[int, None]:
         """
         Set analog gain.
@@ -579,6 +591,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">BB", channel, gain)
         return self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
 
+    @connection_status_check
     def osc_sample_clock_phase(self, phase: int) -> tuple[int, None]:
         """
         Set sample phase.
@@ -614,6 +627,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._nut_set_enable(True)
 
+    @connection_status_check
     def _nut_set_enable(self, enable: int | bool) -> tuple[int, None]:
         """
         Set nut enable.
@@ -633,6 +647,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def nut_voltage(self, voltage: float | str | int) -> tuple[int, None]:
         """
         Set nut voltage.
@@ -669,6 +684,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def nut_clock_disable(self) -> tuple[int, None]:
         """
         Disable the nut clock.
@@ -678,6 +694,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._nut_set_clock_enable(False)
 
+    @connection_status_check
     def nut_clock_enable(self) -> tuple[int, None]:
         """
         Enable the nut clock.
@@ -687,6 +704,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._nut_set_clock_enable(True)
 
+    @connection_status_check
     def _nut_set_clock_enable(self, enable: bool) -> tuple[int, None]:
         payload = struct.pack(">?", enable)
         self._logger.debug(f"nut_set_clock_enable payload: {payload.hex()}")
@@ -696,6 +714,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def nut_clock_freq(self, clock: int | str) -> tuple[int, None]:
         """
         Set nut clock.
@@ -727,6 +746,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, None
 
+    @connection_status_check
     def nut_timeout_ms(self, timeout: int) -> tuple[int, None]:
         """
         Set nut timeout.
@@ -762,6 +782,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._spi_enable(False)
 
+    @connection_status_check
     def _spi_enable(self, enable: bool):
         """
         Enable the SPI.
@@ -778,6 +799,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_spi_enable = enable
         return status, res
 
+    @connection_status_check
     def spi_reset(self) -> tuple[int, None]:
         """
         Reset the SPI hardware.
@@ -789,6 +811,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_spi_reset payload: {payload}")
         return self.send_with_command(protocol.Command.CRACKER_SPI_RESET)
 
+    @connection_status_check
     def spi_config(
         self,
         speed: float | None = None,
@@ -819,6 +842,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         if speed is None or cpol is None or csn_auto is None:
             config = self.get_current_config()
+            if config is None:
+                self._logger.error("Get config from cracker error.")
+                return self.NON_PROTOCOL_ERROR, None
             if speed is None:
                 speed = config.nut_spi_speed
             if cpol is None:
@@ -877,6 +903,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return sorted(divisors)
 
+    @connection_status_check
     def _spi_transceive(
         self, tx_data: bytes | str | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool
     ) -> tuple[int, bytes | None]:
@@ -993,6 +1020,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._i2c_enable(False)
 
+    @connection_status_check
     def _i2c_enable(self, enable: bool):
         """
         Enable the I2C.
@@ -1009,6 +1037,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_i2c_enable = enable
         return status, res
 
+    @connection_status_check
     def i2c_reset(self) -> tuple[int, None]:
         """
         Reset the I2C.
@@ -1020,6 +1049,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_i2c_reset payload: {payload}")
         return self.send_with_command(protocol.Command.CRACKER_I2C_RESET)
 
+    @connection_status_check
     def i2c_config(
         self,
         dev_addr: int | None = None,
@@ -1038,6 +1068,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         if dev_addr is None or speed is None:
             config = self.get_current_config()
+            if config is None:
+                self._logger.error("Get config from cracker error.")
+                return self.NON_PROTOCOL_ERROR, None
             if dev_addr is None:
                 dev_addr = config.nut_i2c_dev_addr
             if speed is None:
@@ -1051,6 +1084,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_i2c_speed = speed
         return status, res
 
+    @connection_status_check
     def _i2c_transceive(
         self,
         tx_data: bytes | str | None,
@@ -1244,6 +1278,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         return self._uart_enable(False)
 
+    @connection_status_check
     def _uart_enable(self, enable: bool) -> tuple[int, None]:
         """
         Enable the uart.
@@ -1260,6 +1295,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.nut_uart_enable = enable
         return status, res
 
+    @connection_status_check
     def uart_reset(self) -> tuple[int, None]:
         """
         Reset the UART hardware.
@@ -1271,6 +1307,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_reset payload: {payload}")
         return self.send_with_command(protocol.Command.CRACKER_UART_RESET)
 
+    @connection_status_check
     def uart_config(
         self,
         baudrate: serial.Baudrate | None = None,
@@ -1295,6 +1332,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         if baudrate is None or bytesize is None or parity is None or stopbits is None:
             config = self.get_current_config()
+            if config is None:
+                self._logger.error("Get config from cracker error.")
+                return self.NON_PROTOCOL_ERROR, None
             if baudrate is None:
                 baudrate = config.nut_uart_baudrate
             if bytesize is None:
@@ -1306,14 +1346,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         payload = struct.pack(">BBBB", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
-        status, res = self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
-        if status == protocol.STATUS_OK:
-            self._config.nut_uart_baudrate = baudrate
-            self._config.nut_uart_bytesize = bytesize
-            self._config.nut_uart_parity = parity
-            self._config.nut_uart_stopbits = stopbits
-        return status, res
+        return self.send_with_command(protocol.Command.CRACKER_UART_CONFIG, payload=payload)
 
+    @connection_status_check
     def uart_transmit_receive(
         self, tx_data: str | bytes = None, rx_count: int = 0, is_trigger: bool = False, timeout: int = 10000
     ) -> tuple[int, bytes | None]:
@@ -1340,6 +1375,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_transmit_receive payload: {payload.hex()}")
         return self.send_with_command(protocol.Command.CRACKER_UART_TRANSCEIVE, payload=payload)
 
+    @connection_status_check
     def uart_receive_fifo_remained(self) -> tuple[int, int]:
         """
         Get the number of remaining unread bytes in the UART receive FIFO.
@@ -1352,6 +1388,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         status, res = self.send_with_command(protocol.Command.CRACKER_UART_RECEIVE_FIFO_REMAINED)
         return status, struct.unpack(">H", res)[0]
 
+    @connection_status_check
     def uart_receive_fifo_dump(self) -> tuple[int, bytes | None]:
         """
         Read all the remaining data from the UART receive FIFO.
@@ -1363,6 +1400,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_receive_fifo_dump payload: {payload}")
         return self.send_with_command(protocol.Command.CRACKER_UART_CRACKER_UART_RECEIVE_FIFO_DUMP)
 
+    @connection_status_check
     def uart_receive_fifo_clear(self) -> tuple[int, bytes | None]:
         """
         Clear all the remaining data in the UART receive FIFO.
