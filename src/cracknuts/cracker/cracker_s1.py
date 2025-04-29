@@ -590,7 +590,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if not 1 <= gain <= 50:
             self._logger.error("Gain error, it should in 1 to 50")
             return self.NON_PROTOCOL_ERROR, None
-        gain *= 2
         payload = struct.pack(">BB", channel, gain)
         return self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
 
