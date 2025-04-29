@@ -178,6 +178,7 @@ class ScarrTraceDataset(TraceDataset):
     _GROUP_ROOT_PATH = "0"
     _ARRAY_TRACES_PATH = "traces"
     _ARRAY_PLAINTEXT_PATH = "plaintext"
+    _ARRAY_METADATA_PATH = "metadata"
 
     def __init__(
         self,
@@ -186,7 +187,7 @@ class ScarrTraceDataset(TraceDataset):
         channel_names: list[str] | None = None,
         trace_count: int | None = None,
         sample_count: int | None = None,
-        data_length: int | None = None,
+        # data_length: int | None = None,
         trace_dtype: np.dtype = np.int16,
         zarr_kwargs: dict | None = None,
         zarr_trace_group_kwargs: dict | None = None,
@@ -199,7 +200,7 @@ class ScarrTraceDataset(TraceDataset):
         self._channel_count = None if self._channel_names is None else len(self._channel_names)
         self._trace_count: int | None = trace_count
         self._sample_count: int | None = sample_count
-        self._data_length: int | None = data_length
+        # self._data_length: int | None = data_length
         self._create_time: int | None = create_time
         self._version: str | None = version
 
@@ -236,12 +237,13 @@ class ScarrTraceDataset(TraceDataset):
                     dtype=trace_dtype,
                     **zarr_trace_group_kwargs,
                 )
-                channel_group.create(
-                    self._ARRAY_PLAINTEXT_PATH,
-                    shape=(self._trace_count, self._data_length),
-                    dtype=np.uint8,
-                    **zarr_data_group_kwargs,
-                )
+                channel_group.create_group(self._ARRAY_METADATA_PATH)
+                # channel_group.create(
+                #     self._ARRAY_PLAINTEXT_PATH,
+                #     shape=(self._trace_count, self._data_length),
+                #     dtype=np.uint8,
+                #     **zarr_data_group_kwargs,
+                # )
             self._zarr_data.attrs[self._ATTR_METADATA_KEY] = {
                 "create_time": self._create_time,
                 "channel_names": self._channel_names,
@@ -291,7 +293,7 @@ class ScarrTraceDataset(TraceDataset):
             channel_names=channel_names,
             trace_count=trace_count,
             sample_count=sample_count,
-            data_length=data_length,
+            # data_length=data_length,
             version=version,
             zarr_kwargs=kwargs,
         )
@@ -300,7 +302,7 @@ class ScarrTraceDataset(TraceDataset):
         if path is not None and path != self._zarr_path:
             zarr.copy_store(self._zarr_data, zarr.open(path, mode="w"))
 
-    def set_trace(self, channel_name: str, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
+    def set_trace(self, channel_name: str, trace_index: int, trace: np.ndarray, data: dict[str, np.ndarray] | None):
         if self._trace_count is None or self._channel_count is None:
             raise Exception("Channel or trace count must has not specified.")
         if channel_name not in self._channel_names:
@@ -315,13 +317,23 @@ class ScarrTraceDataset(TraceDataset):
             return
         channel_index = self._channel_names.index(channel_name)
         self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
-        if self._data_length != 0 and data is not None:
-            if self._data_length != data.shape[0]:
-                self._logger.error(
-                    f"Trace data length {data.shape[0]} does not match the previously "
-                    f"defined value {self._data_length}, so the data will be ignored."
-                )
-            self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_index] = data
+        if data is not None:
+            for k, v in data.items():
+                metadata_group: zarr.hierarchy.Group = self._get_under_root(channel_index, self._ARRAY_METADATA_PATH)
+                metadata_item_group = metadata_group.get(k)
+                if metadata_item_group is None:
+                    self._data_length = v.shape[0]
+                    metadata_item_group = metadata_group.create(
+                        k, shape=(self._trace_count, self._data_length), dtype=np.uint8
+                    )
+                metadata_item_group[trace_index] = v
+        # if self._data_length != 0 and data is not None:
+        #     if self._data_length != data.shape[0]:
+        #         self._logger.error(
+        #             f"Trace data length {data.shape[0]} does not match the previously "
+        #             f"defined value {self._data_length}, so the data will be ignored."
+        #         )
+        #     self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_index] = data
 
     def get_origin_data(self) -> zarr.hierarchy.Group:
         return self._zarr_data
