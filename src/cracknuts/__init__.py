@@ -1,6 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-__version__ = "0.17.1-alpha.3"
+__version__ = "0.17.1-alpha.4"
 
 import sys
 import typing
