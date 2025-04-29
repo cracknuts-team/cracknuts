@@ -527,8 +527,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set osc sample rate
 
-        :param clock: The sample rate in kHz can be one of (65000, 48000, 24000, 12000, 8000, 4000)
-                      or a string in (65M, 48M, 24M, 12M, 8M, 4M).
+        :param clock: The sample rate in kHz can be one of (65000, 48000, 24000, 12000, 8000)
+                      or a string in (65M, 48M, 24M, 12M, 8M).
         :type clock: int | str
         :return: The device response status
         :rtype: tuple[int, None]
@@ -545,16 +545,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 clock = 12000
             elif clock == "8M":
                 clock = 8000
-            elif clock == "4M":
-                clock = 4000
             else:
                 if re.match(r"^\d+$", clock):
                     clock = int(clock)
                 else:
-                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 24M or 12M or 8M or 4M")
+                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 24M or 12M or 8M")
                     return self.NON_PROTOCOL_ERROR, None
         if clock not in (65000, 48000, 24000, 12000, 8000, 4000):
-            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 24000, 12000, 8000, 4000)")
+            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 24000, 12000, 8000)")
             return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">I", clock)
         self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
@@ -592,7 +590,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if not 1 <= gain <= 50:
             self._logger.error("Gain error, it should in 1 to 50")
             return self.NON_PROTOCOL_ERROR, None
-        gain *= 2
         payload = struct.pack(">BB", channel, gain)
         return self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
 
