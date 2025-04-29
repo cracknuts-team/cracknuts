@@ -24,7 +24,7 @@ class SpiCpol(Enum):
 
 
 class SpiCpha(Enum):
-    SPI_CPHA_FIRST, SPI_CPHA_SECOND = 0, 1
+    SPI_CPHA_LOW, SPI_CPHA_HIGH = 0, 1
 
 
 class I2cSpeed(Enum):

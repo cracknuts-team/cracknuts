@@ -27,7 +27,7 @@ class ConfigS1(ConfigBasic):
         self.nut_spi_enable: bool | None = False
         self.nut_spi_speed: float = 10_000.0
         self.nut_spi_cpol: serial.SpiCpol = serial.SpiCpol.SPI_CPOL_LOW
-        self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_FIRST
+        self.nut_spi_cpha: serial.SpiCpha = serial.SpiCpha.SPI_CPHA_LOW
         self.nut_spi_csn_auto: bool = True
         self.nut_spi_csn_delay: bool = True
 
