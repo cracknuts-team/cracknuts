@@ -1164,6 +1164,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type tx_data: str | bytes
         :param is_trigger: Whether the transmit trigger is enabled.
         """
+        if isinstance(tx_data, str):
+            tx_data = bytes.fromhex(tx_data)
         transfer_rw = (0, 0, 0, 0, 0, 0, 0, 0)
         transfer_lens = (len(tx_data), 0, 0, 0, 0, 0, 0, 0)
         status, _ = self._i2c_transceive(
@@ -1220,6 +1222,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                  Return None if an exception is caught.
         :rtype: tuple[int, bytes | None]
         """
+        if isinstance(tx_data, str):
+            tx_data = bytes.fromhex(tx_data)
         transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
         transfer_lens = (len(tx_data), 0, 0, 0, rx_count, 0, 0, 0)
         return self._i2c_transceive(
@@ -1247,6 +1251,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                  Return None if an exception is caught.
         :rtype: tuple[int, bytes | None]
         """
+        if isinstance(tx_data, str):
+            tx_data = bytes.fromhex(tx_data)
         transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
         transfer_lens = (len(tx_data), 0, 0, 0, rx_count, 0, 0, 0)
         return self._i2c_transceive(
