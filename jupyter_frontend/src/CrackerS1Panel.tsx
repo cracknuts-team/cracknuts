@@ -585,12 +585,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 <FormattedMessage id={"cracker.config.scope.channel.a.gain"}/>
                               </Checkbox>
                               <InputNumber
-                                addonAfter="%"
+                                addonAfter="dB"
                                 style={{width: 100}}
                                 step="1"
                                 size={"small"}
                                 min={1}
-                                max={100}
+                                max={50}
                                 changeOnWheel
                                 disabled={!channel0Enable}
                                 value={socChannel0Gain}
@@ -615,12 +615,12 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                 <FormattedMessage id={"cracker.config.scope.channel.b.gain"}/>
                               </Checkbox>
                               <InputNumber
-                                addonAfter="%"
+                                addonAfter="dB"
                                 style={{width: 100}}
                                 step="1"
                                 size={"small"}
                                 min={1}
-                                max={100}
+                                max={50}
                                 changeOnWheel
                                 disabled={!channel1Enable}
                                 value={socChannel1Gain}
