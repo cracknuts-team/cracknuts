@@ -87,6 +87,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         # _, self.cracker_id = self.cracker.get_id()
         # _, self.cracker_name = self.cracker.get_hardware_model()
         # _, self.cracker_version = self.cracker.get_firmware_version()
+        self._has_connected_before = False
 
     def read_config_from_cracker(self) -> None:
         # connection
@@ -96,7 +97,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
         cracker_config = self.cracker.get_current_config()
         if cracker_config is None:
-            cracker_config = self.cracker.get_default_config()
+            cracker_config = self.cracker.get_default_config().__dict__
         self.update_cracker_panel_config(cracker_config, connect_uri)
 
     def write_config_to_cracker(self) -> None:
@@ -112,7 +113,10 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
             if hasattr(self, prop):
                 v = getattr(self, prop)
                 if prop == "nut_i2c_dev_addr":
-                    v = int(v)
+                    if v and v.startswith("0x"):
+                        v = int(v, base=16)
+                    else:
+                        v = int(v)
                 if default_value is not None and isinstance(default_value, Enum):
                     setattr(panel_config, prop, default_value.__class__(v))
                 else:
@@ -182,37 +186,42 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
         the configuration from cracker after connect from panel.
 
         """
-        panel_cracker_config = self.get_cracker_panel_config().__dict__
 
-        # uri = workspace_config.get("connection")
-        if panel_cracker_config:
-            for k, v in panel_cracker_config.items():
-                # Skip comparison for ignored configuration items.
-                if k in ("nut_timeout",):
-                    continue
-                if hasattr(cracker_config, k):
-                    cv = getattr(cracker_config, k)
-                    if isinstance(cv, Enum):
-                        cv = cv.value
-                    if v != cv:
-                        self.panel_config_different_from_cracker_config = True
-                        self._logger.warning(
-                            f"The configuration item {k} differs between the configuration file "
-                            f"({v}) and the cracker ({cv})."
+        if self._has_connected_before:
+            panel_cracker_config = self.get_cracker_panel_config().__dict__
+
+            # uri = workspace_config.get("connection")
+            if panel_cracker_config:
+                for k, v in panel_cracker_config.items():
+                    # Skip comparison for ignored configuration items.
+                    if k in ("nut_timeout",):
+                        continue
+                    if hasattr(cracker_config, k):
+                        cv = getattr(cracker_config, k)
+                        if isinstance(cv, Enum):
+                            cv = cv.value
+                        if v != cv:
+                            self.panel_config_different_from_cracker_config = True
+                            self._logger.warning(
+                                f"The configuration item {k} differs between the configuration file "
+                                f"({v}) and the cracker ({cv})."
+                            )
+                            break
+                    else:
+                        self._logger.error(
+                            f"Config has no attribute named {k}, "
+                            f"which comes from the JSON key in the panel configuration."
                         )
-                        break
-                else:
-                    self._logger.error(
-                        f"Config has no attribute named {k}, "
-                        f"which comes from the JSON key in the panel configuration."
-                    )
-            if not self.panel_config_different_from_cracker_config:
+                if not self.panel_config_different_from_cracker_config:
+                    self.listen_cracker_config()
+            else:
+                self._logger.error(
+                    "Configuration file format error: The cracker configuration segment is missing. "
+                    "The configuration from the cracker or the default configuration will be used."
+                )
+                self.read_config_from_cracker()
                 self.listen_cracker_config()
         else:
-            self._logger.error(
-                "Configuration file format error: The cracker configuration segment is missing. "
-                "The configuration from the cracker or the default configuration will be used."
-            )
             self.read_config_from_cracker()
             self.listen_cracker_config()
 

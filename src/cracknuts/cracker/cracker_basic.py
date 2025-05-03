@@ -90,8 +90,11 @@ def connection_status_check(func):
 
     def wrapper(self: "CrackerBasic", *args, **kwargs):
         if not self._connection_status:
-            self._logger.error("Cracker is not connected.")
-            return self.NON_PROTOCOL_ERROR, None
+            sig_result = func.__annotations__.get("return", None)
+            if sig_result is tuple:
+                return self.DISCONNECTED, None
+            else:
+                return None
         return func(self, *args, **kwargs)
 
     return wrapper
@@ -99,6 +102,7 @@ def connection_status_check(func):
 
 class CrackerBasic(ABC, typing.Generic[T]):
     NON_PROTOCOL_ERROR = -1
+    DISCONNECTED = -2
 
     """
     The basic device class, provides support for the `CNP` protocol, configuration management, firmware maintenance,
@@ -555,6 +559,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 f"{None if payload is None else hex_util.get_hex(
                                   payload, self._logger_info_payload_max_length)}"
             )
+        self._logger.warning(f"{status, payload}")
         return status, payload
 
     def set_logger_info_payload_max_length(self, length):
