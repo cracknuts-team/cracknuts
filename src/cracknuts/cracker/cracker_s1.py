@@ -279,9 +279,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         # === Since the device does not support the channel enable function,
         # the information is temporarily saved to the host software. ===
         # status, res = self._osc_set_analog_all_channel_enable(final_enable)
-        # if status == protocol.STATUS_OK:
-        #     self._config.osc_channel_0_enable = config.osc_channel_0_enable
-        #     self._config.osc_channel_1_enable = config.osc_channel_1_enable
         self._channel_enable.osc_channel_0_enable = final_enable[0]
         self._channel_enable.osc_channel_1_enable = final_enable[1]
         # === end ===
