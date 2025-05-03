@@ -38,64 +38,66 @@ class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePa
             raise ValueError(f"can't find panel for cracker type: {type(cracker)}.")
         super().__init__(*args, **kwargs)
         self.language = user_config.get_option("language", fallback="en")
-        # self._load_current_path_config()
-        workspace_config = self._get_workspace_config()
-        if workspace_config:
-            config_file_cracker_config = workspace_config.get("cracker")
-            # uri = workspace_config.get("connection")
-            uri = cracker.get_uri()
-            cracker_config = cracker.get_current_config()
-            if cracker_config is not None:
-                if config_file_cracker_config:
-                    for k, v in config_file_cracker_config.items():
-                        # Skip comparison for ignored configuration items.
-                        if k in ("nut_timeout",):
-                            continue
-                        if hasattr(cracker_config, k):
-                            cv = getattr(cracker_config, k)
-                            if isinstance(cv, Enum):
-                                cv = cv.value
-                            if v != cv:
-                                self.panel_config_different_from_cracker_config = True
-                                self._logger.warning(
-                                    f"The configuration item {k} differs between the configuration file "
-                                    f"({v}) and the cracker ({cv})."
+
+        if self.cracker.get_connection_status():
+            self._has_connected_before = True
+            workspace_config = self._get_workspace_config()
+            if workspace_config:
+                config_file_cracker_config = workspace_config.get("cracker")
+                # uri = workspace_config.get("connection")
+                uri = cracker.get_uri()
+                cracker_config = cracker.get_current_config()
+                if cracker_config is not None:
+                    if config_file_cracker_config:
+                        for k, v in config_file_cracker_config.items():
+                            # Skip comparison for ignored configuration items.
+                            if k in ("nut_timeout",):
+                                continue
+                            if hasattr(cracker_config, k):
+                                cv = getattr(cracker_config, k)
+                                if isinstance(cv, Enum):
+                                    cv = cv.value
+                                if v != cv:
+                                    self.panel_config_different_from_cracker_config = True
+                                    self._logger.warning(
+                                        f"The configuration item {k} differs between the configuration file "
+                                        f"({v}) and the cracker ({cv})."
+                                    )
+                                    break
+                            else:
+                                self._logger.error(
+                                    f"Config has no attribute named {k}, "
+                                    f"which comes from the JSON key in the config file."
                                 )
-                                break
-                        else:
-                            self._logger.error(
-                                f"Config has no attribute named {k}, "
-                                f"which comes from the JSON key in the config file."
-                            )
-                    if not self.panel_config_different_from_cracker_config:
+                        if not self.panel_config_different_from_cracker_config:
+                            self.listen_cracker_config()
+                        self.update_cracker_panel_config(config_file_cracker_config, uri)
+                    else:
+                        self._logger.error(
+                            "Configuration file format error: The cracker configuration segment is missing. "
+                            "The configuration from the cracker or the default configuration will be used."
+                        )
+                        self.read_config_from_cracker()
                         self.listen_cracker_config()
+                else:
                     self.update_cracker_panel_config(config_file_cracker_config, uri)
+
+                acquisition_config = workspace_config.get("acquisition")
+                if acquisition_config:
+                    self.acquisition.load_config_from_json(workspace_config.get("acquisition"))
                 else:
                     self._logger.error(
-                        "Configuration file format error: The cracker configuration segment is missing. "
-                        "The configuration from the cracker or the default configuration will be used."
+                        "Configuration file format error: Acquisition configuration segment is missing. "
+                        "The configuration from the acquisition object or "
+                        "the default configuration will be used."
                     )
-                    self.read_config_from_cracker()
-                    self.listen_cracker_config()
+                self.sync_config_from_acquisition()
+                self.listen_acquisition_config()
             else:
-                self.update_cracker_panel_config(config_file_cracker_config, uri)
-
-            acquisition_config = workspace_config.get("acquisition")
-            if acquisition_config:
-                self.acquisition.load_config_from_json(workspace_config.get("acquisition"))
-            else:
-                self._logger.error(
-                    "Configuration file format error: Acquisition configuration segment is missing. "
-                    "The configuration from the acquisition object or "
-                    "the default configuration will be used."
-                )
-            self.sync_config_from_acquisition()
-            self.listen_acquisition_config()
-        else:
-            self.read_config_from_cracker()
-            self.listen_cracker_config()
-            self.sync_config_from_acquisition()
-            self.listen_acquisition_config()
+                self.read_config_from_cracker()
+                self.listen_cracker_config()
+                self.sync_config_from_acquisition()
+                self.listen_acquisition_config()
 
         self.reg_msg_handler("dumpConfigButton", "onClick", self.dump_config_button_click)
         self.reg_msg_handler("loadConfigButton", "onClick", self.load_config_button_click)
