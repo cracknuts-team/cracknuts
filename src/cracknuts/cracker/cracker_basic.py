@@ -559,7 +559,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 f"{None if payload is None else hex_util.get_hex(
                                   payload, self._logger_info_payload_max_length)}"
             )
-        self._logger.warning(f"{status, payload}")
         return status, payload
 
     def set_logger_info_payload_max_length(self, length):
