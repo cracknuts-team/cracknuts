@@ -40,7 +40,10 @@ class TraceDataset(abc.ABC):
     _channel_count: int | None
     _trace_count: int | None
     _sample_count: int | None
-    _data_length: int | None
+    _metadata_plaintext_length: int | None
+    _metadata_ciphertext_length: int | None
+    _metadata_key_length: int | None
+    _metadata_extended_length: int | None
     _create_time: int | None
     _version: str | None
 
@@ -59,8 +62,11 @@ class TraceDataset(abc.ABC):
         channel_names: list[str],
         trace_count: int,
         sample_count: int,
-        data_length: int,
         version,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         **kwargs,
     ) -> "TraceDataset": ...
 
@@ -126,8 +132,16 @@ class TraceDataset(abc.ABC):
         return f"<{t.__module__}.{t.__name__} ({self._channel_names}, {self._trace_count})"
 
     def info(self):
+        print(self._metadata_plaintext_length)
         return _InfoRender(
-            self._channel_names, self._channel_count, self._trace_count, self._sample_count, self._data_length
+            self._channel_names,
+            self._channel_count,
+            self._trace_count,
+            self._sample_count,
+            self._metadata_plaintext_length,
+            self._metadata_ciphertext_length,
+            self._metadata_key_length,
+            self._metadata_extended_length,
         )
 
     @property
@@ -147,8 +161,20 @@ class TraceDataset(abc.ABC):
         return self._sample_count
 
     @property
-    def data_length(self):
-        return self._data_length
+    def metadata_plaintext_length(self):
+        return self._metadata_plaintext_length
+
+    @property
+    def metadata_ciphertext_length(self):
+        return self._metadata_ciphertext_length
+
+    @property
+    def metadata_key_length(self):
+        return self._metadata_key_length
+
+    @property
+    def metadata_extended_length(self):
+        return self._metadata_extended_length
 
     @property
     def create_time(self):
@@ -157,19 +183,34 @@ class TraceDataset(abc.ABC):
 
 class _InfoRender:
     def __init__(
-        self, channel_names: list[str], channel_count: int, trace_count: int, sample_count: int, data_length: int
+        self,
+        channel_names: list[str],
+        channel_count: int,
+        trace_count: int,
+        sample_count: int,
+        metadata_plaintext_length: int,
+        metadata_ciphertext_length: int,
+        metadata_key_length: int,
+        metadata_extended_length: int,
     ):
         self._channel_names: list[str] = channel_names
         self._channel_count: int = channel_count
         self._trace_count: int = trace_count
         self._sample_count: int = sample_count
-        self._data_length: int = data_length
+        self._metadata_plaintext_length: int = metadata_plaintext_length
+        self._metadata_ciphertext_length: int = metadata_ciphertext_length
+        self._metadata_key_length: int = metadata_key_length
+        self._metadata_extended_length: int = metadata_extended_length
 
     def __repr__(self):
         return (
             f"Channel: {self._channel_names}\r\n"
             f"Trace:   {self._trace_count}, {self._sample_count}\r\n"
-            f"Data:    {self._trace_count}, {self._data_length}"
+            f"Data:    {self._trace_count} "
+            f"plaintext: {self._metadata_plaintext_length} "
+            f"ciphertext: {self._metadata_ciphertext_length} "
+            f"key: {self._metadata_key_length} "
+            f"extended: {self._metadata_extended_length}"
         )
 
 
@@ -177,8 +218,11 @@ class ScarrTraceDataset(TraceDataset):
     _ATTR_METADATA_KEY = "metadata"
     _GROUP_ROOT_PATH = "0"
     _ARRAY_TRACES_PATH = "traces"
-    _ARRAY_PLAINTEXT_PATH = "plaintext"
-    _ARRAY_METADATA_PATH = "metadata"
+    _ARRAY_METADATA_PLAINTEXT_PATH = "plaintext"
+    _ARRAY_METADATA_CIPHERTEXT_PATH = "ciphertext"
+    _ARRAY_METADATA_KEY_PATH = "key"
+    _ARRAY_METADATA_EXTENDED_PATH = "extended"
+    _GROUP_METADATA_PATH = "metadata"
 
     def __init__(
         self,
@@ -187,7 +231,10 @@ class ScarrTraceDataset(TraceDataset):
         channel_names: list[str] | None = None,
         trace_count: int | None = None,
         sample_count: int | None = None,
-        # data_length: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         trace_dtype: np.dtype = np.int16,
         zarr_kwargs: dict | None = None,
         zarr_trace_group_kwargs: dict | None = None,
@@ -200,7 +247,10 @@ class ScarrTraceDataset(TraceDataset):
         self._channel_count = None if self._channel_names is None else len(self._channel_names)
         self._trace_count: int | None = trace_count
         self._sample_count: int | None = sample_count
-        # self._data_length: int | None = data_length
+        self._metadata_plaintext_length: int = data_plaintext_length
+        self._metadata_ciphertext_length: int = data_ciphertext_length
+        self._metadata_key_length: int = data_key_length
+        self._metadata_extended_length: int = data_extended_length
         self._create_time: int | None = create_time
         self._version: str | None = version
 
@@ -217,15 +267,9 @@ class ScarrTraceDataset(TraceDataset):
         self._zarr_data = zarr.open(zarr_path, mode=mode, **zarr_kwargs)
 
         if create_empty:
-            if (
-                self._channel_names is None
-                or self._trace_count is None
-                or self._sample_count is None
-                or self._data_length is None
-            ):
+            if self._channel_names is None or self._trace_count is None or self._sample_count is None:
                 raise ValueError(
-                    "channel_names and trace_count and sample_count and data_length "
-                    "must be specified when in write mode."
+                    "channel_names and trace_count and sample_count " "must be specified when in write mode."
                 )
             self._create_time = int(time.time())
             group_root = self._zarr_data.create_group(self._GROUP_ROOT_PATH)
@@ -237,7 +281,39 @@ class ScarrTraceDataset(TraceDataset):
                     dtype=trace_dtype,
                     **zarr_trace_group_kwargs,
                 )
-                channel_group.create_group(self._ARRAY_METADATA_PATH)
+                metadata_group = channel_group.create_group(self._GROUP_METADATA_PATH)
+                if self._metadata_plaintext_length is not None:
+                    metadata_group.create(
+                        self._ARRAY_METADATA_PLAINTEXT_PATH,
+                        shape=(
+                            self._trace_count,
+                            self._metadata_plaintext_length,
+                        ),
+                    )
+                if self._metadata_ciphertext_length is not None:
+                    metadata_group.create(
+                        self._ARRAY_METADATA_CIPHERTEXT_PATH,
+                        shape=(
+                            self._trace_count,
+                            self._metadata_ciphertext_length,
+                        ),
+                    )
+                if self._metadata_key_length is not None:
+                    metadata_group.create(
+                        self._ARRAY_METADATA_KEY_PATH,
+                        shape=(
+                            self._trace_count,
+                            self._metadata_key_length,
+                        ),
+                    )
+                if self._metadata_extended_length is not None:
+                    metadata_group.create(
+                        self._ARRAY_METADATA_EXTENDED_PATH,
+                        shape=(
+                            self._trace_count,
+                            self._metadata_extended_length,
+                        ),
+                    )
                 # channel_group.create(
                 #     self._ARRAY_PLAINTEXT_PATH,
                 #     shape=(self._trace_count, self._data_length),
@@ -249,7 +325,10 @@ class ScarrTraceDataset(TraceDataset):
                 "channel_names": self._channel_names,
                 "trace_count": self._trace_count,
                 "sample_count": self._sample_count,
-                "data_length": self._data_length,
+                "metadata_plaintext_length": self._metadata_plaintext_length,
+                "metadata_ciphertext_length": self._metadata_ciphertext_length,
+                "metadata_key_length": self._metadata_key_length,
+                "metadata_extended_length": self._metadata_extended_length,
                 "version": self._version,
             }
         else:
@@ -267,7 +346,10 @@ class ScarrTraceDataset(TraceDataset):
                 self._channel_count = len(self._channel_names)
             self._trace_count = metadata.get("trace_count")
             self._sample_count = metadata.get("sample_count")
-            self._data_length = metadata.get("data_length")
+            self._metadata_plaintext_length = metadata.get("metadata_plaintext_length")
+            self._metadata_ciphertext_length = metadata.get("metadata_ciphertext_length")
+            self._metadata_key_length = metadata.get("metadata_key_length")
+            self._metadata_extended_length = metadata.get("metadata_extended_length")
             self._version = metadata.get("version")
 
     @classmethod
@@ -282,8 +364,11 @@ class ScarrTraceDataset(TraceDataset):
         channel_names: list[str],
         trace_count: int,
         sample_count: int,
-        data_length: int,
         version: str,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         **kwargs,
     ) -> "TraceDataset":
         kwargs["mode"] = "w"
@@ -293,8 +378,11 @@ class ScarrTraceDataset(TraceDataset):
             channel_names=channel_names,
             trace_count=trace_count,
             sample_count=sample_count,
-            # data_length=data_length,
             version=version,
+            data_plaintext_length=data_plaintext_length,
+            data_ciphertext_length=data_ciphertext_length,
+            data_key_length=data_key_length,
+            data_extended_length=data_extended_length,
             zarr_kwargs=kwargs,
         )
 
@@ -302,7 +390,9 @@ class ScarrTraceDataset(TraceDataset):
         if path is not None and path != self._zarr_path:
             zarr.copy_store(self._zarr_data, zarr.open(path, mode="w"))
 
-    def set_trace(self, channel_name: str, trace_index: int, trace: np.ndarray, data: dict[str, np.ndarray] | None):
+    def set_trace(
+        self, channel_name: str, trace_index: int, trace: np.ndarray, data: dict[str, np.ndarray] | None = None
+    ):
         if self._trace_count is None or self._channel_count is None:
             raise Exception("Channel or trace count must has not specified.")
         if channel_name not in self._channel_names:
@@ -319,14 +409,67 @@ class ScarrTraceDataset(TraceDataset):
         self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
         if data is not None:
             for k, v in data.items():
-                metadata_group: zarr.hierarchy.Group = self._get_under_root(channel_index, self._ARRAY_METADATA_PATH)
+                self._logger.error(f"GET KEY: {k}, VALUE: {v}")
+                metadata_group: zarr.hierarchy.Group = self._get_under_root(channel_index, self._GROUP_METADATA_PATH)
                 metadata_item_group = metadata_group.get(k)
                 if metadata_item_group is None:
-                    self._data_length = v.shape[0]
-                    metadata_item_group = metadata_group.create(
-                        k, shape=(self._trace_count, self._data_length), dtype=np.uint8
-                    )
-                metadata_item_group[trace_index] = v
+                    metadata_length = v.shape[0]
+                    attrs = self._zarr_data.attrs[self._ATTR_METADATA_KEY]
+                    if k == "plaintext":
+                        self._metadata_plaintext_length = metadata_length
+                        metadata_item_group = metadata_group.create(
+                            k,
+                            shape=(
+                                self._trace_count,
+                                self._metadata_plaintext_length,
+                            ),
+                            dtype=np.uint8,
+                        )
+                        self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
+                            "metadata_plaintext_length": self._metadata_plaintext_length
+                        }
+                    if k == "ciphertext":
+                        self._metadata_ciphertext_length = metadata_length
+                        metadata_item_group = metadata_group.create(
+                            k,
+                            shape=(
+                                self._trace_count,
+                                self._metadata_ciphertext_length,
+                            ),
+                            dtype=np.uint8,
+                        )
+                        self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
+                            "metadata_ciphertext_length": self._metadata_ciphertext_length
+                        }
+                    if k == "key":
+                        self._metadata_key_length = metadata_length
+                        metadata_item_group = metadata_group.create(
+                            k,
+                            shape=(
+                                self._trace_count,
+                                self._metadata_key_length,
+                            ),
+                            dtype=np.uint8,
+                        )
+                        self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
+                            "metadata_key_length": self._metadata_key_length
+                        }
+                    if k == "extended":
+                        self._metadata_extended_length = metadata_length
+                        metadata_item_group = metadata_group.create(
+                            k,
+                            shape=(
+                                self._trace_count,
+                                self._metadata_extended_length,
+                            ),
+                            dtype=np.uint8,
+                        )
+                        self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
+                            "metadata_extended_length": self._metadata_extended_length
+                        }
+                    self._logger.warning(f"fff {self._zarr_data.attrs[self._ATTR_METADATA_KEY]}")
+                if metadata_item_group is not None:
+                    metadata_item_group[trace_index] = v
         # if self._data_length != 0 and data is not None:
         #     if self._data_length != data.shape[0]:
         #         self._logger.error(
@@ -594,8 +737,11 @@ class NumpyTraceDataset(TraceDataset):
         channel_names: list[str],
         trace_count: int,
         sample_count: int,
-        data_length: int,
         version: str,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         **kwargs,
     ) -> "TraceDataset":
         if not os.path.exists(path):
@@ -615,7 +761,6 @@ class NumpyTraceDataset(TraceDataset):
             channel_names=channel_names,
             trace_count=trace_count,
             sample_count=sample_count,
-            data_length=data_length,
             version=version,
             **kwargs,
         )

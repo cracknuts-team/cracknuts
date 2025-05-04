@@ -57,7 +57,10 @@ class Acquisition(abc.ABC):
         trace_count: int = 1000,
         sample_length: int = -1,
         sample_offset: int = 0,
-        data_length: int = 0,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         trigger_judge_wait_time: float = 0.05,
         trigger_judge_timeout: float = 1.0,
         do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
@@ -76,8 +79,6 @@ class Acquisition(abc.ABC):
         :type sample_length: int
         :param sample_offset: the sample offset to be acquired.
         :type sample_offset: int
-        :param data_length: the data length to be acquired.
-        :type data_length: int
         :param trigger_judge_timeout: The trigger judge timeout in seconds.
         :type trigger_judge_timeout: float
         :param trigger_judge_wait_time: The trigger judge wait time in seconds.
@@ -104,7 +105,10 @@ class Acquisition(abc.ABC):
         self.trace_count: int = trace_count
         self.sample_length = sample_length
         self.sample_offset: int = sample_offset
-        self.data_length: int = data_length
+        self.metadata_plaintext_length: int = data_plaintext_length
+        self.metadata_ciphertext_length: int = data_ciphertext_length
+        self.metadata_key_length: int = data_key_length
+        self.metadata_extended_length: int = data_extended_length
         self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
         self.trigger_judge_timeout: float = trigger_judge_timeout  # second
         self.do_error_handler_strategy: int = do_error_handler_strategy
@@ -145,7 +149,10 @@ class Acquisition(abc.ABC):
         count: int = 1,
         sample_length: int = 1024,
         sample_offset: int = 0,
-        data_length: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -163,8 +170,6 @@ class Acquisition(abc.ABC):
         :type sample_length: int
         :param sample_offset: The sample offset to be acquired.
         :type sample_offset: int
-        :param data_length: The data length to be acquired.
-        :type data_length: int
         :param trigger_judge_wait_time: The trigger judge wait time in seconds.
         :type trigger_judge_wait_time: float
         :param trigger_judge_timeout: The trigger judge timeout in seconds.
@@ -189,7 +194,10 @@ class Acquisition(abc.ABC):
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
-                data_length=data_length,
+                data_plaintext_length=data_plaintext_length,
+                data_ciphertext_length=data_ciphertext_length,
+                data_key_length=data_key_length,
+                data_extended_length=data_extended_length,
                 trigger_judge_wait_time=trigger_judge_wait_time,
                 trigger_judge_timeout=trigger_judge_timeout,
                 do_error_max_count=do_error_max_count,
@@ -377,7 +385,10 @@ class Acquisition(abc.ABC):
         count: int = 1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
-        data_length: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -394,7 +405,10 @@ class Acquisition(abc.ABC):
                 "count": count,
                 "sample_length": sample_length,
                 "sample_offset": sample_offset,
-                "data_length": data_length,
+                "data_plaintext_length": data_plaintext_length,
+                "data_ciphertext_length": data_ciphertext_length,
+                "data_key_length": data_key_length,
+                "data_extended_length": data_extended_length,
                 "trigger_judge_wait_time": trigger_judge_wait_time,
                 "trigger_judge_timeout": trigger_judge_timeout,
                 "do_error_max_count": do_error_max_count,
@@ -411,7 +425,10 @@ class Acquisition(abc.ABC):
         count: int = 1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
-        data_length: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         trigger_judge_wait_time: float | None = None,
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
@@ -438,8 +455,14 @@ class Acquisition(abc.ABC):
             self.sample_length = sample_length
         if sample_offset is not None:
             self.sample_offset = sample_offset
-        if data_length is not None:
-            self.data_length = data_length
+        if data_plaintext_length is not None:
+            self.metadata_plaintext_length = data_plaintext_length
+        if data_ciphertext_length is not None:
+            self.metadata_ciphertext_length = data_ciphertext_length
+        if data_key_length is not None:
+            self.metadata_key_length = data_key_length
+        if data_extended_length is not None:
+            self.metadata_extended_length = data_extended_length
         if trigger_judge_wait_time is not None:
             self.trigger_judge_wait_time = trigger_judge_wait_time
         if trigger_judge_timeout is not None:
@@ -501,18 +524,24 @@ class Acquisition(abc.ABC):
                     channel_names,
                     self.trace_count,
                     sample_length,
-                    self.data_length,
                     version=f"({cracker_version}, {cracker_version})",
-                )  # todo channel
+                    data_plaintext_length=self.metadata_plaintext_length,
+                    data_ciphertext_length=self.metadata_ciphertext_length,
+                    data_extended_length=self.metadata_extended_length,
+                    data_key_length=self.metadata_key_length,
+                )
             elif file_format == "numpy":
                 dataset = NumpyTraceDataset.new(
                     file_path,
                     channel_names,
                     self.trace_count,
                     sample_length,
-                    self.data_length,
                     version=f"({cracker_version}, {cracker_version})",
-                )  # todo channel
+                    data_plaintext_length=self.metadata_plaintext_length,
+                    data_ciphertext_length=self.metadata_ciphertext_length,
+                    data_extended_length=self.metadata_extended_length,
+                    data_key_length=self.metadata_key_length,
+                )
             else:
                 self._logger.error(f"Unsupported file format: {file_format}")
                 return
@@ -573,8 +602,6 @@ class Acquisition(abc.ABC):
                 time.sleep(self.trigger_judge_wait_time)
             if dataset is not None and self._last_wave is not None:
                 for k in self._last_wave.keys():
-                    if data is not None and isinstance(data, bytes):
-                        data = np.frombuffer(data, dtype=np.uint8)
                     dataset.set_trace(str(k), trace_index, self._last_wave[k], data)
             self._post_do()
             trace_index += 1
