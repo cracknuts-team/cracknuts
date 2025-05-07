@@ -16,7 +16,7 @@ import cracknuts.cracker.serial as serial
 
 class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackerS1PanelWidget.js"
-    _css = pathlib.Path(__file__).parent / "static" / "CrackerS1PanelWidget.css"
+    _css = ""
 
     uri = traitlets.Unicode("cnp://192.168.0.11:8080").tag(sync=True)
     connect_status = traitlets.Bool(False).tag(sync=True)
