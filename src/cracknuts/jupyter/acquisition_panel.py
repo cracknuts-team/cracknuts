@@ -15,7 +15,7 @@ from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "AcquisitionPanelWidget.js"
-    _css = pathlib.Path(__file__).parent / "static" / "AcquisitionPanelWidget.css"
+    _css = ""
 
     acq_status = traitlets.Int(0).tag(sync=True)
     acq_run_progress = traitlets.Dict({"finished": 0, "total": -1}).tag(sync=True)
