@@ -1,9 +1,8 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Col, Form, InputNumber, Progress, Radio, Row, Select} from "antd";
+import {Col, Form, Input, InputNumber, Progress, Radio, Row, Select} from "antd";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
-import React from "react";
+import React, {ChangeEvent} from "react";
 import {FormattedMessage, useIntl} from "react-intl";
-import FileSelector, {DefaultDirectoryInfo, DirectoryListNode} from "@/FileSelector.tsx";
 
 interface AcqRunProgress {
   finished: number;
@@ -64,34 +63,6 @@ const AcquisitionPanel: React.FC = () => {
     '#00ff99',
     '#00ff00',
   ]
-
-  const getDefaultDirectoryInfo = async (initDirectory: string | null | undefined) => {
-    model.send({source: "fileSelector", event: "getDefaultDirectoryInfo", args: {initDirectory: initDirectory}});
-    return new Promise<DefaultDirectoryInfo>((resolve) => {
-      const msgCallback = (msg: object) => {
-        if ("defaultDirectoryInfo" in msg) {
-          const data = msg["defaultDirectoryInfo"] as DefaultDirectoryInfo;
-          resolve(data);
-          model.off("msg:custom", msgCallback);
-        }
-      };
-      model.on("msg:custom", msgCallback);
-    });
-  };
-
-  const getDirectoryList = async (path: string) => {
-    model.send({source: "fileSelector", event: "getDirectoryList", args: {path: path}});
-    return new Promise<DirectoryListNode[]>((resolve) => {
-      const msgCallback = (msg: object) => {
-        if ("directoryList" in msg) {
-          const data = msg["directoryList"] as DirectoryListNode[];
-          resolve(data);
-          model.off("msg:custom", msgCallback);
-        }
-      };
-      model.on("msg:custom", msgCallback);
-    });
-  };
 
   return (
     <div>
@@ -197,12 +168,12 @@ const AcquisitionPanel: React.FC = () => {
               ></Select>
             </Form.Item>
             <Form.Item label={intl.formatMessage({id: "acquisition.filePath"})}>
-              <FileSelector
-                selectedPath={filePath}
-                getDefaultDirectoryInfo={getDefaultDirectoryInfo}
-                getDirectoryList={getDirectoryList}
-                selectedPathChanged={setFilePath}
-                size="small"
+              <Input
+                size={"small"}
+                value={filePath}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  setFilePath(e.target.value);
+                }}
               />
             </Form.Item>
             <Form.Item>
