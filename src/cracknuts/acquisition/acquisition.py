@@ -498,9 +498,8 @@ class Acquisition(abc.ABC):
         if persistent:
             cracker_config = self.cracker.get_current_config()
             channel_names = []
-            # disable this channel before cracker support channel enable.
-            # if cracker_config.osc_channel_0_enable:
-            #     channel_names.append("0")
+            if cracker_config.osc_channel_0_enable:
+                channel_names.append("0")
             if cracker_config.osc_channel_1_enable:
                 channel_names.append("1")
             if self.sample_length == -1:
