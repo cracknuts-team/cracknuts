@@ -74,7 +74,13 @@ class TraceDataset(abc.ABC):
     def dump(self, path: str | None = None, **kwargs): ...
 
     @abc.abstractmethod
-    def set_trace(self, channel_name: str, trace_index: int, trace: np.ndarray, data: np.ndarray | None): ...
+    def set_trace(
+        self,
+        channel_name: str,
+        trace_index: int,
+        trace: np.ndarray,
+        data: dict[str, np.ndarray[np.int8] | bytes] | None,
+    ): ...
 
     @property
     def trace_data(self) -> TraceDatasetData:
@@ -85,8 +91,8 @@ class TraceDataset(abc.ABC):
         return TraceDatasetData(get_trace_data=self._get_trace)
 
     @property
-    def plain_text(self):
-        return TraceDatasetData(get_trace_data=self._get_plaintext)
+    def data(self):
+        return TraceDatasetData(get_trace_data=self._get_data)
 
     @property
     def trace_data_with_indices(self):
@@ -98,8 +104,6 @@ class TraceDataset(abc.ABC):
     @abc.abstractmethod
     def _get_trace_data_with_indices(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]: ...
 
-    # This method should return trace, plaintext, and ciphertext.
-    # However, the ciphertext is currently empty, so it only returns trace and plaintext.
     @abc.abstractmethod
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, np.ndarray]: ...
 
@@ -107,10 +111,7 @@ class TraceDataset(abc.ABC):
     def _get_trace(self, channel_slice, trace_slice) -> np.ndarray: ...
 
     @abc.abstractmethod
-    def _get_plaintext(self, channel_slice, trace_slice) -> np.ndarray: ...
-
-    @abc.abstractmethod
-    def _get_ciphertext(self, channel_slice, trace_slice) -> np.ndarray: ...
+    def _get_data(self, channel_slice, trace_slice) -> np.ndarray: ...
 
     @staticmethod
     def _parse_slice(origin_count, index_slice) -> list:
@@ -391,7 +392,11 @@ class ScarrTraceDataset(TraceDataset):
             zarr.copy_store(self._zarr_data, zarr.open(path, mode="w"))
 
     def set_trace(
-        self, channel_name: str, trace_index: int, trace: np.ndarray, data: dict[str, np.ndarray] | None = None
+        self,
+        channel_name: str,
+        trace_index: int,
+        trace: np.ndarray,
+        data: dict[str, np.ndarray[np.int8] | bytes] | None = None,
     ):
         if self._trace_count is None or self._channel_count is None:
             raise Exception("Channel or trace count must has not specified.")
@@ -409,7 +414,8 @@ class ScarrTraceDataset(TraceDataset):
         self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
         if data is not None:
             for k, v in data.items():
-                self._logger.error(f"GET KEY: {k}, VALUE: {v}")
+                if isinstance(v, bytes):
+                    v = np.frombuffer(v, dtype=np.uint8)
                 metadata_group: zarr.hierarchy.Group = self._get_under_root(channel_index, self._GROUP_METADATA_PATH)
                 metadata_item_group = metadata_group.get(k)
                 if metadata_item_group is None:
@@ -467,7 +473,6 @@ class ScarrTraceDataset(TraceDataset):
                         self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
                             "metadata_extended_length": self._metadata_extended_length
                         }
-                    self._logger.warning(f"fff {self._zarr_data.attrs[self._ATTR_METADATA_KEY]}")
                 if metadata_item_group is not None:
                     metadata_item_group[trace_index] = v
         # if self._data_length != 0 and data is not None:
@@ -481,27 +486,59 @@ class ScarrTraceDataset(TraceDataset):
     def get_origin_data(self) -> zarr.hierarchy.Group:
         return self._zarr_data
 
-    def get_trace_by_indexes(self, channel_name: str, *trace_indexes: int) -> tuple[np.ndarray, np.ndarray] | None:
+    def get_trace_by_indexes(
+        self, channel_name: str, *trace_indexes: int
+    ) -> tuple[np.ndarray, list[dict[str, bytes | None]]] | None:
         channel_index = self._channel_names.index(channel_name)
         return (
             self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[[i for i in trace_indexes]],
-            self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[[i for i in trace_indexes]],
+            [self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes],
         )
+
+    def _get_metadata_by_index(self, channel_index: int, trace_index: int) -> dict[str, bytes | None]:
+        plaintext = self._get_under_root(channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_PLAINTEXT_PATH)
+        ciphertext = self._get_under_root(
+            channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_CIPHERTEXT_PATH
+        )
+        key = self._get_under_root(channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_KEY_PATH)
+        extended = self._get_under_root(channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_EXTENDED_PATH)
+        if plaintext is not None:
+            plaintext = plaintext[trace_index]
+            if ciphertext is not None:
+                plaintext = plaintext.tobytes()
+        if ciphertext is not None:
+            ciphertext = ciphertext[trace_index]
+            if ciphertext is not None:
+                ciphertext = ciphertext.tobytes()
+        if key is not None:
+            key = key[trace_index]
+            if key is not None:
+                key = key.tobytes()
+        if extended is not None:
+            if extended is not None:
+                extended = extended.tobytes()
+        return {"plaintext": plaintext, "ciphertext": ciphertext, "key": key, "extend": extended}
 
     def get_trace_by_range(
         self, channel_name: str, index_start: int, index_end: int
-    ) -> tuple[np.ndarray, np.ndarray] | None:
+    ) -> tuple[np.ndarray, list[dict[str, bytes | None]]] | None:
         channel_index = self._channel_names.index(channel_name)
         return (
             self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[index_start:index_end],
-            self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[index_start:index_end],
+            [self._get_metadata_by_index(channel_index, trace_index) for trace_index in range(index_start, index_end)],
         )
 
     def _get_under_root(self, *paths: typing.Any):
         paths = self._GROUP_ROOT_PATH, *paths
-        return self._zarr_data["/".join(str(path) for path in paths)]
+        path = "/".join(str(path) for path in paths)
+        if path in self._zarr_data:
+            return self._zarr_data[path]
+        else:
+            return None
 
-    def _get_trace_data_with_indices(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]:
+    def _get_trace_data_with_indices(
+        self, channel_slice, trace_slice
+    ) -> tuple[list, list, np.ndarray, list[list[dict[str, bytes | None]]]]:
         traces = []
         data = []
 
@@ -515,24 +552,27 @@ class ScarrTraceDataset(TraceDataset):
 
         for channel_index in channel_indexes:
             traces.append(self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_slice])
-            data.append(self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_slice])
+            data.append([self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
-        return channel_indexes, trace_indexes, np.array(traces), np.array(data)
+        return channel_indexes, trace_indexes, np.array(traces), data
 
-    def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, np.ndarray]:
+    def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:
         traces = []
-        plaintext = []
+        data = []
 
-        channel_indexes = self._parse_slice(self.channel_count, channel_slice)
+        channel_indexes, trace_indexes = (
+            self._parse_slice(self._channel_count, channel_slice),
+            self._parse_slice(self._trace_count, trace_slice),
+        )
 
         if isinstance(trace_slice, int):
             trace_slice = slice(trace_slice, trace_slice + 1)
 
         for channel_index in channel_indexes:
             traces.append(self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_slice])
-            plaintext.append(self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_slice])
+            data.append([self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
-        return np.vstack(traces), np.vstack(plaintext)
+        return np.vstack(traces), data
 
     def _get_trace(self, channel_slice, trace_slice) -> np.ndarray:
         traces = []
@@ -547,20 +587,18 @@ class ScarrTraceDataset(TraceDataset):
 
         return np.vstack(traces) if len(traces) == 1 else np.stack(traces)
 
-    def _get_plaintext(self, channel_slice, trace_slice) -> np.ndarray:
-        plaintext = []
+    def _get_data(self, channel_slice, trace_slice) -> list[list[dict[str, bytes | None]]]:
+        data = []
 
-        channel_indexes = self._parse_slice(self.channel_count, channel_slice)
-
-        if isinstance(trace_slice, int):
-            trace_slice = slice(trace_slice, trace_slice + 1)
+        channel_indexes, trace_indexes = (
+            self._parse_slice(self._channel_count, channel_slice),
+            self._parse_slice(self._trace_count, trace_slice),
+        )
 
         for channel_index in channel_indexes:
-            plaintext.append(self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_slice])
+            data.append([self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
-        return np.vstack(plaintext) if len(plaintext) == 1 else np.stack(plaintext)
-
-    def _get_ciphertext(self, channel_slice, trace_slice) -> np.ndarray: ...
+        return data
 
 
 class NumpyTraceDataset(TraceDataset):
@@ -797,7 +835,7 @@ class NumpyTraceDataset(TraceDataset):
     def _get_trace(self, channel_slice, trace_slice) -> np.ndarray:
         return self._trace_array[channel_slice, trace_slice]
 
-    def _get_plaintext(self, channel_slice, trace_slice) -> np.ndarray:
+    def _get_data(self, channel_slice, trace_slice) -> np.ndarray:
         return self._plaintext_array[channel_slice, trace_slice]
 
     def _get_ciphertext(self, channel_slice, trace_slice) -> np.ndarray:
