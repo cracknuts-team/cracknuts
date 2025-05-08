@@ -223,7 +223,6 @@ class ScarrTraceDataset(TraceDataset):
     _ARRAY_METADATA_CIPHERTEXT_PATH = "ciphertext"
     _ARRAY_METADATA_KEY_PATH = "key"
     _ARRAY_METADATA_EXTENDED_PATH = "extended"
-    _GROUP_METADATA_PATH = "metadata"
 
     def __init__(
         self,
@@ -282,9 +281,8 @@ class ScarrTraceDataset(TraceDataset):
                     dtype=trace_dtype,
                     **zarr_trace_group_kwargs,
                 )
-                metadata_group = channel_group.create_group(self._GROUP_METADATA_PATH)
                 if self._metadata_plaintext_length is not None:
-                    metadata_group.create(
+                    channel_group.create(
                         self._ARRAY_METADATA_PLAINTEXT_PATH,
                         shape=(
                             self._trace_count,
@@ -292,7 +290,7 @@ class ScarrTraceDataset(TraceDataset):
                         ),
                     )
                 if self._metadata_ciphertext_length is not None:
-                    metadata_group.create(
+                    channel_group.create(
                         self._ARRAY_METADATA_CIPHERTEXT_PATH,
                         shape=(
                             self._trace_count,
@@ -300,7 +298,7 @@ class ScarrTraceDataset(TraceDataset):
                         ),
                     )
                 if self._metadata_key_length is not None:
-                    metadata_group.create(
+                    channel_group.create(
                         self._ARRAY_METADATA_KEY_PATH,
                         shape=(
                             self._trace_count,
@@ -308,19 +306,13 @@ class ScarrTraceDataset(TraceDataset):
                         ),
                     )
                 if self._metadata_extended_length is not None:
-                    metadata_group.create(
+                    channel_group.create(
                         self._ARRAY_METADATA_EXTENDED_PATH,
                         shape=(
                             self._trace_count,
                             self._metadata_extended_length,
                         ),
                     )
-                # channel_group.create(
-                #     self._ARRAY_PLAINTEXT_PATH,
-                #     shape=(self._trace_count, self._data_length),
-                #     dtype=np.uint8,
-                #     **zarr_data_group_kwargs,
-                # )
             self._zarr_data.attrs[self._ATTR_METADATA_KEY] = {
                 "create_time": self._create_time,
                 "channel_names": self._channel_names,
@@ -413,17 +405,17 @@ class ScarrTraceDataset(TraceDataset):
         channel_index = self._channel_names.index(channel_name)
         self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_index] = trace
         if data is not None:
+            channel_group = self._get_under_root(str(channel_index))
             for k, v in data.items():
                 if isinstance(v, bytes):
                     v = np.frombuffer(v, dtype=np.uint8)
-                metadata_group: zarr.hierarchy.Group = self._get_under_root(channel_index, self._GROUP_METADATA_PATH)
-                metadata_item_group = metadata_group.get(k)
+                metadata_item_group = channel_group.get(k)
                 if metadata_item_group is None:
                     metadata_length = v.shape[0]
                     attrs = self._zarr_data.attrs[self._ATTR_METADATA_KEY]
                     if k == "plaintext":
                         self._metadata_plaintext_length = metadata_length
-                        metadata_item_group = metadata_group.create(
+                        metadata_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
@@ -436,7 +428,7 @@ class ScarrTraceDataset(TraceDataset):
                         }
                     if k == "ciphertext":
                         self._metadata_ciphertext_length = metadata_length
-                        metadata_item_group = metadata_group.create(
+                        metadata_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
@@ -449,7 +441,7 @@ class ScarrTraceDataset(TraceDataset):
                         }
                     if k == "key":
                         self._metadata_key_length = metadata_length
-                        metadata_item_group = metadata_group.create(
+                        metadata_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
@@ -462,7 +454,7 @@ class ScarrTraceDataset(TraceDataset):
                         }
                     if k == "extended":
                         self._metadata_extended_length = metadata_length
-                        metadata_item_group = metadata_group.create(
+                        metadata_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
@@ -475,13 +467,6 @@ class ScarrTraceDataset(TraceDataset):
                         }
                 if metadata_item_group is not None:
                     metadata_item_group[trace_index] = v
-        # if self._data_length != 0 and data is not None:
-        #     if self._data_length != data.shape[0]:
-        #         self._logger.error(
-        #             f"Trace data length {data.shape[0]} does not match the previously "
-        #             f"defined value {self._data_length}, so the data will be ignored."
-        #         )
-        #     self._get_under_root(channel_index, self._ARRAY_PLAINTEXT_PATH)[trace_index] = data
 
     def get_origin_data(self) -> zarr.hierarchy.Group:
         return self._zarr_data
@@ -496,12 +481,10 @@ class ScarrTraceDataset(TraceDataset):
         )
 
     def _get_metadata_by_index(self, channel_index: int, trace_index: int) -> dict[str, bytes | None]:
-        plaintext = self._get_under_root(channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_PLAINTEXT_PATH)
-        ciphertext = self._get_under_root(
-            channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_CIPHERTEXT_PATH
-        )
-        key = self._get_under_root(channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_KEY_PATH)
-        extended = self._get_under_root(channel_index, self._GROUP_METADATA_PATH, self._ARRAY_METADATA_EXTENDED_PATH)
+        plaintext = self._get_under_root(channel_index, self._ARRAY_METADATA_PLAINTEXT_PATH)
+        ciphertext = self._get_under_root(channel_index, self._ARRAY_METADATA_CIPHERTEXT_PATH)
+        key = self._get_under_root(channel_index, self._ARRAY_METADATA_KEY_PATH)
+        extended = self._get_under_root(channel_index, self._ARRAY_METADATA_EXTENDED_PATH)
         if plaintext is not None:
             plaintext = plaintext[trace_index]
             if ciphertext is not None:
