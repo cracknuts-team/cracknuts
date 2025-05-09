@@ -40,10 +40,10 @@ class TraceDataset(abc.ABC):
     _channel_count: int | None
     _trace_count: int | None
     _sample_count: int | None
-    _metadata_plaintext_length: int | None
-    _metadata_ciphertext_length: int | None
-    _metadata_key_length: int | None
-    _metadata_extended_length: int | None
+    _data_plaintext_length: int | None
+    _data_ciphertext_length: int | None
+    _data_key_length: int | None
+    _data_extended_length: int | None
     _create_time: int | None
     _version: str | None
 
@@ -133,16 +133,15 @@ class TraceDataset(abc.ABC):
         return f"<{t.__module__}.{t.__name__} ({self._channel_names}, {self._trace_count})"
 
     def info(self):
-        print(self._metadata_plaintext_length)
         return _InfoRender(
             self._channel_names,
             self._channel_count,
             self._trace_count,
             self._sample_count,
-            self._metadata_plaintext_length,
-            self._metadata_ciphertext_length,
-            self._metadata_key_length,
-            self._metadata_extended_length,
+            self._data_plaintext_length,
+            self._data_ciphertext_length,
+            self._data_key_length,
+            self._data_extended_length,
         )
 
     @property
@@ -162,20 +161,20 @@ class TraceDataset(abc.ABC):
         return self._sample_count
 
     @property
-    def metadata_plaintext_length(self):
-        return self._metadata_plaintext_length
+    def adata_plaintext_length(self):
+        return self._data_plaintext_length
 
     @property
-    def metadata_ciphertext_length(self):
-        return self._metadata_ciphertext_length
+    def data_ciphertext_length(self):
+        return self._data_ciphertext_length
 
     @property
-    def metadata_key_length(self):
-        return self._metadata_key_length
+    def data_key_length(self):
+        return self._data_key_length
 
     @property
-    def metadata_extended_length(self):
-        return self._metadata_extended_length
+    def data_extended_length(self):
+        return self._data_extended_length
 
     @property
     def create_time(self):
@@ -189,29 +188,29 @@ class _InfoRender:
         channel_count: int,
         trace_count: int,
         sample_count: int,
-        metadata_plaintext_length: int,
-        metadata_ciphertext_length: int,
-        metadata_key_length: int,
-        metadata_extended_length: int,
+        data_plaintext_length: int,
+        data_ciphertext_length: int,
+        data_key_length: int,
+        data_extended_length: int,
     ):
         self._channel_names: list[str] = channel_names
         self._channel_count: int = channel_count
         self._trace_count: int = trace_count
         self._sample_count: int = sample_count
-        self._metadata_plaintext_length: int = metadata_plaintext_length
-        self._metadata_ciphertext_length: int = metadata_ciphertext_length
-        self._metadata_key_length: int = metadata_key_length
-        self._metadata_extended_length: int = metadata_extended_length
+        self._data_plaintext_length: int = data_plaintext_length
+        self._data_ciphertext_length: int = data_ciphertext_length
+        self._data_key_length: int = data_key_length
+        self._data_extended_length: int = data_extended_length
 
     def __repr__(self):
         return (
             f"Channel: {self._channel_names}\r\n"
             f"Trace:   {self._trace_count}, {self._sample_count}\r\n"
             f"Data:    {self._trace_count} "
-            f"plaintext: {self._metadata_plaintext_length} "
-            f"ciphertext: {self._metadata_ciphertext_length} "
-            f"key: {self._metadata_key_length} "
-            f"extended: {self._metadata_extended_length}"
+            f"plaintext: {self._data_plaintext_length} "
+            f"ciphertext: {self._data_ciphertext_length} "
+            f"key: {self._data_key_length} "
+            f"extended: {self._data_extended_length}"
         )
 
 
@@ -219,10 +218,10 @@ class ScarrTraceDataset(TraceDataset):
     _ATTR_METADATA_KEY = "metadata"
     _GROUP_ROOT_PATH = "0"
     _ARRAY_TRACES_PATH = "traces"
-    _ARRAY_METADATA_PLAINTEXT_PATH = "plaintext"
-    _ARRAY_METADATA_CIPHERTEXT_PATH = "ciphertext"
-    _ARRAY_METADATA_KEY_PATH = "key"
-    _ARRAY_METADATA_EXTENDED_PATH = "extended"
+    _ARRAY_DATA_PLAINTEXT_PATH = "plaintext"
+    _ARRAY_DATA_CIPHERTEXT_PATH = "ciphertext"
+    _ARRAY_DATA_KEY_PATH = "key"
+    _ARRAY_DATA_EXTENDED_PATH = "extended"
 
     def __init__(
         self,
@@ -247,10 +246,10 @@ class ScarrTraceDataset(TraceDataset):
         self._channel_count = None if self._channel_names is None else len(self._channel_names)
         self._trace_count: int | None = trace_count
         self._sample_count: int | None = sample_count
-        self._metadata_plaintext_length: int = data_plaintext_length
-        self._metadata_ciphertext_length: int = data_ciphertext_length
-        self._metadata_key_length: int = data_key_length
-        self._metadata_extended_length: int = data_extended_length
+        self._data_plaintext_length: int = data_plaintext_length
+        self._data_ciphertext_length: int = data_ciphertext_length
+        self._data_key_length: int = data_key_length
+        self._data_extended_length: int = data_extended_length
         self._create_time: int | None = create_time
         self._version: str | None = version
 
@@ -281,36 +280,36 @@ class ScarrTraceDataset(TraceDataset):
                     dtype=trace_dtype,
                     **zarr_trace_group_kwargs,
                 )
-                if self._metadata_plaintext_length is not None:
+                if self._data_plaintext_length is not None:
                     channel_group.create(
-                        self._ARRAY_METADATA_PLAINTEXT_PATH,
+                        self._ARRAY_DATA_PLAINTEXT_PATH,
                         shape=(
                             self._trace_count,
-                            self._metadata_plaintext_length,
+                            self._data_plaintext_length,
                         ),
                     )
-                if self._metadata_ciphertext_length is not None:
+                if self._data_ciphertext_length is not None:
                     channel_group.create(
-                        self._ARRAY_METADATA_CIPHERTEXT_PATH,
+                        self._ARRAY_DATA_CIPHERTEXT_PATH,
                         shape=(
                             self._trace_count,
-                            self._metadata_ciphertext_length,
+                            self._data_ciphertext_length,
                         ),
                     )
-                if self._metadata_key_length is not None:
+                if self._data_key_length is not None:
                     channel_group.create(
-                        self._ARRAY_METADATA_KEY_PATH,
+                        self._ARRAY_DATA_KEY_PATH,
                         shape=(
                             self._trace_count,
-                            self._metadata_key_length,
+                            self._data_key_length,
                         ),
                     )
-                if self._metadata_extended_length is not None:
+                if self._data_extended_length is not None:
                     channel_group.create(
-                        self._ARRAY_METADATA_EXTENDED_PATH,
+                        self._ARRAY_DATA_EXTENDED_PATH,
                         shape=(
                             self._trace_count,
-                            self._metadata_extended_length,
+                            self._data_extended_length,
                         ),
                     )
             self._zarr_data.attrs[self._ATTR_METADATA_KEY] = {
@@ -318,10 +317,10 @@ class ScarrTraceDataset(TraceDataset):
                 "channel_names": self._channel_names,
                 "trace_count": self._trace_count,
                 "sample_count": self._sample_count,
-                "metadata_plaintext_length": self._metadata_plaintext_length,
-                "metadata_ciphertext_length": self._metadata_ciphertext_length,
-                "metadata_key_length": self._metadata_key_length,
-                "metadata_extended_length": self._metadata_extended_length,
+                "data_plaintext_length": self._data_plaintext_length,
+                "data_ciphertext_length": self._data_ciphertext_length,
+                "data_key_length": self._data_key_length,
+                "data_extended_length": self._data_extended_length,
                 "version": self._version,
             }
         else:
@@ -339,10 +338,10 @@ class ScarrTraceDataset(TraceDataset):
                 self._channel_count = len(self._channel_names)
             self._trace_count = metadata.get("trace_count")
             self._sample_count = metadata.get("sample_count")
-            self._metadata_plaintext_length = metadata.get("metadata_plaintext_length")
-            self._metadata_ciphertext_length = metadata.get("metadata_ciphertext_length")
-            self._metadata_key_length = metadata.get("metadata_key_length")
-            self._metadata_extended_length = metadata.get("metadata_extended_length")
+            self._data_plaintext_length = metadata.get("data_plaintext_length")
+            self._data_ciphertext_length = metadata.get("data_ciphertext_length")
+            self._data_key_length = metadata.get("data_key_length")
+            self._data_extended_length = metadata.get("data_extended_length")
             self._version = metadata.get("version")
 
     @classmethod
@@ -409,64 +408,64 @@ class ScarrTraceDataset(TraceDataset):
             for k, v in data.items():
                 if isinstance(v, bytes):
                     v = np.frombuffer(v, dtype=np.uint8)
-                metadata_item_group = channel_group.get(k)
-                if metadata_item_group is None:
-                    metadata_length = v.shape[0]
+                data_item_group = channel_group.get(k)
+                if data_item_group is None:
+                    data_length = v.shape[0]
                     attrs = self._zarr_data.attrs[self._ATTR_METADATA_KEY]
                     if k == "plaintext":
-                        self._metadata_plaintext_length = metadata_length
-                        metadata_item_group = channel_group.create(
+                        self._data_plaintext_length = data_length
+                        data_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
-                                self._metadata_plaintext_length,
+                                self._data_plaintext_length,
                             ),
                             dtype=np.uint8,
                         )
                         self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
-                            "metadata_plaintext_length": self._metadata_plaintext_length
+                            "data_plaintext_length": self._data_plaintext_length
                         }
                     if k == "ciphertext":
-                        self._metadata_ciphertext_length = metadata_length
-                        metadata_item_group = channel_group.create(
+                        self._data_ciphertext_length = data_length
+                        data_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
-                                self._metadata_ciphertext_length,
+                                self._data_ciphertext_length,
                             ),
                             dtype=np.uint8,
                         )
                         self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
-                            "metadata_ciphertext_length": self._metadata_ciphertext_length
+                            "data_ciphertext_length": self._data_ciphertext_length
                         }
                     if k == "key":
-                        self._metadata_key_length = metadata_length
-                        metadata_item_group = channel_group.create(
+                        self._data_key_length = data_length
+                        data_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
-                                self._metadata_key_length,
+                                self._data_key_length,
                             ),
                             dtype=np.uint8,
                         )
                         self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
-                            "metadata_key_length": self._metadata_key_length
+                            "data_key_length": self._data_key_length
                         }
                     if k == "extended":
-                        self._metadata_extended_length = metadata_length
-                        metadata_item_group = channel_group.create(
+                        self._data_extended_length = data_length
+                        data_item_group = channel_group.create(
                             k,
                             shape=(
                                 self._trace_count,
-                                self._metadata_extended_length,
+                                self._data_extended_length,
                             ),
                             dtype=np.uint8,
                         )
                         self._zarr_data.attrs[self._ATTR_METADATA_KEY] = attrs | {
-                            "metadata_extended_length": self._metadata_extended_length
+                            "data_extended_length": self._data_extended_length
                         }
-                if metadata_item_group is not None:
-                    metadata_item_group[trace_index] = v
+                if data_item_group is not None:
+                    data_item_group[trace_index] = v
 
     def get_origin_data(self) -> zarr.hierarchy.Group:
         return self._zarr_data
@@ -477,14 +476,14 @@ class ScarrTraceDataset(TraceDataset):
         channel_index = self._channel_names.index(channel_name)
         return (
             self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[[i for i in trace_indexes]],
-            [self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes],
+            [self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes],
         )
 
-    def _get_metadata_by_index(self, channel_index: int, trace_index: int) -> dict[str, bytes | None]:
-        plaintext = self._get_under_root(channel_index, self._ARRAY_METADATA_PLAINTEXT_PATH)
-        ciphertext = self._get_under_root(channel_index, self._ARRAY_METADATA_CIPHERTEXT_PATH)
-        key = self._get_under_root(channel_index, self._ARRAY_METADATA_KEY_PATH)
-        extended = self._get_under_root(channel_index, self._ARRAY_METADATA_EXTENDED_PATH)
+    def _get_data_by_index(self, channel_index: int, trace_index: int) -> dict[str, bytes | None]:
+        plaintext = self._get_under_root(channel_index, self._ARRAY_DATA_PLAINTEXT_PATH)
+        ciphertext = self._get_under_root(channel_index, self._ARRAY_DATA_CIPHERTEXT_PATH)
+        key = self._get_under_root(channel_index, self._ARRAY_DATA_KEY_PATH)
+        extended = self._get_under_root(channel_index, self._ARRAY_DATA_EXTENDED_PATH)
         if plaintext is not None:
             plaintext = plaintext[trace_index]
             if ciphertext is not None:
@@ -508,7 +507,7 @@ class ScarrTraceDataset(TraceDataset):
         channel_index = self._channel_names.index(channel_name)
         return (
             self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[index_start:index_end],
-            [self._get_metadata_by_index(channel_index, trace_index) for trace_index in range(index_start, index_end)],
+            [self._get_data_by_index(channel_index, trace_index) for trace_index in range(index_start, index_end)],
         )
 
     def _get_under_root(self, *paths: typing.Any):
@@ -535,7 +534,7 @@ class ScarrTraceDataset(TraceDataset):
 
         for channel_index in channel_indexes:
             traces.append(self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_slice])
-            data.append([self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes])
+            data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
         return channel_indexes, trace_indexes, np.array(traces), data
 
@@ -553,7 +552,7 @@ class ScarrTraceDataset(TraceDataset):
 
         for channel_index in channel_indexes:
             traces.append(self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[trace_slice])
-            data.append([self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes])
+            data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
         return np.vstack(traces), data
 
@@ -579,79 +578,115 @@ class ScarrTraceDataset(TraceDataset):
         )
 
         for channel_index in channel_indexes:
-            data.append([self._get_metadata_by_index(channel_index, trace_index) for trace_index in trace_indexes])
+            data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
         return data
 
 
 class NumpyTraceDataset(TraceDataset):
     _ARRAY_TRACE_PATH = "trace.npy"
-    _ARRAY_DATA_PATH = "data.npy"
+    _ARRAY_PLAINTEXT_PATH = "plaintext.npy"
+    _ARRAY_CIPHERTEXT_PATH = "ciphertext.npy"
+    _ARRAY_KEY_PATH = "key.npy"
+    _ARRAY_EXTENDED_PATH = "extended.npy"
+
     _METADATA_PATH = "metadata.json"
 
     def __init__(
         self,
-        npy_trace_path: str | None = None,
-        npy_data_path: str | None = None,
-        npy_metadata_path: str | None = None,
+        path: str | None = None,
         create_empty: bool = False,
         channel_names: list[str] | None = None,
         trace_count: int | None = None,
         sample_count: int | None = None,
         trace_dtype: np.dtype = np.int16,
-        data_length: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
         create_time: int | None = None,
         version: str | None = None,
     ):
         self._logger = logger.get_logger(NumpyTraceDataset)
 
-        self._npy_trace_path: str | None = npy_trace_path
-        self._npy_data_path: str | None = npy_data_path
-        self._npy_metadata_path: str | None = npy_metadata_path
+        self._npy_metadata_path: str = os.path.join(path, self._METADATA_PATH)
 
         self._channel_names: list[str] | None = channel_names
         self._channel_count: int | None = None if self._channel_names is None else len(self._channel_names)
         self._trace_count: int | None = trace_count
         self._sample_count: int | None = sample_count
-        self._data_length: int | None = data_length
+        self._data_plaintext_length: int | None = data_plaintext_length
+        self._data_ciphertext_length: int | None = data_ciphertext_length
+        self._data_key_length: int | None = data_key_length
+        self._data_extended_length: int | None = data_extended_length
         self._create_time: int | None = create_time
         self._version: str | None = version
 
-        self._trace_array: np.ndarray
-        self._data_array: np.ndarray
+        self._trace_array: np.ndarray | None = None
+        self._plaintext_array: np.ndarray | None = None
+        self._ciphertext_array: np.ndarray | None = None
+        self._key_array: np.ndarray | None = None
+        self._extended_array: np.ndarray | None = None
+
+        if path is not None:
+            self._set_path(path)
 
         if create_empty:
-            if (
-                self._channel_names is None
-                or self._trace_count is None
-                or self._sample_count is None
-                or self._data_length is None
-            ):
+            if self._channel_names is None or self._trace_count is None or self._sample_count is None:
                 raise ValueError(
-                    "channel_names and trace_count and sample_count and data_length "
-                    "must be specified when in write mode."
+                    "channel_names and trace_count and sample_count " "must be specified when in write mode."
                 )
             self._trace_array = np.zeros(
                 shape=(self._channel_count, self._trace_count, self._sample_count), dtype=trace_dtype
             )
-            self._plaintext_array = np.zeros(
-                shape=(self._channel_count, self._trace_count, self._data_length), dtype=np.uint8
-            )
+            if self._data_plaintext_length is not None:
+                self._plaintext_array = np.zeros(
+                    shape=(self._channel_count, self._trace_count, self._data_plaintext_length), dtype=np.uint8
+                )
+            if self._data_ciphertext_length is not None:
+                self._ciphertext_array = np.zeros(
+                    shape=(self._channel_count, self._trace_count, self._data_ciphertext_length), dtype=np.uint8
+                )
+            if self._data_key_length is not None:
+                self._key_array = np.zeros(
+                    shape=(self._channel_count, self._trace_count, self._data_key_length), dtype=np.uint8
+                )
+            if self._data_extended_length is not None:
+                self._extended_array = np.zeros(
+                    shape=(self._channel_count, self._trace_count, self._data_extended_length), dtype=np.uint8
+                )
             self._create_time = int(time.time())
 
         else:
-            if self._npy_trace_path is None:
-                raise ValueError("The npy_trace_path must be specified when in non-write mode.")
-
-            self._trace_array = np.load(self._npy_trace_path)
-
-            if self._npy_data_path is None or self._npy_metadata_path is None:
-                self._logger.warning(
-                    "npy_data_path or npy_metadata_path is not specified, data or metadata info will be not load."
-                )
+            if path is None:
+                print("path is required if create_empty is False")
             else:
-                self._plaintext_array = np.load(self._npy_data_path)
-                self._load_metadata()
+                self._trace_array = np.load(self._npy_trace_path)
+
+                if not os.path.exists(self._npy_data_plaintext_path):
+                    self._logger.warning("npy_data_plaintext_path is not specified, plaintext will be not load.")
+                else:
+                    self._plaintext_array = np.load(self._npy_data_plaintext_path)
+
+                if not os.path.exists(self._npy_data_ciphertext_path):
+                    self._logger.warning("npy_data_ciphertext_path is not specified, ciphertext will be not load.")
+                else:
+                    self._ciphertext_array = np.load(self._npy_data_ciphertext_path)
+
+                if not os.path.exists(self._npy_data_key_path):
+                    self._logger.info("npy_data_key_path is not specified, key will be not load.")
+                else:
+                    self._key_array = np.load(self._npy_data_key_path)
+
+                if not os.path.exists(self._npy_data_extended_path):
+                    self._logger.info("npy_data_extended_path is not specified, extended will be not load.")
+                else:
+                    self._extended_array = np.load(self._npy_data_extended_path)
+
+                if not os.path.exists(self._npy_metadata_path):
+                    self._logger.info("npy_metadata_path is not specified, metadata will be not load.")
+                else:
+                    self._load_metadata()
 
     def _load_metadata(self):
         with open(self._npy_metadata_path) as f:
@@ -666,18 +701,24 @@ class NumpyTraceDataset(TraceDataset):
                 self._channel_count: int | None = len(self._channel_names)
             self._trace_count: int | None = metadata.get("trace_count")
             self._sample_count: int | None = metadata.get("sample_count")
-            self._data_length: int | None = metadata.get("data_length")
+            self._data_plaintext_length: int | None = metadata.get("data_plaintext_length")
+            self._data_ciphertext_length: int | None = metadata.get("data_ciphertext_length")
+            self._data_key_length: int | None = metadata.get("data_key_length")
+            self._data_extended_length: int | None = metadata.get("data_extended_length")
             self._create_time: int | None = metadata.get("create_time")
             self._version: str | None = metadata.get("version")
 
     def _dump_metadata(self):
-        with open(self._npy_metadata_path, "w") as f:
+        with open(self._npy_metadata_path, "w", encoding="utf-8") as f:
             json.dump(
                 {
                     "channel_names": self._channel_names,
                     "trace_count": self._trace_count,
                     "sample_count": self._sample_count,
-                    "data_length": self._data_length,
+                    "data_plaintext_length": self._data_plaintext_length,
+                    "data_ciphertext_length": self._data_ciphertext_length,
+                    "data_key_length": self._data_key_length,
+                    "data_extended_length": self._data_extended_length,
                     "create_time": self._create_time,
                     "version": self._version,
                 },
@@ -690,23 +731,17 @@ class NumpyTraceDataset(TraceDataset):
     @classmethod
     def load(cls, path: str, **kwargs) -> "TraceDataset":
         return cls(
-            os.path.join(path, cls._ARRAY_TRACE_PATH),
-            os.path.join(path, cls._ARRAY_DATA_PATH),
-            os.path.join(path, cls._METADATA_PATH),
+            path,
             **kwargs,
         )
 
     @classmethod
-    def load_from_numpy_array(cls, trace: np.ndarray, data: np.ndarray | None = None):
+    def load_from_numpy_array(cls, trace: np.ndarray):
         channel_count = None
         trace_count = None
         sample_count = None
-        data_length = None
 
         shape = trace.shape
-
-        if data is not None and not shape == data.shape:
-            raise ValueError("trace and data must have the same shape.")
 
         array_size = len(shape)
 
@@ -714,17 +749,14 @@ class NumpyTraceDataset(TraceDataset):
             channel_count = 1
             trace_count = 1
             sample_count = shape[0]
-            data_length = data.shape[0] if data is not None else 0
         elif array_size == 2:
             channel_count = 1
             trace_count = shape[0]
             sample_count = shape[1]
-            data_length = data.shape[1] if data is not None else 0
         elif array_size == 3:
             channel_count = shape[0]
             trace_count = shape[1]
             sample_count = shape[2]
-            data_length = data.shape[2] if data is not None else 0
 
         channel_names = []
         for i in range(channel_count):
@@ -735,19 +767,18 @@ class NumpyTraceDataset(TraceDataset):
             channel_names=channel_names,
             trace_count=trace_count,
             sample_count=sample_count,
-            data_length=data_length,
             trace_dtype=trace.dtype,
         )
 
         if array_size == 1:
-            ds.set_trace(0, 0, trace, data)
+            ds.set_trace(0, 0, trace)
         elif array_size == 2:
             for t in range(shape[0]):
-                ds.set_trace(0, t, trace[t], data[t] if data is not None else None)
+                ds.set_trace(0, t, trace[t])
         elif array_size == 3:
             for c in range(shape[0]):
                 for t in range(shape[1]):
-                    ds.set_trace(c, t, trace[c, t], data[c, t] if data is not None else None)
+                    ds.set_trace(c, t, trace[c, t])
 
         return ds
 
@@ -770,38 +801,84 @@ class NumpyTraceDataset(TraceDataset):
         elif os.path.isfile(path):
             raise Exception(f"{path} is not a file.")
 
-        npy_trace_path = os.path.join(path, cls._ARRAY_TRACE_PATH)
-        npy_data_path = os.path.join(path, cls._ARRAY_DATA_PATH)
-        npy_metadata_path = os.path.join(path, cls._METADATA_PATH)
-
         return cls(
-            npy_trace_path=npy_trace_path,
-            npy_data_path=npy_data_path,
-            npy_metadata_path=npy_metadata_path,
+            path=path,
             create_empty=True,
             channel_names=channel_names,
             trace_count=trace_count,
             sample_count=sample_count,
             version=version,
+            data_plaintext_length=data_plaintext_length,
+            data_ciphertext_length=data_ciphertext_length,
+            data_key_length=data_key_length,
+            data_extended_length=data_extended_length,
             **kwargs,
         )
 
-    def dump(self, path: str | None = None, **kwargs):
-        if self._npy_trace_path is None or self._npy_data_path is None:
-            raise Exception("trace and metadata path must not be None.")
-        else:
-            np.save(self._npy_trace_path, self._trace_array)
-            np.save(self._npy_data_path, self._plaintext_array)
-            self._dump_metadata()
+    def _set_path(self, path: str):
+        self._npy_trace_path: str = os.path.join(path, self._ARRAY_TRACE_PATH)
+        self._npy_data_plaintext_path: str = os.path.join(path, self._ARRAY_PLAINTEXT_PATH)
+        self._npy_data_ciphertext_path: str = os.path.join(path, self._ARRAY_CIPHERTEXT_PATH)
+        self._npy_data_key_path: str = os.path.join(path, self._ARRAY_KEY_PATH)
+        self._npy_data_extended_path: str = os.path.join(path, self._ARRAY_EXTENDED_PATH)
 
-    def set_trace(self, channel_name: str | int, trace_index: int, trace: np.ndarray, data: np.ndarray | None):
+    def dump(self, path: str | None = None, **kwargs):
+        if path is not None:
+            self._set_path(path)
+        if self._npy_trace_path is None:
+            print("Path must be provided, either as an argument or set in __init__.")
+            return
+        np.save(self._npy_trace_path, self._trace_array)
+
+        if self._plaintext_array is not None:
+            np.save(self._npy_data_plaintext_path, self._plaintext_array)
+        if self._ciphertext_array is not None:
+            np.save(self._npy_data_ciphertext_path, self._ciphertext_array)
+        if self._key_array is not None:
+            np.save(self._npy_data_key_path, self._key_array)
+        if self._extended_array is not None:
+            np.save(self._npy_data_extended_path, self._extended_array)
+        self._dump_metadata()
+
+    def set_trace(self, channel_name: str | int, trace_index: int, trace: np.ndarray, data: dict[str, bytes]):
         if isinstance(channel_name, int):
             channel_index = channel_name
         else:
             channel_index = self._channel_names.index(channel_name)
+
         self._trace_array[channel_index, trace_index, :] = trace
-        if self._data_length != 0 and data is not None:
-            self._plaintext_array[channel_index, trace_index, :] = data
+
+        data_plaintext = data.get("plaintext")
+        data_ciphertext = data.get("ciphertext")
+        data_key = data.get("key")
+        data_extended = data.get("extended")
+
+        if data_plaintext is not None:
+            if self._plaintext_array is None:
+                item_length = len(data_plaintext)
+                self._plaintext_array = np.zeros(
+                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                )
+            self._plaintext_array[channel_index, trace_index, :] = np.frombuffer(data_plaintext, dtype=np.uint8)
+        if data_ciphertext is not None:
+            if self._ciphertext_array is None:
+                item_length = len(data_ciphertext)
+                self._ciphertext_array = np.zeros(
+                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                )
+            self._ciphertext_array[channel_index, trace_index, :] = np.frombuffer(data_ciphertext, dtype=np.uint8)
+        if data_key is not None:
+            if self._key_array is None:
+                item_length = len(data_key)
+                self._key_array = np.zeros(shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8)
+            self._key_array[channel_index, trace_index, :] = np.frombuffer(data_key, dtype=np.uint8)
+        if data_extended is not None:
+            if self._extended_array is None:
+                item_length = len(data_extended)
+                self._extended_array = np.zeros(
+                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                )
+            self._key_array[channel_index, trace_index, :] = np.frombuffer(data_extended, dtype=np.uint8)
 
     def _get_trace_data_with_indices(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]:
         c = self._parse_slice(self._channel_count, channel_slice)
@@ -812,14 +889,47 @@ class NumpyTraceDataset(TraceDataset):
             trace_slice = slice(trace_slice, trace_slice + 1)
         return c, t, self._trace_array[channel_slice, trace_slice], self._plaintext_array[channel_slice, trace_slice]
 
-    def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, np.ndarray]:
-        pass
+    def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:
+        data = []
+
+        channel_indexes, trace_indexes = (
+            self._parse_slice(self._channel_count, channel_slice),
+            self._parse_slice(self._trace_count, trace_slice),
+        )
+
+        if isinstance(trace_slice, int):
+            trace_slice = slice(trace_slice, trace_slice + 1)
+
+        traces = self._trace_array[channel_slice, trace_slice]
+        for channel_index in channel_indexes:
+            data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
+
+        return traces, data
 
     def _get_trace(self, channel_slice, trace_slice) -> np.ndarray:
         return self._trace_array[channel_slice, trace_slice]
 
-    def _get_data(self, channel_slice, trace_slice) -> np.ndarray:
-        return self._plaintext_array[channel_slice, trace_slice]
+    def _get_data(self, channel_slice, trace_slice) -> list[list[dict[str, bytes | None]]]:
+        data = []
 
-    def _get_ciphertext(self, channel_slice, trace_slice) -> np.ndarray:
-        pass
+        channel_indexes, trace_indexes = (
+            self._parse_slice(self._channel_count, channel_slice),
+            self._parse_slice(self._trace_count, trace_slice),
+        )
+
+        for channel_index in channel_indexes:
+            data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
+
+        return data
+
+    def _get_data_by_index(self, channel_index: int, trace_index: int) -> dict[str, bytes | None]:
+        data = {}
+        if self._plaintext_array is not None:
+            data["plaintext"] = self._plaintext_array[channel_index, trace_index].tobytes()
+        if self._ciphertext_array is not None:
+            data["ciphertext"] = self._ciphertext_array[channel_index, trace_index].tobytes()
+        if self._key_array is not None:
+            data["key"] = self._key_array[channel_index, trace_index].tobytes()
+        if self._extended_array is not None:
+            data["extended"] = self._extended_array[channel_index, trace_index].tobytes()
+        return data
