@@ -281,6 +281,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         # status, res = self._osc_set_analog_all_channel_enable(final_enable)
         self._channel_enable.osc_channel_0_enable = final_enable[0]
         self._channel_enable.osc_channel_1_enable = final_enable[1]
+        self._config.osc_channel_0_enable = final_enable[0]
+        self._config.osc_channel_1_enable = final_enable[1]
         # === end ===
 
     @connection_status_check
@@ -588,7 +590,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._logger.error("Gain error, it should in 1 to 50")
             return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">BB", channel, gain)
-        return self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
+        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_GAIN, payload=payload)
+        if status == protocol.STATUS_OK:
+            if channel == 0:
+                self._config.osc_channel_0_gain = gain
+            elif channel == 1:
+                self._config.osc_channel_1_gain = gain
 
     @connection_status_check
     def osc_sample_clock_phase(self, phase: int) -> tuple[int, None]:
