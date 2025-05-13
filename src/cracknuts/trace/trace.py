@@ -102,7 +102,9 @@ class TraceDataset(abc.ABC):
         return TraceDatasetData(get_trace_data=self._get_trace_data_with_indices)[item]
 
     @abc.abstractmethod
-    def _get_trace_data_with_indices(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]: ...
+    def _get_trace_data_with_indices(
+        self, channel_slice, trace_slice
+    ) -> tuple[list, list, np.ndarray, list[list[dict[str, bytes | None]]]]: ...
 
     @abc.abstractmethod
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, np.ndarray]: ...
@@ -609,8 +611,6 @@ class NumpyTraceDataset(TraceDataset):
     ):
         self._logger = logger.get_logger(NumpyTraceDataset)
 
-        self._npy_metadata_path: str = os.path.join(path, self._METADATA_PATH)
-
         self._channel_names: list[str] | None = channel_names
         self._channel_count: int | None = None if self._channel_names is None else len(self._channel_names)
         self._trace_count: int | None = trace_count
@@ -630,6 +630,7 @@ class NumpyTraceDataset(TraceDataset):
 
         if path is not None:
             self._set_path(path)
+            self._npy_metadata_path: str = os.path.join(path, self._METADATA_PATH)
 
         if create_empty:
             if self._channel_names is None or self._trace_count is None or self._sample_count is None:
@@ -771,14 +772,14 @@ class NumpyTraceDataset(TraceDataset):
         )
 
         if array_size == 1:
-            ds.set_trace(0, 0, trace)
+            ds.set_trace(0, 0, trace, None)
         elif array_size == 2:
             for t in range(shape[0]):
-                ds.set_trace(0, t, trace[t])
+                ds.set_trace(0, t, trace[t], None)
         elif array_size == 3:
             for c in range(shape[0]):
                 for t in range(shape[1]):
-                    ds.set_trace(c, t, trace[c, t])
+                    ds.set_trace(c, t, trace[c, t], None)
 
         return ds
 
@@ -840,7 +841,7 @@ class NumpyTraceDataset(TraceDataset):
             np.save(self._npy_data_extended_path, self._extended_array)
         self._dump_metadata()
 
-    def set_trace(self, channel_name: str | int, trace_index: int, trace: np.ndarray, data: dict[str, bytes]):
+    def set_trace(self, channel_name: str | int, trace_index: int, trace: np.ndarray, data: dict[str, bytes] | None):
         if isinstance(channel_name, int):
             channel_index = channel_name
         else:
@@ -848,10 +849,10 @@ class NumpyTraceDataset(TraceDataset):
 
         self._trace_array[channel_index, trace_index, :] = trace
 
-        data_plaintext = data.get("plaintext")
-        data_ciphertext = data.get("ciphertext")
-        data_key = data.get("key")
-        data_extended = data.get("extended")
+        data_plaintext = None if data is None else data.get("plaintext")
+        data_ciphertext = None if data is None else data.get("ciphertext")
+        data_key = None if data is None else data.get("key")
+        data_extended = None if data is None else data.get("extended")
 
         if data_plaintext is not None:
             if self._plaintext_array is None:
@@ -880,14 +881,21 @@ class NumpyTraceDataset(TraceDataset):
                 )
             self._key_array[channel_index, trace_index, :] = np.frombuffer(data_extended, dtype=np.uint8)
 
-    def _get_trace_data_with_indices(self, channel_slice, trace_slice) -> tuple[list, list, np.ndarray, np.ndarray]:
+    def _get_trace_data_with_indices(
+        self, channel_slice, trace_slice
+    ) -> tuple[list, list, np.ndarray, list[list[dict[str, bytes | None]]]]:
         c = self._parse_slice(self._channel_count, channel_slice)
         t = self._parse_slice(self._trace_count, trace_slice)
         if isinstance(channel_slice, int):
             channel_slice = slice(channel_slice, channel_slice + 1)
         if isinstance(trace_slice, int):
             trace_slice = slice(trace_slice, trace_slice + 1)
-        return c, t, self._trace_array[channel_slice, trace_slice], self._plaintext_array[channel_slice, trace_slice]
+        plaintext = None if self._plaintext_array is None else self._plaintext_array[channel_slice, trace_slice]
+        ciphertext = None if self._ciphertext_array is None else self._ciphertext_array[channel_slice, trace_slice]
+        key = None if self._key_array is None else self._key_array[channel_slice, trace_slice]
+        extended = None if self._extended_array is None else self._extended_array[channel_slice, trace_slice]
+
+        return c, t, self._trace_array[channel_slice, trace_slice], [plaintext, ciphertext, key, extended]
 
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:
         data = []
