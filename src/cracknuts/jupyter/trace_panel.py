@@ -106,7 +106,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         return super()._repr_mimebundle_(**kwargs)
 
     def set_numpy_data(self, trace: np.ndarray, data: np.ndarray = None) -> None:
-        ds = NumpyTraceDataset.load_from_numpy_array(trace, data)
+        ds = NumpyTraceDataset.load_from_numpy_array(trace)
         self.set_trace_dataset(ds)
 
     def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
