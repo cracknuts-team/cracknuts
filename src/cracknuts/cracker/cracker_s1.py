@@ -13,7 +13,7 @@ class ConfigS1(ConfigBasic):
         super().__init__()
 
         self.nut_enable: bool = False
-        self.nut_voltage: float = 3.5
+        self.nut_voltage: float = 3.3
         self.nut_clock_enable = False
         self.nut_clock = 8000
         self.nut_timeout: int | None = None
@@ -675,6 +675,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         else:
             voltage = voltage * 1000
         voltage = int(voltage)
+        if voltage > 4000 or voltage < 2000:
+            self._logger.error("Nut voltage error, it should in 2.0V to 4.0V")
+            return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">I", voltage)
         self._logger.debug(f"nut_voltage payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_VOLTAGE, payload=payload)
