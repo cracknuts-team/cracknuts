@@ -26,7 +26,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
 
     # nut
     nut_enable = traitlets.Bool(False).tag(sync=True)
-    nut_voltage = traitlets.Float(3.5).tag(sync=True)
+    nut_voltage = traitlets.Float(3.3).tag(sync=True)
     nut_clock_enable = traitlets.Bool(False).tag(sync=True)
     nut_clock = traitlets.Int(65000).tag(sync=True)
 

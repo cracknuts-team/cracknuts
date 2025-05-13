@@ -85,7 +85,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [nutEnable, setNutEnable] = useModelState<boolean>("nut_enable");
   const [nutClockEnable, setNutClockEnable] = useModelState<boolean>("nut_clock_enable");
   const [nutVoltage, setNutVoltage] = useModelState<number>("nut_voltage");
-  const [nutVoltageMin, nutVoltageMax] = [2.0, 4.1];
+  const [nutVoltageMin, nutVoltageMax] = [2.0, 4.0];
   const [nutClock, setNutClock] = useModelState<number>("nut_clock");
 
   const [nutUartEnable, setNutUartEnable] = useModelState<boolean>("nut_uart_enable")

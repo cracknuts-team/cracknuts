@@ -25,8 +25,8 @@ class ConfigBasic:
     def __init__(self):
         self.osc_channel_0_enable = False
         self.osc_channel_1_enable = True
-        self.osc_channel_0_gain = 50
-        self.osc_channel_1_gain = 50
+        self.osc_channel_0_gain = 10
+        self.osc_channel_1_gain = 10
         self.osc_sample_length = 1024
         self.osc_sample_delay = 0
         self.osc_sample_clock = 48000
