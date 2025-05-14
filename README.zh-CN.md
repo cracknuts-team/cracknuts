@@ -8,14 +8,13 @@
     <a href="https://github.com/cracknuts-team/cracknuts/releases"><img alt="GitHub release" src="https://img.shields.io/github/release/cracknuts-team/cracknuts.svg"></a>
 </p>
 
-A library for `CrackNuts` device.  
-This repository is the Python library for controlling the Cracker device and performing key analysis in the CrackNuts project.
+本仓库是`CrackNuts`项目中`Cracker`设备的控制与分析Python库。
 
-## Install
+## 安装
 
-Just run `pip install cracknuts` or run `pip install cracknuts[jupyter]` if you are developing in [Jupyter](https://jupyter.org/).
+执行`pip install cracknuts`或`pip install cracknuts[jupyter]`，如果你在[Jupyter](https://jupyter.org/)中开发。
 
-Then run `cracknuts welcome`, and it will print the welcome message and version information of `CrackNuts`.
+安装后运行`cracknuts welcome`，它将打印`cracknuts`的欢迎内容和版本信息。
 
 ```text
    ______                           __      _   __           __
@@ -40,22 +39,22 @@ For more information, visit:
 Enjoy exploring CrackNuts! If you need assistance, feel free to check the documentation or ask for help.
 ```
 
-Once all the above steps complete without errors, the installation is successful, and you can start using `CrackNuts` for research and study.
+以上步骤没有错误后，既是安装成功，你可以开始使用`CrackNuts`进行研究和学习。
 
-Alternatively, you can use the quick install script. It will install Miniconda, create an environment named `cracknuts`, and add two `CrackNuts` shortcuts to the desktop (on Windows) or to the application launcher.
+或者，你可以使用快速安装脚本进行安装。它将安装`Miniconda`并创建一个名为`cracknuts`的环境，同时在桌面（Windows）或者启动器中上创建两个`CrackNuts`的快捷方式。
 
 *Windows*
 
 ```shell
-curl https://raw.githubusercontent.com/cracknuts-team/cracknuts/refs/heads/main/install/win-install.ps1 -o "cracknuts-win-install.ps1"; powershell -ExecutionPolicy Bypass -File ".\cracknuts-win-install.ps1"; del "cracknuts-win-install.ps1"
+curl https://gitee.com/cracknuts-team/cracknuts/raw/main/install/install.ps1 -o "cracknuts-win-install.ps1"; powershell -ExecutionPolicy Bypass -File ".\cracknuts-win-install.ps1" -EnableChinaConfig; del "cracknuts-win-install.ps1"
 ```
 
 *Linux*
 
 ```shell
-curl -sSL https://raw.githubusercontent.com/cracknuts-team/cracknuts/refs/heads/main/install/install.sh | bash
+curl -sSL https://gitee.com/cracknuts-team/cracknuts/raw/main/install/install.sh | bash -s -- --china-config
 ```
 
-## Usage
+## 使用
 
-Visit [CrackNuts](https://cracknuts.io) for more information.  
+访问 [CrackNuts](https://cracknuts.cn)  获取详细信息。  
