@@ -14,6 +14,7 @@ build:
         pnpm install
         pnpm run build
       - pip install .
+      - pip install -r docs/requirements.txt
 
 sphinx:
   configuration: docs/source/conf.py
