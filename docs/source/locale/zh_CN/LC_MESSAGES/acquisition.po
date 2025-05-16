@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-25 16:44+0800\n"
+"POT-Creation-Date: 2025-05-16 16:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -183,6 +183,15 @@ msgstr "从 JSON 文件加载配置。"
 msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
 msgstr ""
 
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_json:1 of
+#, fuzzy
+msgid "Load config from a JSON object."
+msgstr "从 JSON 文件加载配置。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_json:4 of
+msgid "the JSON object"
+msgstr ""
+
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:1 of
 msgid "Load config from a JSON string."
 msgstr ""
@@ -235,25 +244,21 @@ msgstr "需要采集的曲线长度。"
 msgid "The sample offset to be acquired."
 msgstr "采集偏移。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:14 of
-msgid "The data length to be acquired."
-msgstr "采集的数据的长度。"
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:17
+#: cracknuts.acquisition.acquisition.Acquisition.run:14
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:13
 #: cracknuts.acquisition.acquisition.Acquisition.test:13
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:13 of
 msgid "The trigger judge wait time in seconds."
 msgstr "`触发` 判断等待时常，单位：秒。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:20
+#: cracknuts.acquisition.acquisition.Acquisition.run:17
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:16
 #: cracknuts.acquisition.acquisition.Acquisition.test:16
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:16 of
 msgid "The trigger judge timeout in seconds."
 msgstr "`触发` 超时时常，单位：秒"
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:23
+#: cracknuts.acquisition.acquisition.Acquisition.run:20
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:19
 #: cracknuts.acquisition.acquisition.Acquisition.test:19
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:19 of
@@ -262,34 +267,31 @@ msgid ""
 "this setting is invalid."
 msgstr "最大出现错误次数，如果 `do_error_handler_strategy` 设置 0，则不生效。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:27
+#: cracknuts.acquisition.acquisition.Acquisition.run:24
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:23
 #: cracknuts.acquisition.acquisition.Acquisition.test:23
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:23 of
 msgid ""
 "The strategy to handle error handling. 0: Exit immediately, 1: Exit after"
 " exceeding the error count."
-msgstr ""
-"错误处理策略：0 立即退出，1 超过尝试次数后退出。"
+msgstr "错误处理策略：0 立即退出，1 超过尝试次数后退出。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:31
+#: cracknuts.acquisition.acquisition.Acquisition.run:28
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:27 of
 msgid "The file format of the trace dataset. \"scarr\" or \"numpy\"."
 msgstr "保存文件格式，\"scarr\" 或者 \"numpy\""
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:34
+#: cracknuts.acquisition.acquisition.Acquisition.run:31
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:30 of
 msgid ""
 "The file path of the trace dataset. If set to \"auto\", a folder with a "
 "timestamp format will be created in the current working directory to save"
 " the data."
-msgstr ""
-"文件保存路径，如果设置了 \"auto\"，则在当前工作目录下创建一个以时间戳格式命名的文件夹保存数据。"
+msgstr "文件保存路径，如果设置了 \"auto\"，则在当前工作目录下创建一个以时间戳格式命名的文件夹保存数据。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:1 of
 msgid "Start run mode in the foreground, which will cause blocking."
-msgstr ""
-"前台启动 `运行` 模式，这会导致阻塞。"
+msgstr "前台启动 `运行` 模式，这会导致阻塞。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.stop:1 of
 msgid "Stop test or run mode."
@@ -308,4 +310,6 @@ msgstr "需要采集的曲线数量，一般不要指定，使用默认值：-1�
 msgid "Start test mode in foreground, which will cause blocking."
 msgstr "前台启动 `测试` 模式，这会导致阻塞。"
 
+#~ msgid "The data length to be acquired."
+#~ msgstr "采集的数据的长度。"
 

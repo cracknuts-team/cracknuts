@@ -1,6 +1,7 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import abc
+import functools
 import importlib.util
 import json
 import logging
@@ -88,6 +89,7 @@ def connection_status_check(func):
     This is a decorator to check the connection status of the cracker device. user should use this directly.
     """
 
+    @functools.wraps(func)
     def wrapper(self: "CrackerBasic", *args, **kwargs):
         if not self._connection_status:
             sig_result = func.__annotations__.get("return", None)

@@ -1,5 +1,5 @@
-Generate markdown
-=================
+API docs for CrackNuts
+======================
 
 Commands
 --------
