@@ -8,10 +8,11 @@ build:
   jobs:
     pre_build:
       - npm install -g pnpm
-      - cd jupyter_frontend
-      - pnpm install
-      - pnpm build
-      - cd ..
+      - |
+        cd ../jupyter_frontend
+        npm install -g pnpm
+        pnpm install
+        pnpm run build
       - pip install .
 
 sphinx:
