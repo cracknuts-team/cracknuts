@@ -16,4 +16,4 @@ build:
       - pip install .
 
 sphinx:
-  configuration: source/conf.py
+  configuration: docs/source/conf.py
