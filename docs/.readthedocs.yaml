@@ -6,9 +6,10 @@ build:
     python: "3.12"
   jobs:
     pre_build:
-      # ✅ 安装项目代码：向上一级目录
+      - echo `realpath ..`
+      #  安装项目代码：向上一级目录
       - pip install ..
-      # ✅ 安装文档依赖
+      #  安装文档依赖
       - pip install -r requirements.txt
 
 sphinx:
