@@ -9,7 +9,7 @@ build:
     pre_build:
       - npm install -g pnpm
       - |
-        cd ../jupyter_frontend
+        cd jupyter_frontend
         npm install -g pnpm
         pnpm install
         pnpm run build
