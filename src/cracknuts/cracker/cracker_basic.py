@@ -92,6 +92,7 @@ def connection_status_check(func):
     @functools.wraps(func)
     def wrapper(self: "CrackerBasic", *args, **kwargs):
         if not self._connection_status:
+            print("Error: Cracker not connected")
             sig_result = func.__annotations__.get("return", None)
             if sig_result is tuple:
                 return self.DISCONNECTED, None
