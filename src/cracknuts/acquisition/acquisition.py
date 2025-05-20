@@ -691,10 +691,22 @@ class Acquisition(abc.ABC):
         self.cracker.osc_single()
 
     @abc.abstractmethod
-    def do(self):
+    def do(self) -> dict[str, bytes]:
         """
         The `do` logic, which the user should implement in the subclass.
 
+        :return: The data in dictionary format to be saved should contain the ciphertext and plaintext keys,
+                 and may optionally include the key and extended keys.
+                 The plaintext is the data to be encrypted, the ciphertext is the encrypted result, the key is used
+                 to encrypt the plaintext, and the extended field is for any custom data you want to save.
+                 The data is structured as follows:
+                 {
+                    "plaintext": plaintext_data_bytes,
+                    "ciphertext": ciphertext_data_bytes,
+                    "key": key_data_bytes,
+                    "extended": extended_data_bytes,
+                }
+        :rtype: dict[str, bytes]
         """
         ...
 
