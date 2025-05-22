@@ -6,7 +6,6 @@ import sys
 import typing
 from collections.abc import Callable
 
-from cracknuts import jupyter
 from cracknuts.acquisition import Acquisition, AcquisitionBuilder
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.cracker.cracker_g1 import CrackerG1
@@ -17,8 +16,11 @@ try:
 
     if "ipykernel" not in sys.modules:
         display = None
+    else:
+        from cracknuts import jupyter as cn_jupyter
 except ImportError:
     display = None
+    cn_jupyter = None
 
 
 def version():
@@ -76,28 +78,28 @@ def new_acquisition(
 if display is not None:
 
     def panel(acq: Acquisition):
-        return jupyter.display_cracknuts_panel(acq)
+        return cn_jupyter.display_cracknuts_panel(acq)
 
 
 if display is not None:
 
     def panel_cracker(cracker: CrackerBasic):
-        return jupyter.display_cracker_panel(cracker)
+        return cn_jupyter.display_cracker_panel(cracker)
 
 
 if display is not None:
 
     def panel_scope(acq: Acquisition):
-        return jupyter.display_scope_panel(acq)
+        return cn_jupyter.display_scope_panel(acq)
 
 
 if display is not None:
 
     def panel_acquisition(acq: Acquisition):
-        return jupyter.display_acquisition_panel(acq)
+        return cn_jupyter.display_acquisition_panel(acq)
 
 
 if display is not None:
 
     def panel_trace():
-        return jupyter.display_trace_panel()
+        return cn_jupyter.display_trace_panel()
