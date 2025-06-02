@@ -1587,7 +1587,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
-        time = time * 1, 000, 00  # the uint is 10 ns
+        time = time * 1_000_00  # the uint is 10 ns
         payload = struct.pack(">BI", polar, time)
         self._logger.debug(f"cracker_nut_reset payload: {payload}")
         return self.send_with_command(protocol.Command.NUT_RESET, payload=payload)

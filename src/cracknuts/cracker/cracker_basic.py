@@ -322,7 +322,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         try:
             if not self._socket:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self._socket.settimeout(5)
+                self._socket.settimeout(
+                    60
+                )  # todo 由于在IO通信时，delay的存在，可能超过这个超时时间，这里暂时设置为60秒的超时
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
