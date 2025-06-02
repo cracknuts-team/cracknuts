@@ -1568,6 +1568,18 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         用户在测试板设计时需确保默认不复位（如默认上拉），
         下发nut_reset()命令后，RESET管脚根据极性持续相应的复位时间。
 
+        ::
+
+            polar=LOW
+            TRIG: ~~~ ┐            ┌ ~~~
+                      └────────────┘     LOW
+                      |<-  time  ->|
+
+            polar=HIGH
+            TRIG:    ┌────────────┐     HIGH
+                 ~~~ ┘            └ ~~~
+                     |<-  time  ->|
+
         :param polar: 极性 0 低电平，1 高电平
         :type polar: int
         :param time: 高低电平持续时间
