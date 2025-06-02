@@ -2,6 +2,7 @@
 
 import re
 import struct
+import warnings
 from enum import Enum
 
 from cracknuts.cracker import protocol, serial
@@ -162,7 +163,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             config.nut_uart_parity,
             config.nut_uart_stopbits,
         )
-        self._uart_enable(config.nut_uart_enable)
+        self._uart_io_enable(config.nut_uart_enable)
 
         self.i2c_config(config.nut_i2c_dev_addr, config.nut_i2c_speed)
         self._i2c_enable(config.nut_i2c_enable)
@@ -1275,33 +1276,67 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             is_trigger=is_trigger,
         )
 
+    def uart_io_enable(self) -> tuple[int, None]:
+        """ "
+        使能UART通信接口，使能后TX引脚变为高电平，RX引脚置为三态输入状态。
+
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+
+        """
+        return self._uart_io_enable(True)
+
     def uart_enable(self) -> tuple[int, None]:
         """
-        Enable the UART.
+        .. deprecated:: 0.19.0
+            此函数将在未来版本中移除，请使用`uart_io_enable`代替。
 
-        :return: The device response status
-        :rtype: tuple[int, None]
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
         """
-        return self._uart_enable(True)
+        warnings.warn(
+            "uart_enable() 已弃用，将在未来版本中移除，请使用 uart_io_enable() 替代。",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._uart_io_enable(True)
+
+    def uart_io_disable(self) -> tuple[int, None]:
+        """
+        关闭UART通信接口，关闭后TX引脚、RX引脚置为三态输入状态。
+
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+
+        return self._uart_io_enable(False)
 
     def uart_disable(self) -> tuple[int, None]:
         """
-        Disable the UART.
+        .. deprecated:: 0.19.0
+            此函数将在未来版本中移除，请使用`uart_io_disable`代替。
 
-        :return: The device response status
-        :rtype: tuple[int, None]
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
         """
-        return self._uart_enable(False)
+        warnings.warn(
+            "uart_disable() 已弃用，将在未来版本中移除，请使用 uart_io_disable() 替代。",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._uart_io_enable(False)
 
     @connection_status_check
-    def _uart_enable(self, enable: bool) -> tuple[int, None]:
+    def _uart_io_enable(self, enable: bool) -> tuple[int, None]:
         """
-        Enable the uart.
+        配置UART通信接口使能，
+        True: 使能UART通信接口，使能后TX引脚变为高电平，RX引脚置为三态输入状态。
+        False: 关闭UART通信接口，关闭后TX引脚、RX引脚置为三态输入状态。
 
-        :param enable: True for enable, False for disable.
+        :param enable: True：使能, False：关闭.
         :type enable: bool
-        :return: The device response status.
-        :rtype: tuple[int, None]
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
         """
         payload = struct.pack(">?", enable)
         self._logger.debug(f"cracker_uart_enable payload: {payload.hex()}")
@@ -1313,10 +1348,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_reset(self) -> tuple[int, None]:
         """
-        Reset the UART hardware.
+        复位UART硬件逻辑。
 
-        :return: The device response status.
-        :rtype: tuple[int, None]
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
         """
         payload = None
         self._logger.debug(f"cracker_uart_reset payload: {payload}")
@@ -1331,17 +1366,17 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         stopbits: serial.Stopbits | None = None,
     ) -> tuple[int, None]:
         """
-        Config uart.
+        配置UART接口参数。
 
-        :param baudrate: The baudrate of the uart.
+        :param baudrate: 波特率。
         :type baudrate: serial.Baudrate
-        :param bytesize: The bytesize of the uart.
+        :param bytesize: 数据位长度。
         :type bytesize: serial.Bytesize
-        :param parity: The parity of the uart.
+        :param parity: 校验方式。
         :type parity: serial.Parity
-        :param stopbits: The stopbits of the uart.
+        :param stopbits: 停止位。
         :type stopbits: serial.Stopbits
-        :return: The device response status.
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, None]
         """
 
@@ -1365,20 +1400,44 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     @connection_status_check
     def uart_transmit_receive(
-        self, tx_data: str | bytes = None, rx_count: int = 0, is_trigger: bool = False, timeout: int = 10000
+        self, tx_data: str | bytes = None, rx_count: int = 0, timeout: int = 10000, is_trigger: bool = False
     ) -> tuple[int, bytes | None]:
         """
-        Transmit and receive data through the UART protocol.
+        通过UART接口发送数据，等待一段时间后，接收数据，根据用户配置决定是否产生Trigger信号。
 
-        :param tx_data: The data to be sent.
+        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
+
+        ::
+
+            TRIG: ───┐            ┌────────────┐            ┌─── HIGH
+                     |            |            |            |
+                     └────────────┘            └────────────┘    LOW
+                     ┌────────────┬────────────┬────────────┐
+                     │  tx_data   │   delay    │   rx_data  │
+                     └────────────┴────────────┴────────────┘
+
+        is_trigger=False 时，Trigger 信号不变
+
+        ::
+
+            TRIG: ────────────────────────────────────────────── HIGH
+
+                                                                 LOW
+                     ┌────────────┬────────────┬────────────┐
+                     │  tx_data   │   delay    │   rx_data  │
+                     └────────────┴────────────┴────────────┘
+
+        :param tx_data: 要发送数据，bytes或十六进制字符串。
         :type tx_data: str | bytes
-        :param rx_count: The number of received data bytes.
+        :param rx_count: 要接收数据长度。
         :type rx_count: int
-        :param is_trigger: Whether the transmit trigger is enabled.
-        :type is_trigger: bool
-        :param timeout: Timeout in milliseconds.
+        :param timeout: 超时时间，单位毫秒。
         :type timeout: int
-        :return: The device response status and the data received from the device.
+        :param is_trigger: 接收完成时是否产生触发信号。
+                           True：接收完成时，Trigger信号拉高，
+                           False：接收完成时，Trigger信号不变
+        :type is_trigger: bool
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
         if isinstance(tx_data, str):
@@ -1390,12 +1449,88 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._logger.debug(f"cracker_uart_transmit_receive payload: {payload.hex()}")
         return self.send_with_command(protocol.Command.CRACKER_UART_TRANSCEIVE, payload=payload)
 
+    def uart_transmit(self, tx_data: str | bytes, is_trigger: bool = False) -> tuple[int, None]:
+        """
+        通过UART接口发送数据，根据用户配置决定是否产生Trigger信号。
+
+        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
+
+        ::
+
+            TRIG: ───┐            ┌─── HIGH
+                     |            |
+                     └────────────┘    LOW
+                     ┌────────────┬
+                     │  tx_data   │
+                     └────────────┴
+
+        is_trigger=False 时，Trigger 信号不变
+
+        ::
+
+            TRIG: ──────────────────── HIGH
+
+                                       LOW
+                     ┌────────────┬
+                     │  tx_data   │
+                     └────────────┴
+
+        :param tx_data: 要发送数据，bytes或十六进制字符串。
+        :type tx_data: str | bytes
+        :param is_trigger: 接收完成时是否产生触发信号。
+                           True：接收完成时，Trigger信号拉高，
+                           False：接收完成时，Trigger信号不变
+        :type is_trigger: bool
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+        return self.uart_transmit_receive(tx_data=tx_data, rx_count=0, timeout=0, is_trigger=is_trigger)
+
+    def uart_receive(self, rx_count: int, timeout: int = 10000, is_trigger: bool = False) -> tuple[int, bytes | None]:
+        """
+        通过UART接口接收数据，根据用户配置决定是否产生Trigger信号。
+
+        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
+
+        ::
+
+            TRIG: ───┐            ┌─── HIGH
+                     |            |
+                     └────────────┘    LOW
+                     ┬────────────┐
+                     │   rx_data  │
+                     ┴────────────┘
+
+        is_trigger=False 时，Trigger 信号不变
+
+        ::
+
+            TRIG: ──────────────────── HIGH
+
+                                       LOW
+                     ┬────────────┐
+                     │   rx_data  │
+                     ┴────────────┘
+
+        :param rx_count: 要接收数据长度。
+        :type rx_count: int
+        :param timeout: 超时时间，单位毫秒。
+        :type timeout: int
+        :param is_trigger: 接收完成时是否产生触发信号。
+                           True：接收完成时，Trigger信号拉高，
+                           False：接收完成时，Trigger信号不变
+        :type is_trigger: bool
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+        return self.uart_transmit_receive(tx_data=None, rx_count=rx_count, timeout=timeout, is_trigger=is_trigger)
+
     @connection_status_check
     def uart_receive_fifo_remained(self) -> tuple[int, int]:
         """
-        Get the number of remaining unread bytes in the UART receive FIFO.
+        读取UART接收FIFO剩余未读字节数。
 
-        :return: The device response status and the number of remaining unread bytes.
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, int]
         """
         payload = None
@@ -1406,9 +1541,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_receive_fifo_dump(self) -> tuple[int, bytes | None]:
         """
-        Read all the remaining data from the UART receive FIFO.
+        读取UART接收FIFO中剩余的所有数据。
 
-        :return: The device response status and all the remaining unread bytes.
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
         payload = None
@@ -1418,9 +1553,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_receive_fifo_clear(self) -> tuple[int, bytes | None]:
         """
-        Clear all the remaining data in the UART receive FIFO.
+        清除UART接收FIFO中剩余的所有数据。
 
-        :return: The device response status and all the remaining unread bytes.
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
         payload = None
