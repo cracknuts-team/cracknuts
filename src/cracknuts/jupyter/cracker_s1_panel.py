@@ -338,7 +338,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
                 serial.Stopbits(self.nut_uart_stopbits),
             )
 
-        self.cracker.uart_enable() if enabled else self.cracker.uart_disable()
+        self.cracker.uart_io_enable() if enabled else self.cracker.uart_io_disable()
 
     @traitlets.observe("nut_uart_baudrate")
     @observe_interceptor
