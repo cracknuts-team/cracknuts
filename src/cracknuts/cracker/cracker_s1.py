@@ -1561,3 +1561,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = None
         self._logger.debug(f"cracker_uart_receive_fifo_dump payload: {payload}")
         return self.send_with_command(protocol.Command.CRACKER_UART_CRACKER_UART_RECEIVE_CLEAR)
+
+    def nut_reset(self, polar: int = 0, time: int = 10):
+        """
+        复位nut芯片的RESET管脚，可配置复位电平极性，复位电平时间。默认RESET管脚为三态输入，
+        用户在测试板设计时需确保默认不复位（如默认上拉），
+        下发nut_reset()命令后，RESET管脚根据极性持续相应的复位时间。
+
+        :param polar: 极性 0 低电平，1 高电平
+        :type polar: int
+        :param time: 高低电平持续时间
+        :type time: int
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+        time = time * 1, 000, 00  # the uint is 10 ns
+        payload = struct.pack(">BI", polar, time)
+        self._logger.debug(f"cracker_nut_reset payload: {payload}")
+        return self.send_with_command(protocol.Command.NUT_RESET, payload=payload)
