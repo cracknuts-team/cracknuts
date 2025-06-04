@@ -59,18 +59,20 @@ def serial_server(
                     continue
 
                 print(f"[RECV] {data.hex(' ')}")
-                print(f"[RECV] {data.decode('utf-8', errors='ignore')}")
+                # print(f"[RECV] {data.decode('utf-8', errors='ignore')}")
 
                 response = None
                 if response_rules:
                     response = response_rules.get(data)
+                else:
+                    response = data
 
                 if response:
                     if response_delay > 0:
                         time.sleep(response_delay)
                     ser.write(response)
                     print(f"[SEND] {response.hex(' ')}")
-                    print(f"[SEND] {response.decode('utf-8', errors='ignore')}")
+                    # print(f"[SEND] {response.decode('utf-8', errors='ignore')}")
 
     except serial.SerialException as e:
         print(f"[ERROR] 串口错误：{e}")
@@ -96,8 +98,8 @@ if __name__ == '__main__':
         baudrate=115200,
         bytesize=8,
         stopbits=1,
-        parity='O',
+        parity='N',
         response_rules=None,
-        response_delay=3
+        response_delay=0.0
     )
 
