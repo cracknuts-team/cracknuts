@@ -98,7 +98,7 @@ if __name__ == '__main__':
         baudrate=115200,
         bytesize=8,
         stopbits=1,
-        parity='N',
+        parity='O',
         response_rules=None,
         response_delay=0.0
     )

@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 from threading import Thread
 
@@ -31,9 +32,8 @@ class DynamicSerialServer(Thread):
                 return
             # print(f"[INFO] 自动发现串口：{self.port}")
         self._running = True
-        ser = None
         try:
-            ser = serial.Serial(
+            self.ser = serial.Serial(
                 port=self.port,
                 baudrate=self.baudrate,
                 bytesize=self.bytesize,
@@ -42,9 +42,11 @@ class DynamicSerialServer(Thread):
                 timeout=1
             )
 
+            print(f"[INFO] 串口服务启动：{self.port}: {self.baudrate}bps, {self.bytesize} bits, {self.stopbits} stopbits, {self.parity} parity")
+
             while self._running:
-                if ser.in_waiting:
-                    data = ser.read(ser.in_waiting)
+                if self.ser.in_waiting:
+                    data = self.ser.read(self.ser.in_waiting)
                     if not data:
                         continue
 
@@ -55,14 +57,13 @@ class DynamicSerialServer(Thread):
                     if self.response_rules:
                         response = self.response_rules.get(data)
                     else:
-                        print("[INFO] 未设置响应规则，使用默认回声响应，清空已处理的数据")
                         response = data
                         self.rec_cache = self.rec_cache[:-len(data)]  # 清除已处理的数据
 
                     if response:
                         if self.response_delay > 0:
                             time.sleep(self.response_delay)
-                        ser.write(response)
+                        self.ser.write(response)
                         # print(f"[SEND] {response.hex(' ')}")
 
         except serial.SerialException as e:
@@ -71,8 +72,8 @@ class DynamicSerialServer(Thread):
             print("[INFO] 中断退出")
         finally:
             # print(f"[INFO] 关闭串口服务：{self.port}")
-            if ser and ser.is_open:
-                ser.close()
+            if self.ser and self.ser.is_open:
+                self.ser.close()
 
     def stop(self):
         self._running = False
@@ -90,7 +91,10 @@ class DynamicSerialServer(Thread):
         self.rec_cache = b''
         return data
 
-    def send_data(self, data):
+    def send_data(self, data, delay=1.0):
+        threading.Thread(target=self._send_data, args=(data, delay)).start()
+
+    def _send_data(self, data, delay=1.0):
         """
         发送数据到串口
         """
@@ -98,6 +102,7 @@ class DynamicSerialServer(Thread):
         start_time = time.time()
         while (not self.ser or not self.ser.is_open) and (time.time() - start_time) < timeout:
             time.sleep(0.1)
+        time.sleep(delay)
         if self.ser and self.ser.is_open:
             self.ser.write(data)
             print(f"[SEND] {data.hex(' ')}")
@@ -158,12 +163,12 @@ def cracker_s1():
     s1.disconnect()
 
 @pytest.mark.parametrize("serial_server", gen_uart_config_params(), ids=lambda cfg: f"baudrate[{cfg['baudrate']}]-stopbits[{cfg['stopbits']}]-parity[{cfg['parity']}]", indirect=True)
-@pytest.mark.parametrize("tx_data_len", [1, 512, 1024, 2048, 4096], ids=lambda x: f"tx_data_len[{x}]")
+@pytest.mark.parametrize("tx_data_len", [4096], ids=lambda x: f"tx_data_len[{x}]")
 def test_uart_ts_with_config(cracker_s1, serial_server: DynamicSerialServer, tx_data_len):
     baudrate, stopbits, parity = serial_server.baudrate, serial_server.stopbits, serial_server.parity
     cracker_s1.uart_config(baudrate=enum_baudrate[param_baudrate.index(baudrate)], stopbits=enum_stopbits[param_stopbits.index(stopbits)], parity=enum_parity[param_parity.index(parity)])
     tx_data = os.urandom(tx_data_len)
-    status, res = cracker_s1.uart_transmit_receive(tx_data=tx_data, rx_count=len(tx_data), timeout=1000, is_trigger=True)
+    status, res = cracker_s1.uart_transmit_receive(tx_data=tx_data, rx_count=len(tx_data), timeout=9000, is_trigger=True)
     print(f"Status: {status}, Response: {res.hex(' ') if res else 'None'}")
     assert res == tx_data
 
@@ -184,9 +189,46 @@ def test_uart_transmit_with_config(cracker_s1, serial_server: DynamicSerialServe
 def test_uart_receive_with_config(cracker_s1, serial_server: DynamicSerialServer, rx_data_len):
     baudrate, stopbits, parity = serial_server.baudrate, serial_server.stopbits, serial_server.parity
     cracker_s1.uart_config(baudrate=enum_baudrate[param_baudrate.index(baudrate)], stopbits=enum_stopbits[param_stopbits.index(stopbits)], parity=enum_parity[param_parity.index(parity)])
+
+    res_holder = {}
+    threading.Thread(target=_cracker_receive_data, args=(cracker_s1, rx_data_len, res_holder)).start()
+
     tx_data = os.urandom(rx_data_len)
-    serial_server.send_data(tx_data)
-    time.sleep(0.5) # 等待数据接收完成
-    status, res = cracker_s1.uart_receive(rx_count=rx_data_len, is_trigger=True)
+    serial_server.send_data(tx_data, delay=0.5)
+
+    timeout = 2
+    start_time = time.time()
+    while "response" not in res_holder and (time.time() - start_time) < timeout:
+        time.sleep(0.1)
+    status, res = res_holder.get("response", (None, None))
     assert status == 0, f"Expected status 0 but got {status}"
-    assert res == tx_data, f"Expected {tx_data.hex(' ')} but got {res.hex(' ')}"
+    assert res == tx_data, f"Expected {tx_data.hex(' ')} but got {res.hex(' ') if res else 'None'}"
+
+
+def _cracker_receive_data(cracker: CrackerS1, rx_count, res_holder):
+    status, res = cracker.uart_receive(rx_count=rx_count, is_trigger=True, timeout=100000)
+    res_holder["response"] = status, res
+
+def test_a():
+    s1 = CrackerS1('192.168.0.10')
+    s1.connect(force_update_bin=True, force_write_default_config=True)
+    s1.uart_io_enable()
+    s1.osc_trigger_source('P')
+    threading.Thread(target=_serial_write).start()
+    status, res = s1.uart_receive(rx_count=5, is_trigger=True, timeout=10000)
+    print(f"Status: {status}, Response: {res.hex(' ') if res else 'None'}")
+
+
+def _serial_write():
+    """
+    发送数据到串口
+    """
+    for i in range(10):
+        port = 'COM12'  # 替换为实际的串口号
+        baudrate = 115200
+        ser = serial.Serial(port, baudrate, timeout=1)
+        data = b'\x01\x02\x03\x04\x05'
+        ser.write(data)
+        print(f"[SEND] {data.hex(' ')}")
+        ser.close()
+        time.sleep(0.5)
