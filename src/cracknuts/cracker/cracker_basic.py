@@ -515,9 +515,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 return status, None
             resp_payload = self._recv(length)
             if status != protocol.STATUS_OK:
+                try:
+                    resp_payload_str = resp_payload.decode("utf-8")
+                except UnicodeDecodeError:
+                    resp_payload_str = hex_util.get_hex(resp_payload)
                 self._logger.warning(
-                    f"Received a non-OK response status code: 0x{status:04X}, "
-                    f"with the payload: {resp_payload.decode('utf-8')}"
+                    f"Received a non-OK response status code: 0x{status:04X}, " f"with the payload: {resp_payload_str}"
                 )
             else:
                 if self._logger.isEnabledFor(logging.DEBUG):
