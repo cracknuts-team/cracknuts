@@ -1511,9 +1511,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      |            |            |            |
                      └────────────┘            └────────────┘    LOW
                      ┌────────────┬────────────┬────────────┐
-                     │  tx_data   │   timeout  │   rx_data  │
+                     │  tx_data   │   process  │   rx_data  │
                      └────────────┴────────────┴────────────┘
-
+                                  | <------ timeout ------> |
         is_trigger=False 时，Trigger 信号不变
 
         ::
@@ -1522,8 +1522,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
                                                                  LOW
                      ┌────────────┬────────────┬────────────┐
-                     │  tx_data   │   timeout  │   rx_data  │
+                     │  tx_data   │   process  │   rx_data  │
                      └────────────┴────────────┴────────────┘
+                                  | <------ timeout ------> |
 
         :param tx_data: 要发送数据，bytes或十六进制字符串。
         :type tx_data: str | bytes
