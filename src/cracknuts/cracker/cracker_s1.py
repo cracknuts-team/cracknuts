@@ -70,43 +70,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         for k, v in self.get_current_config().__dict__.items():
             setattr(self._config, k, v)
 
-    def _parse_config_bytes(self, config_bytes: bytes) -> ConfigS1 | None:
+    def _parse_config_bytes(self, config_bytes: bytes) -> ConfigBasic | None:
         if config_bytes is None:
             return None
-        bytes_format = {
-            "nut_enable": "?",
-            "nut_voltage": "I",
-            "nut_clock_enable": "?",
-            "nut_clock": "I",
-            "osc_sample_clock": "I",
-            "osc_sample_phase": "I",
-            "osc_sample_length": "I",
-            "osc_sample_delay": "I",
-            "osc_channel_0_enable": "?",
-            "osc_channel_0_gain": "B",
-            "osc_channel_1_enable": "?",
-            "osc_channel_1_gain": "B",
-            "osc_trigger_mode": "B",
-            "osc_trigger_source": "B",
-            "osc_trigger_edge": "B",
-            "osc_trigger_edge_level": "H",
-            "nut_i2c_enable": "?",
-            "nut_i2c_dev_addr": "B",
-            "nut_i2c_speed": "B",
-            "nut_uart_enable": "?",
-            "nut_uart_stopbits": "B",
-            "nut_uart_parity": "B",
-            "nut_uart_bytesize": "B",
-            "nut_uart_baudrate": "B",
-            "nut_spi_enable": "?",
-            "nut_spi_speed": "H",
-            "nut_spi_cpol": "B",
-            "nut_spi_cpha": "B",
-            "nut_spi_csn_auto": "?",
-            "nut_spi_csn_delay": "?",
-        }
-
-        config = ConfigS1()
+        bytes_format, bytes_length, config = self._get_config_bytes_format()
+        # config_bytes = config_bytes[:bytes_length]
 
         try:
             config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)
@@ -133,6 +101,44 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 setattr(config, k, v)
 
         return config
+
+    def _get_config_bytes_format(self) -> tuple[dict[str, str], int, ConfigBasic]:
+        return (
+            {
+                "nut_enable": "?",
+                "nut_voltage": "I",
+                "nut_clock_enable": "?",
+                "nut_clock": "I",
+                "osc_sample_clock": "I",
+                "osc_sample_phase": "I",
+                "osc_sample_length": "I",
+                "osc_sample_delay": "I",
+                "osc_channel_0_enable": "?",
+                "osc_channel_0_gain": "B",
+                "osc_channel_1_enable": "?",
+                "osc_channel_1_gain": "B",
+                "osc_trigger_mode": "B",
+                "osc_trigger_source": "B",
+                "osc_trigger_edge": "B",
+                "osc_trigger_edge_level": "H",
+                "nut_i2c_enable": "?",
+                "nut_i2c_dev_addr": "B",
+                "nut_i2c_speed": "B",
+                "nut_uart_enable": "?",
+                "nut_uart_stopbits": "B",
+                "nut_uart_parity": "B",
+                "nut_uart_bytesize": "B",
+                "nut_uart_baudrate": "B",
+                "nut_spi_enable": "?",
+                "nut_spi_speed": "H",
+                "nut_spi_cpol": "B",
+                "nut_spi_cpha": "B",
+                "nut_spi_csn_auto": "?",
+                "nut_spi_csn_delay": "?",
+            },
+            50,
+            ConfigS1(),
+        )
 
     @connection_status_check
     def write_config_to_cracker(self, config: ConfigS1):
