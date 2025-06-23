@@ -74,7 +74,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if config_bytes is None:
             return None
         bytes_format, bytes_length, config = self._get_config_bytes_format()
-        config_bytes = config_bytes[:bytes_length]
+        if len(config_bytes) != bytes_length:
+            self._logger.warning(
+                f"The length of the config info from Cracker is incorrect: "
+                f"expected {bytes_length}, but got {len(config_bytes)}."
+            )
+            config_bytes = config_bytes[:bytes_length]
 
         try:
             config_tuple = struct.unpack(f">{"".join(bytes_format.values())}", config_bytes)

@@ -17,12 +17,14 @@ class ConfigG1(ConfigS1):
         self.glitch_vcc_config_count = 0
         self.glitch_vcc_config_delay = 0
         self.glitch_vcc_config_repeat = 0
+        self.glitch_vcc_normal = 0
         self.glitch_gnd_enable = False
         self.glitch_gnd_config_wait = 0
         self.glitch_gnd_config_level = 0
         self.glitch_gnd_config_count = 0
         self.glitch_gnd_config_delay = 0
         self.glitch_gnd_config_repeat = 0
+        self.glitch_gnd_normal = 0
 
 
 class CommandG1(Command):
@@ -55,8 +57,29 @@ class CrackerG1(CrackerS1):
         else:
             return status, res
 
-    def _glitch_vcc_config(self, wait: int, level: int, count: int, delay: int, repeat: int):
-        payload = struct.pack(">IIIII", wait, level, count, delay, repeat)
+    def glitch_vcc_config(self, wait: int, g_level: int, g_cnt: int, g_delay: int, g_repeat: int):
+        """
+        配置glitch ::
+
+            v_normal────┬───────────────────┐       ┌────────────┐       ┌───
+                        |   wait_cnt        | g_cnt |  g_delay   | g_cnt |
+                        |                   |       |            |       |
+                        |           g_level └───────┘            └───────┘
+                        |                       └────────────────────┘
+                         Trigger                          g_repeat
+
+        :param wait: glitch产生前等待时间（时钟个数）
+        :type wait: int
+        :param g_level: Glitch DAC电压值
+        :type g_level: int
+        :param g_cnt: Glitch持续时间（时钟个数）
+        :type g_delay: int
+        :param g_repeat: Glitch重复次数
+        :type g_repeat: int
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+        payload = struct.pack(">IIIII", wait, g_level, g_cnt, g_delay, g_repeat)
         self._logger.debug(f"glitch_vcc_config payload: {payload.hex()}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_CONFIG, payload=payload)
         if status != protocol.STATUS_OK:
