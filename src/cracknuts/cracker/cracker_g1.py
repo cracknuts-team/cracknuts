@@ -25,6 +25,15 @@ class ConfigG1(ConfigS1):
         self.glitch_gnd_config_delay = 0
         self.glitch_gnd_config_repeat = 0
         self.glitch_gnd_normal = 0
+        self.glitch_clock_enable = False
+        self.glitch_clock_len_normal = 0
+        self.glitch_clock_wave_normal = 0
+        self.glitch_clock_config_len_glitch = 0
+        self.glitch_clock_config_len_glitch = 0
+        self.glitch_clock_config_count = 0
+        self.glitch_clock_config_delay = 0
+        self.glitch_clock_config_repeat = 0
+        self.glitch_clock_normal = 0
 
 
 class CommandG1(Command):
