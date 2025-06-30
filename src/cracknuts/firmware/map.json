@@ -17,6 +17,6 @@
   },
   "cracker_g1_v1.0": {
     "server": "server-0.5.2-alpha.3.bin",
-    "bitstream": "bs-cracker_g1_v0.1-0.0.0-alpha.2.bit.bin"
+    "bitstream": "bs-cracker_g1_v0.1-0.0.0-alpha.3.bit.bin"
   }
 }
