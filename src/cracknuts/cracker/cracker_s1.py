@@ -948,7 +948,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def spi_transmit(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, None]:
         """
-        通过SPI接口发送bytes型数据txData，根据isTrigger决定在数据发送后是否产生触发信号。
+        通过SPI接口发送数据，并根据is_trigger决定在数据发送后是否产生触发信号。
 
         is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
 
@@ -972,9 +972,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   tx_data  │
                      └────────────┘
 
-        :param tx_data: The data to send.
+        :param tx_data: 待发送的数据
         :type tx_data: str | bytes
-        :param is_trigger: Whether the transmit trigger is enabled.
+        :param is_trigger: 是否产生触发信号
         :type is_trigger: bool
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, None]
@@ -1050,11 +1050,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │  tx_data   │   timeout  │   rx_data  │
                      └────────────┴────────────┴────────────┘
 
-        :param tx_data: The data to send.
+        :param tx_data: 待发送的数据。
         :type tx_data: str | bytes
-        :param delay: The transmit delay in milliseconds, with a minimum effective duration of 10 nanoseconds.
+        :param delay: 发送和接收之间的延时，单位10纳秒。
         :type delay: int
-        :param rx_count: The number of received data bytes.
+        :param rx_count: 要读取数据字节长度。
         :type rx_count: int
         :param is_trigger: 接收完成时是否产生触发信号：
                            True：接收完成时，Trigger信号拉高
@@ -1099,7 +1099,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         :param tx_data: 要发送数据，bytes或十六进制字符串。
         :type tx_data: str | bytes
-        :param rx_count: The number of received data bytes.
+        :param rx_count: 要读取数据字节长度。
         :type rx_count: int
         :param is_trigger: 接收完成时是否产生触发信号：
                            True：接收完成时，Trigger信号拉高
