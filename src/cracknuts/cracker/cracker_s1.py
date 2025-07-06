@@ -914,37 +914,67 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return sorted(divisors)
 
     @connection_status_check
-    def _spi_transceive(
-        self, tx_data: bytes | str | None, is_delay: bool, delay: int, rx_count: int, is_trigger: bool
-    ) -> tuple[int, bytes | None]:
+    def spi_transceive_delay_transceive(
+        self, tx_data1: bytes | str | None, tx_data2: bytes | str | None, is_delay: bool, delay: int, is_trigger: bool
+    ) -> tuple[int, tuple[bytes | None, bytes | None] | None]:
         """
-        Basic interface for sending and receiving data through the SPI protocol.
+        通过SPI发送tx_data1，等待delay后（单位10ns），读取再发送tx_data2数据。
 
-        :param tx_data: The data to send.
-        :param is_delay: Whether the transmit delay is enabled.
+        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
+
+        ::
+
+            TRIG: ───┐            ┌────────────┐            ┌─── HIGH
+                     |            |            |            |
+                     └────────────┘            └────────────┘    LOW
+                     ┌────────────┬────────────┬────────────┐
+                     │  tx_data1  │    delay   │  tx_data2  │
+                     └────────────┴────────────┴────────────┘
+
+        is_trigger=False 时，Trigger 信号不变
+
+        ::
+
+            TRIG: ────────────────────────────────────────────── HIGH
+
+                                                                 LOW
+                     ┌────────────┬────────────┬────────────┐
+                     │  tx_data1  │   timeout  │  rx_data2  │
+                     └────────────┴────────────┴────────────┘
+
+        :param tx_data1: 第一阶段待发送数据。
+        :type tx_data1: str | bytes
+        :param tx_data2: 第二阶段待发送数据。
+        :type tx_data2: str | bytes
+        :param is_delay: 是否开启delay
         :type is_delay: bool
-        :param delay: The transmit delay in milliseconds, with a minimum effective duration of 10 nanoseconds.
+        :param delay: 发送和接收之间的延时，单位10纳秒。
         :type delay: int
-        :param rx_count: The number of received data bytes.
-        :type rx_count: int
-        :param is_trigger: Whether the transmit trigger is enabled.
+        :param is_trigger: 接收完成时是否产生触发信号：
+                           True：接收完成时，Trigger信号拉高
+                           False：接收完成时，Trigger信号不变。
         :type is_trigger: bool
-        :return: The device response status and the data received from the SPI device.
-                 Return None if an exception is caught.
+        :return: Cracker设备响应状态和接收到的数据：(status, (response1, response2))。
         :rtype: tuple[int, bytes | None]
         """
-        if isinstance(tx_data, str):
-            tx_data = bytes.fromhex(tx_data)
-        payload = struct.pack(">?IH?", is_delay, delay, rx_count, is_trigger)
-        if tx_data is not None:
-            payload += tx_data
-        self._logger.debug(f"_spi_transceive payload: {payload.hex()}")
+        if isinstance(tx_data1, str):
+            tx_data1 = bytes.fromhex(tx_data1)
+        if isinstance(tx_data2, str):
+            tx_data2 = bytes.fromhex(tx_data2)
+        tx_data1_len = 0 if tx_data1 is None else len(tx_data1)
+        tx_data2_len = 0 if tx_data2 is None else len(tx_data2)
+        payload = struct.pack(">?IH?", is_delay, delay, tx_data2_len, is_trigger)
+        if tx_data1 is not None:
+            payload += tx_data1
+        if tx_data2 is not None:
+            payload += tx_data2
+        self._logger.debug(f"spi_transmit_delay_receive payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_SPI_TRANSCEIVE, payload=payload)
         if status != protocol.STATUS_OK:
             self._logger.error(f"Receive status code error [{status}]")
-            return status, None
+            return status, (None, None)
         else:
-            return status, res
+            return status, (res[:tx_data1_len], res[-tx_data1_len:])
 
     def spi_transmit(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, None]:
         """
@@ -979,14 +1009,16 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, None]
         """
-        status, _ = self._spi_transceive(
-            tx_data, is_delay=False, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger
+        status, _ = self.spi_transceive_delay_transceive(
+            tx_data1=tx_data, tx_data2=None, is_delay=False, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger
         )
         return status, None
 
-    def spi_receive(self, rx_count: int, is_trigger: bool = False) -> tuple[int, bytes | None]:
+    def spi_receive(
+        self, rx_count: int, dummy: bytes | str = b"\x00", is_trigger: bool = False
+    ) -> tuple[int, bytes | None]:
         """
-        通过SPI接口读取rCount个bytes型数据，根据 is_trigger 决定在数据接收后是否产生触发信号。
+        通过SPI接口读取rx_count个bytes型数据，根据 is_trigger 决定在数据接收后是否产生触发信号。
 
         is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
 
@@ -1012,6 +1044,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         :param rx_count: 要读取数据字节长度。
         :type rx_count: int
+        :param dummy: 需要在spi读取阶段发送的填充数据
+        :type dummy: bytes|str
         :param is_trigger: 接收完成时是否产生触发信号：
                            True：接收完成时，Trigger信号拉高
                            False：接收完成时，Trigger信号不变。
@@ -1020,10 +1054,18 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                  Return None if an exception is caught.
         :rtype: tuple[int, bytes | None]
         """
-        return self._spi_transceive(None, is_delay=False, delay=1_000_000_000, rx_count=rx_count, is_trigger=is_trigger)
+        if isinstance(dummy, str):
+            dummy = bytes.fromhex(dummy)
+        dummy = dummy[:1]
+
+        status, (_, res) = self.spi_transceive_delay_transceive(
+            tx_data1=dummy * rx_count, tx_data2=None, is_delay=False, delay=1_000_000_000, is_trigger=is_trigger
+        )
+
+        return status, res
 
     def spi_transmit_delay_receive(
-        self, tx_data: bytes | str, delay: int, rx_count: int, is_trigger: bool = False
+        self, tx_data: bytes | str, delay: int, rx_count: int, dummy: bytes | str = b"\x00", is_trigger: bool = False
     ) -> tuple[int, bytes | None]:
         """
         通过SPI发送bytes型数据tx_data，等待delay后（单位10ns），读取rx_count长度数据。
@@ -1056,6 +1098,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type delay: int
         :param rx_count: 要读取数据字节长度。
         :type rx_count: int
+        :param dummy: 需要在spi读取阶段发送的填充数据
+        :type dummy: bytes|str
         :param is_trigger: 接收完成时是否产生触发信号：
                            True：接收完成时，Trigger信号拉高
                            False：接收完成时，Trigger信号不变。
@@ -1063,11 +1107,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
-        return self._spi_transceive(tx_data, is_delay=True, delay=delay, rx_count=rx_count, is_trigger=is_trigger)
+        status, (_, res) = self.spi_transceive_delay_transceive(
+            tx_data1=tx_data, tx_data2=dummy * rx_count, is_delay=True, delay=delay, is_trigger=is_trigger
+        )
 
-    def spi_transceive(self, tx_data: bytes | str, rx_count: int, is_trigger: bool = False) -> tuple[int, bytes | None]:
+        return status, res
+
+    def spi_transceive(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, bytes | None]:
         """
-        通过SPI接口发送bytes型数据txData，同时返回与txData等长的数据rxData；
+        通过SPI接口发送bytes型数据tx_data，同时返回与tx_data等长的数据
 
         is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
 
@@ -1099,8 +1147,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         :param tx_data: 要发送数据，bytes或十六进制字符串。
         :type tx_data: str | bytes
-        :param rx_count: 要读取数据字节长度。
-        :type rx_count: int
         :param is_trigger: 接收完成时是否产生触发信号：
                            True：接收完成时，Trigger信号拉高
                            False：接收完成时，Trigger信号不变。
@@ -1108,7 +1154,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
-        return self._spi_transceive(tx_data, is_delay=False, delay=0, rx_count=rx_count, is_trigger=is_trigger)
+        status, (res, _) = self.spi_transceive_delay_transceive(
+            tx_data1=tx_data, tx_data2=None, is_delay=False, delay=0, is_trigger=is_trigger
+        )
+
+        return status, res
 
     def i2c_enable(self) -> tuple[int, None]:
         """
