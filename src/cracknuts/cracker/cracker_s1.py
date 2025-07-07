@@ -73,6 +73,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     def _parse_config_bytes(self, config_bytes: bytes) -> ConfigS1 | None:
         if config_bytes is None:
             return None
+        # 这里由于 server固件增加了glitch的功能，临时这里处理移除不必要的配置信息
+        config_bytes = config_bytes[:50]
         bytes_format = {
             "nut_enable": "?",
             "nut_voltage": "I",
@@ -1010,7 +1012,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
         status, _ = self.spi_transceive_delay_transceive(
-            tx_data1=tx_data, tx_data2=None, is_delay=False, delay=1_000_000_000, rx_count=0, is_trigger=is_trigger
+            tx_data1=tx_data, tx_data2=None, is_delay=False, delay=1_000_000_000, is_trigger=is_trigger
         )
         return status, None
 
