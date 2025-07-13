@@ -12,7 +12,7 @@
     "bitstream": "bs-cracker_s1_v0.1-0.1.0-alpha.5.bit.bin"
   },
   "cracker_s1_v1.0": {
-    "server": "server-0.5.2-alpha.5.bin",
-    "bitstream": "bs-cracker_s1_v0.1-0.1.0-alpha.7.bit.bin"
+    "server": "server-0.5.2-alpha.6.bin",
+    "bitstream": "bs-cracker_s1_v0.1-0.1.0-alpha.8.bit.bin"
   }
 }

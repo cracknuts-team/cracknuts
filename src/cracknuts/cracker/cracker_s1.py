@@ -976,7 +976,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._logger.error(f"Receive status code error [{status}]")
             return status, (None, None)
         else:
-            return status, (res[:tx_data1_len], res[-tx_data1_len:])
+            return status, (res[:tx_data1_len], res[-tx_data2_len:])
 
     def spi_transmit(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, None]:
         """
@@ -1115,7 +1115,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         return status, res
 
-    def spi_transceive(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, bytes | None]:
+    def spi_transceive(
+        self, tx_data: bytes | str, rx_count: int = None, dummy: bytes | str = b"\x00", is_trigger: bool = False
+    ) -> tuple[int, bytes | None]:
         """
         通过SPI接口发送bytes型数据tx_data，同时返回与tx_data等长的数据
 
@@ -1149,6 +1151,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         :param tx_data: 要发送数据，bytes或十六进制字符串。
         :type tx_data: str | bytes
+        :param rx_count: 接收数据的长度，默认与 tx_data长度一致，如果指定了该长度：
+                         1. 发送数据长度小于接收数据长度时，自动在 tx_data后补充dummy数据
+                         2. 如果接收数据长度小于发送数据长度，则函数自动把接收到的数据截取到 rx_count 长度
+        :type rx_count: int
+        :param dummy: 发送的填充数据
+        :type dummy: bytes | str
         :param is_trigger: 接收完成时是否产生触发信号：
                            True：接收完成时，Trigger信号拉高
                            False：接收完成时，Trigger信号不变。
@@ -1156,9 +1164,21 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
+        if isinstance(dummy, str):
+            dummy = bytes.fromhex(dummy)
+        dummy = dummy[:1]
+        if isinstance(tx_data, str):
+            tx_data = bytes.fromhex(tx_data)
+        tx_data_len = len(tx_data)
+        if rx_count > tx_data_len:
+            tx_data += dummy * (rx_count - tx_data_len)
+
         status, (res, _) = self.spi_transceive_delay_transceive(
             tx_data1=tx_data, tx_data2=None, is_delay=False, delay=0, is_trigger=is_trigger
         )
+
+        if tx_data_len > rx_count:
+            res = res[:rx_count]
 
         return status, res
 
