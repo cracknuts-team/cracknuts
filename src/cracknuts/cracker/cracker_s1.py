@@ -852,7 +852,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :rtype: tuple[int, None]
         """
 
-        if speed is None or cpol is None or csn_auto is None:
+        if speed is None or cpol is None or csn_auto is None or csn_delay is None:
             config = self.get_current_config()
             if config is None:
                 self._logger.error("Get config from cracker error.")
@@ -863,6 +863,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 cpol = config.nut_spi_cpol
             if cpha is None:
                 cpha = config.nut_spi_cpha
+            if csn_auto is None:
+                csn_auto = config.nut_spi_csn_auto
+            if csn_delay is None:
+                csn_delay = config.nut_spi_csn_delay
 
         # System clock is 100e6
         # Clock divider is 2
@@ -1119,7 +1123,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self, tx_data: bytes | str, rx_count: int = None, dummy: bytes | str = b"\x00", is_trigger: bool = False
     ) -> tuple[int, bytes | None]:
         """
-        通过SPI接口发送bytes型数据tx_data，同时返回与tx_data等长的数据
+        通过SPI接口发送bytes型数据tx_data，默认返回与tx_data等长的数据
 
         is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
 
@@ -1153,7 +1157,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type tx_data: str | bytes
         :param rx_count: 接收数据的长度，默认与 tx_data长度一致，如果指定了该长度：
                          1. 发送数据长度小于接收数据长度时，自动在 tx_data后补充dummy数据
-                         2. 如果接收数据长度小于发送数据长度，则函数自动把接收到的数据截取到 rx_count 长度
+                         2. 如果接收数据长度小于发送数据长度，则函数自动把接收到的数据从头截取到 rx_count 长度
         :type rx_count: int
         :param dummy: 发送的填充数据
         :type dummy: bytes | str
@@ -1170,14 +1174,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if isinstance(tx_data, str):
             tx_data = bytes.fromhex(tx_data)
         tx_data_len = len(tx_data)
-        if rx_count > tx_data_len:
+        if rx_count and rx_count > tx_data_len:
             tx_data += dummy * (rx_count - tx_data_len)
 
         status, (res, _) = self.spi_transceive_delay_transceive(
             tx_data1=tx_data, tx_data2=None, is_delay=False, delay=0, is_trigger=is_trigger
         )
 
-        if tx_data_len > rx_count:
+        if rx_count and tx_data_len > rx_count:
             res = res[:rx_count]
 
         return status, res
