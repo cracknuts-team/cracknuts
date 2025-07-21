@@ -35,6 +35,7 @@ class ConfigS1(ConfigBasic):
         self.nut_i2c_enable: bool = False
         self.nut_i2c_dev_addr: int = 0x00
         self.nut_i2c_speed: serial.I2cSpeed = serial.I2cSpeed.STANDARD_100K
+        self.nut_i2c_stretch_enable = False
 
     def __str__(self):
         return super().__str__()
@@ -74,7 +75,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if config_bytes is None:
             return None
         # 这里由于 server固件增加了glitch的功能，临时这里处理移除不必要的配置信息
-        config_bytes = config_bytes[:50]
+        config_bytes = config_bytes[:51]
         bytes_format = {
             "nut_enable": "?",
             "nut_voltage": "I",
@@ -95,6 +96,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "nut_i2c_enable": "?",
             "nut_i2c_dev_addr": "B",
             "nut_i2c_speed": "B",
+            "nut_i2c_stretch_enable": "?",
             "nut_uart_enable": "?",
             "nut_uart_stopbits": "B",
             "nut_uart_parity": "B",
@@ -956,9 +958,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type is_delay: bool
         :param delay: 发送和接收之间的延时，单位10纳秒。
         :type delay: int
-        :param is_trigger: 接收完成时是否产生触发信号：
-                           True：接收完成时，Trigger信号拉高
-                           False：接收完成时，Trigger信号不变。
+        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
         :type is_trigger: bool
         :return: Cracker设备响应状态和接收到的数据：(status, (response1, response2))。
         :rtype: tuple[int, bytes | None]
@@ -1010,7 +1010,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         :param tx_data: 待发送的数据
         :type tx_data: str | bytes
-        :param is_trigger: 是否产生触发信号
+        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
         :type is_trigger: bool
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, None]
@@ -1052,9 +1052,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type rx_count: int
         :param dummy: 需要在spi读取阶段发送的填充数据
         :type dummy: bytes|str
-        :param is_trigger: 接收完成时是否产生触发信号：
-                           True：接收完成时，Trigger信号拉高
-                           False：接收完成时，Trigger信号不变。
+        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
         :type is_trigger: bool
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
                  Return None if an exception is caught.
@@ -1074,9 +1072,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self, tx_data: bytes | str, delay: int, rx_count: int, dummy: bytes | str = b"\x00", is_trigger: bool = False
     ) -> tuple[int, bytes | None]:
         """
-        通过SPI发送bytes型数据tx_data，等待delay后（单位10ns），读取rx_count长度数据。
+        通过SPI发送bytes型数据tx_data，等待delay后（单位10ns），读取rx_count长度数据。其实现方式是在发送完数据后，
+        等待 delay 时间，master 再发送等于 rx_count 长度的dummy数据，master 解析此时 slave 发送来的数据作为 rx_data。
 
-        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
+
+        is_trigger=True 时，tx_data传输开始时 Trigger 信号拉低，完毕后 Trigger 信号拉高
 
         ::
 
@@ -1084,7 +1084,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      |            |            |            |
                      └────────────┘            └────────────┘    LOW
                      ┌────────────┬────────────┬────────────┐
-                     │  tx_data   │    delay   │   rx_data  │
+            MASTER   │  tx_data   │    delay   │    dummy   │
+                     └────────────┴────────────┴────────────┘
+                     ┌────────────┬────────────┬────────────┐
+            SLAVE    │   dummy    │    delay   │   rx_data  │
                      └────────────┴────────────┴────────────┘
 
         is_trigger=False 时，Trigger 信号不变
@@ -1095,7 +1098,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
                                                                  LOW
                      ┌────────────┬────────────┬────────────┐
-                     │  tx_data   │   timeout  │   rx_data  │
+            MASTER   │  tx_data   │    delay   │    dummy   │
+                     └────────────┴────────────┴────────────┘
+                     ┌────────────┬────────────┬────────────┐
+            SLAVE    │   dummy    │    delay   │   rx_data  │
                      └────────────┴────────────┴────────────┘
 
         :param tx_data: 待发送的数据。
@@ -1106,9 +1112,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type rx_count: int
         :param dummy: 需要在spi读取阶段发送的填充数据
         :type dummy: bytes|str
-        :param is_trigger: 接收完成时是否产生触发信号：
-                           True：接收完成时，Trigger信号拉高
-                           False：接收完成时，Trigger信号不变。
+        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
         :type is_trigger: bool
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
@@ -1125,7 +1129,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         通过SPI接口发送bytes型数据tx_data，默认返回与tx_data等长的数据
 
-        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
+        is_trigger=True 时，tx_data传输开始时 Trigger 信号拉低，完毕后 Trigger 信号拉高
 
         ::
 
@@ -1161,9 +1165,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type rx_count: int
         :param dummy: 发送的填充数据
         :type dummy: bytes | str
-        :param is_trigger: 接收完成时是否产生触发信号：
-                           True：接收完成时，Trigger信号拉高
-                           False：接收完成时，Trigger信号不变。
+        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
         :type is_trigger: bool
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
@@ -1235,9 +1237,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     @connection_status_check
     def i2c_config(
-        self,
-        dev_addr: int | None = None,
-        speed: serial.I2cSpeed | None = None,
+        self, dev_addr: int | None = None, speed: serial.I2cSpeed | None = None, enable_stretch: bool = False
     ) -> tuple[int, None]:
         """
         Config the SPI.
@@ -1246,6 +1246,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type dev_addr: int
         :param speed: The speed of the device.
         :type speed: serial.I2cSpeed
+        :enable_stretch: 是否启用 stretch
+        :type enable_stretch: bool
         :return: The device response status.
         :rtype: tuple[int, None]
         """
@@ -1260,7 +1262,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             if speed is None:
                 speed = config.nut_i2c_speed
 
-        payload = struct.pack(">BB", dev_addr, speed.value)
+        payload = struct.pack(">BB?", dev_addr, speed.value, enable_stretch)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.CRACKER_I2C_CONFIG, payload=payload)
         if status == protocol.STATUS_OK:
@@ -1342,11 +1344,24 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def i2c_transmit(self, tx_data: bytes | str, is_trigger: bool = False) -> tuple[int, None]:
         """
-        Send data through the I2C protocol.
+        通过i2c协议发送数据
 
-        :param tx_data: The data to be sent.
+        is_trigger=True 时，tx_data传输开始时 Trigger 信号拉低，完毕后 Trigger 信号拉高
+
+        ::
+
+            TRIG: ───┐            ┌─── HIGH
+                     |            |
+                     └────────────┘    LOW
+                     ┌────────────┐
+                     │   tx_data  │
+                     └────────────┘
+
+        is_trigger=False 时，Trigger 信号不变
+
+        :param tx_data: 待发送的数据
         :type tx_data: str | bytes
-        :param is_trigger: Whether the transmit trigger is enabled.
+        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
         """
         if isinstance(tx_data, str):
             tx_data = bytes.fromhex(tx_data)
