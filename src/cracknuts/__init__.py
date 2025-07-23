@@ -57,7 +57,8 @@ def new_cracker(
 def new_acquisition(
     cracker: CrackerBasic,
     init: Callable[[CrackerBasic], None] | None = None,
-    do: Callable[[CrackerBasic], None] | None = None,
+    do: Callable[[CrackerBasic], dict[str, bytes]] | None = None,
+    finish: Callable[[CrackerBasic], None] | None = None,
     sample_length: int | None = None,
     data_plaintext_length: int | None = None,
     data_ciphertext_length: int | None = None,
@@ -70,7 +71,7 @@ def new_acquisition(
     acq_kwargs["data_ciphertext_length"] = data_ciphertext_length
     acq_kwargs["data_key_length"] = data_key_length
     acq_kwargs["data_extended_length"] = data_extended_length
-    return AcquisitionBuilder().cracker(cracker).init(init).do(do).build(**acq_kwargs)
+    return AcquisitionBuilder().cracker(cracker).init(init).do(do).finish(finish).build(**acq_kwargs)
 
 
 if display is not None:
