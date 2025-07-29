@@ -482,7 +482,7 @@ class Acquisition(abc.ABC):
         self._post_init()
         self._loop(not test, self.file_path, self.file_format)
         self._pre_finish()
-        self._finish()
+        self.finish()
         self._post_finish()
 
     def _status_changed(self):
@@ -745,7 +745,7 @@ class Acquisition(abc.ABC):
 
     def _save_dataset(self): ...
 
-    def _finish(self):
+    def finish(self):
         pass
 
     def get_last_wave(self) -> dict[int, np.ndarray] | None:
@@ -830,6 +830,7 @@ class AcquisitionBuilder:
         self._cracker = None
         self._do_function = lambda _: ...
         self._init_function = lambda _: ...
+        self._finish_function = lambda _: ...
 
     def cracker(self, cracker: CrackerBasic):
         """
@@ -854,7 +855,7 @@ class AcquisitionBuilder:
             self._init_function = init_function
         return self
 
-    def do(self, do_function: typing.Callable[[CrackerBasic], None]):
+    def do(self, do_function: typing.Callable[[CrackerBasic], dict[str, bytes]]):
         """
         The do function of acquisition.
 
@@ -864,6 +865,18 @@ class AcquisitionBuilder:
         """
         if do_function is not None:
             self._do_function = do_function
+        return self
+
+    def finish(self, finish_function: typing.Callable[[CrackerBasic], None]):
+        """
+        The finish function of acquisition.
+
+        :param finish_function: the finish function
+        :type finish_function: typing.Callable[[CrackerBasic], None]
+        :return: 'AcquisitionBuilder'
+        """
+        if finish_function is not None:
+            self._finish_function = finish_function
         return self
 
     def build(self, **kwargs):
@@ -888,5 +901,8 @@ class AcquisitionBuilder:
 
             def do(self):
                 return builder_self._do_function(self.cracker)
+
+            def finish(self):
+                builder_self._finish_function(self.cracker)
 
         return AnonymousAcquisition(self._cracker, **kwargs)
