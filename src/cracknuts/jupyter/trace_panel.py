@@ -218,10 +218,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         return down_index.reshape(sample_count * 2), down_value.reshape(sample_count * 2)
 
-    def change_range(self, start: int, end: int):
+    def _change_range(self, start: int, end: int):
         if self._trace_cache_x_indices is not None:
             start, end = self._trace_cache_x_indices[start], self._trace_cache_x_indices[end]
+        self.change_range(start, end)
 
+    def change_range(self, start: int, end: int):
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
         self._trace_series = self._get_trace_series_by_index_range(start, end)
@@ -442,7 +444,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     def selected_range_changed(self, change) -> None:
         if change.get("new") is not None:
             s, e = change.get("new")
-            self.change_range(s, e)
+            self._change_range(s, e)
 
     @traitlets.observe("overview_select_range")
     def overview_select_range_changed(self, change) -> None:
