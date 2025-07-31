@@ -843,13 +843,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         :type cpol: serial.SpiCpol
         :param cpha: 时钟相位.
         :type cpha: serial.SpiCpha
-        :param csn_auto: In delay mode, does the chip select signal remain low throughout the delay phase?
-                         Deselecting this option means that during the DELAY, the CS (Chip Select) signal is
-                         normally pulled high.
-                         Selecting this option indicates that during the DELAY, the CS signal is fixed at low.
+        :param csn_auto: True，片选（Chip Select）信号只在数据通信时拉低。False，片选信号一直拉低。
         :type csn_auto: bool,
-        :param csn_delay: In delay mode, does the chip select signal remain low throughout the delay phase?
-                        True: CS stays low. False: CS behaves normally and goes high.
+        :param csn_delay: True，片选（Chip Select）信号在Delay过程中保持低电平。False，片选信号在Delay期间为高电平。
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, None]
         """
@@ -1423,7 +1419,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         if isinstance(tx_data, str):
             tx_data = bytes.fromhex(tx_data)
-        transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
+        transfer_rw = (1, 1, 1, 1, 0, 0, 0, 0)
         transfer_lens = (len(tx_data), 0, 0, 0, rx_count, 0, 0, 0)
         return self._i2c_transceive(
             tx_data,
@@ -1452,12 +1448,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         if isinstance(tx_data, str):
             tx_data = bytes.fromhex(tx_data)
-        transfer_rw = (0, 0, 0, 0, 1, 1, 1, 1)
-        transfer_lens = (len(tx_data), 0, 0, 0, rx_count, 0, 0, 0)
+        transfer_rw = (0, 0, 0, 0, 0, 0, 1, 0)
+        transfer_lens = (len(tx_data), rx_count, 0, 0, 0, 0, 0, 0)
         return self._i2c_transceive(
             tx_data,
-            combined_transfer_count_1=1,
-            combined_transfer_count_2=1,
+            combined_transfer_count_1=2,
+            combined_transfer_count_2=0,
             transfer_rw=transfer_rw,
             transfer_lens=transfer_lens,
             is_delay=False,
