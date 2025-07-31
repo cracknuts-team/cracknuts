@@ -322,7 +322,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         try:
             if not self._socket:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self._socket.settimeout(5)
+                self._socket.settimeout(
+                    60
+                )  # todo 由于在IO通信时，delay的存在，可能超过这个超时时间，这里暂时设置为60秒的超时
             self._socket.connect(self._server_address)
             self._connection_status = True
             self._logger.info(f"Connected to cracker: {self._server_address}")
@@ -513,9 +515,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 return status, None
             resp_payload = self._recv(length)
             if status != protocol.STATUS_OK:
+                try:
+                    resp_payload_str = resp_payload.decode("utf-8")
+                except UnicodeDecodeError:
+                    resp_payload_str = hex_util.get_hex(resp_payload)
                 self._logger.warning(
-                    f"Received a non-OK response status code: 0x{status:04X}, "
-                    f"with the payload: {resp_payload.decode('utf-8')}"
+                    f"Received a non-OK response status code: 0x{status:04X}, " f"with the payload: {resp_payload_str}"
                 )
             else:
                 if self._logger.isEnabledFor(logging.DEBUG):
