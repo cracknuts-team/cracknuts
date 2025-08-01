@@ -18,7 +18,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackerS1PanelWidget.js"
     _css = ""
 
-    uri = traitlets.Unicode("cnp://192.168.0.11:8080").tag(sync=True)
+    uri = traitlets.Unicode("cnp://192.168.0.10:8080").tag(sync=True)
     connect_status = traitlets.Bool(False).tag(sync=True)
     cracker_id = traitlets.Unicode("Unknown").tag(sync=True)
     cracker_name = traitlets.Unicode("Unknown").tag(sync=True)
