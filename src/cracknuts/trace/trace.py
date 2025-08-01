@@ -410,6 +410,8 @@ class ScarrTraceDataset(TraceDataset):
             for k, v in data.items():
                 if isinstance(v, bytes):
                     v = np.frombuffer(v, dtype=np.uint8)
+                elif isinstance(v, int):
+                    v = np.array([v], dtype=np.uint8)
                 data_item_group = channel_group.get(k)
                 if data_item_group is None:
                     data_length = v.shape[0]
