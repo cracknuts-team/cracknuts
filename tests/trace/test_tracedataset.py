@@ -1,4 +1,4 @@
-from cracknuts.trace.trace import ScarrTraceDataset, NumpyTraceDataset, TraceDataset
+from cracknuts.trace.trace import ZarrTraceDataset, NumpyTraceDataset, TraceDataset
 import numpy as np
 
 channel_name = ['1', '2']
@@ -18,11 +18,11 @@ def _update_trace(ds: TraceDataset):
 
 
 def test_scarr_trace_dataset_create():
-    ds = ScarrTraceDataset.new(zarr_path, channel_name, trace_count, sample_count, data_length, version)
+    ds = ZarrTraceDataset.new(zarr_path, channel_name, trace_count, sample_count, data_length, version)
     _update_trace(ds)
 
 def test_scarr_trace_dataset_load():
-    ds = ScarrTraceDataset.load("D:\\project\\cracknuts\\demo\\jupyter\\dataset\\20250113160603.zarr")
+    ds = ZarrTraceDataset.load("D:\\project\\cracknuts\\demo\\jupyter\\dataset\\20250113160603.zarr")
     print(ds.info())
     print(ds.get_origin_data().tree())
     for name in ds.channel_names:
@@ -31,7 +31,7 @@ def test_scarr_trace_dataset_load():
 
 
 def test_scarr_trace_dataset_data_slice():
-    ds = ScarrTraceDataset.load(zarr_path)
+    ds = ZarrTraceDataset.load(zarr_path)
     print(ds.info())
     print(ds.data_with_indices[0][0])
     # print(ds.data[0][0])
