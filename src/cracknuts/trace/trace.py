@@ -5,6 +5,7 @@ import json
 import os.path
 import time
 import typing
+import warnings
 
 import numpy as np
 import zarr
@@ -84,18 +85,30 @@ class TraceDataset(abc.ABC):
 
     @property
     def trace_data(self) -> TraceDatasetData:
+        """
+        曲线及数据（不包含通道、曲线索引信息）
+        """
         return TraceDatasetData(get_trace_data=self._get_trace_data)
 
     @property
     def trace(self):
+        """
+        曲线数据集中的曲线数据，返回一个支持高级切片索引的对象
+        """
         return TraceDatasetData(get_trace_data=self._get_trace)
 
     @property
     def data(self):
+        """
+        曲线数据集中的数据，包含明文、密文、扩展数据等，返回一个支持高级切片索引的对象
+        """
         return TraceDatasetData(get_trace_data=self._get_data)
 
     @property
     def trace_data_with_indices(self):
+        """
+        曲线及数据（包含通道、曲线索引信息）
+        """
         return TraceDatasetData(get_trace_data=self._get_trace_data_with_indices)
 
     def __getitem__(self, item):
@@ -216,7 +229,7 @@ class _InfoRender:
         )
 
 
-class ScarrTraceDataset(TraceDataset):
+class ZarrTraceDataset(TraceDataset):
     _ATTR_METADATA_KEY = "metadata"
     _GROUP_ROOT_PATH = "0"
     _ARRAY_TRACES_PATH = "traces"
@@ -243,6 +256,36 @@ class ScarrTraceDataset(TraceDataset):
         create_time: int | None = None,
         version: str | None = None,
     ):
+        """
+        以Zarr格式存储的 CrackNuts曲线数据集，用户使用时不建议使用构造函数，而是调用 load 函数。
+        :param zarr_path: zarr 文件文件路径
+        :type zarr_path: str
+        :param channel_names: 曲线中通道的名称列表
+        :type channel_names: list[str]
+        :param trace_count: 曲线条数
+        :type trace_count: int
+        :param sample_count: 曲线长度（数据点数量）
+        :type sample_count: int
+        :param data_plaintext_length: 明文长度
+        :type data_plaintext_length: int
+        :param data_key_length: 密钥长度
+        :type data_key_length: int
+        :param data_extended_length: 额外数据的长度
+        :type data_extended_length: int
+        :param trace_dtype: 曲线数据点格式
+        :type trace_dtype: np.type
+        :param zarr_kwargs: zarr 格式的参数
+        :type zarr_kwargs: dict
+        :param zarr_trace_group_kwargs: zarr trace group 的参数
+        :type zarr_trace_group_kwargs: dict
+        :param zarr_data_group_kwargs: zarr data group 的参数
+        :type zarr_data_group_kwargs: dict
+        :param create_time: 创建时间(unix时间戳)
+        :type create_time: int
+        :param version: Cracker等版本信息
+        :type version: str
+        """
+
         self._zarr_path: str = zarr_path
         self._channel_names: list[str] | None = channel_names
         self._channel_count = None if self._channel_names is None else len(self._channel_names)
@@ -348,6 +391,13 @@ class ScarrTraceDataset(TraceDataset):
 
     @classmethod
     def load(cls, path: str, **kwargs) -> "TraceDataset":
+        """
+        加载曲线
+
+        :param path: 曲线路径
+        :type path: str
+        :param kwargs:
+        """
         kwargs["mode"] = "r"
         return cls(path, zarr_kwargs=kwargs)
 
@@ -391,6 +441,9 @@ class ScarrTraceDataset(TraceDataset):
         trace: np.ndarray,
         data: dict[str, np.ndarray[np.int8] | bytes] | None = None,
     ):
+        """
+        设置曲线，该函数仅需要上位机调用，用户无需调用
+        """
         if self._trace_count is None or self._channel_count is None:
             raise Exception("Channel or trace count must has not specified.")
         if channel_name not in self._channel_names:
@@ -472,11 +525,20 @@ class ScarrTraceDataset(TraceDataset):
                     data_item_group[trace_index] = v
 
     def get_origin_data(self) -> zarr.hierarchy.Group:
+        """
+        获取原始格式的数据，此处返回zarr数据对象
+
+        :return: zarr数据对象
+        :rtype: zarr.hierarchy.Group
+        """
         return self._zarr_data
 
     def get_trace_by_indexes(
-        self, channel_name: str, *trace_indexes: int
+        self, channel_name: str | int, *trace_indexes: int
     ) -> tuple[np.ndarray, list[dict[str, bytes | None]]] | None:
+        """
+        根据索引获取曲线数据，该函数用户无需使用
+        """
         channel_index = self._channel_names.index(channel_name)
         return (
             self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[[i for i in trace_indexes]],
@@ -508,6 +570,9 @@ class ScarrTraceDataset(TraceDataset):
     def get_trace_by_range(
         self, channel_name: str, index_start: int, index_end: int
     ) -> tuple[np.ndarray, list[dict[str, bytes | None]]] | None:
+        """
+        根据索引获取曲线数据，该函数用户无需使用
+        """
         channel_index = self._channel_names.index(channel_name)
         return (
             self._get_under_root(channel_index, self._ARRAY_TRACES_PATH)[index_start:index_end],
@@ -587,7 +652,54 @@ class ScarrTraceDataset(TraceDataset):
         return data
 
 
+class ScarrTraceDataset2(ZarrTraceDataset):
+    """
+    [DEPRECATED] 这个类已经废弃，请使用 ZarrTraceDataset .
+    """
+
+    def __init__(
+        self,
+        zarr_path: str,
+        create_empty: bool = False,
+        channel_names: list[str] | None = None,
+        trace_count: int | None = None,
+        sample_count: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
+        trace_dtype: np.dtype = np.int16,
+        zarr_kwargs: dict | None = None,
+        zarr_trace_group_kwargs: dict | None = None,
+        zarr_data_group_kwargs: dict | None = None,
+        create_time: int | None = None,
+        version: str | None = None,
+    ):
+        warnings.warn("这个类已经废弃，请使用 ZarrTraceDataset。")
+        super().__init__(
+            zarr_path,
+            create_empty,
+            channel_names,
+            trace_count,
+            sample_count,
+            data_plaintext_length,
+            data_ciphertext_length,
+            data_key_length,
+            data_extended_length,
+            trace_dtype,
+            zarr_kwargs,
+            zarr_trace_group_kwargs,
+            zarr_data_group_kwargs,
+            create_time,
+            version,
+        )
+
+
 class NumpyTraceDataset(TraceDataset):
+    """
+    以numpy格式为基础的TraceDataset
+    """
+
     _ARRAY_TRACE_PATH = "trace.npy"
     _ARRAY_PLAINTEXT_PATH = "plaintext.npy"
     _ARRAY_CIPHERTEXT_PATH = "ciphertext.npy"
