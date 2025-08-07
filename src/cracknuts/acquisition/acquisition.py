@@ -15,7 +15,7 @@ import numpy as np
 
 from cracknuts import logger
 from cracknuts.cracker.cracker_basic import CrackerBasic
-from cracknuts.trace.trace import ScarrTraceDataset, NumpyTraceDataset
+from cracknuts.trace.trace import ZarrTraceDataset, NumpyTraceDataset
 
 
 @dataclass
@@ -518,7 +518,7 @@ class Acquisition(abc.ABC):
                 file_path += ".npy"
 
             if file_format == "scarr":
-                dataset = ScarrTraceDataset.new(
+                dataset = ZarrTraceDataset.new(
                     file_path,
                     channel_names,
                     self.trace_count,
