@@ -106,6 +106,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         return super()._repr_mimebundle_(**kwargs)
 
     def set_numpy_data(self, trace: np.ndarray, data: np.ndarray = None) -> None:
+        """
+        展示numpy格式的曲线数据
+
+        :param trace: 曲线数据
+        :type trace: np.ndarray
+        """
         ds = NumpyTraceDataset.load_from_numpy_array(trace)
         self.set_trace_dataset(ds)
 
@@ -218,10 +224,20 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         return down_index.reshape(sample_count * 2), down_value.reshape(sample_count * 2)
 
-    def change_range(self, start: int, end: int):
+    def _change_range(self, start: int, end: int):
         if self._trace_cache_x_indices is not None:
             start, end = self._trace_cache_x_indices[start], self._trace_cache_x_indices[end]
+        self.change_range(start, end)
 
+    def change_range(self, start: int, end: int):
+        """
+        改变曲线展示的区间
+
+        :param start: 开始索引
+        :type start: int
+        :param end: 结束索引
+        :type end: int
+        """
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
         self._trace_series = self._get_trace_series_by_index_range(start, end)
@@ -254,6 +270,14 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_series_send_state()
 
     def change_percent_range(self, percent_start: float, percent_end: float):
+        """
+        改变展示曲线的百分比
+
+        :param percent_start: 开始
+        :type percent_start: float
+        :param percent_end: 结束
+        :type percent_end: float
+        """
         start = round((self._trace_dataset.sample_count - 1) * percent_start / 100)
         end = round((self._trace_dataset.sample_count - 1) * percent_end / 100)
 
@@ -346,9 +370,19 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         )
 
     def show_all_trace(self):
+        """
+        展示全部曲线。
+        提示: 谨慎使用该函数，当曲线长度过大或曲线数量过大时，容易造成卡顿
+        """
         self._show_trace(slice(0, self._trace_dataset.channel_count), slice(0, self._trace_dataset.trace_count))
 
     def highlight(self, indices: dict[int, list : [int]] | list[int] | int) -> None:
+        """
+        高亮曲线
+
+        高亮指定曲线索引的曲线：高亮时，未被包含在高亮索引(indices)现有展示的曲线将以灰色展示。
+        该函数一般用于展示相关性曲线中分数最高的曲线。
+        """
         if isinstance(indices, int):
             indices = {0: [indices]}
         elif isinstance(indices, list):
@@ -405,6 +439,9 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._update_overview_trace()
 
     def reset(self, args):
+        """
+        重置曲线展示
+        """
         self._trace_cache_trace_highlight_indices = None
         self._trace_cache_x_range_start = 0
         self._trace_cache_x_range_end = self._trace_dataset.sample_count - 1
@@ -424,6 +461,18 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     def set_trace_dataset(
         self, trace_dataset: TraceDataset, show_all_trace=False, channel_slice=None, trace_slice=None
     ) -> None:
+        """
+        展示曲线数据集中的曲线
+
+        :param trace_dataset: 曲线数据集
+        :type trace_dataset: TraceDataset
+        :param show_all_trace: 是否展示全部曲线
+        :type show_all_trace: bool
+        :param channel_slice: 曲线通道索引切片，该参数支持类似numpy的高级切片操作
+        :type channel_slice: slice
+        :param trace_slice: 曲线索引切片，该参数支持类似numpy的高级切片操作
+        :type trace_slice: slice
+        """
         self._trace_dataset = trace_dataset
         if show_all_trace:
             self.show_all_trace()
@@ -442,7 +491,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     def selected_range_changed(self, change) -> None:
         if change.get("new") is not None:
             s, e = change.get("new")
-            self.change_range(s, e)
+            self._change_range(s, e)
 
     @traitlets.observe("overview_select_range")
     def overview_select_range_changed(self, change) -> None:
