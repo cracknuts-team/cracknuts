@@ -55,7 +55,8 @@
   "cracker.config.nut.i2c.enable": "I2C",
   "cracker.config.nut.i2c.dev_addr": "Dev Addr",
   "cracker.config.nut.i2c.speed": "Speed",
-
+  "cracker.config.nut.i2c.stretchEnable": "Stretch",
+  "cracker.config.nut.i2c.stretchEnable.tooltip": "When the nut starts clock stretching, this option needs to be enabled",
   "cracker.config.scope.channel.a.gain": "Ch A Gain",
   "cracker.config.scope.channel.b.gain": "Ch B Gain",
   "cracker.config.scope.sampleLength": "Sample Count",
