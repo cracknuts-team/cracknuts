@@ -104,6 +104,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [nutI2cEnable, setNutI2cEnable] = useModelState<boolean>("nut_i2c_enable");
   const [nutI2cDevAddr, setNutI2cDevAddr] = useModelState<string>("nut_i2c_dev_addr");
   const [nutI2cSpeed, setNutI2cSpeed] = useModelState<number>("nut_i2c_speed");
+  const [nutI2cStretchEnable, setNutI2cStretchEnable] = useModelState<boolean>("nut_i2c_stretch_enable");
 
   // osc
   const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");
@@ -528,6 +529,16 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                         ]}/>
                       </Space.Compact>
                     </Form.Item>
+                    <Tooltip
+                      title={nutI2cEnable ? intl.formatMessage({id: "cracker.config.nut.i2c.stretchEnable.tooltip"}) : null}>
+                      <Form.Item style={{marginRight: 1}}>
+                        <Checkbox id={"cracker_config_i2c_stretch_enable"} checked={nutI2cStretchEnable} onChange={() => {
+                          setNutI2cStretchEnable(!nutI2cStretchEnable)
+                        }} disabled={!nutI2cEnable}>
+                          <FormattedMessage id={"cracker.config.nut.i2c.stretchEnable"}/>
+                        </Checkbox>
+                      </Form.Item>
+                    </Tooltip>
                   </Form>
                 </Col>
               </Row>

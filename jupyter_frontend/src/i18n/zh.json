@@ -55,6 +55,8 @@
   "cracker.config.nut.i2c.enable": "I2C",
   "cracker.config.nut.i2c.dev_addr": "设备地址",
   "cracker.config.nut.i2c.speed": "速度",
+  "cracker.config.nut.i2c.stretchEnable": "时钟拉伸",
+  "cracker.config.nut.i2c.stretchEnable.tooltip": "nut开始时钟拉伸后需要开启此选项",
   "cracker.config.scope.channel.a.gain": "Ch A 增益",
   "cracker.config.scope.channel.b.gain": "Ch B 增益",
   "cracker.config.scope.sampleLength": "采样点数",
