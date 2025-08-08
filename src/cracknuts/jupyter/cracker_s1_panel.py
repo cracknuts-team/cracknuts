@@ -7,14 +7,14 @@ from typing import Any
 
 from traitlets import traitlets
 
-from cracknuts import logger
+from cracknuts import logger, CrackerG1
 from cracknuts.cracker.cracker_s1 import CrackerS1, ConfigS1
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
 import cracknuts.cracker.serial as serial
 
 
-class CrackerS1PanelWidget(MsgHandlerPanelWidget):
+class CrackerPanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackerS1PanelWidget.js"
     _css = ""
 
@@ -51,6 +51,20 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_i2c_stretch_enable = traitlets.Bool(False).tag(sync=True)
 
     nut_timeout = traitlets.Int(0).tag(sync=True)
+
+    # glitch
+    glitch_vcc_normal_voltage = traitlets.Float(3.3).tag(sync=True)
+    glitch_vcc_wait = traitlets.Int(0).tag(sync=True)
+    glitch_vcc_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
+    glitch_vcc_count = traitlets.Int(1).tag(sync=True)
+    glitch_vcc_repeat = traitlets.Int(0).tag(sync=True)
+    glitch_vcc_delay = traitlets.Int(0).tag(sync=True)
+    glitch_gnd_normal_voltage = traitlets.Float(0.0).tag(sync=True)
+    glitch_gnd_wait = traitlets.Int(0).tag(sync=True)
+    glitch_gnd_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
+    glitch_gnd_count = traitlets.Int(1).tag(sync=True)
+    glitch_gnd_repeat = traitlets.Int(0).tag(sync=True)
+    glitch_gnd_delay = traitlets.Int(0).tag(sync=True)
 
     # osc
     osc_channel_0_enable = traitlets.Bool(False).tag(sync=True)
@@ -486,3 +500,22 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     @observe_interceptor
     def nut_i2c_stretch_enable_changed(self, change):
         self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(self.nut_i2c_speed), change.get("new"))
+
+    #     glitch_vcc_normal_voltage = traitlets.Float(3.3).tag(sync=True)
+    #     glitch_vcc_wait = traitlets.Int(0).tag(sync=True)
+    #     glitch_vcc_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
+    #     glitch_vcc_count = traitlets.Int(1).tag(sync=True)
+    #     glitch_vcc_repeat = traitlets.Int(0).tag(sync=True)
+    #     glitch_vcc_delay = traitlets.Int(0).tag(sync=True)
+    #     glitch_gnd_normal_voltage = traitlets.Float(0.0).tag(sync=True)
+    #     glitch_gnd_wait = traitlets.Int(0).tag(sync=True)
+    #     glitch_gnd_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
+    #     glitch_gnd_count = traitlets.Int(1).tag(sync=True)
+    #     glitch_gnd_repeat = traitlets.Int(0).tag(sync=True)
+    #     glitch_gnd_delay = traitlets.Int(0).tag(sync=True)
+
+    @traitlets.observe("glitch_vcc_normal_voltage")
+    @observe_interceptor
+    def glitch_vcc_normal_voltage_changed(self, change):
+        cracker_g1: CrackerG1 = self.cracker
+        cracker_g1.glitch_vcc_normal(change.get("new"))
