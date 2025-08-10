@@ -76,7 +76,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if config_bytes is None:
             return None
         # 这里由于 server固件增加了glitch的功能，临时这里处理移除不必要的配置信息
-        config_bytes = config_bytes[:51]
+        config_bytes = config_bytes[:52]
         bytes_format = {
             "nut_enable": "?",
             "nut_voltage": "I",
