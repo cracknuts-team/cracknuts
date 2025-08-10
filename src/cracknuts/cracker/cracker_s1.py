@@ -18,6 +18,7 @@ class ConfigS1(ConfigBasic):
         self.nut_clock_enable = False
         self.nut_clock = 8000
         self.nut_timeout: int | None = None
+        self.nut_reset_io_enable: bool = False
 
         self.nut_uart_enable: bool = False
         self.nut_uart_baudrate: serial.Baudrate = serial.Baudrate.BAUDRATE_115200
@@ -81,6 +82,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             "nut_voltage": "I",
             "nut_clock_enable": "?",
             "nut_clock": "I",
+            "nut_reset_io_enable": "?",
             "osc_sample_clock": "I",
             "osc_sample_phase": "I",
             "osc_sample_length": "I",
@@ -1847,3 +1849,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">BI", polar, time)
         self._logger.debug(f"cracker_nut_reset payload: {payload}")
         return self.send_with_command(protocol.Command.NUT_RESET, payload=payload)
+
+    def nut_reset_io_enable(self, enable: bool):
+        payload = struct.pack(">B", enable)
+        self._logger.debug(f"cracker_nut_reset_io_enable payload: {payload}")
+        return self.send_with_command(protocol.Command.NUT_RESET_IO_ENABLE, payload=payload)
