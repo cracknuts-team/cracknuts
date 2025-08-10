@@ -652,7 +652,7 @@ class ZarrTraceDataset(TraceDataset):
         return data
 
 
-class ScarrTraceDataset2(ZarrTraceDataset):
+class ScarrTraceDataset(ZarrTraceDataset):
     """
     [DEPRECATED] 这个类已经废弃，请使用 ZarrTraceDataset .
     """
