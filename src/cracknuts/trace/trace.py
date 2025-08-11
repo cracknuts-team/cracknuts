@@ -1009,6 +1009,13 @@ class NumpyTraceDataset(TraceDataset):
         key = None if self._key_array is None else self._key_array[channel_slice, trace_slice]
         extended = None if self._extended_array is None else self._extended_array[channel_slice, trace_slice]
 
+        print(
+            "trace shape",
+            self._trace_array.shape,
+            self._trace_array[channel_slice, trace_slice].shape,
+            channel_slice,
+            trace_slice,
+        )
         return c, t, self._trace_array[channel_slice, trace_slice], [plaintext, ciphertext, key, extended]
 
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:
