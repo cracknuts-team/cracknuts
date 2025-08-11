@@ -91,9 +91,9 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         super().__init__(*args, **kwargs)
         self._logger = logger.get_logger(self)
         self.observe: bool = True
-        self.cracker: CrackerS1 | None = None
+        self.cracker: CrackerS1 | CrackerG1 | None = None
         if "cracker" in kwargs:
-            self.cracker: CrackerS1 = kwargs["cracker"]
+            self.cracker = kwargs["cracker"]
         if self.cracker is None:
             raise ValueError("cracker is required")
         self.reg_msg_handler("connectButton", "onClick", self.msg_connection_button_on_click)
@@ -517,5 +517,4 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("glitch_vcc_normal_voltage")
     @observe_interceptor
     def glitch_vcc_normal_voltage_changed(self, change):
-        cracker_g1: CrackerG1 = self.cracker
-        cracker_g1.glitch_vcc_normal(change.get("new"))
+        self.cracker.glitch_vcc_normal(change.get("new"))
