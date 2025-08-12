@@ -159,7 +159,7 @@ const AcquisitionPanel: React.FC = () => {
               <Select
                 size={"small"}
                 options={[
-                  {value: "scarr", label: "Scarr"},
+                  {value: "zarr", label: "Zarr"},
                   {value: "numpy", label: "Numpy"},
                 ]}
                 value={fileFormat}
