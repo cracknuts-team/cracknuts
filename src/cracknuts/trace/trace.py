@@ -840,8 +840,8 @@ class NumpyTraceDataset(TraceDataset):
                 f,
             )
 
-    def get_origin_data(self) -> tuple[np.array, np.array]:
-        return self._trace_array, self._plaintext_array
+    def get_origin_data(self) -> tuple[np.array, np.array, np.array, np.array, np.array]:
+        return self._trace_array, self._plaintext_array, self._ciphertext_array, self._key_array, self._extended_array
 
     @classmethod
     def load(cls, path: str, **kwargs) -> "TraceDataset":
@@ -972,26 +972,26 @@ class NumpyTraceDataset(TraceDataset):
             if self._plaintext_array is None:
                 item_length = len(data_plaintext)
                 self._plaintext_array = np.zeros(
-                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                    shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8
                 )
             self._plaintext_array[channel_index, trace_index, :] = np.frombuffer(data_plaintext, dtype=np.uint8)
         if data_ciphertext is not None:
             if self._ciphertext_array is None:
                 item_length = len(data_ciphertext)
                 self._ciphertext_array = np.zeros(
-                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                    shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8
                 )
             self._ciphertext_array[channel_index, trace_index, :] = np.frombuffer(data_ciphertext, dtype=np.uint8)
         if data_key is not None:
             if self._key_array is None:
                 item_length = len(data_key)
-                self._key_array = np.zeros(shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8)
+                self._key_array = np.zeros(shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8)
             self._key_array[channel_index, trace_index, :] = np.frombuffer(data_key, dtype=np.uint8)
         if data_extended is not None:
             if self._extended_array is None:
                 item_length = len(data_extended)
                 self._extended_array = np.zeros(
-                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                    shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8
                 )
             self._key_array[channel_index, trace_index, :] = np.frombuffer(data_extended, dtype=np.uint8)
 
