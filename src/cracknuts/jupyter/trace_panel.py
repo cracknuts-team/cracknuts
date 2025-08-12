@@ -1,11 +1,15 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
 import colorsys
+import functools
+import os
 import pathlib
 import typing
 from dataclasses import dataclass, field
+from numbers import Number
 
 import numpy as np
+import zarr
 from numpy import ndarray
 
 from cracknuts import logger
@@ -36,6 +40,24 @@ class _TraceSeriesData:
             "trace_index": self.trace_index,
             "z": self.z,
         }
+
+
+def correlation_zarr_substitute(substitute_func_name: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self: "TracePanelWidget", *args, **kwargs):
+            if self._correlation_traces is not None:
+                substitute_func = getattr(self, substitute_func_name, None)
+                if substitute_func is not None:
+                    return substitute_func(*args, **kwargs)
+                else:
+                    raise ValueError(f"The substitute function {substitute_func_name} is not defined.")
+            else:
+                return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 @dataclass
@@ -94,6 +116,9 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_cache_x_range_end: int | None = None
         self._trace_cache_trace_highlight_indices: dict[int, list[int]] | None = None
 
+        self._correlation_traces = None
+        self._is_correlation_traces_setting = False
+
         self._trace_series_color_background = "gray"
 
         self.reg_msg_handler("reset", "onClick", self.reset)
@@ -112,14 +137,17 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         :param trace: 曲线数据
         :type trace: np.ndarray
         """
+        self.set_numpy_like_data(trace, data)
+
+    def set_numpy_like_data(self, trace: np.ndarray | zarr.core.Array, data: np.ndarray = None) -> None:
         ds = NumpyTraceDataset.load_from_numpy_array(trace)
         self.set_trace_dataset(ds)
 
+    @correlation_zarr_substitute("_correlation_zarr_show_trace")
     def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
         channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
-
         self._trace_cache_channel_indices = channel_indexes
         self._trace_cache_trace_indices = trace_indices
         self._trace_cache_traces = traces
@@ -150,6 +178,16 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if self._trace_cache_trace_highlight_indices is not None:
             overview_channel_index, overview_trace_indices = list(self._trace_cache_trace_highlight_indices.items())[0]
             overview_trace_index = overview_trace_indices[0]
+            if (
+                overview_channel_index not in self._trace_cache_channel_indices
+                or overview_trace_index not in self._trace_cache_trace_indices
+            ):
+                self.highlight(None)
+            if overview_channel_index not in self._trace_cache_channel_indices:
+                overview_channel_index = self._trace_cache_channel_indices[0]
+            if overview_trace_index not in self._trace_cache_trace_indices:
+                overview_trace_index = self._trace_cache_trace_indices[0]
+
         else:
             overview_channel_index = self._trace_cache_channel_indices[0]
             overview_trace_index = self._trace_cache_trace_indices[0]
@@ -376,7 +414,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         """
         self._show_trace(slice(0, self._trace_dataset.channel_count), slice(0, self._trace_dataset.trace_count))
 
-    def highlight(self, indices: dict[int, list : [int]] | list[int] | int) -> None:
+    def highlight(self, indices: dict[int, list[int] | int] | list[int] | int | None) -> None:
         """
         高亮曲线
 
@@ -387,8 +425,12 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             indices = {0: [indices]}
         elif isinstance(indices, list):
             indices = {0: indices}
-        else:
-            indices = None
+        elif isinstance(indices, dict):
+            for k, v in indices.items():
+                if isinstance(v, int):
+                    indices[k] = [v]
+                else:
+                    raise ValueError("The indices value type is not supported, it should be int or list of int.")
 
         if indices is None or len(indices) == 0:
             self._trace_cache_trace_highlight_indices = None
@@ -473,6 +515,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         :param trace_slice: 曲线索引切片，该参数支持类似numpy的高级切片操作
         :type trace_slice: slice
         """
+        if not self._is_correlation_traces_setting:
+            self._correlation_traces = None
         self._trace_dataset = trace_dataset
         if show_all_trace:
             self.show_all_trace()
@@ -481,11 +525,129 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         else:
             self.show_default_trace()
 
-    def open_trace_data_set_file(self, trace_dataset: TraceDataset) -> TraceDataset: ...
+    def open_numpy_file(self, path: str):
+        if os.path.isdir(path):
+            trace_path = os.path.join(path, "trace.npy")
+            if os.path.exists(trace_path):
+                trace = np.load(trace_path)
+                self.set_numpy_data(trace)
+            else:
+                raise ValueError(f"The directory {path} does not contain trace.npy file.")
+        elif os.path.isfile(path):
+            trace = np.load(path)
+        else:
+            raise ValueError(f"The path {path} is neither a file nor a directory containing trace.npy.")
 
-    def open_numpy_file(self, path: str): ...
+        if len(trace.shape) == 2:
+            self.set_numpy_data(trace)
+        else:
+            raise ValueError(f"The file {path} does not contain valid trace data, it should be a 2D array.")
 
-    def open_zarr(self, path: str): ...
+    def open_zarr(self, path: str):
+        zarr_data = zarr.open(path, mode="r")
+        self.set_zarr(zarr_data)
+
+    def set_zarr(self, zarr_trace: zarr.hierarchy.Group | zarr.core.Array):
+        if isinstance(zarr_trace, zarr.hierarchy.Group):
+            traces_data = zarr_trace.get("/0/0/traces")
+            if traces_data is not None:
+                self.set_numpy_data(traces_data)
+            else:
+                traces_data = zarr_trace.get("/0/0/correlation")
+                if traces_data is not None:
+                    self.set_correlation_zarr_trace(traces_data)
+                else:
+                    raise ValueError(
+                        "The zarr group does not contain valid trace data, "
+                        "it should contain /0/0/traces dataset or /0/0/correlation."
+                    )
+        elif isinstance(zarr_trace, zarr.core.Array):
+            if len(zarr_trace.shape) == 2:
+                self.set_numpy_like_data(zarr_trace)
+            elif len(zarr_trace.shape) == 3:
+                self.set_correlation_zarr_trace(zarr_trace)
+            else:
+                raise ValueError("The zarr data zarr should be a 2D array.")
+        else:
+            raise ValueError("The zarr parameter type is not supported.")
+
+    def set_correlation_zarr(self, correlation_zarr: zarr.hierarchy.Group):
+        self.set_correlation_zarr_trace(correlation_zarr.get("/0/0/correlation"))
+
+    def set_correlation_zarr_trace(self, correlation_zarr_trace: zarr.core.Array):
+        self._correlation_traces = correlation_zarr_trace
+        if self._correlation_traces is None:
+            raise ValueError(
+                "The correlation zarr does not contain valid trace data, it should contain /0/0/correlation."
+            )
+        default_show_traces = self._correlation_traces[:, 0, :]
+        self._is_correlation_traces_setting = True
+        self.set_numpy_like_data(default_show_traces)
+        self._is_correlation_traces_setting = False
+
+    def _correlation_zarr_show_trace(self, guss_slice: slice, byte_slice: slice):
+        channel_indices = TraceDataset._parse_slice(
+            self._correlation_traces.shape[0], guss_slice
+        )  # 使用Guss索引模拟通道索引
+        trace_indices = TraceDataset._parse_slice(
+            self._correlation_traces.shape[1], byte_slice
+        )  # 使用字节索引模拟曲线索引
+        if isinstance(guss_slice, int):
+            guss_slice = slice(guss_slice, guss_slice + 1)
+        if isinstance(byte_slice, int):
+            byte_slice = slice(byte_slice, byte_slice + 1)
+
+        if isinstance(byte_slice, list):
+            # 这里如果 guss_slice 也是一个列表的化，不支持numpy 那样的 配对形式的切片，
+            # 所以不能实现指定多个猜测字节下单个比特位曲线的效果
+            sub_traces = []
+            for trace_index in trace_indices:
+                sub_traces.append(self._correlation_traces[guss_slice, trace_index, :])
+            traces = np.stack(sub_traces, axis=1)
+        else:
+            traces = self._correlation_traces[guss_slice, byte_slice, :]
+
+        self._trace_cache_channel_indices = channel_indices
+        self._trace_cache_trace_indices = trace_indices
+        self._trace_cache_traces = traces
+
+        if self._trace_cache_x_range_start is None:
+            self._trace_cache_x_range_start = 0
+        if self._trace_cache_x_range_end is None:
+            self._trace_cache_x_range_end = self._trace_dataset.sample_count - 1
+
+        self._trace_series = self._get_trace_series_by_index_range(
+            self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        )
+
+        self._trace_series.percent_range = [
+            self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
+            self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
+
+        self._update_overview_trace()
+
+        if self._auto_sync:
+            self._trace_series_send_state()
+
+    def set_trace(
+        self, trace: TraceDataset | np.ndarray | zarr.hierarchy.Group | zarr.core.Array | list[list[Number]] | str
+    ):
+        if isinstance(trace, TraceDataset):
+            self.set_trace_dataset(trace)
+        elif isinstance(trace, np.ndarray):
+            self.set_numpy_data(trace)
+        elif isinstance(trace, zarr.hierarchy.Group) or isinstance(trace, zarr.core.Array):
+            self.set_zarr(trace)
+        elif isinstance(trace, list):
+            self.set_numpy_data(np.array(trace))
+        elif isinstance(trace, str):
+            if pathlib.Path(trace).suffix in [".npy"]:
+                self.open_numpy_file(trace)
+            elif pathlib.Path(trace).suffix in [".zarr"]:
+                self.open_zarr(trace)
+        else:
+            raise ValueError("The trace parameter type is not supported.")
 
     @traitlets.observe("selected_range")
     def selected_range_changed(self, change) -> None:
