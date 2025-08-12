@@ -46,7 +46,6 @@ def correlation_zarr_substitute(substitute_func_name: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self: "TracePanelWidget", *args, **kwargs):
-            print("bb substitute func ", substitute_func_name, self._correlation_traces)
             if self._correlation_traces is not None:
                 substitute_func = getattr(self, substitute_func_name, None)
                 if substitute_func is not None:
@@ -149,13 +148,9 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
-        print("bb ", channel_slice, trace_slice, traces.shape)
         self._trace_cache_channel_indices = channel_indexes
         self._trace_cache_trace_indices = trace_indices
         self._trace_cache_traces = traces
-
-        print("bb channel indices ", self._trace_cache_channel_indices)
-        print("bb trace indices ", self._trace_cache_trace_indices)
 
         if display_range is None:
             if self._trace_cache_x_range_start is None:
@@ -169,7 +164,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_series = self._get_trace_series_by_index_range(
             self._trace_cache_x_range_start, self._trace_cache_x_range_end
         )
-        print("bb series", self._trace_series)
         self._trace_series.percent_range = [
             self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
             self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
@@ -188,7 +182,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 overview_channel_index not in self._trace_cache_channel_indices
                 or overview_trace_index not in self._trace_cache_trace_indices
             ):
-                print("not found highlight trace, use default trace")
                 self.highlight(None)
             if overview_channel_index not in self._trace_cache_channel_indices:
                 overview_channel_index = self._trace_cache_channel_indices[0]
@@ -198,10 +191,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         else:
             overview_channel_index = self._trace_cache_channel_indices[0]
             overview_trace_index = self._trace_cache_trace_indices[0]
-
-        print("channel indices: ", self._trace_cache_channel_indices)
-        print("trace indices: ", self._trace_cache_trace_indices)
-        print("overview channel index: ", overview_channel_index)
 
         c_idx = self._trace_cache_channel_indices.index(overview_channel_index)
         t_idx = self._trace_cache_trace_indices.index(overview_trace_index)
@@ -360,7 +349,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         x_idx = None
         for c, channel_index in enumerate(self._trace_cache_channel_indices):
             for t, trace_index in enumerate(self._trace_cache_trace_indices):
-                print("xxx ", self._trace_cache_traces.shape, c, t)
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 color, z_increase = self._get_highlight_color(
                     channel_index, trace_index, None if highlight_colors is None else highlight_colors[color_i]
@@ -619,14 +607,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         else:
             traces = self._correlation_traces[guss_slice, byte_slice, :]
 
-        print("aa ", guss_slice, byte_slice, traces.shape)
-
         self._trace_cache_channel_indices = channel_indices
         self._trace_cache_trace_indices = trace_indices
         self._trace_cache_traces = traces
 
-        print("aa channel indices ", self._trace_cache_channel_indices)
-        print("aa trace indices ", self._trace_cache_trace_indices)
         if self._trace_cache_x_range_start is None:
             self._trace_cache_x_range_start = 0
         if self._trace_cache_x_range_end is None:
@@ -636,7 +620,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_cache_x_range_start, self._trace_cache_x_range_end
         )
 
-        print("aa series", self._trace_series)
         self._trace_series.percent_range = [
             self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
             self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
