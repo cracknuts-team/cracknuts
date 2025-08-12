@@ -46,6 +46,7 @@ def correlation_zarr_substitute(substitute_func_name: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self: "TracePanelWidget", *args, **kwargs):
+            print("bb substitute func ", substitute_func_name, self._correlation_traces)
             if self._correlation_traces is not None:
                 substitute_func = getattr(self, substitute_func_name, None)
                 if substitute_func is not None:
@@ -359,6 +360,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         x_idx = None
         for c, channel_index in enumerate(self._trace_cache_channel_indices):
             for t, trace_index in enumerate(self._trace_cache_trace_indices):
+                print("xxx ", self._trace_cache_traces.shape, c, t)
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 color, z_increase = self._get_highlight_color(
                     channel_index, trace_index, None if highlight_colors is None else highlight_colors[color_i]
@@ -525,7 +527,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         :param trace_slice: 曲线索引切片，该参数支持类似numpy的高级切片操作
         :type trace_slice: slice
         """
-        if not self._correlation_traces:
+        if not self._is_correlation_traces_setting:
             self._correlation_traces = None
         self._trace_dataset = trace_dataset
         if show_all_trace:
@@ -565,7 +567,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             else:
                 traces_data = zarr_trace.get("/0/0/correlation")
                 if traces_data is not None:
-                    self.set_correlation_zarr(traces_data)
+                    self.set_correlation_zarr_trace(traces_data)
                 else:
                     raise ValueError(
                         "The zarr group does not contain valid trace data, "
@@ -596,14 +598,27 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._is_correlation_traces_setting = False
 
     def _correlation_zarr_show_trace(self, guss_slice: slice, byte_slice: slice):
-        channel_indices = TraceDataset._parse_slice(self._correlation_traces.shape[0], guss_slice)
-        trace_indices = TraceDataset._parse_slice(self._correlation_traces.shape[1], byte_slice)
+        channel_indices = TraceDataset._parse_slice(
+            self._correlation_traces.shape[0], guss_slice
+        )  # 使用Guss索引模拟通道索引
+        trace_indices = TraceDataset._parse_slice(
+            self._correlation_traces.shape[1], byte_slice
+        )  # 使用字节索引模拟曲线索引
         if isinstance(guss_slice, int):
             guss_slice = slice(guss_slice, guss_slice + 1)
         if isinstance(byte_slice, int):
             byte_slice = slice(byte_slice, byte_slice + 1)
 
-        traces = self._correlation_traces[guss_slice, byte_slice, :]
+        if isinstance(byte_slice, list):
+            # 这里如果 guss_slice 也是一个列表的化，不支持numpy 那样的 配对形式的切片，
+            # 所以不能实现指定多个猜测字节下单个比特位曲线的效果
+            sub_traces = []
+            for trace_index in trace_indices:
+                sub_traces.append(self._correlation_traces[guss_slice, trace_index, :])
+            traces = np.stack(sub_traces, axis=1)
+        else:
+            traces = self._correlation_traces[guss_slice, byte_slice, :]
+
         print("aa ", guss_slice, byte_slice, traces.shape)
 
         self._trace_cache_channel_indices = channel_indices
