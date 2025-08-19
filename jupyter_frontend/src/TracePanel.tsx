@@ -97,8 +97,13 @@ const TracePanel: React.FC = () => {
         const [newStart, newEnd] = brushParams.areas[0].coordRange
         setSelectedRange([newStart, newEnd])
       }
-
     });
+    // console.error("exec dispatchAction brushEnd")
+    // chart.dispatchAction({
+    //     type: 'takeGlobalCursor',
+    //     key: 'brush',
+    //     brushOption: { brushType: 'lineX' } // 默认使用矩形刷选
+    // });
   };
 
   useEffect(() => {
@@ -372,7 +377,7 @@ const TracePanel: React.FC = () => {
 
   return (
     <div ref={chartBoxRef}>
-      <ReactEcharts ref={chartRef} option={option} notMerge={true} style={{height: 400}}/>
+      <ReactEcharts ref={chartRef} option={option} notMerge={false} style={{height: 400}} replaceMerge={"series"}/>
       <ReactEcharts ref={overviewChartRef} option={overviewOption} notMerge={true} style={{height: 60}}/>
       <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
         setPercentRange([s, e]);
