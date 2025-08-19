@@ -1,7 +1,11 @@
 # Copyright 2024 CrackNuts. All rights reserved.
+import os
 import re
 import struct
 
+import pandas as pd
+from scipy.interpolate import interp1d
+import importlib.util
 from cracknuts.cracker import protocol
 from cracknuts.cracker.cracker_basic import ConfigBasic
 from cracknuts.cracker.cracker_s1 import ConfigS1, CrackerS1
@@ -66,7 +70,7 @@ class CrackerG1(CrackerS1):
         else:
             return status, res
 
-    def glitch_vcc_config(self, wait: int, g_level: int, g_cnt: int, g_delay: int, g_repeat: int):
+    def glitch_vcc_config(self, wait: int, g_level: int | float, g_cnt: int, g_delay: int, g_repeat: int):
         """
         配置glitch ::
 
@@ -88,6 +92,7 @@ class CrackerG1(CrackerS1):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
+        g_level = self._get_dac_code_from_voltage(g_level)
         payload = struct.pack(">IIIII", wait, g_level, g_cnt, g_delay, g_repeat)
         self._logger.debug(f"glitch_vcc_config payload: {payload.hex()}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_CONFIG, payload=payload)
@@ -147,7 +152,13 @@ class CrackerG1(CrackerS1):
 
     @staticmethod
     def _get_dac_code_from_voltage(voltage: float) -> int:
-        return int(voltage / 5 / (2**10 - 1))
+        df = pd.read_csv(
+            os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "gnd_vnormal_voltage.csv")
+        )
+        codes = df["code"].map(lambda x: int(x, 16)).values
+        voltages = df["voltage"].values
+        interp_func = interp1d(voltages, codes, kind="linear", fill_value="extrapolate")
+        return int(round(interp_func(voltage * 1000).item()))
 
     def glitch_gnd_enable(self):
         self._glitch_gnd_enable(True)
@@ -165,6 +176,7 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def _glitch_gnd_config(self, wait: int, level: int, count: int, delay: int, repeat: int):
+        level = self._get_dac_code_from_voltage(level)
         payload = struct.pack(">IIIII", wait, level, count, delay, repeat)
         self._logger.debug(f"glitch_gnd_config payload: {payload.hex()}")
         status, res = self.send_with_command(CommandG1.GLITCH_GND_CONFIG, payload=payload)
