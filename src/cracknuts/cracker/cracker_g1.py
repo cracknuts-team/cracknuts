@@ -118,7 +118,8 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def nut_voltage(self, voltage: float | str | int) -> tuple[int, None]:
-        return self.glitch_vcc_normal(voltage)
+        ...
+        # return self.glitch_vcc_normal(voltage)
 
     def glitch_vcc_normal(self, voltage: float | str | int) -> tuple[int, None]:
         voltage = self._parse_voltage(voltage)
