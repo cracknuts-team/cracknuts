@@ -584,6 +584,7 @@ class Acquisition(abc.ABC):
                     break
                 self._logger.debug("Judge trigger status.")
                 if self._is_triggered():
+                    self._logger.debug(f"Triggered! Cost {trigger_judge_time}.")
                     self._last_wave = self._get_waves(self.sample_offset, self.sample_length)
                     if self._last_wave is not None:
                         self._logger.debug(
