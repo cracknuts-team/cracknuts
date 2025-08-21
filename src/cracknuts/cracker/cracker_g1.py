@@ -176,7 +176,7 @@ class CrackerG1(CrackerS1):
         else:
             return status, res
 
-    def _glitch_gnd_config(self, wait: int, level: int, count: int, delay: int, repeat: int):
+    def glitch_gnd_config(self, wait: int, level: int, count: int, delay: int, repeat: int):
         level = self._get_dac_code_from_voltage(level)
         payload = struct.pack(">IIIII", wait, level, count, delay, repeat)
         self._logger.debug(f"glitch_gnd_config payload: {payload.hex()}")
@@ -213,8 +213,8 @@ class CrackerG1(CrackerS1):
         else:
             return status, res
 
-    def _get_config_bytes_format(self) -> tuple[dict[str, str], int, ConfigBasic]:
-        bytes_format, bytes_length, config = super()._get_config_bytes_format()
+    def _get_config_bytes_format(self) -> tuple[dict[str, str], ConfigBasic]:
+        bytes_format, config = super()._get_config_bytes_format()
         bytes_format.update(
             {
                 "glitch_vcc_enable": "?",
@@ -233,9 +233,8 @@ class CrackerG1(CrackerS1):
                 "glitch_gnd_config_repeat": "I",
             }
         )
-        bytes_length = 50 + bytes_length
         config = ConfigG1()
-        return bytes_format, bytes_length, config
+        return bytes_format, config
 
     def get_default_config(self) -> ConfigS1:
         return ConfigG1()
