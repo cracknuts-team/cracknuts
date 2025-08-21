@@ -70,7 +70,7 @@ class CrackerG1(CrackerS1):
         else:
             return status, res
 
-    def glitch_vcc_config(self, wait: int, g_level: int | float, g_cnt: int, g_delay: int, g_repeat: int):
+    def glitch_vcc_config(self, wait: int, level: int | float, count: int, delay: int, repeat: int):
         """
         配置glitch ::
 
@@ -83,17 +83,17 @@ class CrackerG1(CrackerS1):
 
         :param wait: glitch产生前等待时间（时钟个数）
         :type wait: int
-        :param g_level: Glitch DAC电压值
-        :type g_level: int
-        :param g_cnt: Glitch持续时间（时钟个数）
-        :type g_delay: int
-        :param g_repeat: Glitch重复次数
-        :type g_repeat: int
+        :param level: Glitch DAC电压值
+        :type level: int
+        :param count: Glitch持续时间（时钟个数）
+        :type delay: int
+        :param repeat: Glitch重复次数
+        :type repeat: int
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
-        g_level = self._get_dac_code_from_voltage(g_level)
-        payload = struct.pack(">IIIII", wait, g_level, g_cnt, g_delay, g_repeat)
+        level = self._get_dac_code_from_voltage(level)
+        payload = struct.pack(">IIIII", wait, level, count, delay, repeat)
         self._logger.debug(f"glitch_vcc_config payload: {payload.hex()}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_CONFIG, payload=payload)
         if status != protocol.STATUS_OK:
