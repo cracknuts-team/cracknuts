@@ -518,9 +518,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 try:
                     resp_payload_str = resp_payload.decode("utf-8")
                 except UnicodeDecodeError:
-                    resp_payload_str = hex_util.get_hex(resp_payload)
+                    resp_payload_str = hex_util.get_hex(resp_payload, max_len=len(resp_payload))
+                req_command, req_payload = protocol.unpack_send_message(message)
+                if req_command is None:
+                    self._logger.warning("Request message format error, cannot unpack command.")
                 self._logger.warning(
-                    f"Received a non-OK response status code: 0x{status:04X}, " f"with the payload: {resp_payload_str}"
+                    f"Command 0x{req_command:04X} "
+                    f"with payload {hex_util.get_hex(req_payload, max_len=len(req_payload))} "
+                    f"received a non-OK response with status code 0x{status:04X}, "
+                    f"and payload {resp_payload_str}."
                 )
             else:
                 if self._logger.isEnabledFor(logging.DEBUG):
