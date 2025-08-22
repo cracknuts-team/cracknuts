@@ -523,7 +523,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 if req_command is None:
                     self._logger.warning("Request message format error, cannot unpack command.")
                 self._logger.warning(
-                    f"Command 0x{req_command:04X} "
+                    f"Command {f'0x{req_command:04X}' if req_command is not None else 'None'} "
                     f"with payload {hex_util.get_hex(req_payload, max_len=len(req_payload))} "
                     f"received a non-OK response with status code 0x{status:04X}, "
                     f"and payload {resp_payload_str}."
