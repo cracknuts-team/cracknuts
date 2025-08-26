@@ -26,7 +26,7 @@ class Crush(CrackerS1):
         status, _ = self.send_with_command(CrushCommand.QSPI_RESET)
 
     def qspi_set_post_delay(self, delay: int):
-        payload = struct.pack(">H", delay)
+        payload = struct.pack(">I", delay)
         self._logger.debug(f"qspi_set_post_delay payload: {payload.hex()}")
         status, _ = self.send_with_command(CrushCommand.QSPI_SET_POST_DELAY, payload=payload)
 
