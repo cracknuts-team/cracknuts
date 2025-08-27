@@ -195,6 +195,13 @@ class TraceDataset(abc.ABC):
     def create_time(self):
         return self._create_time
 
+    def plot(self):
+        from cracknuts.trace.plot import TracePlot
+
+        plot = TracePlot()
+        plot.set_trace_dataset(self)
+        return plot
+
 
 class _InfoRender:
     def __init__(
