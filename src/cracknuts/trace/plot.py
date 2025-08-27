@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 import numpy as np
 import plotly.graph_objects as go
 from numpy.typing import ArrayLike
