@@ -124,6 +124,7 @@ class Command:
     NUT_CLOCK = 0x0202
     NUT_INTERFACE = 0x0210
     NUT_TIMEOUT = 0x0224
+    NUT_RESET_IO_ENABLE = 0x0206
 
     CRACKER_SERIAL_BAUD = 0x0220
     CRACKER_SERIAL_WIDTH = 0x0221
@@ -201,3 +202,12 @@ def build_send_message(command: int, rfu: int = 0, payload: bytes | None = None)
 
 def build_response_message(status: int, payload: bytes | None = None):
     return _build_res_message(status, payload)
+
+
+def unpack_send_message(message: bytes):
+    if len(message) < REQ_HEADER_SIZE:
+        return None, message
+    else:
+        header = struct.unpack(REQ_HEADER_FORMAT, message[:REQ_HEADER_SIZE])
+        payload = message[REQ_HEADER_SIZE:]
+        return header[3], payload
