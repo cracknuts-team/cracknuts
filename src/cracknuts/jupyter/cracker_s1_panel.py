@@ -29,6 +29,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_voltage = traitlets.Float(3.3).tag(sync=True)
     nut_clock_enable = traitlets.Bool(False).tag(sync=True)
     nut_clock = traitlets.Int(65000).tag(sync=True)
+    nut_reset_io_enable = traitlets.Bool(False).tag(sync=True)
 
     nut_uart_enable = traitlets.Bool(False).tag(sync=True)
     nut_uart_baudrate = traitlets.Int(4).tag(sync=True)
@@ -48,6 +49,7 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     nut_i2c_enable = traitlets.Bool(False).tag(sync=True)
     nut_i2c_dev_addr = traitlets.Unicode("0x00").tag(sync=True)
     nut_i2c_speed = traitlets.Int(0).tag(sync=True)
+    nut_i2c_stretch_enable = traitlets.Bool(False).tag(sync=True)
 
     nut_timeout = traitlets.Int(0).tag(sync=True)
 
@@ -462,15 +464,26 @@ class CrackerS1PanelWidget(MsgHandlerPanelWidget):
     def nut_i2c_enable_changed(self, change):
         enabled = bool(change.get("new"))
         if enabled:
-            self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(self.nut_i2c_speed))
+            self.cracker.i2c_config(
+                int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(self.nut_i2c_speed), self.nut_i2c_stretch_enable
+            )
         self.cracker.i2c_enable() if enabled else self.cracker.i2c_disable()
 
     @traitlets.observe("nut_i2c_dev_addr")
     @observe_interceptor
     def nut_i2c_dev_addr_changed(self, change):
-        self.cracker.i2c_config(int(change.get("new"), 16), serial.I2cSpeed(self.nut_i2c_speed))
+        self.cracker.i2c_config(
+            int(change.get("new"), 16), serial.I2cSpeed(self.nut_i2c_speed), self.nut_i2c_stretch_enable
+        )
 
     @traitlets.observe("nut_i2c_speed")
     @observe_interceptor
     def nut_i2c_speed_changed(self, change):
-        self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(change.get("new")))
+        self.cracker.i2c_config(
+            int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(change.get("new")), self.nut_i2c_stretch_enable
+        )
+
+    @traitlets.observe("nut_i2c_stretch_enable")
+    @observe_interceptor
+    def nut_i2c_stretch_enable_changed(self, change):
+        self.cracker.i2c_config(int(self.nut_i2c_dev_addr, 16), serial.I2cSpeed(self.nut_i2c_speed), change.get("new"))

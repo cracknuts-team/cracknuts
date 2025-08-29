@@ -25,11 +25,7 @@ interface CrackS1PanelProps {
   languageChanged?: (language: string) => void;
 }
 
-const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({
-                                                       hasAcquisition = false,
-                                                       connectStatusChanged = undefined,
-                                                       languageChanged = undefined
-                                                     }) => {
+const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, connectStatusChanged = undefined, languageChanged = undefined}) => {
   // 连接
   const [uri, setUri] = useModelState<string>("uri");
   const [connectStatus] = useModelState<boolean>("connect_status");
@@ -107,6 +103,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({
   const [nutI2cEnable, setNutI2cEnable] = useModelState<boolean>("nut_i2c_enable");
   const [nutI2cDevAddr, setNutI2cDevAddr] = useModelState<string>("nut_i2c_dev_addr");
   const [nutI2cSpeed, setNutI2cSpeed] = useModelState<number>("nut_i2c_speed");
+  const [nutI2cStretchEnable, setNutI2cStretchEnable] = useModelState<boolean>("nut_i2c_stretch_enable");
 
   // osc
   const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");

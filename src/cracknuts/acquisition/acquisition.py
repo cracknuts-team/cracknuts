@@ -27,7 +27,7 @@ class AcquisitionConfig:
     trigger_judge_wait_time: float = 0.05
     do_error_max_count: int = 1
     file_path: str = ""
-    file_format: str = "scarr"
+    file_format: str = "zarr"
 
 
 class AcqProgress:
@@ -65,7 +65,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float = 1.0,
         do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
         do_error_max_count: int = -1,
-        file_format: str = "scarr",
+        file_format: str = "zarr",
         file_path: str = "auto",
         trace_fetch_interval: float = 0,
     ):
@@ -89,7 +89,7 @@ class Acquisition(abc.ABC):
         :param do_error_max_count: The maximum number of error count.
                                    If `do_error_handler_strategy` is 0, this setting is invalid.
         :type do_error_max_count: int
-        :param file_format: The file format of the trace dataset. "scarr" or "numpy".
+        :param file_format: The file format of the trace dataset. "zarr" or "numpy".
         :type file_format: str
         :param file_path: The file path of the trace dataset. If set to "auto", a folder with a timestamp format
                           will be created in the current working directory to save the data.
@@ -157,7 +157,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = "scarr",
+        file_format: str | None = "zarr",
         file_path: str | None = "auto",
     ):
         """
@@ -180,7 +180,7 @@ class Acquisition(abc.ABC):
         :param do_error_handler_strategy: The strategy to handle error handling.
                                           0: Exit immediately, 1: Exit after exceeding the error count.
         :type do_error_handler_strategy: int
-        :param file_format: The file format of the trace dataset. "scarr" or "numpy".
+        :param file_format: The file format of the trace dataset. "zarr" or "numpy".
         :type file_format: str
         :param file_path: The file path of the trace dataset. If set to "auto", a folder with a timestamp format
                           will be created in the current working directory to save the data.
@@ -215,7 +215,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = "scarr",
+        file_format: str | None = "zarr",
         file_path: str | None = "auto",
     ):
         """
@@ -237,7 +237,7 @@ class Acquisition(abc.ABC):
         :param do_error_handler_strategy: The strategy to handle error handling.
                                           0: Exit immediately, 1: Exit after exceeding the error count.
         :type do_error_handler_strategy: int
-        :param file_format: The file format of the trace dataset. "scarr" or "numpy".
+        :param file_format: The file format of the trace dataset. "zarr" or "numpy".
         :type file_format: str
         :param file_path: The file path of the trace dataset. If set to "auto", a folder with a timestamp format
                           will be created in the current working directory to save the data.
@@ -393,7 +393,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = "scarr",
+        file_format: str | None = "zarr",
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
     ):
@@ -433,7 +433,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = "scarr",
+        file_format: str | None = "zarr",
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
     ):
@@ -489,7 +489,7 @@ class Acquisition(abc.ABC):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, persistent: bool = True, file_path: str | None = None, file_format: str = "scarr"):
+    def _loop(self, persistent: bool = True, file_path: str | None = None, file_format: str = "zarr"):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
@@ -512,12 +512,12 @@ class Acquisition(abc.ABC):
             if not file_path.endswith("/"):
                 file_path += "/"
             file_path += datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            if file_format == "scarr":
+            if file_format == "zarr":
                 file_path += ".zarr"
             elif file_format == "numpy":
                 file_path += ".npy"
 
-            if file_format == "scarr":
+            if file_format == "zarr":
                 dataset = ZarrTraceDataset.new(
                     file_path,
                     channel_names,
@@ -556,7 +556,7 @@ class Acquisition(abc.ABC):
             self.pre_do()
             start = time.time()
             try:
-                data = self.do()
+                data = self.do(trace_index)
             except Exception as e:
                 self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
                 do_error_count += 1
@@ -584,6 +584,7 @@ class Acquisition(abc.ABC):
                     break
                 self._logger.debug("Judge trigger status.")
                 if self._is_triggered():
+                    self._logger.debug(f"Triggered! Cost {trigger_judge_time}.")
                     self._last_wave = self._get_waves(self.sample_offset, self.sample_length)
                     if self._last_wave is not None:
                         self._logger.debug(
@@ -691,10 +692,12 @@ class Acquisition(abc.ABC):
         self.cracker.osc_single()
 
     @abc.abstractmethod
-    def do(self) -> dict[str, bytes]:
+    def do(self, count: int) -> dict[str, bytes]:
         """
         The `do` logic, which the user should implement in the subclass.
 
+        :param count: The loop count, starting from 0.
+        :type count: int
         :return: The data in dictionary format to be saved should contain the ciphertext and plaintext keys,
                  and may optionally include the key and extended keys.
                  The plaintext is the data to be encrypted, the ciphertext is the encrypted result, the key is used
@@ -828,7 +831,7 @@ class AcquisitionBuilder:
 
     def __init__(self):
         self._cracker = None
-        self._do_function = lambda _: ...
+        self._do_function = lambda cracker, count: ...
         self._init_function = lambda _: ...
         self._finish_function = lambda _: ...
 
@@ -855,7 +858,7 @@ class AcquisitionBuilder:
             self._init_function = init_function
         return self
 
-    def do(self, do_function: typing.Callable[[CrackerBasic], dict[str, bytes]]):
+    def do(self, do_function: typing.Callable[[CrackerBasic, int], dict[str, bytes]]):
         """
         The do function of acquisition.
 
@@ -899,8 +902,8 @@ class AcquisitionBuilder:
             def init(self):
                 builder_self._init_function(self.cracker)
 
-            def do(self):
-                return builder_self._do_function(self.cracker)
+            def do(self, count: int):
+                return builder_self._do_function(self.cracker, count)
 
             def finish(self):
                 builder_self._finish_function(self.cracker)

@@ -195,6 +195,13 @@ class TraceDataset(abc.ABC):
     def create_time(self):
         return self._create_time
 
+    def plot(self):
+        from cracknuts.trace.plot import TracePlot
+
+        plot = TracePlot()
+        plot.set_trace_dataset(self)
+        return plot
+
 
 class _InfoRender:
     def __init__(
@@ -652,7 +659,7 @@ class ZarrTraceDataset(TraceDataset):
         return data
 
 
-class ScarrTraceDataset2(ZarrTraceDataset):
+class ScarrTraceDataset(ZarrTraceDataset):
     """
     [DEPRECATED] 这个类已经废弃，请使用 ZarrTraceDataset .
     """
@@ -840,8 +847,8 @@ class NumpyTraceDataset(TraceDataset):
                 f,
             )
 
-    def get_origin_data(self) -> tuple[np.array, np.array]:
-        return self._trace_array, self._plaintext_array
+    def get_origin_data(self) -> tuple[np.array, np.array, np.array, np.array, np.array]:
+        return self._trace_array, self._plaintext_array, self._ciphertext_array, self._key_array, self._extended_array
 
     @classmethod
     def load(cls, path: str, **kwargs) -> "TraceDataset":
@@ -972,26 +979,26 @@ class NumpyTraceDataset(TraceDataset):
             if self._plaintext_array is None:
                 item_length = len(data_plaintext)
                 self._plaintext_array = np.zeros(
-                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                    shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8
                 )
             self._plaintext_array[channel_index, trace_index, :] = np.frombuffer(data_plaintext, dtype=np.uint8)
         if data_ciphertext is not None:
             if self._ciphertext_array is None:
                 item_length = len(data_ciphertext)
                 self._ciphertext_array = np.zeros(
-                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                    shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8
                 )
             self._ciphertext_array[channel_index, trace_index, :] = np.frombuffer(data_ciphertext, dtype=np.uint8)
         if data_key is not None:
             if self._key_array is None:
                 item_length = len(data_key)
-                self._key_array = np.zeros(shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8)
+                self._key_array = np.zeros(shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8)
             self._key_array[channel_index, trace_index, :] = np.frombuffer(data_key, dtype=np.uint8)
         if data_extended is not None:
             if self._extended_array is None:
                 item_length = len(data_extended)
                 self._extended_array = np.zeros(
-                    shape=(self._channel_count, self._sample_count, item_length), dtype=np.uint8
+                    shape=(self._channel_count, self._trace_count, item_length), dtype=np.uint8
                 )
             self._key_array[channel_index, trace_index, :] = np.frombuffer(data_extended, dtype=np.uint8)
 
@@ -1009,6 +1016,13 @@ class NumpyTraceDataset(TraceDataset):
         key = None if self._key_array is None else self._key_array[channel_slice, trace_slice]
         extended = None if self._extended_array is None else self._extended_array[channel_slice, trace_slice]
 
+        print(
+            "trace shape",
+            self._trace_array.shape,
+            self._trace_array[channel_slice, trace_slice].shape,
+            channel_slice,
+            trace_slice,
+        )
         return c, t, self._trace_array[channel_slice, trace_slice], [plaintext, ciphertext, key, extended]
 
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:
