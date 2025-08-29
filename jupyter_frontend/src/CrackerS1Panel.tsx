@@ -549,6 +549,16 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                             ]}/>
                           </Space.Compact>
                         </Form.Item>
+                        <Tooltip
+                          title={nutI2cEnable ? intl.formatMessage({id: "cracker.config.nut.i2c.stretchEnable.tooltip"}) : null}>
+                          <Form.Item style={{marginRight: 1}}>
+                            <Checkbox id={"cracker_config_i2c_stretch_enable"} checked={nutI2cStretchEnable} onChange={() => {
+                              setNutI2cStretchEnable(!nutI2cStretchEnable)
+                            }} disabled={!nutI2cEnable}>
+                              <FormattedMessage id={"cracker.config.nut.i2c.stretchEnable"}/>
+                            </Checkbox>
+                          </Form.Item>
+                        </Tooltip>
                       </Form>
                     </Col>
                   </Row>
