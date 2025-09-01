@@ -49,8 +49,7 @@ else {
     $destinationPath = "$userProfile\Downloads\Miniconda3-latest-Windows-x86_64.exe"
 
     # Download the Miniconda installer
-    $webClient = New-Object System.Net.WebClient
-    $webClient.DownloadFile($minicondaUrl, $destinationPath)
+    Invoke-WebRequest -Uri $minicondaUrl -OutFile $destinationPath
 
     Write-Host "Miniconda download completed, starting silent installation..."
 

@@ -210,4 +210,4 @@ def unpack_send_message(message: bytes):
     else:
         header = struct.unpack(REQ_HEADER_FORMAT, message[:REQ_HEADER_SIZE])
         payload = message[REQ_HEADER_SIZE:]
-        return header, payload
+        return header[3], payload
