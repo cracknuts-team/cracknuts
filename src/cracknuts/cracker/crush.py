@@ -12,6 +12,7 @@ class CrushCommand(Command):
     QSPI_SET_FAB_DATA = 0x0344
     QSPI_CLEAR_BUFFER = 0x0345
     QSPI_ACTION = 0x0346
+    QSPI_WRITE_BUFFER = 0x0003
 
 
 class Crush(CrackerS1):
@@ -49,3 +50,10 @@ class Crush(CrackerS1):
     def qspi_action(self):
         self._logger.debug(f"qspi_action payload: {None}")
         status, _ = self.send_with_command(CrushCommand.QSPI_ACTION)
+
+    def qspi_write_buffer(self, base_addr: int, offset: int, data: bytes | str):
+        if isinstance(data, str):
+            data = bytes.fromhex(data)
+        payload = struct.pack(">II", base_addr, offset) + data
+        self._logger.debug(f"qspi_write_buffer payload: {payload.hex()}")
+        status, _ = self.send_with_command(CrushCommand.QSPI_WRITE_BUFFER, payload=payload)
