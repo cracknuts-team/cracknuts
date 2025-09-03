@@ -191,6 +191,7 @@ class Acquisition(abc.ABC):
         else:
             self._run(
                 test=False,
+                persistent=True,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -246,6 +247,7 @@ class Acquisition(abc.ABC):
         try:
             self._do_run(
                 test=False,
+                persistent=True,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -298,6 +300,7 @@ class Acquisition(abc.ABC):
             self._logger.debug("Start test mode.")
             self._run(
                 test=True,
+                persistent=False,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -340,6 +343,7 @@ class Acquisition(abc.ABC):
         try:
             self._do_run(
                 test=True,
+                persistent=False,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -382,6 +386,7 @@ class Acquisition(abc.ABC):
     def _run(
         self,
         test: bool = True,
+        persistent: bool = False,
         count: int = 1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
@@ -402,6 +407,7 @@ class Acquisition(abc.ABC):
             target=self._do_run,
             kwargs={
                 "test": test,
+                "persistent": persistent,
                 "count": count,
                 "sample_length": sample_length,
                 "sample_offset": sample_offset,
@@ -422,6 +428,7 @@ class Acquisition(abc.ABC):
     def _do_run(
         self,
         test: bool = True,
+        persistent: bool = False,
         count: int = 1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
@@ -480,7 +487,7 @@ class Acquisition(abc.ABC):
         self.pre_init()
         self.init()
         self._post_init()
-        self._loop(not test, self.file_path, self.file_format)
+        self._loop(test, persistent, self.file_path, self.file_format)
         self._pre_finish()
         self.finish()
         self._post_finish()
@@ -489,7 +496,9 @@ class Acquisition(abc.ABC):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, persistent: bool = True, file_path: str | None = None, file_format: str = "zarr"):
+    def _loop(
+        self, test: bool = True, persistent: bool = False, file_path: str | None = None, file_format: str = "zarr"
+    ):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
@@ -603,12 +612,12 @@ class Acquisition(abc.ABC):
             if dataset is not None and self._last_wave is not None:
                 for k in self._last_wave.keys():
                     dataset.set_trace(str(k), trace_index, self._last_wave[k], data)
-            self._post_do()
+            self._post_do(data)
             trace_index += 1
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
             # Reduce the execution frequency in test mode.
-            if not persistent:
+            if test:
                 if self.trace_fetch_interval is not None and self.trace_fetch_interval != 0:
                     time.sleep(self.trace_fetch_interval)
 
@@ -719,7 +728,7 @@ class Acquisition(abc.ABC):
             self._logger.error("Do error: %s", e.args)
             return False
 
-    def _post_do(self): ...
+    def _post_do(self, data): ...
 
     def _is_triggered(self):
         _, triggered = self.cracker.osc_is_triggered()
