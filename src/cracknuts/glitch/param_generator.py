@@ -97,7 +97,7 @@ class VCCGlitchParamGenerator(AbstractGlitchParamGenerator):
         if self.interval is not None:
             interval_list = self._do_build(self.interval)
 
-        self._params = [
+        return [
             VCCGlitchParam(*combo)
             for combo in itertools.product(
                 normal_list,
