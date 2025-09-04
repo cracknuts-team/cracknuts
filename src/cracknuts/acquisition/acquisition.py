@@ -565,7 +565,7 @@ class Acquisition(abc.ABC):
             self.pre_do()
             start = time.time()
             try:
-                data = self.do()
+                data = self.do(trace_index)
             except Exception as e:
                 self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
                 do_error_count += 1
@@ -701,10 +701,12 @@ class Acquisition(abc.ABC):
         self.cracker.osc_single()
 
     @abc.abstractmethod
-    def do(self) -> dict[str, bytes]:
+    def do(self, count: int) -> dict[str, bytes]:
         """
         The `do` logic, which the user should implement in the subclass.
 
+        :param count: The loop count, starting from 0.
+        :type count: int
         :return: The data in dictionary format to be saved should contain the ciphertext and plaintext keys,
                  and may optionally include the key and extended keys.
                  The plaintext is the data to be encrypted, the ciphertext is the encrypted result, the key is used
@@ -838,7 +840,7 @@ class AcquisitionBuilder:
 
     def __init__(self):
         self._cracker = None
-        self._do_function = lambda _: ...
+        self._do_function = lambda cracker, count: ...
         self._init_function = lambda _: ...
         self._finish_function = lambda _: ...
 
@@ -865,7 +867,7 @@ class AcquisitionBuilder:
             self._init_function = init_function
         return self
 
-    def do(self, do_function: typing.Callable[[CrackerBasic], dict[str, bytes]]):
+    def do(self, do_function: typing.Callable[[CrackerBasic, int], dict[str, bytes]]):
         """
         The do function of acquisition.
 
@@ -909,8 +911,8 @@ class AcquisitionBuilder:
             def init(self):
                 builder_self._init_function(self.cracker)
 
-            def do(self):
-                return builder_self._do_function(self.cracker)
+            def do(self, count: int):
+                return builder_self._do_function(self.cracker, count)
 
             def finish(self):
                 builder_self._finish_function(self.cracker)
