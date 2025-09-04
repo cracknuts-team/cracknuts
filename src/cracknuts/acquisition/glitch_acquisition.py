@@ -111,7 +111,6 @@ class GlitchAcquisition(Acquisition):
         self._current_glitch_param = None
 
     def pre_init(self):
-        # 初始化存储数据
         self._glitch_result = GlitchTestResult(datetime.datetime.now().strftime("%Y%m%d%H%M%S"), create=True)
 
     def init(self): ...
@@ -123,6 +122,7 @@ class GlitchAcquisition(Acquisition):
         if isinstance(self._glitch_param_generator, VCCGlitchParamGenerator):
             glitch_param = self._glitch_param_generator.next()
             cracker_g1: CrackerG1 = typing.cast(self.cracker, CrackerG1)
+            print(f"type of cracker_g1: {type(cracker_g1)}")
             cracker_g1.glitch_vcc_config(
                 wait=glitch_param.wait,
                 level=glitch_param.glitch,
@@ -143,7 +143,7 @@ class GlitchAcquisition(Acquisition):
         self._glitch_param_generator = param_generator
         self.trace_count = self._glitch_param_generator.total()
 
-    def do_glitch_test(
+    def glitch_test(
         self,
         sample_length: int | None = None,
         sample_offset: int | None = None,
@@ -160,6 +160,41 @@ class GlitchAcquisition(Acquisition):
         trace_fetch_interval: float = 0.1,
     ):
         self._run(
+            test=False,
+            persistent=False,
+            count=self.trace_count,
+            sample_length=sample_length,
+            sample_offset=sample_offset,
+            data_plaintext_length=data_plaintext_length,
+            data_ciphertext_length=data_ciphertext_length,
+            data_key_length=data_key_length,
+            data_extended_length=data_extended_length,
+            trigger_judge_wait_time=trigger_judge_wait_time,
+            trigger_judge_timeout=trigger_judge_timeout,
+            do_error_max_count=do_error_max_count,
+            do_error_handler_strategy=do_error_handler_strategy,
+            file_format=file_format,
+            file_path=file_path,
+            trace_fetch_interval=trace_fetch_interval,
+        )
+
+    def glitch_test_sync(
+        self,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
+        file_format: str | None = "zarr",
+        file_path: str | None = "auto",
+        trace_fetch_interval: float = 0.1,
+    ):
+        self._do_run(
             test=False,
             persistent=False,
             count=self.trace_count,
@@ -216,7 +251,7 @@ class GlitchAcquisitionBuilder(AcquisitionBuilder):
 
         builder_self = self
 
-        class AnonymousAcquisition(Acquisition):
+        class AnonymousAcquisition(GlitchAcquisition):
             def __init__(self, *ana_args, **ana_kwargs):
                 super().__init__(*ana_args, **ana_kwargs)
 
