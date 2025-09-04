@@ -4,7 +4,7 @@
   "acquisition.test": "测试",
   "acquisition.stop": "停止",
   "acquisition.traceCount": "采集轮数",
-  "acquisition.triggerJudgeWaitTime": "触发判断等待时长",
+  "acquisition.triggerJudgeWaitTime": "触发判断间隔",
   "acquisition.triggerJudgeTimeout": "触发判断超时",
   "acquisition.traceFetchInterval": "采集频率",
   "acquisition.doErrorCountMax": "do异常最大次数",
