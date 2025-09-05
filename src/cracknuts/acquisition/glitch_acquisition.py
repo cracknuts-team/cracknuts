@@ -5,7 +5,13 @@ import sqlite3
 import typing
 
 from cracknuts import Acquisition, CrackerBasic, AcquisitionBuilder, CrackerG1
-from cracknuts.glitch.param_generator import AbstractGlitchParamGenerator, VCCGlitchParam, VCCGlitchParamGenerator
+from cracknuts.glitch.param_generator import (
+    AbstractGlitchParamGenerator,
+    VCCGlitchParam,
+    VCCGlitchParamGenerator,
+    GlitchGenerateParam,
+    GNDGlitchParamGenerator,
+)
 
 
 class GlitchTestResult(abc.ABC):
@@ -106,6 +112,7 @@ class GlitchAcquisition(Acquisition):
             file_path,
             trace_fetch_interval,
         )
+        self._cracker_g1 = typing.cast(CrackerG1, self.cracker)
         self._glitch_result = None
         self._glitch_param_generator: AbstractGlitchParamGenerator | None = None
         self._current_glitch_param = None
@@ -159,6 +166,10 @@ class GlitchAcquisition(Acquisition):
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
     ):
+        glitch_params = self._build_glitch_param_generator(self._cracker_g1.get_glitch_test_params())
+        self._logger.warning(f"glitch_params: {glitch_params}")
+        self.set_glitch_params(glitch_params)
+        self._logger.warning(f"count is {self.trace_count}")
         self._run(
             test=False,
             persistent=False,
@@ -177,6 +188,129 @@ class GlitchAcquisition(Acquisition):
             file_path=file_path,
             trace_fetch_interval=trace_fetch_interval,
         )
+
+    @staticmethod
+    def _build_glitch_param_generator(glitch_params) -> AbstractGlitchParamGenerator:
+        if glitch_params["type"] == "vcc":
+            normal, wait, glitch, count, repeat, interval = None, None, None, None, None, None
+            for param in glitch_params["params"]:
+                if param["prop"] == "normal":
+                    g_param = param["param"]
+                    normal = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "wait":
+                    g_param = param["param"]
+                    wait = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "glitch":
+                    g_param = param["param"]
+                    glitch = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "count":
+                    g_param = param["param"]
+                    count = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "repeat":
+                    g_param = param["param"]
+                    repeat = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "interval":
+                    g_param = param["param"]
+                    interval = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+            return VCCGlitchParamGenerator(normal, wait, glitch, count, repeat, interval)
+        elif glitch_params["type"] == "gnd":
+            normal, wait, glitch, count, repeat, interval = None, None, None, None, None, None
+            for param in glitch_params["params"]:
+                if param["prop"] == "normal":
+                    g_param = param["param"]
+                    normal = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "wait":
+                    g_param = param["param"]
+                    wait = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "glitch":
+                    g_param = param["param"]
+                    glitch = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "count":
+                    g_param = param["param"]
+                    count = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "repeat":
+                    g_param = param["param"]
+                    repeat = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+                elif param["prop"] == "interval":
+                    g_param = param["param"]
+                    interval = GlitchGenerateParam(
+                        start=g_param["start"],
+                        end=g_param["end"],
+                        count=g_param["count"],
+                        step=g_param["step"],
+                        mode=GlitchGenerateParam.Mode(g_param["mode"]),
+                    )
+            return GNDGlitchParamGenerator(normal, wait, glitch, count, repeat, interval)
+        elif glitch_params["type"] == "clock":
+            ...
+        else:
+            raise ValueError("Unknown glitch param type")
 
     def glitch_test_sync(
         self,
