@@ -18,6 +18,7 @@ import {useModel, useModelState} from "@anywidget/react";
 import {BlockOutlined, ExportOutlined, ImportOutlined, SaveOutlined, ThunderboltOutlined,} from "@ant-design/icons";
 import AcquisitionPanel from "@/AcquisitionPanel.tsx";
 import {FormattedMessage, useIntl} from "react-intl";
+import GlitchTestPanel, {GlitchTestPanelOnApplyParam} from "@/GlitchTestPanel.tsx";
 
 interface CrackS1PanelProps {
   hasAcquisition?: boolean;
@@ -130,6 +131,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [glitchGNDRepeatMin, glitchGNDRepeatMax] = [1, 255];
   const [glitchGNDDelay, setGlitchGNDDelay] = useModelState<number>("glitch_gnd_delay");
 
+  // glitch test
+  const [,setGlitchTestParams] = useModelState<GlitchTestPanelOnApplyParam>("glitch_test_params");
 
   // osc
   const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");
@@ -365,7 +368,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
             <Spin indicator={<span></span>} spinning={acqStatus == 2 || acqStatus == -2}>
               {/*<Divider orientation="left" style={{marginTop: 15, marginBottom: 5, borderColor: '#3da9c7'}}>NUT</Divider>*/}
               <Tabs defaultActiveKey="1">
-                <Tabs.TabPane tab={"Cracker"} key="1">
+                <Tabs.TabPane tab={"COMMON"} key="1">
                   <Row>
                     <Col span={24}>
                       <Form layout={"inline"}>
@@ -817,7 +820,14 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Col>
                   </Row>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab={"OSC"} key="3">
+                <Tabs.TabPane tab={"GLITCH TEST"} key="3">
+                  <Row>
+                    <Col span={24}>
+                      <GlitchTestPanel onApply={setGlitchTestParams}/>
+                    </Col>
+                  </Row>
+                </Tabs.TabPane>
+                <Tabs.TabPane tab={"OSC"} key="4">
                   <Row>
                     <Col span={24}>
                       <Row>

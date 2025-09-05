@@ -10,6 +10,7 @@ from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition, AcquisitionConfig
 from traitlets import traitlets
 
+from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
@@ -92,6 +93,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
 
     def msg_acq_status_changed(self, changed: dict[str, typing.Any]):
         status = changed.get("status")
+        self._logger.warning(f"glitch_test....... {status}")
         if status == "pause":
             self.acquisition.pause()
         elif status == "test":
@@ -114,6 +116,30 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
                 do_error_max_count=self.do_error_max_count,
                 file_format=self.file_format,
                 file_path="auto" if self.file_path == "" or self.file_path is None else self.file_path,
+            )
+        elif status == "glitch_test":
+            self.before_test()
+
+            # self.acquisition.run(
+            #     count=self.trace_count,
+            #     sample_offset=self.sample_offset,
+            #     sample_length=self.sample_length,
+            #     trigger_judge_wait_time=self.trigger_judge_wait_time,
+            #     trigger_judge_timeout=self.trigger_judge_timeout,
+            #     do_error_max_count=self.do_error_max_count,
+            #     file_format=self.file_format,
+            #     file_path="auto" if self.file_path == "" or self.file_path is None else self.file_path,
+            # )
+            glitch_acq = typing.cast(GlitchAcquisition, self.acquisition)
+            print("xxxxxxxxx ", type(glitch_acq))
+            print("xxx111111 ", type(self.acquisition))
+            glitch_acq.glitch_test(
+                sample_length=self.sample_length,
+                sample_offset=self.sample_offset,
+                trigger_judge_wait_time=self.trigger_judge_wait_time,
+                trigger_judge_timeout=self.trigger_judge_timeout,
+                do_error_max_count=self.do_error_max_count,
+                trace_fetch_interval=self.trace_fetch_interval,
             )
         else:
             self.acquisition.stop()

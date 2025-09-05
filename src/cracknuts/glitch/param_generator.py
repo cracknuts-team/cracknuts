@@ -108,3 +108,6 @@ class VCCGlitchParamGenerator(AbstractGlitchParamGenerator):
                 interval_list,
             )
         ]
+
+
+class GNDGlitchParamGenerator(VCCGlitchParamGenerator): ...
