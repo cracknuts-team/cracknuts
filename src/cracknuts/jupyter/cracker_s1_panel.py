@@ -257,8 +257,6 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("nut_voltage")
     @observe_interceptor
     def nut_voltage_changed(self, change):
-        self._logger.error(f"nut voltage changed: {change.get('old')} - {change.get('new')}")
-        self._logger.error(f"nut voltage changed: {change}")
         self.cracker.nut_voltage(change.get("new"))
 
     @traitlets.observe("nut_clock_enable")
