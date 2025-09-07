@@ -41,13 +41,13 @@ class ConfigG1(ConfigS1):
 
 
 class CommandG1(Command):
-    GLITCH_VCC_ENABLE = 0x0310
+    GLITCH_VCC_ARM = 0x0310
     GLITCH_VCC_RESET = 0x0311
     GLITCH_VCC_FORCE = 0x0312
     GLITCH_VCC_CONFIG = 0x0313
     GLITCH_VCC_NORMAL = 0x0314
 
-    GLITCH_GND_ENABLE = 0x0320
+    GLITCH_GND_ARM = 0x0320
     GLITCH_GND_RESET = 0x0321
     GLITCH_GND_FORCE = 0x0322
     GLITCH_GND_CONFIG = 0x0323
@@ -55,16 +55,16 @@ class CommandG1(Command):
 
 
 class CrackerG1(CrackerS1):
-    def glitch_vcc_enable(self):
-        self._glitch_vcc_enable(True)
+    def glitch_vcc_arm(self):
+        self._glitch_vcc_arm(True)
 
-    def glitch_vcc_disable(self):
-        self._glitch_vcc_enable(False)
+    # def glitch_vcc_disable(self):
+    #     self._glitch_vcc_enable(False)
 
-    def _glitch_vcc_enable(self, enable: bool):
+    def _glitch_vcc_arm(self, enable: bool):
         payload = struct.pack(">?", enable)
         self._logger.debug(f"glitch_vcc_enable payload: {payload.hex()}")
-        status, res = self.send_with_command(CommandG1.GLITCH_VCC_ENABLE, payload=payload)
+        status, res = self.send_with_command(CommandG1.GLITCH_VCC_ARM, payload=payload)
         if status != protocol.STATUS_OK:
             return status, None
         else:
@@ -118,8 +118,7 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def nut_voltage(self, voltage: float | str | int) -> tuple[int, None]:
-        ...
-        # return self.glitch_vcc_normal(voltage)
+        return self.glitch_vcc_normal(voltage)
 
     def glitch_vcc_normal(self, voltage: float | str | int) -> tuple[int, None]:
         voltage = self._parse_voltage(voltage)
@@ -161,16 +160,16 @@ class CrackerG1(CrackerS1):
         interp_func = interp1d(voltages, codes, kind="linear", fill_value="extrapolate")
         return int(round(interp_func(voltage * 1000).item()))
 
-    def glitch_gnd_enable(self):
-        self._glitch_gnd_enable(True)
+    def glitch_gnd_arm(self):
+        self._glitch_gnd_arm(True)
 
-    def glitch_gnd_disable(self):
-        self._glitch_gnd_enable(False)
+    # def glitch_gnd_disable(self):
+    #     self._glitch_gnd_arm(False)
 
-    def _glitch_gnd_enable(self, enable: bool):
+    def _glitch_gnd_arm(self, enable: bool):
         payload = struct.pack(">?", enable)
         self._logger.debug(f"glitch_gnd_enable payload: {payload.hex()}")
-        status, res = self.send_with_command(CommandG1.GLITCH_GND_ENABLE, payload=payload)
+        status, res = self.send_with_command(CommandG1.GLITCH_GND_ARM, payload=payload)
         if status != protocol.STATUS_OK:
             return status, None
         else:
