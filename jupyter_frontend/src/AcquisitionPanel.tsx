@@ -33,8 +33,8 @@ const AcquisitionPanel: React.FC = () => {
       model.send({source: "acqStatusButton", event: "onChange", args: {status: "test"}});
     } else if (status == 2) {
       model.send({source: "acqStatusButton", event: "onChange", args: {status: "run"}});
-    } else if (status == 3) {
-      model.send({source: "acqStatusButton", event: "onChange", args: {status: "glitch_test"}});
+    // } else if (status == 3) {
+    //   model.send({source: "acqStatusButton", event: "onChange", args: {status: "glitch_test"}});
     } else {
       // stop
       model.send({source: "acqStatusButton", event: "onChange", args: {status: "stop"}});
@@ -86,9 +86,9 @@ const AcquisitionPanel: React.FC = () => {
                 <Radio.Button value={2} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>
                   <FormattedMessage id={"acquisition.run"}/>
                 </Radio.Button>
-                <Radio.Button value={3} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>
-                  Glitch Test
-                </Radio.Button>
+                {/*<Radio.Button value={3} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>*/}
+                {/*  Glitch Test*/}
+                {/*</Radio.Button>*/}
                 <Radio.Button value={-1} disabled={acqStatus == 0 || checkFrontBackStatusSync()}>
                   <FormattedMessage id={"acquisition.pause"}/>
                 </Radio.Button>
