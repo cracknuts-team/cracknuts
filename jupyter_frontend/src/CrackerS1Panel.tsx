@@ -107,29 +107,29 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
   const [nutI2cStretchEnable, setNutI2cStretchEnable] = useModelState<boolean>("nut_i2c_stretch_enable");
 
   // glitch
-  const [glitchVCCNormalVoltage, setGlitchVCCNormalVoltage] = useModelState<number>("glitch_vcc_normal_voltage");
-  const [glitchVCCNormalVoltageMin, glitchVCCNormalVoltageMax] = [1.2, 4.0];
-  const [glitchVCCWait, setGlitchVCCWait] = useModelState<number>("glitch_vcc_wait");
-  const [glitchVCCWaitMin, glitchVCCWaitMax] = [0, 0xFFFF_FFFF];
-  const [glitchVCCGlitchVoltage, setGlitchVCCGlitchVoltage] = useModelState<number>("glitch_vcc_glitch_voltage");
-  const [glitchVCCGlitchVoltageMin, glitchVCCGlitchVoltageMax] = [0.0, 4.0];
-  const [glitchVCCCount, setGlitchVCCCount] = useModelState<number>("glitch_vcc_count");
-  const [glitchVCCCountMin, glitchVCCCountMax] = [1, 255];
-  const [glitchVCCRepeat, setGlitchVCCRepeat] = useModelState<number>("glitch_vcc_repeat");
-  const [glitchVCCRepeatMin, glitchVCCRepeatMax] = [1, 255];
-  const [glitchVCCDelay, setGlitchVCCDelay] = useModelState<number>("glitch_vcc_delay");
-
-  const [glitchGNDNormalVoltage, setGlitchGNDNormalVoltage] = useModelState<number>("glitch_gnd_normal_voltage");
-  const [glitchGNDNormalVoltageMin, glitchGNDNormalVoltageMax] = [0.0, 1.0];
-  const [glitchGNDWait, setGlitchGNDWait] = useModelState<number>("glitch_gnd_wait");
-  const [glitchGNDWaitMin, glitchGNDWaitMax] = [0, 0xFFFF_FFFF];
-  const [glitchGNDGlitchVoltage, setGlitchGNDGlitchVoltage] = useModelState<number>("glitch_gnd_glitch_voltage");
-  const [glitchGNDGlitchVoltageMin, glitchGNDGlitchVoltageMax] = [0.0, 4.0];
-  const [glitchGNDCount, setGlitchGNDCount] = useModelState<number>("glitch_gnd_count");
-  const [glitchGNDCountMin, glitchGNDCountMax] = [1, 255];
-  const [glitchGNDRepeat, setGlitchGNDRepeat] = useModelState<number>("glitch_gnd_repeat");
-  const [glitchGNDRepeatMin, glitchGNDRepeatMax] = [1, 255];
-  const [glitchGNDDelay, setGlitchGNDDelay] = useModelState<number>("glitch_gnd_delay");
+  // const [glitchVCCNormalVoltage, setGlitchVCCNormalVoltage] = useModelState<number>("glitch_vcc_normal_voltage");
+  // const [glitchVCCNormalVoltageMin, glitchVCCNormalVoltageMax] = [1.2, 4.0];
+  // const [glitchVCCWait, setGlitchVCCWait] = useModelState<number>("glitch_vcc_wait");
+  // const [glitchVCCWaitMin, glitchVCCWaitMax] = [0, 0xFFFF_FFFF];
+  // const [glitchVCCGlitchVoltage, setGlitchVCCGlitchVoltage] = useModelState<number>("glitch_vcc_glitch_voltage");
+  // const [glitchVCCGlitchVoltageMin, glitchVCCGlitchVoltageMax] = [0.0, 4.0];
+  // const [glitchVCCCount, setGlitchVCCCount] = useModelState<number>("glitch_vcc_count");
+  // const [glitchVCCCountMin, glitchVCCCountMax] = [1, 255];
+  // const [glitchVCCRepeat, setGlitchVCCRepeat] = useModelState<number>("glitch_vcc_repeat");
+  // const [glitchVCCRepeatMin, glitchVCCRepeatMax] = [1, 255];
+  // const [glitchVCCDelay, setGlitchVCCDelay] = useModelState<number>("glitch_vcc_delay");
+  //
+  // const [glitchGNDNormalVoltage, setGlitchGNDNormalVoltage] = useModelState<number>("glitch_gnd_normal_voltage");
+  // const [glitchGNDNormalVoltageMin, glitchGNDNormalVoltageMax] = [0.0, 1.0];
+  // const [glitchGNDWait, setGlitchGNDWait] = useModelState<number>("glitch_gnd_wait");
+  // const [glitchGNDWaitMin, glitchGNDWaitMax] = [0, 0xFFFF_FFFF];
+  // const [glitchGNDGlitchVoltage, setGlitchGNDGlitchVoltage] = useModelState<number>("glitch_gnd_glitch_voltage");
+  // const [glitchGNDGlitchVoltageMin, glitchGNDGlitchVoltageMax] = [0.0, 4.0];
+  // const [glitchGNDCount, setGlitchGNDCount] = useModelState<number>("glitch_gnd_count");
+  // const [glitchGNDCountMin, glitchGNDCountMax] = [1, 255];
+  // const [glitchGNDRepeat, setGlitchGNDRepeat] = useModelState<number>("glitch_gnd_repeat");
+  // const [glitchGNDRepeatMin, glitchGNDRepeatMax] = [1, 255];
+  // const [glitchGNDDelay, setGlitchGNDDelay] = useModelState<number>("glitch_gnd_delay");
 
   // glitch test
   const [,setGlitchTestParams] = useModelState<GlitchTestPanelOnApplyParam>("glitch_test_params");
@@ -592,235 +592,235 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                     </Col>
                   </Row>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab={"GLITCH"} key="2">
-                  <Row>
-                    <Col span={24}>
-                      <Form layout={"inline"}>
-                        <Form.Item label={"VCC"} style={{width: 35}}/>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.normalVoltage"})}>
-                          <InputNumber style={{width: 90}}
-                            addonAfter="V"
-                            step="0.1"
-                            stringMode
-                            size={"small"}
-                            min={glitchVCCNormalVoltageMin}
-                            max={glitchVCCNormalVoltageMax}
-                            value={glitchVCCNormalVoltage}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchVCCNormalVoltage(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.wait"})}>
-                          <InputNumber style={{width: 90}}
-                            addonAfter="10 ns"
-                            step="1"
-                            stringMode
-                            size={"small"}
-                            min={glitchVCCWaitMin}
-                            max={glitchVCCWaitMax}
-                            value={glitchVCCWait}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchVCCWait(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.glitchVoltage"})}>
-                          <InputNumber style={{width: 90}}
-                            addonAfter="V"
-                            step="0.1"
-                            stringMode
-                            size={"small"}
-                            min={glitchVCCGlitchVoltageMin}
-                            max={glitchVCCGlitchVoltageMax}
-                            value={glitchVCCGlitchVoltage}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchVCCGlitchVoltage(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.count"})}>
-                          <InputNumber style={{width: 90}}
-                            step="1"
-                            stringMode
-                            size={"small"}
-                            min={glitchVCCCountMin}
-                            max={glitchVCCCountMax}
-                            value={glitchVCCCount}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchVCCCount(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.repeat"})}>
-                          <InputNumber style={{width: 90}}
-                            step="1"
-                            stringMode
-                            size={"small"}
-                            min={glitchVCCRepeatMin}
-                            max={glitchVCCRepeatMax}
-                            value={glitchVCCRepeat}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchVCCRepeat(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.delay"})}>
-                          <InputNumber style={{width: 90}}
-                            step="1"
-                            addonAfter="10 ns"
-                            stringMode
-                            size={"small"}
-                            // min={glitchVCCDelay}
-                            // max={glitchVCCRepeatMax}
-                            value={glitchVCCDelay}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchVCCDelay(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                      </Form>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col span={24}>
-                      <Form layout={"inline"}>
-                        <Form.Item label={"GND"} style={{width: 35}}/>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.normalVoltage"})}>
-                          <InputNumber style={{width: 90}}
-                            addonAfter="V"
-                            step="0.1"
-                            stringMode
-                            size={"small"}
-                            min={glitchGNDNormalVoltageMin}
-                            max={glitchGNDNormalVoltageMax}
-                            value={glitchGNDNormalVoltage}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchGNDNormalVoltage(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>
-                          <InputNumber style={{width: 90}}
-                            addonAfter="10 ns"
-                            step="1"
-                            stringMode
-                            size={"small"}
-                            min={glitchGNDWaitMin}
-                            max={glitchGNDWaitMax}
-                            value={glitchGNDWait}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchGNDWait(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.glitchVoltage"})}>
-                          <InputNumber style={{width: 90}}
-                            addonAfter="V"
-                            step="0.1"
-                            stringMode
-                            size={"small"}
-                            min={glitchGNDGlitchVoltageMin}
-                            max={glitchGNDGlitchVoltageMax}
-                            value={glitchGNDGlitchVoltage}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchGNDGlitchVoltage(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.count"})}>
-                          <InputNumber style={{width: 90}}
-                            step="1"
-                            stringMode
-                            size={"small"}
-                            min={glitchGNDCountMin}
-                            max={glitchGNDCountMax}
-                            value={glitchGNDCount}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchGNDCount(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.repeat"})}>
-                          <InputNumber style={{width: 90}}
-                            step="1"
-                            stringMode
-                            size={"small"}
-                            min={glitchGNDRepeatMin}
-                            max={glitchGNDRepeatMax}
-                            value={glitchGNDRepeat}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchGNDRepeat(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.delay"})}>
-                          <InputNumber style={{width: 90}}
-                            step="1"
-                            addonAfter="10 ns"
-                            stringMode
-                            size={"small"}
-                            // min={glitchVCCDelay}
-                            // max={glitchVCCRepeatMax}
-                            value={glitchGNDDelay}
-                            parser={(v) => {
-                              return Number(v);
-                            }}
-                            onChange={(v) => {
-                              setGlitchGNDDelay(Number(v));
-                            }}
-                            changeOnWheel
-                          />
-                        </Form.Item>
-                      </Form>
-                    </Col>
-                  </Row>
-                </Tabs.TabPane>
-                <Tabs.TabPane tab={"GLITCH TEST"} key="3">
+                {/*<Tabs.TabPane tab={"GLITCH"} key="2">*/}
+                {/*  <Row>*/}
+                {/*    <Col span={24}>*/}
+                {/*      <Form layout={"inline"}>*/}
+                {/*        <Form.Item label={"VCC"} style={{width: 35}}/>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.normalVoltage"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            addonAfter="V"*/}
+                {/*            step="0.1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchVCCNormalVoltageMin}*/}
+                {/*            max={glitchVCCNormalVoltageMax}*/}
+                {/*            value={glitchVCCNormalVoltage}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchVCCNormalVoltage(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.wait"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            addonAfter="10 ns"*/}
+                {/*            step="1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchVCCWaitMin}*/}
+                {/*            max={glitchVCCWaitMax}*/}
+                {/*            value={glitchVCCWait}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchVCCWait(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.glitchVoltage"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            addonAfter="V"*/}
+                {/*            step="0.1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchVCCGlitchVoltageMin}*/}
+                {/*            max={glitchVCCGlitchVoltageMax}*/}
+                {/*            value={glitchVCCGlitchVoltage}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchVCCGlitchVoltage(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.count"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            step="1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchVCCCountMin}*/}
+                {/*            max={glitchVCCCountMax}*/}
+                {/*            value={glitchVCCCount}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchVCCCount(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.repeat"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            step="1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchVCCRepeatMin}*/}
+                {/*            max={glitchVCCRepeatMax}*/}
+                {/*            value={glitchVCCRepeat}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchVCCRepeat(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.delay"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            step="1"*/}
+                {/*            addonAfter="10 ns"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            // min={glitchVCCDelay}*/}
+                {/*            // max={glitchVCCRepeatMax}*/}
+                {/*            value={glitchVCCDelay}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchVCCDelay(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*      </Form>*/}
+                {/*    </Col>*/}
+                {/*  </Row>*/}
+                {/*  <Row>*/}
+                {/*    <Col span={24}>*/}
+                {/*      <Form layout={"inline"}>*/}
+                {/*        <Form.Item label={"GND"} style={{width: 35}}/>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.normalVoltage"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            addonAfter="V"*/}
+                {/*            step="0.1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchGNDNormalVoltageMin}*/}
+                {/*            max={glitchGNDNormalVoltageMax}*/}
+                {/*            value={glitchGNDNormalVoltage}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchGNDNormalVoltage(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            addonAfter="10 ns"*/}
+                {/*            step="1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchGNDWaitMin}*/}
+                {/*            max={glitchGNDWaitMax}*/}
+                {/*            value={glitchGNDWait}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchGNDWait(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.glitchVoltage"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            addonAfter="V"*/}
+                {/*            step="0.1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchGNDGlitchVoltageMin}*/}
+                {/*            max={glitchGNDGlitchVoltageMax}*/}
+                {/*            value={glitchGNDGlitchVoltage}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchGNDGlitchVoltage(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.count"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            step="1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchGNDCountMin}*/}
+                {/*            max={glitchGNDCountMax}*/}
+                {/*            value={glitchGNDCount}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchGNDCount(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.repeat"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            step="1"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            min={glitchGNDRepeatMin}*/}
+                {/*            max={glitchGNDRepeatMax}*/}
+                {/*            value={glitchGNDRepeat}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchGNDRepeat(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*        <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.delay"})}>*/}
+                {/*          <InputNumber style={{width: 90}}*/}
+                {/*            step="1"*/}
+                {/*            addonAfter="10 ns"*/}
+                {/*            stringMode*/}
+                {/*            size={"small"}*/}
+                {/*            // min={glitchVCCDelay}*/}
+                {/*            // max={glitchVCCRepeatMax}*/}
+                {/*            value={glitchGNDDelay}*/}
+                {/*            parser={(v) => {*/}
+                {/*              return Number(v);*/}
+                {/*            }}*/}
+                {/*            onChange={(v) => {*/}
+                {/*              setGlitchGNDDelay(Number(v));*/}
+                {/*            }}*/}
+                {/*            changeOnWheel*/}
+                {/*          />*/}
+                {/*        </Form.Item>*/}
+                {/*      </Form>*/}
+                {/*    </Col>*/}
+                {/*  </Row>*/}
+                {/*</Tabs.TabPane>*/}
+                <Tabs.TabPane tab={"GLITCH"} key="3">
                   <Row>
                     <Col span={24}>
                       <GlitchTestPanel onApply={setGlitchTestParams}/>
