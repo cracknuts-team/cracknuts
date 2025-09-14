@@ -67,6 +67,30 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     glitch_gnd_repeat = traitlets.Int(0).tag(sync=True)
     glitch_gnd_delay = traitlets.Int(0).tag(sync=True)
 
+    glitch_vcc_arm = False
+    glitch_vcc_config_wait = 0
+    glitch_vcc_config_level = 0
+    glitch_vcc_config_count = 0
+    glitch_vcc_config_delay = 0
+    glitch_vcc_config_repeat = 0
+    glitch_vcc_normal = 0
+    glitch_gnd_arm = False
+    glitch_gnd_config_wait = 0
+    glitch_gnd_config_level = 0
+    glitch_gnd_config_count = 0
+    glitch_gnd_config_delay = 0
+    glitch_gnd_config_repeat = 0
+    glitch_gnd_normal = 0
+    glitch_clock_arm = False
+    glitch_clock_len_normal = 0
+    glitch_clock_wave_normal = 0
+    glitch_clock_config_len_glitch = 0
+    glitch_clock_config_wave_glitch = 0
+    glitch_clock_config_count = 0
+    glitch_clock_config_delay = 0
+    glitch_clock_config_repeat = 0
+    glitch_clock_normal = 0
+
     # glitch test
     glitch_test_params = traitlets.Dict({}).tag(sync=True)
 
