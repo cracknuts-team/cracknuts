@@ -15,21 +15,21 @@ from cracknuts.cracker.protocol import Command
 class ConfigG1(ConfigS1):
     def __init__(self):
         super().__init__()
-        self.glitch_vcc_enable = False
+        self.glitch_vcc_arm = False
         self.glitch_vcc_config_wait = 0
         self.glitch_vcc_config_level = 0
         self.glitch_vcc_config_count = 0
         self.glitch_vcc_config_delay = 0
         self.glitch_vcc_config_repeat = 0
         self.glitch_vcc_normal = 0
-        self.glitch_gnd_enable = False
+        self.glitch_gnd_arm = False
         self.glitch_gnd_config_wait = 0
         self.glitch_gnd_config_level = 0
         self.glitch_gnd_config_count = 0
         self.glitch_gnd_config_delay = 0
         self.glitch_gnd_config_repeat = 0
         self.glitch_gnd_normal = 0
-        self.glitch_clock_enable = False
+        self.glitch_clock_arm = False
         self.glitch_clock_len_normal = 0
         self.glitch_clock_wave_normal = 0
         self.glitch_clock_config_len_glitch = 0
@@ -226,14 +226,14 @@ class CrackerG1(CrackerS1):
         bytes_format, config = super()._get_config_bytes_format()
         bytes_format.update(
             {
-                "glitch_vcc_enable": "?",
+                "glitch_vcc_arm": "?",
                 "glitch_vcc_normal": "I",
                 "glitch_vcc_config_wait": "I",
                 "glitch_vcc_config_level": "I",
                 "glitch_vcc_config_count": "I",
                 "glitch_vcc_config_delay": "I",
                 "glitch_vcc_config_repeat": "I",
-                "glitch_gnd_enable": "?",
+                "glitch_gnd_arm": "?",
                 "glitch_gnd_normal": "I",
                 "glitch_gnd_config_wait": "I",
                 "glitch_gnd_config_level": "I",
