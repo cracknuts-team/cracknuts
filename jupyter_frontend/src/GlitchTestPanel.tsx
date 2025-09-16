@@ -187,7 +187,7 @@ interface GlitchTestPanelProps {
 
 const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
   const [vccGlitchParamGenerators, setVccGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
-    prop: 'Normal',
+    prop: 'normal',
     param: {
       mode: 3,
       start: 3.5,
@@ -199,7 +199,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: 5.0,
     unit: 'v',
   }, {
-    prop: 'Glitch',
+    prop: 'glitch',
     param: {
       mode: 3,
       start: 1.5,
@@ -211,7 +211,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: 5.0,
     unit: 'v',
   }, {
-    prop: 'Wait',
+    prop: 'wait',
     param: {
       mode: 3,
       start: 0,
@@ -223,7 +223,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: Number.MAX_VALUE,
     unit: '5ns',
   }, {
-    prop: 'Repeat',
+    prop: 'repeat',
     param: {
       mode: 3,
       start: 1,
@@ -235,7 +235,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: Number.MAX_VALUE,
     unit: 'times',
   }, {
-    prop: 'Interval',
+    prop: 'interval',
     param: {
       mode: 3,
       start: 1,
@@ -248,7 +248,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     unit: '5ns',
   }]);
   const [gndGlitchParamGenerators, setGndGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
-    prop: 'Normal',
+    prop: 'normal',
     param: {
       mode: 3,
       start: 0,
@@ -260,7 +260,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: 5.0,
     unit: 'v',
   }, {
-    prop: 'Glitch',
+    prop: 'glitch',
     param: {
       mode: 3,
       start: 1.5,
@@ -272,7 +272,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: 5.0,
     unit: 'v',
   }, {
-    prop: 'Wait',
+    prop: 'wait',
     param: {
       mode: 3,
       start: 0,
@@ -284,7 +284,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: Number.MAX_VALUE,
     unit: '5ns',
   }, {
-    prop: 'Repeat',
+    prop: 'repeat',
     param: {
       mode: 3,
       start: 1,
@@ -296,7 +296,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: Number.MAX_VALUE,
     unit: 'times',
   }, {
-    prop: 'Interval',
+    prop: 'interval',
     param: {
       mode: 3,
       start: 1,
@@ -309,7 +309,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     unit: '5ns',
   }]);
   const [clockGlitchParamGenerators, setClockGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
-    prop: 'Normal',
+    prop: 'normal',
     param: {
       mode: 0,
       start: 0,
@@ -321,7 +321,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
     max: 255,
     unit: 'MHz',
   }, {
-    prop: 'Wait',
+    prop: 'wait',
     param: {
       mode: 0,
       start: 0,
@@ -386,8 +386,7 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
       </Col>
     </Row>
   );
-
 };
 
-export type {GlitchTestPanelOnApplyParam};
+export type {GlitchTestPanelProps, GlitchTestPanelOnApplyParam};
 export default GlitchTestPanel;
