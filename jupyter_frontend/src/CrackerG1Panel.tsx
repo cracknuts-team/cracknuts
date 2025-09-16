@@ -1,14 +1,15 @@
 import React from "react";
 import Connection, {ConnectionPanelProps} from "@/cracker/Connection.tsx";
 import GlitchTestPanel, {GlitchTestPanelProps} from "@/GlitchTestPanel.tsx";
+import G1ConfigPanel from "@/cracker/G1ConfigPanel.tsx";
 
 
-interface CrackerG1PanelProps {
+interface Props {
   connection: ConnectionPanelProps;
   glitchTestPanel: GlitchTestPanelProps;
 }
 
-const CrackerG1Panel: React.FC<CrackerG1PanelProps> = (props) => {
+const CrackerG1Panel: React.FC<Props> = (props) => {
   return (
     <div>
       <Connection
@@ -19,6 +20,7 @@ const CrackerG1Panel: React.FC<CrackerG1PanelProps> = (props) => {
         disconnect={props.connection.disconnect}
         disabled={props.connection.disabled}
       />
+      <G1ConfigPanel common/>
       <GlitchTestPanel
         onApply={props.glitchTestPanel.onApply}
       />
