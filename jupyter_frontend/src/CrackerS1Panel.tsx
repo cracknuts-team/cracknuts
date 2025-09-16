@@ -588,7 +588,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   style={{width: 80}}
                                 ></Select>
                                 <Button style={{pointerEvents: "none", opacity: 1, cursor: "default"}}
-                                        size={"small"}>Hz</Button>
+                                        size={"small"}>S/s</Button>
                               </Space.Compact>
                             </Form.Item>
                             <Form.Item label={intl.formatMessage({id: "cracker.config.scope.samplePhase"})}>
