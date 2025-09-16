@@ -378,6 +378,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                               disabled={!nutClockEnable}
                               size={"small"}
                               options={[
+                                {value: 64000, label: "64 M"},
                                 {value: 24000, label: "24 M"},
                                 {value: 12000, label: "12 M"},
                                 {value: 8000, label: "8  M"},

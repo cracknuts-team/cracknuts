@@ -755,7 +755,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         if isinstance(clock, str):
             clock = clock.upper()
-            if clock == "24M":
+            if clock == "64M":
+                clock = 64000
+            elif clock == "24M":
                 clock = 24000
             elif clock == "12M":
                 clock = 12000
@@ -764,9 +766,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             elif clock == "4M":
                 clock = 4000
             else:
-                self._logger.error(f"Unknown clock type: {clock}, 24M or 12M or 8M or 4M")
+                self._logger.error(f"Unknown clock type: {clock}, 64M or 24M or 12M or 8M or 4M")
                 return protocol.STATUS_ERROR, None
-
+        validate_nut_clock = (64000, 24000, 12000, 8000, 4000)
+        if clock not in validate_nut_clock:
+            self._logger.error(f"UnSupport osc clock, it should in {validate_nut_clock}")
         payload = struct.pack(">I", clock)
         self._logger.debug(f"nut_set_clock payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK, payload=payload)
