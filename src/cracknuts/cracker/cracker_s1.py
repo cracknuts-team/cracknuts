@@ -368,14 +368,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set trigger source.
 
-        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P') or ('Nut'、'ChA'、'ChB'、'Protocol')
-                       or a number in 0, 1, 2, 3, represent Nut, Channel A, Channel B, and Protocol, respectively.
+        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P', 'R', 'V')
+                       or ('Nut', 'ChA', 'ChB', 'Protocol', 'Reset', 'Voltage') or a number in 0 1 2 3 4 5 represent
+                       Nut, Channel A, Channel B, Protocol, Reset and Voltage respectively.
         :type source: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        sources1 = ("N", "A", "B", "P")
-        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL")
+        sources1 = ("N", "A", "B", "P", "R", "V")
+        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL", "RESET", "VOLTAGE")
         if isinstance(source, str):
             source = source.upper()
             if source in sources1:
@@ -389,8 +390,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 )
                 return self.NON_PROTOCOL_ERROR, None
         else:
-            if source > 3:
-                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3)")
+            if source > 5:
+                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3, 4, 5)")
                 return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">B", source)
         self._logger.debug(f"osc_trigger_source payload: {payload.hex()}")
