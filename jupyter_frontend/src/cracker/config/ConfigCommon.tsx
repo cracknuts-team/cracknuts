@@ -3,7 +3,7 @@ import {FormattedMessage, useIntl} from "react-intl";
 import React, {ChangeEvent} from "react";
 
 
-interface ConfigCommonPanelProps {
+interface ConfigCommonProps {
   voltage: {
     enable: boolean;
     setEnable: (enable: boolean) => void;
@@ -57,7 +57,7 @@ interface ConfigCommonPanelProps {
 
 const [NUT_VOLTAGE_MIN, NUT_VOLTAGE_MAX] = [2.0, 4.0]
 
-const ConfigCommonPanel: React.FC<ConfigCommonPanelProps> = ({voltage, clock, uart, spi, i2c}) => {
+const ConfigCommon: React.FC<ConfigCommonProps> = ({voltage, clock, uart, spi, i2c}) => {
 
   const intl = useIntl();
 
@@ -271,5 +271,5 @@ const ConfigCommonPanel: React.FC<ConfigCommonPanelProps> = ({voltage, clock, ua
   );
 };
 
-export default ConfigCommonPanel;
-export type {ConfigCommonPanelProps};
+export default ConfigCommon;
+export type {ConfigCommonProps};
