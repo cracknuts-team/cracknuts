@@ -3,7 +3,7 @@ import {Button, Input, Space} from "antd";
 import {useIntl} from "react-intl";
 
 
-interface ConnectionPanelProps {
+interface ConnectionProps {
   uri: string,
   onUriChanged: (uri: string) => void;
   connect: () => void;
@@ -12,7 +12,7 @@ interface ConnectionPanelProps {
   disabled: boolean;
 }
 
-const Connection: React.FC<ConnectionPanelProps> = ({
+const Connection: React.FC<ConnectionProps> = ({
                                                  uri,
                                                  onUriChanged,
                                                  connect,
@@ -69,4 +69,4 @@ const Connection: React.FC<ConnectionPanelProps> = ({
 };
 
 export default Connection;
-export type {ConnectionPanelProps};
+export type {ConnectionProps};
