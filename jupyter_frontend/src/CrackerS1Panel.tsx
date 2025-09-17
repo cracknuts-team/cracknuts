@@ -730,6 +730,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   {label: "A (Ch A)", value: 1},
                                   {label: "B (Ch B)", value: 2},
                                   {label: "P (Protocol)", value: 3},
+                                  {label: "R (Reset)", value: 4},
+                                  {label: "V (Voltage)", value: 5},
                                 ]}
                                 style={{width: 110}}
                                 value={oscTriggerSource}
