@@ -101,5 +101,6 @@
   "cracker.scope.echarts.toolbox.dataZoom.zoom": "缩放",
   "trace.echarts.toolbox.saveAsImage": "保存为图片",
   "trace.echarts.toolbox.brush.lineX": "缩放",
-  "trace.echarts.toolbox.myReset": "重置"
+  "trace.echarts.toolbox.myReset": "重置",
+  "language": "中"
 }
