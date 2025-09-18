@@ -1,5 +1,5 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {ConnectionProps} from "@/cracker/Connection.tsx";
+import {ConnectionProps} from "@/components/Connection.tsx";
 
 export function useConnectionStates(): Omit<ConnectionProps, "disabled"> {
   const model = useModel();

@@ -4,6 +4,7 @@ from traitlets import traitlets
 
 from cracknuts.jupyter.glitch_test_panel import GlitchTestPanel
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
+from cracknuts.utils import user_config
 
 
 class CrackerG1Panel(MsgHandlerPanelWidget):
@@ -43,6 +44,9 @@ class CrackerG1Panel(MsgHandlerPanelWidget):
     nut_i2c_speed = traitlets.Int(0).tag(sync=True)
     nut_i2c_stretch_enable = traitlets.Bool(False).tag(sync=True)
 
+    language = traitlets.Unicode("en").tag(sync=True)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.language = user_config.get_option("language", fallback="en")
         self.glitch_test_panel = GlitchTestPanel()
