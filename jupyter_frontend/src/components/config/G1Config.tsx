@@ -9,10 +9,14 @@ interface G1ConfigProps {
     common: ConfigCommonProps;
     osc: ConfigOSCProps
     glitch: ConfigGlitchProps
-    glitchTest: ConfigGlitchTestProps
+    glitchTest: ConfigGlitchTestProps;
 }
 
-const G1Config: React.FC<G1ConfigProps> = ({common, osc, glitch, glitchTest}) => {
+interface G1ConfigInternalProps extends G1ConfigProps {
+    isGlitchTestShow: (show: boolean) => void;
+}
+
+const G1Config: React.FC<G1ConfigInternalProps> = ({common, osc, glitch, glitchTest, isGlitchTestShow}) => {
 
     const tabItems: TabsProps['items'] = [{
         key: 'Common',
@@ -48,7 +52,12 @@ const G1Config: React.FC<G1ConfigProps> = ({common, osc, glitch, glitchTest}) =>
     }];
 
     return (
-        <Tabs items={tabItems}/>
+        <Tabs
+            items={tabItems}
+            onChange={(key) => {
+                isGlitchTestShow(key === 'GlitchTest');
+            }}
+        />
     );
 };
 

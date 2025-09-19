@@ -50,7 +50,6 @@ const Scope: React.FC<ScopeProps> = ({
     const [customC0YRangeLink, setCustomC0YRangeLink] = useState<boolean>(true)
     const [customC1YRangeLink, setCustomC1YRangeLink] = useState<boolean>(true)
 
-    // const [customXRangeEnabled, setCustomXRangeEnabled] = useState<boolean>(false)
     const [customXMin, setCustomXMin] = useState<number | undefined>(undefined)
     const [customXMax, setCustomXMax] = useState<number | undefined>(undefined)
 

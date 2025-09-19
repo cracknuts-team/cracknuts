@@ -1,10 +1,10 @@
 import {createRender, useModel, useModelState} from "@anywidget/react";
 import React, {useEffect, useState} from "react";
-import CrackerG1 from "@/components/CrackerG1.tsx";
+import CrackerG1, {CrackerG1PanelProps} from "@/components/CrackerG1.tsx";
 import {ConnectionProps} from "@/components/Connection.tsx"
 import {G1ConfigProps} from "@/components/config/G1Config.tsx";
 import {useConnectionStates} from "@/hooks/connection.ts";
-import {useConfigCommonStates, useOscConfigStates, useConfigGlitchTestStates, useGlitchStates} from "@/hooks/config.ts";
+import {useConfigCommonStates, useConfigGlitchTestStates, useGlitchStates, useOscConfigStates} from "@/hooks/config.ts";
 
 import {ConfigProvider, theme,} from "antd";
 import {IntlProvider} from "react-intl";
@@ -15,6 +15,10 @@ import enUS from "antd/es/locale/en_US";
 import {bus} from "@/bus.ts";
 import {ConfigurationProps} from "@/components/Configuration.tsx";
 import useConfigurationStates from "@/hooks/configuration.ts";
+import {ScopeProps} from "@/components/Scope.tsx";
+import {useScopeStates} from "@/hooks/scope.ts";
+import {AcquisitionProps} from "@/components/Acquisition.tsx";
+import {useAcquisitionStates} from "@/hooks/acquisition.ts";
 
 const render = createRender(() => {
 
@@ -22,12 +26,16 @@ const render = createRender(() => {
 
     const connectionProps: ConnectionProps = {...useConnectionStates(), disabled: false}; // disabled wait for acq status.
     const configurationProps: ConfigurationProps = useConfigurationStates()
+    const acquisitionProps: AcquisitionProps = useAcquisitionStates()
     const configProps: G1ConfigProps = {
         common: useConfigCommonStates(),
         osc: useOscConfigStates(),
         glitch: useGlitchStates(),
         glitchTest: useConfigGlitchTestStates()
     };
+    const scopeProps: ScopeProps = {...useScopeStates(), disable: false}; // todo disabled wait for cracker connection status.
+
+
 
     const [language, _setLanguage] = useModelState<string>("language");
     const [antLanguage, setAntLanguage] = useState(zhCN);
@@ -65,7 +73,55 @@ const render = createRender(() => {
         setLanguage(language);
     }, [language]);
 
-    const algorithm = theme.defaultAlgorithm;
+    const isLightColor = (hexColor: string) => {
+        if (hexColor.startsWith("#")) {
+            hexColor = hexColor.slice(1);
+        }
+
+        if (hexColor.length === 3) {
+            hexColor = hexColor
+                .split("")
+                .map((char) => char + char)
+                .join("");
+        }
+
+        const r = parseInt(hexColor.slice(0, 2), 16);
+        const g = parseInt(hexColor.slice(2, 4), 16);
+        const b = parseInt(hexColor.slice(4, 6), 16);
+
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        return brightness > 128;
+    }
+
+    // in browser
+    let jpTheme = document.body.getAttribute("data-jp-theme-name");
+
+    if (jpTheme == null) {
+        // in vscode
+        jpTheme = document.body.getAttribute("data-vscode-theme-kind");
+    }
+
+    if (jpTheme == null) {
+        // in pycharm
+        jpTheme = document.documentElement.getAttribute("style");
+        if (jpTheme != null && jpTheme.includes("--jb-background-color")) {
+            const s = jpTheme.indexOf("--jb-background-color") + 22;
+            const e = s + 7;
+            const color = jpTheme.substring(s, e);
+            if (!isLightColor(color)) {
+                jpTheme = "dark";
+            }
+        }
+    }
+
+    let algorithm = theme.defaultAlgorithm;
+    let panelTheme: CrackerG1PanelProps["theme"] = "light";
+
+    if (jpTheme != undefined && jpTheme.toLowerCase().includes("dark")) {
+        algorithm = theme.darkAlgorithm;
+        panelTheme = "dark";
+    }
 
     return (
         <IntlProvider locale={language} messages={messageMap[language]}>
@@ -74,6 +130,9 @@ const render = createRender(() => {
                     connection={connectionProps}
                     configuration={configurationProps}
                     config={configProps}
+                    acquisition={acquisitionProps}
+                    scope={scopeProps}
+                    theme={panelTheme}
                 />
             </ConfigProvider>
         </IntlProvider>
