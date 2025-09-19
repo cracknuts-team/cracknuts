@@ -46,6 +46,17 @@ class CrackerG1Panel(MsgHandlerPanelWidget):
 
     language = traitlets.Unicode("en").tag(sync=True)
 
+    series_data = traitlets.Dict({}).tag(sync=True)
+
+    custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"0": (0, 0), "1": (0, 0)}).tag(sync=True)
+    y_range: dict[int, tuple[int, int]] = traitlets.Dict({0: (None, None), 1: (None, None)}).tag(sync=True)
+    combine_y_range = traitlets.Bool(False).tag(sync=True)
+
+    scope_status = traitlets.Int(0).tag(sync=True)
+    monitor_status = traitlets.Bool(False).tag(sync=True)
+    lock_scope_operation = traitlets.Bool(False).tag(sync=True)
+    monitor_period = traitlets.Float(1.0).tag(sync=True)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.language = user_config.get_option("language", fallback="en")
