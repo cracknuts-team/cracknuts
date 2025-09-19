@@ -1,6 +1,7 @@
 import {Button, Col, InputNumber, Radio, Row, Select, SelectProps, Table} from "antd"
 import React, {useState} from "react";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
+import GlitchTestResult from "@/components/glitch-test/TestResult.tsx";
 
 type GlitchTestModelSelectProps = {
     value?: number;
@@ -387,7 +388,7 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
                 </Row>
             </Col>
             <Col flex="auto" style={{ paddingLeft: 16 }}>
-                Glitch test progress
+                <GlitchTestResult/>
             </Col>
         </Row>
     );
