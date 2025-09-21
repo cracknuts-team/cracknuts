@@ -378,6 +378,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                               disabled={!nutClockEnable}
                               size={"small"}
                               options={[
+                                {value: 64000, label: "64 M"},
                                 {value: 24000, label: "24 M"},
                                 {value: 12000, label: "12 M"},
                                 {value: 8000, label: "8  M"},
@@ -578,6 +579,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   size={"small"}
                                   options={[
                                     {value: 65000, label: "65 M"},
+                                    {value: 64000, label: "64 M"},
                                     {value: 48000, label: "48 M"},
                                     {value: 24000, label: "24 M"},
                                     {value: 12000, label: "12 M"},
@@ -730,6 +732,8 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                   {label: "A (Ch A)", value: 1},
                                   {label: "B (Ch B)", value: 2},
                                   {label: "P (Protocol)", value: 3},
+                                  {label: "R (Reset)", value: 4},
+                                  {label: "V (Voltage)", value: 5},
                                 ]}
                                 style={{width: 110}}
                                 value={oscTriggerSource}
