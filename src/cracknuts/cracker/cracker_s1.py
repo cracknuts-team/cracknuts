@@ -557,6 +557,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             clock = clock.upper()
             if clock == "65M":
                 clock = 65000
+            elif clock == "64M":
+                clock = 64000
             elif clock == "48M":
                 clock = 48000
             elif clock == "24M":
@@ -569,10 +571,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 if re.match(r"^\d+$", clock):
                     clock = int(clock)
                 else:
-                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 24M or 12M or 8M")
+                    self._logger.error("UnSupport osc sample rate, it should in 65M or 64M or 48M or 24M or 12M or 8M")
                     return self.NON_PROTOCOL_ERROR, None
-        if clock not in (65000, 48000, 24000, 12000, 8000, 4000):
-            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 24000, 12000, 8000)")
+        if clock not in (65000, 64000, 48000, 24000, 12000, 8000, 4000):
+            self._logger.error("UnSupport osc sample clock, it should in (65000, 64000, 48000, 24000, 12000, 8000)")
             return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">I", clock)
         self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
@@ -756,7 +758,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         if isinstance(clock, str):
             clock = clock.upper()
-            if clock == "24M":
+            if clock == "64M":
+                clock = 64000
+            elif clock == "24M":
                 clock = 24000
             elif clock == "12M":
                 clock = 12000
@@ -765,9 +769,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             elif clock == "4M":
                 clock = 4000
             else:
-                self._logger.error(f"Unknown clock type: {clock}, 24M or 12M or 8M or 4M")
+                self._logger.error(f"Unknown clock type: {clock}, 64M or 24M or 12M or 8M or 4M")
                 return protocol.STATUS_ERROR, None
-
+        validate_nut_clock = (64000, 24000, 12000, 8000, 4000)
+        if clock not in validate_nut_clock:
+            self._logger.error(f"UnSupport osc clock, it should in {validate_nut_clock}")
         payload = struct.pack(">I", clock)
         self._logger.debug(f"nut_set_clock payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK, payload=payload)
