@@ -1,6 +1,6 @@
 import React from "react";
 import {Col, Row} from "antd";
-import ResultStatusButtonGroup from "@/components/glitch-test/ResultStatusButtonGroup.tsx";
+import TestResultTable from "@/components/glitch-test/TestResultTable.tsx";
 
 
 const TestResult: React.FC = () => {
@@ -8,7 +8,7 @@ const TestResult: React.FC = () => {
     return (
         <Row>
             <Col span={24}>
-                <ResultStatusButtonGroup/>
+                <TestResultTable/>
             </Col>
         </Row>
     );

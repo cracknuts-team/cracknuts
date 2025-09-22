@@ -1,4 +1,4 @@
-import {Button, Col, InputNumber, Radio, Row, Select, SelectProps, Table} from "antd"
+import {Button, Col, InputNumber, Progress, Radio, Row, Select, SelectProps, Table} from "antd"
 import React, {useState} from "react";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 import GlitchTestResult from "@/components/glitch-test/TestResult.tsx";
@@ -349,10 +349,12 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
     };
 
     return (
+        <div>
         <Row>
-            <Col span={6} style={{minWidth: 600}}>
-                <Row style={{marginBottom: 8}}>
-                    <Col flex={"auto"}>
+            {/*<Col span={6} style={{minWidth: 600}}>*/}
+            <Col span={24}>
+                <Row style={{marginBottom: 10}}>
+                    <Col flex={"none"}>
                         <Radio.Group
                             value={selected}
                             buttonStyle="solid"
@@ -372,6 +374,9 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
                             </Radio.Button>
                         </Radio.Group>
                     </Col>
+                    <Col flex={"auto"} style={{ padding: '0 20px' }}>
+                        <Progress type={"line"} size={"small"}/>
+                    </Col>
                     <Col style={{marginLeft: 'auto'}}>
                         <Button size={"small"} onClick={() => {
                             onApply({type: selected, data: dataMap[selected].data})
@@ -387,10 +392,13 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
                     </Col>
                 </Row>
             </Col>
-            <Col flex="auto" style={{ paddingLeft: 16 }}>
+        </Row>
+        <Row>
+            <Col span={24}>
                 <GlitchTestResult/>
             </Col>
         </Row>
+        </div>
     );
 };
 
