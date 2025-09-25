@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import {Checkbox, Table, TableProps, Tag} from "antd";
+import {Space, Table, TableProps, Tag} from "antd";
 import CheckableTag from "antd/es/tag/CheckableTag";
 
 interface TestResultData {
@@ -87,13 +87,12 @@ const TestResultTable: React.FC = () => {
         return {...d,  status: <Tag color={s.color}>{s.label}</Tag>}
     });
 
-    const [selected, setSelected] = useState<string[]>([]);
+    const [selected, setSelected] = useState<string[]>(['glitched', 'not_glitched', 'no_response', 'error']);
 
     return (
         <div>
-            <Checkbox.Group style={{margin: '18px 0 8px 0'}}>
+            <Space.Compact style={{margin: "20px 0 10px 0"}}>
                 {statusCheckOptions.map(opt => (
-
                     <CheckableTag
                         key={opt.key}
                         checked={selected.includes(opt.key)}
@@ -104,8 +103,8 @@ const TestResultTable: React.FC = () => {
                         }}
                         style={{
                             border: `2px solid ${opt.color}`,
-                            borderRadius: 8,
-                            padding: '4px 12px',
+                            // borderRadius: 8,
+                            // padding: '4px 12px',
                             backgroundColor: selected.includes(opt.key) ? opt.color : '#fff',
                             color: selected.includes(opt.key) ? '#fff' : opt.color,
                             cursor: 'pointer',
@@ -114,7 +113,8 @@ const TestResultTable: React.FC = () => {
                         {opt.label}
                     </CheckableTag>
                 ))}
-            </Checkbox.Group>
+            </Space.Compact>
+
             <Table<_TestResultData> columns={columns} dataSource={_data} size={"small"}
                                     pagination={{
                                         total: 100,

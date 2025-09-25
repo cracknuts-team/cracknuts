@@ -122,7 +122,7 @@ class GlitchAcquisition(Acquisition):
 
     def init(self): ...
 
-    def do(self) -> "GlitchDoData": ...
+    def do(self, count: int) -> "GlitchDoData": ...
 
     def pre_do(self):
         # 设置当前的glitch参数
@@ -278,7 +278,7 @@ class GlitchAcquisition(Acquisition):
         )
 
     @staticmethod
-    def _build_glitch_param_generator(glitch_params) -> AbstractGlitchParamGenerator:
+    def _build_glitch_param_generator(glitch_params) -> None | VCCGlitchParamGenerator | GNDGlitchParamGenerator:
         if glitch_params["type"] == "vcc":
             normal, wait, glitch, count, repeat, interval = None, None, None, None, None, None
             for param in glitch_params["params"]:
@@ -480,7 +480,7 @@ class GlitchAcquisitionBuilder(AcquisitionBuilder):
             def init(self):
                 builder_self._init_function(self.cracker)
 
-            def do(self):
+            def do(self, count: int):
                 return builder_self._do_function(self.cracker)
 
             def finish(self):
