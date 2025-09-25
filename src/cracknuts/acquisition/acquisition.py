@@ -855,7 +855,7 @@ class AcquisitionBuilder:
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[CrackerBasic], None]):
+    def init(self, init_function: typing.Callable[[], None]):
         """
         The init function of acquisition.
 
