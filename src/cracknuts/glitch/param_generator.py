@@ -6,10 +6,10 @@ import random
 
 class GlitchGenerateParam:
     class Mode(Enum):
-        INCREASE = "increase"
-        DECREASE = "decrease"
-        RANDOM = "random"
-        FIXED = "fixed"
+        INCREASE = 0
+        DECREASE = 1
+        RANDOM = 2
+        FIXED = 3
 
     def __init__(self, mode, start, end, step, count):
         self.mode = mode
@@ -17,6 +17,9 @@ class GlitchGenerateParam:
         self.end = end
         self.step = step
         self.count = count
+
+    def __str__(self):
+        return self.__dict__
 
 
 class AbstractGlitchParamGenerator(abc.ABC):
@@ -108,6 +111,9 @@ class VCCGlitchParamGenerator(AbstractGlitchParamGenerator):
                 interval_list,
             )
         ]
+
+    def __str__(self):
+        return self.__dict__
 
 
 class GNDGlitchParamGenerator(VCCGlitchParamGenerator): ...

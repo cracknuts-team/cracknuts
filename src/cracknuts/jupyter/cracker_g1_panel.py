@@ -14,6 +14,7 @@ from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
 from cracknuts.jupyter.scope_panel import ScopePanelWidget
 from cracknuts.jupyter.glitch_test_panel import GlitchTestPanel
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
+from cracknuts.jupyter.ui_sync import observe_interceptor
 from cracknuts.utils import user_config
 
 
@@ -22,6 +23,8 @@ class CrackerG1Panel(CrackerPanelWidget, AcquisitionPanelWidget, ScopePanelWidge
     _css = ""
 
     language = traitlets.Unicode("en").tag(sync=True)
+
+    glitch_test_params = traitlets.Dict({}).tag(sync=True)
 
     def __init__(self, cracker: CrackerG1, acquisition: GlitchAcquisition):
         super().__init__(**{"cracker": cracker, "acquisition": acquisition})
@@ -227,6 +230,13 @@ class CrackerG1Panel(CrackerPanelWidget, AcquisitionPanelWidget, ScopePanelWidge
     @staticmethod
     def builder():
         return CrackerG1PanelBuilder()
+
+    @traitlets.observe("glitch_test_params")
+    @observe_interceptor
+    def glitch_test_params_changed(self, change):
+        if isinstance(self.cracker, CrackerG1):
+            self.cracker.set_glitch_test_params(change.get("new"))
+            self.acquisition.glitch_run()
 
 
 class CrackerG1PanelBuilder:

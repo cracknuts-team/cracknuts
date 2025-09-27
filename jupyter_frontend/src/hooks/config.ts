@@ -1,7 +1,6 @@
 import {useModelState} from "@anywidget/react";
 import {ConfigCommonProps} from "@/components/config/ConfigCommon.tsx";
-import {ConfigGlitchTestProps} from "@/components/config/ConfigGlitchTest.tsx";
-import {GlitchTestPanelOnApplyParam} from "@/GlitchTestPanel.tsx";
+import {ConfigGlitchTestProps, GlitchTestOnApplyParam} from "@/components/config/ConfigGlitchTest.tsx";
 import {ConfigOSCProps} from "@/components/config/ConfigOSC.tsx";
 import {ConfigGlitchProps} from "@/components/config/ConfigGlitch.tsx";
 
@@ -87,7 +86,7 @@ const useConfigCommonStates: () => ConfigCommonProps = () => {
 }
 
 const useConfigGlitchTestStates: () => ConfigGlitchTestProps = () => {
-    const [, setGlitchTestParams] = useModelState<GlitchTestPanelOnApplyParam>("glitch_test_params");
+    const [, setGlitchTestParams] = useModelState<GlitchTestOnApplyParam>("glitch_test_params");
 
     return {
         onApply: setGlitchTestParams

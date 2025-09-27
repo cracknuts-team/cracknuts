@@ -179,7 +179,7 @@ const GlitchTestPropPanel: React.FC<GlitchTestPropPanelData> = ({data, setData})
 
 interface GlitchTestOnApplyParam {
     type: 'vcc' | 'gnd' | 'clock';
-    data: GlitchGenerateParamProps[];
+    data: Omit<GlitchGenerateParamProps, 'min' | 'max' | 'unit'>[];
 }
 
 interface ConfigGlitchTestProps {
@@ -379,7 +379,7 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
                     </Col>
                     <Col style={{marginLeft: 'auto'}}>
                         <Button size={"small"} onClick={() => {
-                            onApply({type: selected, data: dataMap[selected].data})
+                            onApply({type: selected, data: dataMap[selected].data.map(({ prop, param }) => ({ prop, param }))})
                         }}>Apply</Button>
                     </Col>
                 </Row>
