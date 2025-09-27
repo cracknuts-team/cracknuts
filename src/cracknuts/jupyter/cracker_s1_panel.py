@@ -92,7 +92,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     glitch_clock_normal = 0
 
     # glitch test
-    glitch_test_params = traitlets.Dict({}).tag(sync=True)
+    # glitch_test_params = traitlets.Dict({}).tag(sync=True)
 
     # osc
     osc_channel_0_enable = traitlets.Bool(False).tag(sync=True)
@@ -545,9 +545,8 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     def glitch_vcc_normal_voltage_changed(self, change):
         self.cracker.glitch_vcc_normal(change.get("new"))
 
-    @traitlets.observe("glitch_test_params")
-    @observe_interceptor
-    def glitch_test_params_changed(self, change):
-        self._logger.warning(f"ffffff: {change.get("new")}")
-        if isinstance(self.cracker, CrackerG1):
-            self.cracker.set_glitch_test_params(change.get("new"))
+    # @traitlets.observe("glitch_test_params")
+    # @observe_interceptor
+    # def glitch_test_params_changed(self, change):
+    #     if isinstance(self.cracker, CrackerG1):
+    #         self.cracker.set_glitch_test_params(change.get("new"))
