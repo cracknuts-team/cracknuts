@@ -270,7 +270,7 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        trace_fetch_interval: float = 2.0,
+        trace_fetch_interval: float | None = None,
     ):
         """
         Start test mode in background.
@@ -395,7 +395,7 @@ class Acquisition(abc.ABC):
         do_error_handler_strategy: int | None = None,
         file_format: str | None = "zarr",
         file_path: str | None = "auto",
-        trace_fetch_interval: float = 0.1,
+        trace_fetch_interval: float | None = None,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -608,9 +608,9 @@ class Acquisition(abc.ABC):
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
             # Reduce the execution frequency in test mode.
-            if not persistent:
-                if self.trace_fetch_interval is not None and self.trace_fetch_interval != 0:
-                    time.sleep(self.trace_fetch_interval)
+            # if not persistent:
+            if self.trace_fetch_interval is not None and self.trace_fetch_interval != 0:
+                time.sleep(self.trace_fetch_interval)
 
         if dataset is not None:
             dataset.dump()
