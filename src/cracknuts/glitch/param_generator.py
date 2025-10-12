@@ -19,7 +19,7 @@ class GlitchGenerateParam:
         self.count = count
 
     def __str__(self):
-        return self.__dict__
+        return str(self.__dict__)
 
 
 class AbstractGlitchParamGenerator(abc.ABC):
@@ -86,7 +86,6 @@ class VCCGlitchParamGenerator(AbstractGlitchParamGenerator):
         count_list = []
         repeat_list = []
         interval_list = []
-
         if self.normal is not None:
             normal_list = self._do_build(self.normal)
         if self.wait is not None:
@@ -113,7 +112,7 @@ class VCCGlitchParamGenerator(AbstractGlitchParamGenerator):
         ]
 
     def __str__(self):
-        return self.__dict__
+        return str(self.__dict__)
 
 
 class GNDGlitchParamGenerator(VCCGlitchParamGenerator): ...

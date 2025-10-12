@@ -224,6 +224,18 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
         max: Number.MAX_VALUE,
         unit: '5ns',
     }, {
+        prop: 'count',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: 'times',
+    }, {
         prop: 'repeat',
         param: {
             mode: 3,
@@ -284,6 +296,18 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
         min: 0,
         max: Number.MAX_VALUE,
         unit: '5ns',
+    }, {
+        prop: 'count',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: 'times',
     }, {
         prop: 'repeat',
         param: {
