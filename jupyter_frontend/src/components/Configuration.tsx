@@ -3,27 +3,31 @@ import {Button, Form, Tooltip, Upload} from "antd";
 import {BlockOutlined, ExportOutlined, ImportOutlined, SaveOutlined, ThunderboltOutlined} from "@ant-design/icons";
 import {FormattedMessage, useIntl} from "react-intl";
 import {bus} from "@/bus.ts";
+import {useModel, useModelState} from "@anywidget/react";
 
 type LanguageCode = 'zh' | 'en';
 
-interface ConfigurationProps {
-    panelConfigDifferentFromCrackerConfig: boolean;
-    readConfig: () => void;
-    writeConfig: () => void;
-    loadConfig: (config: string) => void;
-    dumpConfig: () => void;
-    saveConfig: () => void;
-}
-
-const Configuration: React.FC<ConfigurationProps> = ({
-                                                         panelConfigDifferentFromCrackerConfig,
-                                                         readConfig,
-                                                         writeConfig,
-                                                         loadConfig,
-                                                         dumpConfig,
-                                                         saveConfig,
-                                                     }) => {
+const Configuration: React.FC = () => {
     const intl = useIntl();
+
+    const [panelConfigDifferentFromCrackerConfig] = useModelState<boolean>("panel_config_different_from_cracker_config");
+
+    const model = useModel();
+    const dumpConfig = () => {
+        model.send({source: "dumpConfigButton", event: "onClick", args: {}});
+    };
+    const loadConfig = (config: string) => {
+        model.send({source: "loadConfigButton", event: "onClick", args: config});
+    };
+    const saveConfig = () => {
+        model.send({source: "saveConfigButton", event: "onClick", args: {}});
+    };
+    const writeConfig = () => {
+        model.send({source: "writeConfigButton", event: "onClick", args: {}});
+    };
+    const readConfig = () => {
+        model.send({source: "readConfigButton", event: "onClick", args: {}});
+    };
 
     const changeLanguage = () => {
         if (intl.locale === 'zh') {
@@ -116,4 +120,4 @@ const Configuration: React.FC<ConfigurationProps> = ({
 };
 
 export default Configuration;
-export type {ConfigurationProps, LanguageCode};
+export type {LanguageCode};

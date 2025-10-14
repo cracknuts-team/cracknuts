@@ -34,11 +34,19 @@ class AbstractGlitchParamGenerator(abc.ABC):
         if param.mode == GlitchGenerateParam.Mode.FIXED:
             return [param.start for _ in range(param.count)]
         if param.mode == GlitchGenerateParam.Mode.INCREASE:
-            return list(range(param.start, param.end, param.step)) * param.count
+            return list(AbstractGlitchParamGenerator._frange(param.start, param.end, param.step)) * param.count
         if param.mode == GlitchGenerateParam.Mode.DECREASE:
-            return list(range(param.end, param.start, -param.step)) * param.count
+            return list(AbstractGlitchParamGenerator._frange(param.end, param.start, -param.step)) * param.count
         if param.mode == GlitchGenerateParam.Mode.RANDOM:
             return [random.randint(param.start, param.end) for _ in range(param.count)]
+        return []
+
+    @staticmethod
+    def _frange(start, stop, step):
+        x = start
+        while x < stop:
+            yield round(x, 10)
+            x += step
 
     def total(self):
         return len(self._generate_params)

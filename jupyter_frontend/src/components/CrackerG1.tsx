@@ -1,18 +1,14 @@
 import React, {useState} from "react";
 import Connection, {ConnectionProps} from "@/components/Connection.tsx";
-import G1Config, {G1ConfigProps} from "@/components/config/G1Config.tsx";
+import G1Config from "@/components/config/G1Config.tsx";
 import {Col, Row} from "antd";
-import Configuration, {ConfigurationProps} from "@/components/Configuration.tsx";
-import Scope, {ScopeProps} from "@/components/Scope.tsx";
-import Acquisition, {AcquisitionProps} from "@/components/Acquisition.tsx";
+import Configuration from "@/components/Configuration.tsx";
+import Scope from "@/components/Scope.tsx";
+import Acquisition from "@/components/Acquisition.tsx";
 
 
 interface CrackerG1PanelProps {
     connection: ConnectionProps;
-    configuration: ConfigurationProps;
-    config: G1ConfigProps;
-    acquisition: AcquisitionProps;
-    scope: ScopeProps;
     theme: "light" | "dark";
 }
 
@@ -20,7 +16,7 @@ const CrackerG1: React.FC<CrackerG1PanelProps> = (props) => {
 
     const backgroundColor = props.theme === "light" ? "#ffffff" : "#000000";
 
-    const [showScope, setShowScope] = useState<boolean>(true);
+    const [, setShowScope] = useState<boolean>(true);
 
     return (
         <div id={"cracknuts_widget"} style={{
@@ -35,22 +31,23 @@ const CrackerG1: React.FC<CrackerG1PanelProps> = (props) => {
                     <Connection {...props.connection}/>
                 </Col>
                 <Col style={{marginLeft: "auto"}}>
-                    <Configuration {...props.configuration}/>
+                    <Configuration/>
                 </Col>
             </Row>
             <Row>
                 <Col>
-                    <Acquisition {...props.acquisition}/>
+                    <Acquisition/>
                 </Col>
             </Row>
             <Row>
                 <Col span={24}>
-                    <G1Config {...props.config} isGlitchTestShow={(show) => setShowScope(!show)}/>
+                    <G1Config isGlitchTestShow={(show) => setShowScope(!show)}/>
                 </Col>
             </Row>
             <Row>
                 <Col span={24}>
-                    {showScope && <Scope {...props.scope}/>}
+                    <Scope disable={false}/>
+                    {/*{showScope && <Scope disable={false}/>}*/}
                 </Col>
             </Row>
         </div>

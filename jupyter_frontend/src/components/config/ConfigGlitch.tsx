@@ -1,37 +1,65 @@
 import {Col, Form, InputNumber, Row} from "antd";
 import React from "react";
 import {useIntl} from "react-intl";
-
-interface GlitchVoltageConfig {
-    normalVoltage: number;
-    setNormalVoltage: (value: number) => void;
-
-    glitchVoltage: number;
-    setGlitchVoltage: (value: number) => void;
-
-    wait: number;
-    setWait: (value: number) => void;
-
-    count: number;
-    setCount: (value: number) => void;
-
-    repeat: number;
-    setRepeat: (value: number) => void;
-
-    delay: number;
-    setDelay: (value: number) => void;
-}
-
-interface ConfigGlitchProps {
-    vcc: GlitchVoltageConfig;
-    gnd: GlitchVoltageConfig;
-    clock?: undefined; // 后续补充
-}
+import {useModelState} from "@anywidget/react";
 
 
-const ConfigGlitch: React.FC<ConfigGlitchProps> = ({vcc, gnd}) => {
+const ConfigGlitch: React.FC = () => {
 
     const intl = useIntl();
+
+    const [glitchVCCNormalVoltage, setGlitchVCCNormalVoltage] = useModelState<number>("glitch_vcc_normal_voltage");
+    const [glitchVCCWait, setGlitchVCCWait] = useModelState<number>("glitch_vcc_wait");
+    const [glitchVCCGlitchVoltage, setGlitchVCCGlitchVoltage] = useModelState<number>("glitch_vcc_glitch_voltage");
+    const [glitchVCCCount, setGlitchVCCCount] = useModelState<number>("glitch_vcc_count");
+    const [glitchVCCRepeat, setGlitchVCCRepeat] = useModelState<number>("glitch_vcc_repeat");
+    const [glitchVCCDelay, setGlitchVCCDelay] = useModelState<number>("glitch_vcc_delay");
+
+    const [glitchGNDNormalVoltage, setGlitchGNDNormalVoltage] = useModelState<number>("glitch_gnd_normal_voltage");
+    const [glitchGNDWait, setGlitchGNDWait] = useModelState<number>("glitch_gnd_wait");
+    const [glitchGNDGlitchVoltage, setGlitchGNDGlitchVoltage] = useModelState<number>("glitch_gnd_glitch_voltage");
+    const [glitchGNDCount, setGlitchGNDCount] = useModelState<number>("glitch_gnd_count");
+    const [glitchGNDRepeat, setGlitchGNDRepeat] = useModelState<number>("glitch_gnd_repeat");
+    const [glitchGNDDelay, setGlitchGNDDelay] = useModelState<number>("glitch_gnd_delay");
+
+    const vcc = {
+        normalVoltage: glitchVCCNormalVoltage,
+        setNormalVoltage: setGlitchVCCNormalVoltage,
+
+        wait: glitchVCCWait,
+        setWait: setGlitchVCCWait,
+
+        glitchVoltage: glitchVCCGlitchVoltage,
+        setGlitchVoltage: setGlitchVCCGlitchVoltage,
+
+        count: glitchVCCCount,
+        setCount: setGlitchVCCCount,
+
+        repeat: glitchVCCRepeat,
+        setRepeat: setGlitchVCCRepeat,
+
+        delay: glitchVCCDelay,
+        setDelay: setGlitchVCCDelay,
+    }
+    const gnd = {
+        normalVoltage: glitchGNDNormalVoltage,
+        setNormalVoltage: setGlitchGNDNormalVoltage,
+
+        wait: glitchGNDWait,
+        setWait: setGlitchGNDWait,
+
+        glitchVoltage: glitchGNDGlitchVoltage,
+        setGlitchVoltage: setGlitchGNDGlitchVoltage,
+
+        count: glitchGNDCount,
+        setCount: setGlitchGNDCount,
+
+        repeat: glitchGNDRepeat,
+        setRepeat: setGlitchGNDRepeat,
+
+        delay: glitchGNDDelay,
+        setDelay: setGlitchGNDDelay,
+    }
 
     const [glitchVCCNormalVoltageMin, glitchVCCNormalVoltageMax] = [1.2, 4.0];
     const [glitchVCCWaitMin, glitchVCCWaitMax] = [0, 0xFFFF_FFFF];
@@ -276,4 +304,3 @@ const ConfigGlitch: React.FC<ConfigGlitchProps> = ({vcc, gnd}) => {
 };
 
 export default ConfigGlitch;
-export type {ConfigGlitchProps, GlitchVoltageConfig}

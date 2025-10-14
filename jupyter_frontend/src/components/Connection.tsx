@@ -1,27 +1,34 @@
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {Button, Input, Space} from "antd";
 import {useIntl} from "react-intl";
+import {useModel, useModelState} from "@anywidget/react";
 
 
 interface ConnectionProps {
-  uri: string,
-  onUriChanged: (uri: string) => void;
-  connect: () => void;
-  disconnect: () => void;
-  connected: boolean;
-  disabled: boolean;
+//   uri: string,
+//   onUriChanged: (uri: string) => void;
+//   connect: () => void;
+//   disconnect: () => void;
+//   connected: boolean;
+  disabled?: boolean;
 }
 
-const Connection: React.FC<ConnectionProps> = ({
-                                                 uri,
-                                                 onUriChanged,
-                                                 connect,
-                                                 disconnect,
-                                                 connected = false,
-                                                 disabled = false
-                                               }) => {
+const Connection: React.FC<ConnectionProps> = ({disabled=false}) => {
 
   const [buttonBusy, setButtonBusy] = useState<boolean>(false);
+
+  const model = useModel();
+
+  const [uri, setUri] = useModelState<string>("uri");
+  const [connected] = useModelState<boolean>("connect_status");
+
+  const connect = () => {
+    model.send({source: "connectButton", event: "onClick", args: {action: "connect"}})
+  }
+
+  const disconnect = () => {
+    model.send({source: "connectButton", event: "onClick", args: {action: "disconnect"}});
+  }
 
   const intl = useIntl();
 
@@ -53,7 +60,7 @@ const Connection: React.FC<ConnectionProps> = ({
           addonBefore="cnp://"
           value={getUri()}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            onUriChanged("cnp://" + e.target.value);
+            setUri("cnp://" + e.target.value);
           }}
         />
         <Button

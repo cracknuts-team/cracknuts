@@ -2,50 +2,24 @@ import React, {ChangeEvent} from "react";
 import {Form, Input, InputNumber, Progress, Radio, Select} from "antd";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 import {FormattedMessage, useIntl} from "react-intl";
-import {useModel} from "@anywidget/react";
+import {useModel, useModelState} from "@anywidget/react";
 
 interface AcqRunProgress {
     finished: number;
     total: number;
 }
 
-interface AcquisitionProps {
-    status: number,
-    runProgress: AcqRunProgress,
-    traceCount: number,
-    setTraceCount: (count: number) => void,
-    triggerJudgeWaitTime: number,
-    setTriggerJudgeWaitTime: (time: number) => void,
-    triggerJudgeTimeout: number,
-    setTriggerJudgeTimeout: (timeout: number) => void,
-    doErrorCountMax: number,
-    setErrorCountMax: (max: number) => void,
-    fileFormat: string,
-    setFileFormat: (format: string) => void,
-    filePath: string,
-    setFilePath: (path: string) => void,
-    traceFetchInterval: string
-    setTraceFetchInterval: (interval: string) => void
-}
+const Acquisition: React.FC = () => {
 
-const Acquisition: React.FC<AcquisitionProps> = ({
-                                                     status,
-                                                     runProgress,
-                                                     traceCount,
-                                                     setTraceCount,
-                                                     triggerJudgeWaitTime,
-                                                     setTriggerJudgeWaitTime,
-                                                     triggerJudgeTimeout,
-                                                     setTriggerJudgeTimeout,
-                                                     doErrorCountMax,
-                                                     setErrorCountMax,
-                                                     fileFormat,
-                                                     setFileFormat,
-                                                     filePath,
-                                                     setFilePath,
-                                                     traceFetchInterval,
-                                                     setTraceFetchInterval
-                                                 }) => {
+    const [status] = useModelState<number>("acq_status"); // 0 停止 1 测试 2 运行
+    const [runProgress] = useModelState<AcqRunProgress>("acq_run_progress"); //{'finished': 1, total: 1000}
+    const [traceCount, setTraceCount] = useModelState<number>("trace_count");
+    const [triggerJudgeWaitTime, setTriggerJudgeWaitTime] = useModelState<number>("trigger_judge_wait_time");
+    const [triggerJudgeTimeout, setTriggerJudgeTimeout] = useModelState<number>("trigger_judge_timeout");
+    const [doErrorCountMax, setDoErrorCountMax] = useModelState<number>("do_error_max_count");
+    const [fileFormat, setFileFormat] = useModelState<string>("file_format");
+    const [filePath, setFilePath] = useModelState<string>("file_path");
+    const [traceFetchInterval, setTraceFetchInterval] = useModelState<string>("trace_fetch_interval");
 
     const model = useModel();
 
@@ -178,7 +152,7 @@ const Acquisition: React.FC<AcquisitionProps> = ({
                     value={doErrorCountMax}
                     min={-1}
                     onChange={(v) => {
-                        setErrorCountMax(Number(v));
+                        setDoErrorCountMax(Number(v));
                     }}
                     changeOnWheel
                 />
@@ -223,4 +197,4 @@ const Acquisition: React.FC<AcquisitionProps> = ({
 };
 
 export default Acquisition;
-export type {AcquisitionProps, AcqRunProgress};
+export type {AcqRunProgress};

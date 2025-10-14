@@ -1,7 +1,9 @@
-import {Button, Col, InputNumber, Progress, Radio, Row, Select, SelectProps, Table} from "antd"
+import {Button, Col, Form, InputNumber, Progress, Radio, Row, Select, SelectProps, Table} from "antd"
 import React, {useState} from "react";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 import GlitchTestResult from "@/components/glitch-test/TestResult.tsx";
+import {useModelState} from "@anywidget/react";
+// import {useIntl} from "react-intl";
 
 type GlitchTestModelSelectProps = {
     value?: number;
@@ -182,11 +184,13 @@ interface GlitchTestOnApplyParam {
     data: Omit<GlitchGenerateParamProps, 'min' | 'max' | 'unit'>[];
 }
 
-interface ConfigGlitchTestProps {
-    onApply: (params: GlitchTestOnApplyParam) => void;
-}
+const ConfigGlitchTest: React.FC = () => {
 
-const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
+    // const intl = useIntl();
+
+    const [traceCount, setTraceCount] = useModelState<number>("shadow_trace_count");
+    const [, setGlitchTestParams] = useModelState<GlitchTestOnApplyParam>("glitch_test_params");
+
     const [vccGlitchParamGenerators, setVccGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
         prop: 'normal',
         param: {
@@ -374,57 +378,74 @@ const ConfigGlitchTest: React.FC<ConfigGlitchTestProps> = ({onApply}) => {
 
     return (
         <div>
-        <Row>
-            {/*<Col span={6} style={{minWidth: 600}}>*/}
-            <Col span={24}>
-                <Row style={{marginBottom: 10}}>
-                    <Col flex={"none"}>
-                        <Radio.Group
-                            value={selected}
-                            buttonStyle="solid"
-                            onChange={(e: CheckboxChangeEvent) => {
-                                setSelected(e.target.value as 'vcc' | 'gnd' | 'clock');
-                            }}
-                            size={"small"}
-                        >
-                            <Radio.Button value={"vcc"}>
-                                VCC
-                            </Radio.Button>
-                            <Radio.Button value={"gnd"}>
-                                GND
-                            </Radio.Button>
-                            <Radio.Button value={"clock"}>
-                                CLOCK
-                            </Radio.Button>
-                        </Radio.Group>
-                    </Col>
-                    <Col flex={"auto"} style={{ padding: '0 20px' }}>
-                        <Progress type={"line"} size={"small"}/>
-                    </Col>
-                    <Col style={{marginLeft: 'auto'}}>
-                        <Button size={"small"} onClick={() => {
-                            onApply({type: selected, data: dataMap[selected].data.map(({ prop, param }) => ({ prop, param }))})
-                        }}>Apply</Button>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col span={24}>
-                        <GlitchTestPropPanel
-                            data={dataMap[selected].data}
-                            setData={dataMap[selected].setData}
-                        />
-                    </Col>
-                </Row>
-            </Col>
-        </Row>
-        <Row>
-            <Col span={24}>
-                <GlitchTestResult/>
-            </Col>
-        </Row>
+            <Row>
+                {/*<Col span={6} style={{minWidth: 600}}>*/}
+                <Col span={24}>
+                    <Row style={{marginBottom: 10}}>
+                        <Col flex={"none"}>
+                            <Form layout={"inline"}>
+                                <Form.Item>
+                                    <Radio.Group
+                                        value={selected}
+                                        buttonStyle="solid"
+                                        onChange={(e: CheckboxChangeEvent) => {
+                                            setSelected(e.target.value as 'vcc' | 'gnd' | 'clock');
+                                        }}
+                                        size={"small"}
+                                    >
+                                        <Radio.Button value={"vcc"}>
+                                            VCC
+                                        </Radio.Button>
+                                        <Radio.Button value={"gnd"}>
+                                            GND
+                                        </Radio.Button>
+                                        <Radio.Button value={"clock"}>
+                                            CLOCK
+                                        </Radio.Button>
+                                    </Radio.Group>
+                                </Form.Item>
+                                <Form.Item label={"Test Count"}>
+                                    <InputNumber
+                                        size={"small"}
+                                        value={traceCount}
+                                        onChange={(v) => {
+                                            setTraceCount(Number(v));
+                                        }}
+                                        changeOnWheel
+                                    />
+                                </Form.Item>
+                                <Form.Item>
+                                    <Progress style={{width: 300}} type={"line"} size={"small"}/>
+                                </Form.Item>
+                                <Form.Item>
+                                    <Button size={"small"} onClick={() => {
+                                        setGlitchTestParams({
+                                            type: selected,
+                                            data: dataMap[selected].data.map(({prop, param}) => ({prop, param}))
+                                        })
+                                    }}>Test</Button>
+                                </Form.Item>
+                            </Form>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col span={24}>
+                            <GlitchTestPropPanel
+                                data={dataMap[selected].data}
+                                setData={dataMap[selected].setData}
+                            />
+                        </Col>
+                    </Row>
+                </Col>
+            </Row>
+            <Row>
+                <Col span={24}>
+                    <GlitchTestResult/>
+                </Col>
+            </Row>
         </div>
     );
 };
 
-export type {ConfigGlitchTestProps, GlitchTestOnApplyParam};
 export default ConfigGlitchTest;
+export type {GlitchTestOnApplyParam};
