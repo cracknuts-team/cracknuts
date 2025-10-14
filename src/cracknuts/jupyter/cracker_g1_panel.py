@@ -10,7 +10,7 @@ from traitlets import traitlets
 from cracknuts import Acquisition, CrackerG1, logger
 from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition, GlitchDoData, GlitchAcquisitionBuilder
 from cracknuts.jupyter.cracker_s1_panel import CrackerPanelWidget
-from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
+from cracknuts.jupyter.acquisition_panel import GlitchAcquisitionPanelWidget
 from cracknuts.jupyter.scope_panel import ScopePanelWidget
 from cracknuts.jupyter.glitch_test_panel import GlitchTestPanel
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
@@ -18,7 +18,7 @@ from cracknuts.jupyter.ui_sync import observe_interceptor
 from cracknuts.utils import user_config
 
 
-class CrackerG1Panel(CrackerPanelWidget, AcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
+class CrackerG1Panel(CrackerPanelWidget, GlitchAcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackerG1Widget.js"
     _css = ""
 

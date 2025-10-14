@@ -102,26 +102,120 @@ class Acquisition(abc.ABC):
         self._run_thread_pause_event: threading.Event = threading.Event()
 
         self.cracker: CrackerBasic = cracker
-        self.trace_count: int = trace_count
-        self.sample_length = sample_length
-        self.sample_offset: int = sample_offset
+        self._trace_count: int = trace_count
+        self._sample_length = sample_length
+        self._sample_offset: int = sample_offset
         self.metadata_plaintext_length: int = data_plaintext_length
         self.metadata_ciphertext_length: int = data_ciphertext_length
         self.metadata_key_length: int = data_key_length
         self.metadata_extended_length: int = data_extended_length
-        self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
-        self.trigger_judge_timeout: float = trigger_judge_timeout  # second
+        self._trigger_judge_wait_time: float = trigger_judge_wait_time  # second
+        self._trigger_judge_timeout: float = trigger_judge_timeout  # second
         self.do_error_handler_strategy: int = do_error_handler_strategy
-        self.do_error_max_count: int = do_error_max_count  # -1 never exit
-        self.file_format: str = file_format
+        self._do_error_max_count: int = do_error_max_count  # -1 never exit
+        self._file_format: str = file_format
         if file_path is None or file_path == "auto":
             file_path = os.path.abspath(self._DATASET_DEFAULT_PATH)
-        self.file_path: str = file_path
+        self._file_path: str = file_path
 
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
-        self.trace_fetch_interval = trace_fetch_interval
+        self._on_config_changed_listener: list[typing.Callable[[str, typing.Any], None]] = []
+        self._trace_fetch_interval = trace_fetch_interval
+
+    def on_config_changed(self, listener: typing.Callable[[str, typing.Any], None]):
+        self._on_config_changed_listener.append(listener)
+
+    @property
+    def trace_count(self):
+        return self._trace_count
+
+    @trace_count.setter
+    def trace_count(self, value):
+        self._trace_count = value
+        for listener in self._on_config_changed_listener:
+            listener("trace_count", value)
+
+    @property
+    def sample_length(self):
+        return self._sample_length
+
+    @sample_length.setter
+    def sample_length(self, value):
+        self._sample_length = value
+        for listener in self._on_config_changed_listener:
+            listener("sample_length", value)
+
+    @property
+    def sample_offset(self):
+        return self._sample_offset
+
+    @sample_offset.setter
+    def sample_offset(self, value):
+        self._sample_offset = value
+        for listener in self._on_config_changed_listener:
+            listener("sample_offset", value)
+
+    @property
+    def trigger_judge_wait_time(self):
+        return self._trigger_judge_wait_time
+
+    @trigger_judge_wait_time.setter
+    def trigger_judge_wait_time(self, value):
+        self._trigger_judge_wait_time = value
+        for listener in self._on_config_changed_listener:
+            listener("trigger_judge_wait_time", value)
+
+    @property
+    def trigger_judge_timeout(self):
+        return self._trigger_judge_timeout
+
+    @trigger_judge_timeout.setter
+    def trigger_judge_timeout(self, value):
+        self._trigger_judge_timeout = value
+        for listener in self._on_config_changed_listener:
+            listener("trigger_judge_timeout", value)
+
+    @property
+    def do_error_max_count(self):
+        return self._do_error_max_count
+
+    @do_error_max_count.setter
+    def do_error_max_count(self, value):
+        self._do_error_max_count = value
+        for listener in self._on_config_changed_listener:
+            listener("do_error_max_count", value)
+
+    @property
+    def file_format(self):
+        return self._file_format
+
+    @file_format.setter
+    def file_format(self, value):
+        self._file_format = value
+        for listener in self._on_config_changed_listener:
+            listener("file_format", value)
+
+    @property
+    def file_path(self):
+        return self._file_path
+
+    @file_path.setter
+    def file_path(self, value):
+        self._file_path = value
+        for listener in self._on_config_changed_listener:
+            listener("file_path", value)
+
+    @property
+    def trace_fetch_interval(self):
+        return self._trace_fetch_interval
+
+    @trace_fetch_interval.setter
+    def trace_fetch_interval(self, value):
+        self._trace_fetch_interval = value
+        for listener in self._on_config_changed_listener:
+            listener("trace_fetch_interval", value)
 
     def get_status(self):
         return self._status

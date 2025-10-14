@@ -81,6 +81,7 @@ class GlitchAcquisition(Acquisition):
         self,
         cracker: CrackerBasic,
         trace_count: int = 1000,
+        shadow_trace_count: int = 1000,
         sample_length: int = -1,
         sample_offset: int = 0,
         data_plaintext_length: int | None = None,
@@ -112,11 +113,22 @@ class GlitchAcquisition(Acquisition):
             file_path,
             trace_fetch_interval,
         )
+        self._shadow_trace_count = shadow_trace_count
         self._cracker_g1 = typing.cast(CrackerG1, self.cracker)
         self._glitch_result = None
         self._glitch_param_generator: AbstractGlitchParamGenerator | None = None
         self._current_glitch_param = None
         self._is_in_glitch_mode = False
+
+    @property
+    def shadow_trace_count(self):
+        return self._shadow_trace_count
+
+    @shadow_trace_count.setter
+    def shadow_trace_count(self, value: int):
+        self._shadow_trace_count = value
+        for listener in self._on_config_changed_listener:
+            listener("shadow_trace_count", value)
 
     def pre_init(self):
         if not self._is_in_glitch_mode:
@@ -271,10 +283,13 @@ class GlitchAcquisition(Acquisition):
         glitch_params = self._build_glitch_param_generator(self._cracker_g1.get_glitch_test_params())
         self.set_glitch_params(glitch_params)
 
+        print(f"--- shadow count: {self.shadow_trace_count}")
         if count is None:
-            count = self.trace_count
+            count = self.shadow_trace_count
+        print(f"=== total trace count: {count}")
         count = count * self._glitch_param_generator.total()
-
+        print(f"=== glitch param count: {self._glitch_param_generator.total()}")
+        print(f"=== total trace count: {count}")
         self._is_in_glitch_mode = True
         self._run(
             test=False,

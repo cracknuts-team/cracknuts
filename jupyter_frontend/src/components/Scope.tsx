@@ -4,6 +4,7 @@ import {CheckboxChangeEvent} from "antd/es/checkbox";
 import {FormattedMessage, useIntl} from "react-intl";
 import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
 import ReactEcharts from "echarts-for-react";
+import {useModelState} from "@anywidget/react";
 
 interface SeriesData {
     0: number[] | undefined;
@@ -16,30 +17,18 @@ interface RangeData {
 }
 
 interface ScopeProps {
-    disable: boolean;
-    scopeStatus: number;
-    setScopeStatus: (status: number) => void;
-    disableOperate: boolean;
-    monitorStatus: boolean;
-    setMonitorStatus: (status: boolean) => void;
-    monitorPeriod: number;
-    setMonitorPeriod: (period: number) => void;
-    seriesData: SeriesData;
-    yRange: RangeData;
+    disable?: boolean;
 }
 
-const Scope: React.FC<ScopeProps> = ({
-                                         disable,
-                                         scopeStatus,
-                                         setScopeStatus,
-                                         disableOperate,
-                                         monitorStatus,
-                                         setMonitorStatus,
-                                         monitorPeriod,
-                                         setMonitorPeriod,
-                                         seriesData,
-                                         yRange,
-                                     }) => {
+const Scope: React.FC<ScopeProps> = ({disable=false,}) => {
+
+    const [scopeStatus, setScopeStatus] = useModelState<number>("scope_status");
+    const [lockScopeOperation] = useModelState<boolean>("lock_scope_operation");
+    const [monitorStatus, setMonitorStatus] = useModelState<boolean>("monitor_status");
+    const [monitorPeriod, setMonitorPeriod] = useModelState<number>("monitor_period")
+
+    const [yRange] = useModelState<RangeData>("y_range");
+    const [seriesData] = useModelState<SeriesData>("series_data");
 
     const [customRangeModel, setCustomRangeModel] = useState<boolean>(false)
     const [customC0YMin, setCustomC0YMin] = useState<number | undefined>(undefined)
@@ -320,7 +309,7 @@ const Scope: React.FC<ScopeProps> = ({
                             setScopeStatus(Number(e.target.value));
                         }}
                         size={"small"}
-                        disabled={disableOperate}
+                        disabled={lockScopeOperation}
                         style={{minWidth: 200}}
                     >
                         <Radio.Button value={0}>

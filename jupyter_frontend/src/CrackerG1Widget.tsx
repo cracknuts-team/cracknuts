@@ -2,9 +2,6 @@ import {createRender, useModel, useModelState} from "@anywidget/react";
 import React, {useEffect, useState} from "react";
 import CrackerG1, {CrackerG1PanelProps} from "@/components/CrackerG1.tsx";
 import {ConnectionProps} from "@/components/Connection.tsx"
-import {G1ConfigProps} from "@/components/config/G1Config.tsx";
-import {useConnectionStates} from "@/hooks/connection.ts";
-import {useConfigCommonStates, useConfigGlitchTestStates, useGlitchStates, useOscConfigStates} from "@/hooks/config.ts";
 
 import {ConfigProvider, theme,} from "antd";
 import {IntlProvider} from "react-intl";
@@ -13,30 +10,12 @@ import zh from "@/i18n/zh.json";
 import en from "@/i18n/en.json";
 import enUS from "antd/es/locale/en_US";
 import {bus} from "@/bus.ts";
-import {ConfigurationProps} from "@/components/Configuration.tsx";
-import useConfigurationStates from "@/hooks/configuration.ts";
-import {ScopeProps} from "@/components/Scope.tsx";
-import {useScopeStates} from "@/hooks/scope.ts";
-import {AcquisitionProps} from "@/components/Acquisition.tsx";
-import {useAcquisitionStates} from "@/hooks/acquisition.ts";
 
 const render = createRender(() => {
 
     const model = useModel();
 
-    const connectionProps: ConnectionProps = {...useConnectionStates(), disabled: false}; // disabled wait for acq status.
-    const configurationProps: ConfigurationProps = useConfigurationStates()
-    const acquisitionProps: AcquisitionProps = useAcquisitionStates()
-    const configProps: G1ConfigProps = {
-        common: useConfigCommonStates(),
-        osc: useOscConfigStates(),
-        glitch: useGlitchStates(),
-        glitchTest: useConfigGlitchTestStates()
-    };
-    const scopeProps: ScopeProps = {...useScopeStates(), disable: false}; // todo disabled wait for cracker connection status.
-
-
-
+    const connectionProps: ConnectionProps = {disabled: false}; // disabled wait for acq status.
     const [language, _setLanguage] = useModelState<string>("language");
     const [antLanguage, setAntLanguage] = useState(zhCN);
     const messageMap: Record<string, any> = {
@@ -128,10 +107,6 @@ const render = createRender(() => {
             <ConfigProvider theme={{algorithm: algorithm}} locale={antLanguage}>
                 <CrackerG1
                     connection={connectionProps}
-                    configuration={configurationProps}
-                    config={configProps}
-                    acquisition={acquisitionProps}
-                    scope={scopeProps}
                     theme={panelTheme}
                 />
             </ConfigProvider>

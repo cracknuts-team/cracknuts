@@ -1,46 +1,63 @@
 import React from "react";
 import {Button, Checkbox, Col, Form, InputNumber, Row, Select, Space} from "antd";
 import {FormattedMessage, useIntl} from "react-intl";
+import {useModelState} from "@anywidget/react";
 
 
-interface ConfigOSCProps {
-    sample: {
-        rate: number,
-        setRate: (number: number) => void,
-        phase: number,
-        setPhase: (number: number) => void,
-        length: number,
-        setLength: (number: number) => void,
-        delay: number,
-        setDelay: (number: number) => void,
-        channelA: {
-            enable: boolean;
-            setEnable: (enable: boolean) => void;
-            gain: number;
-            setGain: (value: number) => void;
-        },
-        channelB: {
-            enable: boolean;
-            setEnable: (enable: boolean) => void;
-            gain: number;
-            setGain: (value: number) => void;
-        },
-    },
-    trigger: {
-        source: number,
-        setSource: (source: number) => void,
-        mode: number,
-        setMode: (mode: number) => void,
-        edge: number,
-        setEdge: (edge: number) => void,
-        edgeLevel: number,
-        setEdgeLevel: (level: number) => void,
-    }
-}
-
-const ConfigOSC: React.FC<ConfigOSCProps> = ({sample, trigger}) => {
+const ConfigOSC: React.FC = () => {
 
     const intl = useIntl();
+
+    // Sample
+    const [oscSampleClock, setOscSampleClock] = useModelState<number>("osc_sample_clock");
+    const [oscSamplePhase, setOscSamplePhase] = useModelState<number>("osc_sample_phase");
+    const [oscSampleLength, setOscSampleLength] = useModelState<number>("osc_sample_length");
+    const [oscSampleDelay, setOscSampleDelay] = useModelState<number>("osc_sample_delay");
+
+    // Channels
+    const [channelAEnable, setChannelAEnable] = useModelState<boolean>("osc_channel_0_enable");
+    const [channelBEnable, setChannelBEnable] = useModelState<boolean>("osc_channel_1_enable");
+    const [channelAGain, setChannelAGain] = useModelState<number>("osc_channel_0_gain");
+    const [channelBGain, setChannelBGain] = useModelState<number>("osc_channel_1_gain");
+
+    // Trigger
+    const [oscTriggerSource, setOscTriggerSource] = useModelState<number>("osc_trigger_source");
+    const [oscTriggerMode, setOscTriggerMode] = useModelState<number>("osc_trigger_mode");
+    const [oscTriggerEdge, setOscTriggerEdge] = useModelState<number>("osc_trigger_edge");
+    const [oscTriggerEdgeLevel, setOscTriggerEdgeLevel] = useModelState<number>("osc_trigger_edge_level");
+
+    const sample = {
+        rate: oscSampleClock,
+        setRate: setOscSampleClock,
+        phase: oscSamplePhase,
+        setPhase: setOscSamplePhase,
+        length: oscSampleLength,
+        setLength: setOscSampleLength,
+        delay: oscSampleDelay,
+        setDelay: setOscSampleDelay,
+        channelA: {
+            enable: channelAEnable,
+            setEnable: setChannelAEnable,
+            gain: channelAGain,
+            setGain: setChannelAGain,
+        },
+        channelB: {
+            enable: channelBEnable,
+            setEnable: setChannelBEnable,
+            gain: channelBGain,
+            setGain: setChannelBGain,
+        },
+    }
+    const trigger = {
+        source: oscTriggerSource,
+        setSource: setOscTriggerSource,
+        mode: oscTriggerMode,
+        setMode: setOscTriggerMode,
+        edge: oscTriggerEdge,
+        setEdge: setOscTriggerEdge,
+        edgeLevel: oscTriggerEdgeLevel,
+        setEdgeLevel: setOscTriggerEdgeLevel,
+    }
 
     return (
         <Row>
@@ -261,4 +278,3 @@ const ConfigOSC: React.FC<ConfigOSCProps> = ({sample, trigger}) => {
 };
 
 export default ConfigOSC;
-export type {ConfigOSCProps};
