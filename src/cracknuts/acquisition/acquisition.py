@@ -44,6 +44,7 @@ class Acquisition(abc.ABC):
     STATUS_STOPPED: int = 0
     STATUS_TESTING: int = 1
     STATUS_RUNNING: int = 2
+    STATUS_GLITCH_TEST_RUNNING: int = 3
     _STATUS_PAUSED_SWITCH: int = -1
 
     DO_ERROR_HANDLER_STRATEGY_EXIT: int = 0
@@ -495,6 +496,7 @@ class Acquisition(abc.ABC):
         file_format: str | None = "zarr",
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
+        is_glitch: bool = False,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -516,6 +518,7 @@ class Acquisition(abc.ABC):
                 "file_format": file_format,
                 "file_path": file_path,
                 "trace_fetch_interval": trace_fetch_interval,
+                "is_glitch": is_glitch,
             },
         ).start()
 
@@ -537,6 +540,7 @@ class Acquisition(abc.ABC):
         file_format: str | None = "zarr",
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
+        is_glitch: bool = False,
     ):
         if self._status > 0:
             self._logger.warning(
@@ -544,7 +548,10 @@ class Acquisition(abc.ABC):
             )
             return
 
-        if not test:
+        if is_glitch:
+            self._status = self.STATUS_GLITCH_TEST_RUNNING
+            self._status_changed()
+        elif not test:
             self._status = self.STATUS_RUNNING
             self._status_changed()
         else:

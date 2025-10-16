@@ -30,6 +30,10 @@ class GlitchTestResult(abc.ABC):
         self._cursor.close()
         self._conn.close()
 
+    def open(self):
+        self._conn = sqlite3.connect(self._path)
+        self._cursor = self._conn.cursor()
+
 
 class VCCGlitchTestResult(GlitchTestResult):
     def _init_table(self):
@@ -119,6 +123,7 @@ class GlitchAcquisition(Acquisition):
         self._glitch_param_generator: AbstractGlitchParamGenerator | None = None
         self._current_glitch_param = None
         self._is_in_glitch_mode = False
+        self._glitch_test_params = None
 
     @property
     def shadow_trace_count(self):
@@ -188,38 +193,7 @@ class GlitchAcquisition(Acquisition):
         trace_fetch_interval: float = 2.0,
     ):
         self._is_in_glitch_mode = False
-        self.glitch_test(
-            sample_length=sample_length,
-            sample_offset=sample_offset,
-            trigger_judge_wait_time=trigger_judge_wait_time,
-            trigger_judge_timeout=trigger_judge_timeout,
-            do_error_max_count=do_error_max_count,
-            do_error_handler_strategy=do_error_handler_strategy,
-            trace_fetch_interval=trace_fetch_interval,
-        )
-
-    def glitch_test(
-        self,
-        sample_length: int | None = None,
-        sample_offset: int | None = None,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
-        trace_fetch_interval: float = 0.1,
-    ):
-        glitch_params = self._build_glitch_param_generator(self._cracker_g1.get_glitch_test_params())
-        self._logger.warning(f"glitch_params: {glitch_params}")
-        self.set_glitch_params(glitch_params)
-        self._logger.warning(f"count is {self.trace_count}")
-
-        test_mode = self._glitch_param_generator.total() == 1
-        count = -1 if test_mode else self._glitch_param_generator.total()
-
-        self._is_in_glitch_mode = True
-        self._run(
-            test=test_mode,
-            persistent=False,
+        self.test(
             count=count,
             sample_length=sample_length,
             sample_offset=sample_offset,
@@ -229,6 +203,38 @@ class GlitchAcquisition(Acquisition):
             do_error_handler_strategy=do_error_handler_strategy,
             trace_fetch_interval=trace_fetch_interval,
         )
+
+    # def glitch_test(
+    #     self,
+    #     sample_length: int | None = None,
+    #     sample_offset: int | None = None,
+    #     trigger_judge_wait_time: float | None = None,
+    #     trigger_judge_timeout: float | None = None,
+    #     do_error_max_count: int | None = None,
+    #     do_error_handler_strategy: int | None = None,
+    #     trace_fetch_interval: float = 0.1,
+    # ):
+    #     glitch_params = self._build_glitch_param_generator(self._glitch_test_params)
+    #     self._logger.warning(f"glitch_params: {glitch_params}")
+    #     self.set_glitch_params(glitch_params)
+    #     self._logger.warning(f"count is {self.trace_count}")
+    #
+    #     test_mode = self._glitch_param_generator.total() == 1
+    #     count = -1 if test_mode else self._glitch_param_generator.total()
+    #
+    #     self._is_in_glitch_mode = True
+    #     self._run(
+    #         test=test_mode,
+    #         persistent=False,
+    #         count=count,
+    #         sample_length=sample_length,
+    #         sample_offset=sample_offset,
+    #         trigger_judge_wait_time=trigger_judge_wait_time,
+    #         trigger_judge_timeout=trigger_judge_timeout,
+    #         do_error_max_count=do_error_max_count,
+    #         do_error_handler_strategy=do_error_handler_strategy,
+    #         trace_fetch_interval=trace_fetch_interval,
+    #     )
 
     def run(
         self,
@@ -247,7 +253,7 @@ class GlitchAcquisition(Acquisition):
         file_path: str | None = "auto",
     ):
         self._is_in_glitch_mode = False
-        self.glitch_run(
+        self.run(
             count=count,
             sample_length=sample_length,
             sample_offset=sample_offset,
@@ -280,16 +286,12 @@ class GlitchAcquisition(Acquisition):
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
     ):
-        glitch_params = self._build_glitch_param_generator(self._cracker_g1.get_glitch_test_params())
+        glitch_params = self._build_glitch_param_generator(self._glitch_test_params)
         self.set_glitch_params(glitch_params)
 
-        print(f"--- shadow count: {self.shadow_trace_count}")
         if count is None:
             count = self.shadow_trace_count
-        print(f"=== total trace count: {count}")
         count = count * self._glitch_param_generator.total()
-        print(f"=== glitch param count: {self._glitch_param_generator.total()}")
-        print(f"=== total trace count: {count}")
         self._is_in_glitch_mode = True
         self._run(
             test=False,
@@ -308,6 +310,7 @@ class GlitchAcquisition(Acquisition):
             file_format=file_format,
             file_path=file_path,
             trace_fetch_interval=trace_fetch_interval,
+            is_glitch=True,
         )
 
     @staticmethod
@@ -467,6 +470,12 @@ class GlitchAcquisition(Acquisition):
             file_path=file_path,
             trace_fetch_interval=trace_fetch_interval,
         )
+
+    def set_glitch_test_params(self, param):
+        self._glitch_test_params = param
+
+    def get_glitch_test_params(self):
+        return self._glitch_test_params
 
 
 class GlitchDoStatus(enum.Enum):

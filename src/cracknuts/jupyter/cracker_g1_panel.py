@@ -235,8 +235,8 @@ class CrackerG1Panel(CrackerPanelWidget, GlitchAcquisitionPanelWidget, ScopePane
     @observe_interceptor
     def glitch_test_params_changed(self, change):
         if isinstance(self.cracker, CrackerG1):
-            self.cracker.set_glitch_test_params(change.get("new"))
-            self.acquisition.glitch_run()
+            self.acquisition.set_glitch_test_params(change.get("new"))
+            # self.acquisition.glitch_run()
 
 
 class CrackerG1PanelBuilder:

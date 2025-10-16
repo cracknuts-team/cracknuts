@@ -44,7 +44,7 @@ class AbstractGlitchParamGenerator(abc.ABC):
     @staticmethod
     def _frange(start, stop, step):
         x = start
-        while x < stop:
+        while x <= stop:
             yield round(x, 10)
             x += step
 
