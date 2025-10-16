@@ -1,5 +1,5 @@
-import {Button, Col, Form, InputNumber, Progress, Radio, Row, Select, SelectProps, Table} from "antd"
-import React, {useState} from "react";
+import {Col, Form, InputNumber, Radio, Row, Select, SelectProps, Table} from "antd"
+import React, {useEffect, useState} from "react";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 import GlitchTestResult from "@/components/glitch-test/TestResult.tsx";
 import {useModelState} from "@anywidget/react";
@@ -363,9 +363,16 @@ const ConfigGlitchTest: React.FC = () => {
         unit: 'MHz',
     }]);
 
-    type GlitchType = 'vcc' | 'gnd' | 'clock';
-
     const [selected, setSelected] = useState<GlitchType>('vcc');
+
+    useEffect(() => {
+        setGlitchTestParams({
+            type: selected,
+            data: dataMap[selected].data.map(({prop, param}) => ({prop, param}))
+        })
+    }, [vccGlitchParamGenerators, gndGlitchParamGenerators, clockGlitchParamGenerators, selected]);
+
+    type GlitchType = 'vcc' | 'gnd' | 'clock';
 
     const dataMap: Record<GlitchType, {
         data: GlitchGenerateParamProps[];
@@ -414,17 +421,17 @@ const ConfigGlitchTest: React.FC = () => {
                                         changeOnWheel
                                     />
                                 </Form.Item>
-                                <Form.Item>
-                                    <Progress style={{width: 300}} type={"line"} size={"small"}/>
-                                </Form.Item>
-                                <Form.Item>
-                                    <Button size={"small"} onClick={() => {
-                                        setGlitchTestParams({
-                                            type: selected,
-                                            data: dataMap[selected].data.map(({prop, param}) => ({prop, param}))
-                                        })
-                                    }}>Test</Button>
-                                </Form.Item>
+                                {/*<Form.Item>*/}
+                                {/*    <Progress style={{width: 300}} type={"line"} size={"small"}/>*/}
+                                {/*</Form.Item>*/}
+                                {/*<Form.Item>*/}
+                                {/*<Button size={"small"} onClick={() => {*/}
+                                {/*    setGlitchTestParams({*/}
+                                {/*        type: selected,*/}
+                                {/*        data: dataMap[selected].data.map(({prop, param}) => ({prop, param}))*/}
+                                {/*    })*/}
+                                {/*}}>Test</Button>*/}
+                                {/*</Form.Item>*/}
                             </Form>
                         </Col>
                     </Row>
@@ -448,4 +455,4 @@ const ConfigGlitchTest: React.FC = () => {
 };
 
 export default ConfigGlitchTest;
-export type {GlitchTestOnApplyParam};
+export type {GlitchTestOnApplyParam, GlitchTestModelSelectProps};

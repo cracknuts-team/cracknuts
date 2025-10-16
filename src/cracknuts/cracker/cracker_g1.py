@@ -63,7 +63,7 @@ class CrackerG1(CrackerS1):
         operator_port: int = None,
     ):
         super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
-        self._glitch_test_params = None
+        # self._glitch_test_params = None
 
     def glitch_vcc_arm(self):
         self._glitch_vcc_arm(True)
@@ -248,8 +248,8 @@ class CrackerG1(CrackerS1):
     def get_default_config(self) -> ConfigS1:
         return ConfigG1()
 
-    def set_glitch_test_params(self, param):
-        self._glitch_test_params = param
-
-    def get_glitch_test_params(self):
-        return self._glitch_test_params
+    # def set_glitch_test_params(self, param):
+    #     self._glitch_test_params = param
+    #
+    # def get_glitch_test_params(self):
+    #     return self._glitch_test_params

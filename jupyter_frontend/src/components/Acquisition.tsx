@@ -32,8 +32,8 @@ const Acquisition: React.FC = () => {
             model.send({source: "acqStatusButton", event: "onChange", args: {status: "test"}});
         } else if (status == 2) {
             model.send({source: "acqStatusButton", event: "onChange", args: {status: "run"}});
-            // } else if (status == 3) {
-            //   model.send({source: "acqStatusButton", event: "onChange", args: {status: "glitch_test"}});
+        } else if (status == 3) {
+          model.send({source: "acqStatusButton", event: "onChange", args: {status: "glitch_test"}});
         } else {
             // stop
             model.send({source: "acqStatusButton", event: "onChange", args: {status: "stop"}});
@@ -77,16 +77,17 @@ const Acquisition: React.FC = () => {
                     size={"small"}
                 >
                     <Radio.Button value={1}
-                                  disabled={status == 2 || status == -2 || status == -3 || checkFrontBackStatusSync()}>
+                                  disabled={status == 2 || status == 3 || status == -2 || status == -3 || checkFrontBackStatusSync()}>
                         <FormattedMessage id={"acquisition.test"}/>
                     </Radio.Button>
-                    <Radio.Button value={2} disabled={status == 1 || status == -1 || checkFrontBackStatusSync()}>
+                    <Radio.Button value={2} disabled={status == 1 || status == 3 || status == -1  || status == -3 || checkFrontBackStatusSync()}>
                         <FormattedMessage id={"acquisition.run"}/>
                     </Radio.Button>
-                    {/*<Radio.Button value={3} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>*/}
-                    {/*  Glitch Test*/}
-                    {/*</Radio.Button>*/}
-                    <Radio.Button value={-1} disabled={status == 0 || checkFrontBackStatusSync()}>
+                    <Radio.Button value={3} disabled={status == 1 || status == 2 || status == -1 || status == -2 || checkFrontBackStatusSync()}>
+                      Glitch Test
+                    </Radio.Button>
+                    <Radio.Button value={-1} disabled={status == 0 || status ==3 || checkFrontBackStatusSync()}>
+                        {/*这里禁用glitch状态的暂停功能，因为sqlit在暂停时有多线程访问问题*/}
                         <FormattedMessage id={"acquisition.pause"}/>
                     </Radio.Button>
                     <Radio.Button value={0} disabled={checkFrontBackStatusSync()}>
