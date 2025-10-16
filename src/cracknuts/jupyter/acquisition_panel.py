@@ -10,7 +10,7 @@ from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition, AcquisitionConfig
 from traitlets import traitlets
 
-from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition
+from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition, GlitchDoData
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
@@ -290,10 +290,29 @@ class _DefaultDirectoryInfo:
 
 class GlitchAcquisitionPanelWidget(AcquisitionPanelWidget):
     shadow_trace_count = traitlets.Int(1000).tag(sync=True)
+    glitch_test_result = traitlets.List([]).tag(sync=True)
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.glitch_acquisition: GlitchAcquisition = typing.cast(GlitchAcquisition, self.acquisition)
+        self.glitch_acquisition.on_glitch_result_added(self._update_glitch_test_result)
+        self._result_cache = []
+
+    def _update_glitch_test_result(self, index, param, data: "GlitchDoData") -> None:
+        if len(self._result_cache) >= 5:
+            del self._result_cache[0]
+        self._result_cache.append(
+            {
+                "no": index,
+                "normal": param.normal,
+                "glitch": param.glitch,
+                "wait": param.wait,
+                "repeat": param.repeat,
+                "interval": param.interval,
+                "status": data.glitch_status.value,
+            }
+        )
+        self.glitch_test_result = self._result_cache.copy()
 
     @traitlets.observe("shadow_trace_count")
     def shadow_trace_count_changed(self, change):

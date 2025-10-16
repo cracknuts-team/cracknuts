@@ -24,7 +24,7 @@ class GlitchTestResult(abc.ABC):
 
     def _init_table(self): ...
 
-    def add(self, param, data: "GlitchDoData"): ...
+    def add(self, index, param, data: "GlitchDoData"): ...
 
     def close(self):
         self._cursor.close()
@@ -54,8 +54,9 @@ class VCCGlitchTestResult(GlitchTestResult):
         )
         """)
         self._conn.commit()
+        self._conn.execute("PRAGMA journal_mode=WAL;")
 
-    def add(self, param: VCCGlitchParam, data: "GlitchDoData"):
+    def add(self, index, param: VCCGlitchParam, data: "GlitchDoData"):
         if data.glitch_status is None:
             data.glitch_status = GlitchDoStatus.ERROR
         data.key = data.key.hex() if data.key is not None else ""
@@ -65,11 +66,12 @@ class VCCGlitchTestResult(GlitchTestResult):
         self._cursor.execute(
             """
                 INSERT INTO glitch_result (
-                    normal, wait, glitch, count, repeat, interval, plaintext, ciphertext, key, extended, status
+                    no, normal, wait, glitch, count, repeat, interval, plaintext, ciphertext, key, extended, status
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
             (
+                index,
                 param.normal,
                 param.wait,
                 param.glitch,
@@ -131,6 +133,8 @@ class GlitchAcquisition(Acquisition, ABC):
         self._is_in_glitch_mode = False
         self._glitch_test_params = None
 
+        self._on_glitch_result_added_listener = []
+
     @property
     def shadow_trace_count(self):
         return self._shadow_trace_count
@@ -145,7 +149,7 @@ class GlitchAcquisition(Acquisition, ABC):
         if not self._is_in_glitch_mode:
             return
         if isinstance(self._glitch_param_generator, VCCGlitchParamGenerator):
-            self._glitch_result = VCCGlitchTestResult(f"dataset/{self._current_timestamp}_vcc.sqlite3", create=True)
+            self._glitch_result = VCCGlitchTestResult(f"dataset/{self.current_timestamp}.db", create=True)
         else:
             # todo other glitch test result.
             ...
@@ -168,9 +172,12 @@ class GlitchAcquisition(Acquisition, ABC):
             # OTHER GLITCH PARAM GENERATOR
         self.cracker.osc_single()
 
-    def _post_do(self, data):
+    def _post_do(self, index, data):
         if self._is_in_glitch_mode and self._glitch_result is not None:
-            self._glitch_result.add(self._current_glitch_param, GlitchDoData(**data))
+            data = GlitchDoData(**data)
+            self._glitch_result.add(index, self._current_glitch_param, data)
+            for listener in self._on_glitch_result_added_listener:
+                listener(index, self._current_glitch_param, data)
 
     def _pre_finish(self):
         if self._is_in_glitch_mode and self._glitch_result is not None:
@@ -478,6 +485,9 @@ class GlitchAcquisition(Acquisition, ABC):
 
     def get_glitch_test_params(self):
         return self._glitch_test_params
+
+    def on_glitch_result_added(self, callback):
+        self._on_glitch_result_added_listener.append(callback)
 
 
 class GlitchDoStatus(enum.Enum):
