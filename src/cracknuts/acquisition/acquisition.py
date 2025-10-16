@@ -118,7 +118,8 @@ class Acquisition(abc.ABC):
         if file_path is None or file_path == "auto":
             file_path = os.path.abspath(self._DATASET_DEFAULT_PATH)
         self._file_path: str = file_path
-        self._current_timestamp = None  # Current timestamp for dataset
+        self.current_timestamp = None  # Current timestamp for dataset
+        self.current_data = None
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
@@ -585,7 +586,7 @@ class Acquisition(abc.ABC):
             self.file_path = file_path
         if trace_fetch_interval is not None:
             self.trace_fetch_interval = trace_fetch_interval
-        self._current_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        self.current_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.pre_init()
         self.init()
         self._post_init()
@@ -622,7 +623,7 @@ class Acquisition(abc.ABC):
                 file_path = self._DATASET_DEFAULT_PATH
             if not file_path.endswith("/"):
                 file_path += "/"
-            file_path += self._current_timestamp
+            file_path += self.current_timestamp
             if file_format == "zarr":
                 file_path += ".zarr"
             elif file_format == "numpy":
@@ -668,6 +669,7 @@ class Acquisition(abc.ABC):
             start = time.time()
             try:
                 data = self.do(trace_index)
+                self.current_data = data
             except Exception as e:
                 self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
                 do_error_count += 1
@@ -714,7 +716,7 @@ class Acquisition(abc.ABC):
             if dataset is not None and self._last_wave is not None:
                 for k in self._last_wave.keys():
                     dataset.set_trace(str(k), trace_index, self._last_wave[k], data)
-            self._post_do(data)
+            self._post_do(trace_index, data)
             trace_index += 1
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
@@ -832,7 +834,7 @@ class Acquisition(abc.ABC):
             self._logger.error("Do error: %s", e.args)
             return False
 
-    def _post_do(self, data): ...
+    def _post_do(self, index, data): ...
 
     def _is_triggered(self):
         _, triggered = self.cracker.osc_is_triggered()
