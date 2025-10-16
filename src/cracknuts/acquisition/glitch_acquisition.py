@@ -153,32 +153,28 @@ class GlitchAcquisition(Acquisition, ABC):
     def do(self, count: int) -> "GlitchDoData": ...
 
     def pre_do(self):
-        if not self._is_in_glitch_mode:
-            return
-        # 设置当前的glitch参数
-        if isinstance(self._glitch_param_generator, VCCGlitchParamGenerator):
-            glitch_param = self._glitch_param_generator.next()
-            cracker_g1: CrackerG1 = typing.cast(CrackerG1, self.cracker)
-            cracker_g1.glitch_vcc_config(
-                wait=glitch_param.wait,
-                level=glitch_param.glitch,
-                count=glitch_param.count,
-                delay=glitch_param.interval,
-                repeat=glitch_param.repeat,
-            )
-            self._current_glitch_param = glitch_param
-        # OTHER GLITCH PARAM GENERATOR
+        if self._is_in_glitch_mode:
+            if isinstance(self._glitch_param_generator, VCCGlitchParamGenerator):
+                glitch_param = self._glitch_param_generator.next()
+                cracker_g1: CrackerG1 = typing.cast(CrackerG1, self.cracker)
+                cracker_g1.glitch_vcc_config(
+                    wait=glitch_param.wait,
+                    level=glitch_param.glitch,
+                    count=glitch_param.count,
+                    delay=glitch_param.interval,
+                    repeat=glitch_param.repeat,
+                )
+                self._current_glitch_param = glitch_param
+            # OTHER GLITCH PARAM GENERATOR
         self.cracker.osc_single()
 
     def _post_do(self, data):
-        if not self._is_in_glitch_mode:
-            return
-        self._glitch_result.add(self._current_glitch_param, GlitchDoData(**data))
+        if self._is_in_glitch_mode and self._glitch_result is not None:
+            self._glitch_result.add(self._current_glitch_param, GlitchDoData(**data))
 
     def _pre_finish(self):
-        if not self._is_in_glitch_mode:
-            return
-        self._glitch_result.close()
+        if self._is_in_glitch_mode and self._glitch_result is not None:
+            self._glitch_result.close()
 
     def set_glitch_params(self, param_generator: AbstractGlitchParamGenerator):
         self._glitch_param_generator = param_generator
@@ -196,7 +192,7 @@ class GlitchAcquisition(Acquisition, ABC):
         trace_fetch_interval: float = 2.0,
     ):
         self._is_in_glitch_mode = False
-        self.test(
+        super().test(
             count=count,
             sample_length=sample_length,
             sample_offset=sample_offset,
@@ -256,7 +252,7 @@ class GlitchAcquisition(Acquisition, ABC):
         file_path: str | None = "auto",
     ):
         self._is_in_glitch_mode = False
-        self.run(
+        super().run(
             count=count,
             sample_length=sample_length,
             sample_offset=sample_offset,
@@ -294,7 +290,8 @@ class GlitchAcquisition(Acquisition, ABC):
 
         if count is None:
             count = self.shadow_trace_count
-        count = count * self._glitch_param_generator.total()
+        if self._glitch_test_params is not None:
+            count = count * self._glitch_param_generator.total()
         self._is_in_glitch_mode = True
         self._run(
             test=False,
@@ -318,6 +315,8 @@ class GlitchAcquisition(Acquisition, ABC):
 
     @staticmethod
     def _build_glitch_param_generator(glitch_params) -> None | VCCGlitchParamGenerator | GNDGlitchParamGenerator:
+        if glitch_params is None:
+            return None
         if glitch_params["type"] == "vcc":
             normal, wait, glitch, count, repeat, interval = None, None, None, None, None, None
             for param in glitch_params["data"]:
