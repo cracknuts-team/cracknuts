@@ -118,7 +118,7 @@ class Acquisition(abc.ABC):
         if file_path is None or file_path == "auto":
             file_path = os.path.abspath(self._DATASET_DEFAULT_PATH)
         self._file_path: str = file_path
-
+        self._current_timestamp = None  # Current timestamp for dataset
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
@@ -585,6 +585,7 @@ class Acquisition(abc.ABC):
             self.file_path = file_path
         if trace_fetch_interval is not None:
             self.trace_fetch_interval = trace_fetch_interval
+        self._current_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.pre_init()
         self.init()
         self._post_init()
@@ -621,7 +622,7 @@ class Acquisition(abc.ABC):
                 file_path = self._DATASET_DEFAULT_PATH
             if not file_path.endswith("/"):
                 file_path += "/"
-            file_path += datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            file_path += self._current_timestamp
             if file_format == "zarr":
                 file_path += ".zarr"
             elif file_format == "numpy":

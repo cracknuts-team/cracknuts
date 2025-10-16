@@ -1,8 +1,8 @@
 import abc
-import datetime
 import enum
 import sqlite3
 import typing
+from abc import ABC
 
 from cracknuts import Acquisition, CrackerBasic, AcquisitionBuilder, CrackerG1
 from cracknuts.glitch.param_generator import (
@@ -56,6 +56,12 @@ class VCCGlitchTestResult(GlitchTestResult):
         self._conn.commit()
 
     def add(self, param: VCCGlitchParam, data: "GlitchDoData"):
+        if data.glitch_status is None:
+            data.glitch_status = GlitchDoStatus.ERROR
+        data.key = data.key.hex() if data.key is not None else ""
+        data.ciphertext = data.ciphertext.hex() if data.ciphertext is not None else ""
+        data.plaintext = data.plaintext.hex() if data.plaintext is not None else ""
+        data.extended = data.extended.hex() if data.extended is not None else ""
         self._cursor.execute(
             """
                 INSERT INTO glitch_result (
@@ -80,7 +86,7 @@ class VCCGlitchTestResult(GlitchTestResult):
         self._conn.commit()
 
 
-class GlitchAcquisition(Acquisition):
+class GlitchAcquisition(Acquisition, ABC):
     def __init__(
         self,
         cracker: CrackerBasic,
@@ -139,9 +145,7 @@ class GlitchAcquisition(Acquisition):
         if not self._is_in_glitch_mode:
             return
         if isinstance(self._glitch_param_generator, VCCGlitchParamGenerator):
-            self._glitch_result = VCCGlitchTestResult(
-                f"{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}_vcc.sqlite3", create=True
-            )
+            self._glitch_result = VCCGlitchTestResult(f"dataset/{self._current_timestamp}_vcc.sqlite3", create=True)
         else:
             # todo other glitch test result.
             ...
@@ -169,8 +173,7 @@ class GlitchAcquisition(Acquisition):
     def _post_do(self, data):
         if not self._is_in_glitch_mode:
             return
-        data = GlitchDoData()
-        self._glitch_result.add(self._current_glitch_param, data)
+        self._glitch_result.add(self._current_glitch_param, GlitchDoData(**data))
 
     def _pre_finish(self):
         if not self._is_in_glitch_mode:
@@ -492,12 +495,14 @@ class GlitchDoData:
         ciphertext: bytes | None = None,
         key: bytes | None = None,
         extended: bytes | None = None,
-        glitch_status: GlitchDoStatus = GlitchDoStatus.NOT_GLITCHED,
+        glitch_status: GlitchDoStatus | int = GlitchDoStatus.NOT_GLITCHED,
     ):
         self.plaintext = plaintext
         self.ciphertext = ciphertext
         self.key = key
         self.extended = extended
+        if isinstance(glitch_status, int):
+            glitch_status = GlitchDoStatus(glitch_status)
         self.glitch_status = glitch_status
 
 
