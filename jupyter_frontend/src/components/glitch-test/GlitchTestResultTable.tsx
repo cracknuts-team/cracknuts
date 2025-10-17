@@ -49,8 +49,11 @@ const columns: TableProps<_TestResultData>['columns'] = [{
     key: 'status',
 }];
 
+interface GlitchTestResultTableProps {
+    showPagination?: boolean
+}
 
-const TestResultTable: React.FC = () => {
+const GlitchTestResultTable: React.FC<GlitchTestResultTableProps> = ({showPagination = false}) => {
 
     const [data] = useModelState<TestResultData[]>("glitch_test_result");
 
@@ -67,7 +70,7 @@ const TestResultTable: React.FC = () => {
 
     const _data: _TestResultData[] = data.map(d => {
         const s = statusMap[d.status];
-        return {...d,  status: <Tag color={s.color}>{s.label}</Tag>}
+        return {...d, status: <Tag color={s.color}>{s.label}</Tag>}
     });
 
     // const [selected, setSelected] = useState<string[]>(['glitched', 'not_glitched', 'no_response', 'error']);
@@ -98,18 +101,20 @@ const TestResultTable: React.FC = () => {
             {/*    ))}*/}
             {/*</Space.Compact>*/}
 
-            <Table<_TestResultData> columns={columns} dataSource={_data} size={"small"}
-                                    pagination={false}
-                                    // pagination={{
-                                    //     total: 100,
-                                    //     defaultPageSize: 5,
-                                    //     showTotal: (total, range) => {
-                                    //         return `${range[0]}-${range[1]} / ${total}`
-                                    //     },
-                                    // }}
+            <Table<_TestResultData>
+                columns={columns}
+                dataSource={_data}
+                size={"small"}
+                pagination={showPagination ? {
+                    total: data.length,
+                    defaultPageSize: 5,
+                    showTotal: (total, range) => {
+                        return `${range[0]}-${range[1]} / ${total}`
+                    }
+                } : false}
             />
         </div>
     );
 };
 
-export default TestResultTable;
+export default GlitchTestResultTable;
