@@ -21,7 +21,7 @@ else
     echo "Miniconda is not installed, downloading Miniconda..."
     
     # Miniconda download link (Linux 64-bit)
-    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-py312_24.11.1-0-Linux-x86_64.sh"
     DESTINATION_PATH="$USER_HOME/Downloads/Miniconda3-latest-Linux-x86_64.sh"
     
     # Download the Miniconda installer

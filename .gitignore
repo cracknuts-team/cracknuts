@@ -14,3 +14,5 @@ docs/api/build
 node_modules
 src/cracknuts/jupyter/static/*
 .ipynb_checkpoints
+dataset
+.virtual_documents
