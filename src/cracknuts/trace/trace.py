@@ -330,6 +330,7 @@ class ZarrTraceDataset(TraceDataset):
                     self._ARRAY_TRACES_PATH,
                     shape=(self._trace_count, self._sample_count),
                     dtype=trace_dtype,
+                    chunks=(300, sample_count),
                     **zarr_trace_group_kwargs,
                 )
                 if self._data_plaintext_length is not None:
