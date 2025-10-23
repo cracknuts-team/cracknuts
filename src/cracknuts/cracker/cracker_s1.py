@@ -368,15 +368,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set trigger source.
 
-        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P', 'R', 'V')
-                       or ('Nut', 'ChA', 'ChB', 'Protocol', 'Reset', 'Voltage') or a number in 0 1 2 3 4 5 represent
-                       Nut, Channel A, Channel B, Protocol, Reset and Voltage respectively.
+        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P', 'R', 'V', 'G')
+                       or ('Nut', 'ChA', 'ChB', 'Protocol', 'Reset', 'Voltage') or a number in 0 1 2 3 4 5 6 represent
+                       Nut, Channel A, Channel B, Protocol, Reset, Voltage respectively and GPIO.
         :type source: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        sources1 = ("N", "A", "B", "P", "R", "V")
-        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL", "RESET", "VOLTAGE")
+        sources1 = ("N", "A", "B", "P", "R", "V", "G")
+        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL", "RESET", "VOLTAGE", "GPIO")
         if isinstance(source, str):
             source = source.upper()
             if source in sources1:
@@ -391,7 +391,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 return self.NON_PROTOCOL_ERROR, None
         else:
             if source > 5:
-                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3, 4, 5)")
+                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3, 4, 5, 6)")
                 return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">B", source)
         self._logger.debug(f"osc_trigger_source payload: {payload.hex()}")
@@ -1874,3 +1874,16 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">B", enable)
         self._logger.debug(f"cracker_nut_reset_io_enable payload: {payload}")
         return self.send_with_command(protocol.Command.NUT_RESET_IO_ENABLE, payload=payload)
+
+    def gpio_control(self, level: int):
+        payload = struct.pack(">I", level)
+        self._logger.debug(f"cracker_gpio_control payload: {payload}")
+        return self.send_with_command(protocol.Command.CRACKER_GPIO_CONTROL, payload=payload)
+
+    def gpio_delay(self, delay: int):
+        """
+        单位10纳秒。
+        """
+        payload = struct.pack(">I", delay)
+        self._logger.debug(f"cracker_gpio_delay payload: {payload}")
+        return self.send_with_command(protocol.Command.CRACKER_GPIO_DELAY, payload=payload)
