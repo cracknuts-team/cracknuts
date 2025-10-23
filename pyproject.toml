@@ -17,6 +17,8 @@ dependencies = [
     "zarr~=2.18.2",
     "packaging~=24.1",
     "anywidget~=0.9.13",
+    "pandas~=2.3.3",
+    "scipy~=1.16.2"
 ]
 
 [project.optional-dependencies]

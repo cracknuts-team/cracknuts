@@ -58,13 +58,13 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     glitch_vcc_wait = traitlets.Int(0).tag(sync=True)
     glitch_vcc_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
     glitch_vcc_count = traitlets.Int(1).tag(sync=True)
-    glitch_vcc_repeat = traitlets.Int(0).tag(sync=True)
+    glitch_vcc_repeat = traitlets.Int(1).tag(sync=True)
     glitch_vcc_delay = traitlets.Int(0).tag(sync=True)
     glitch_gnd_normal_voltage = traitlets.Float(0.0).tag(sync=True)
     glitch_gnd_wait = traitlets.Int(0).tag(sync=True)
     glitch_gnd_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
     glitch_gnd_count = traitlets.Int(1).tag(sync=True)
-    glitch_gnd_repeat = traitlets.Int(0).tag(sync=True)
+    glitch_gnd_repeat = traitlets.Int(1).tag(sync=True)
     glitch_gnd_delay = traitlets.Int(0).tag(sync=True)
 
     glitch_vcc_arm = False
