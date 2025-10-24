@@ -2,6 +2,7 @@
 import os
 import re
 import struct
+import typing
 
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -16,19 +17,19 @@ class ConfigG1(ConfigS1):
     def __init__(self):
         super().__init__()
         self.glitch_vcc_arm = False
+        self.glitch_vcc_normal = 3.3
         self.glitch_vcc_config_wait = 0
-        self.glitch_vcc_config_level = 0
-        self.glitch_vcc_config_count = 0
+        self.glitch_vcc_config_level = self.glitch_vcc_normal
+        self.glitch_vcc_config_count = 1
         self.glitch_vcc_config_delay = 0
-        self.glitch_vcc_config_repeat = 0
-        self.glitch_vcc_normal = 0
+        self.glitch_vcc_config_repeat = 1
         self.glitch_gnd_arm = False
-        self.glitch_gnd_config_wait = 0
-        self.glitch_gnd_config_level = 0
-        self.glitch_gnd_config_count = 0
-        self.glitch_gnd_config_delay = 0
-        self.glitch_gnd_config_repeat = 0
         self.glitch_gnd_normal = 0
+        self.glitch_gnd_config_wait = 0
+        self.glitch_gnd_config_level = self.glitch_gnd_normal
+        self.glitch_gnd_config_count = 1
+        self.glitch_gnd_config_delay = 0
+        self.glitch_gnd_config_repeat = 1
         self.glitch_clock_arm = False
         self.glitch_clock_len_normal = 0
         self.glitch_clock_wave_normal = 0
@@ -64,6 +65,13 @@ class CrackerG1(CrackerS1):
     ):
         super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
         # self._glitch_test_params = None
+        df = pd.read_csv(
+            os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "gnd_vnormal_voltage.csv")
+        )
+        codes = df["code"].map(lambda x: int(x, 16)).values
+        voltages = df["voltage"].values
+        self.interp_func_cv = interp1d(codes, voltages, kind="linear", fill_value="extrapolate")
+        self.interp_func_vc = interp1d(voltages, codes, kind="linear", fill_value="extrapolate")
 
     def glitch_vcc_arm(self):
         self._glitch_vcc_arm(True)
@@ -160,15 +168,13 @@ class CrackerG1(CrackerS1):
             voltage = float(voltage)
         return voltage
 
-    @staticmethod
-    def _get_dac_code_from_voltage(voltage: float) -> int:
-        df = pd.read_csv(
-            os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "gnd_vnormal_voltage.csv")
-        )
-        codes = df["code"].map(lambda x: int(x, 16)).values
-        voltages = df["voltage"].values
-        interp_func = interp1d(voltages, codes, kind="linear", fill_value="extrapolate")
-        return int(round(interp_func(voltage * 1000).item()))
+    def _get_dac_code_from_voltage(self, voltage: float) -> int:
+        dac_code = int(round(self.interp_func_vc(voltage * 1000).item()))
+        return 0 if dac_code < 0 else 0x03FF if dac_code > 0x03FF else dac_code
+
+    def _get_voltage_from_dac_code(self, dac_code: int) -> float:
+        voltage = self.interp_func_cv(dac_code).item() / 1000
+        return voltage
 
     def glitch_gnd_arm(self):
         self._glitch_gnd_arm(True)
@@ -245,8 +251,37 @@ class CrackerG1(CrackerS1):
         config = ConfigG1()
         return bytes_format, config
 
+    def _parse_config_special_case(self, k, v):
+        if k in ("glitch_vcc_normal", "glitch_vcc_config_level", "glitch_gnd_normal", "glitch_gnd_config_level"):
+            v = round(self._get_voltage_from_dac_code(v), 1)
+        return v
+
+    def get_current_config(self) -> ConfigG1 | None:
+        cur_cfg = typing.cast(ConfigG1, super().get_current_config())
+        cur_cfg.nut_voltage = cur_cfg.glitch_vcc_normal
+        return cur_cfg
+
     def get_default_config(self) -> ConfigS1:
         return ConfigG1()
+
+    def write_config_to_cracker(self, config: ConfigG1):
+        super().write_config_to_cracker(config)
+        self.glitch_vcc_normal(config.glitch_vcc_normal)
+        self.glitch_vcc_config(
+            config.glitch_gnd_config_wait,
+            config.glitch_vcc_config_level,
+            config.glitch_vcc_config_count,
+            config.glitch_vcc_config_delay,
+            config.glitch_vcc_config_repeat,
+        )
+        self.glitch_gnd_normal(config.glitch_gnd_normal)
+        self.glitch_gnd_config(
+            config.glitch_gnd_config_wait,
+            config.glitch_gnd_config_level,
+            config.glitch_gnd_config_count,
+            config.glitch_gnd_config_delay,
+            config.glitch_gnd_config_repeat,
+        )
 
     # def set_glitch_test_params(self, param):
     #     self._glitch_test_params = param
