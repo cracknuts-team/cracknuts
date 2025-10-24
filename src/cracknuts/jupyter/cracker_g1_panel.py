@@ -18,7 +18,185 @@ from cracknuts.jupyter.ui_sync import observe_interceptor
 from cracknuts.utils import user_config
 
 
-class CrackerG1Panel(CrackerPanelWidget, GlitchAcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
+class CrackerConfigG1GlitchPanel(MsgHandlerPanelWidget):
+    # glitch
+    glitch_vcc_normal = traitlets.Float(3.3).tag(sync=True)
+    glitch_vcc_config_wait = traitlets.Int(0).tag(sync=True)
+    glitch_vcc_config_level = traitlets.Float(0.0).tag(sync=True)
+    glitch_vcc_config_count = traitlets.Int(1).tag(sync=True)
+    glitch_vcc_config_delay = traitlets.Int(0).tag(sync=True)
+    glitch_vcc_config_repeat = traitlets.Int(1).tag(sync=True)
+
+    glitch_gnd_normal = traitlets.Float(0.0).tag(sync=True)
+    glitch_gnd_config_wait = traitlets.Int(0).tag(sync=True)
+    glitch_gnd_config_level = traitlets.Float(0.0).tag(sync=True)
+    glitch_gnd_config_count = traitlets.Int(1).tag(sync=True)
+    glitch_gnd_config_delay = traitlets.Int(0).tag(sync=True)
+    glitch_gnd_config_repeat = traitlets.Int(1).tag(sync=True)
+
+    glitch_vcc_arm = False
+    # glitch_vcc_config_wait = 0
+    # glitch_vcc_config_level = 0
+    # glitch_vcc_config_count = 0
+    # glitch_vcc_config_delay = 0
+    # glitch_vcc_config_repeat = 0
+    # glitch_vcc_normal = 0
+    glitch_gnd_arm = False
+    # glitch_gnd_config_wait = 0
+    # glitch_gnd_config_level = 0
+    # glitch_gnd_config_count = 0
+    # glitch_gnd_config_delay = 0
+    # glitch_gnd_config_repeat = 0
+    # glitch_gnd_normal = 0
+    glitch_clock_arm = False
+    glitch_clock_len_normal = 0
+    glitch_clock_wave_normal = 0
+    glitch_clock_config_len_glitch = 0
+    glitch_clock_config_wave_glitch = 0
+    glitch_clock_config_count = 0
+    glitch_clock_config_delay = 0
+    glitch_clock_config_repeat = 0
+    glitch_clock_normal = 0
+
+    # glitch test
+    # glitch_test_params = traitlets.Dict({}).tag(sync=True)
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any):
+        super().__init__(*args, **kwargs)
+        self.cracker: CrackerG1 = kwargs["cracker"]
+        self.reg_msg_handler("glitchVCCForceButton", "onClick", self.glitch_vcc_force)
+
+    def glitch_vcc_force(self, args: dict[str, typing.Any]):
+        self.cracker.glitch_vcc_force()
+
+    @traitlets.observe("glitch_vcc_normal")
+    @observe_interceptor
+    def glitch_vcc_normal_changed(self, change):
+        self.cracker.glitch_vcc_normal(change.get("new"))
+
+    @traitlets.observe("glitch_vcc_config_level")
+    @observe_interceptor
+    def glitch_vcc_config_level_changed(self, change):
+        self.cracker.glitch_vcc_config(
+            self.glitch_vcc_config_wait,
+            change.get("new"),
+            self.glitch_vcc_config_count,
+            self.glitch_vcc_config_delay,
+            self.glitch_vcc_config_repeat,
+        )
+
+    @traitlets.observe("glitch_vcc_config_wait")
+    @observe_interceptor
+    def glitch_vcc_config_wait_changed(self, change):
+        self.cracker.glitch_vcc_config(
+            change.get("new"),
+            self.glitch_vcc_config_level,
+            self.glitch_vcc_config_count,
+            self.glitch_vcc_config_delay,
+            self.glitch_vcc_config_repeat,
+        )
+
+    @traitlets.observe("glitch_vcc_config_count")
+    @observe_interceptor
+    def glitch_vcc_config_count_changed(self, change):
+        self.cracker.glitch_vcc_config(
+            self.glitch_vcc_config_wait,
+            self.glitch_vcc_config_level,
+            change.get("new"),
+            self.glitch_vcc_config_delay,
+            self.glitch_vcc_config_repeat,
+        )
+
+    @traitlets.observe("glitch_vcc_config_repeat")
+    @observe_interceptor
+    def glitch_vcc_config_repeat_changed(self, change):
+        self.cracker.glitch_vcc_config(
+            self.glitch_vcc_config_wait,
+            self.glitch_vcc_config_level,
+            self.glitch_vcc_config_count,
+            self.glitch_vcc_config_delay,
+            change.get("new"),
+        )
+
+    @traitlets.observe("glitch_vcc_config_delay")
+    @observe_interceptor
+    def glitch_vcc_config_delay_changed(self, change):
+        self.cracker.glitch_vcc_config(
+            self.glitch_vcc_config_wait,
+            self.glitch_vcc_config_level,
+            self.glitch_vcc_config_count,
+            change.get("new"),
+            self.glitch_vcc_config_repeat,
+        )
+
+    @traitlets.observe("glitch_gnd_normal")
+    @observe_interceptor
+    def glitch_gnd_normal_changed(self, change):
+        self.cracker.glitch_gnd_normal(change.get("new"))
+
+    @traitlets.observe("glitch_gnd_config_wait")
+    @observe_interceptor
+    def glitch_gnd_glitch_voltage_changed(self, change):
+        self.cracker.glitch_gnd_config(
+            self.glitch_gnd_config_wait,
+            change.get("new"),
+            self.glitch_gnd_config_count,
+            self.glitch_gnd_config_delay,
+            self.glitch_gnd_config_repeat,
+        )
+
+    @traitlets.observe("glitch_gnd_config_count")
+    @observe_interceptor
+    def glitch_gnd_wait_changed(self, change):
+        self.cracker.glitch_gnd_config(
+            change.get("new"),
+            self.glitch_gnd_config_level,
+            self.glitch_gnd_config_count,
+            self.glitch_gnd_config_delay,
+            self.glitch_gnd_config_repeat,
+        )
+
+    @traitlets.observe("glitch_gnd_config_delay")
+    @observe_interceptor
+    def glitch_gnd_count_changed(self, change):
+        self.cracker.glitch_gnd_config(
+            self.glitch_gnd_config_wait,
+            self.glitch_gnd_config_level,
+            change.get("new"),
+            self.glitch_gnd_config_delay,
+            self.glitch_gnd_config_repeat,
+        )
+
+    @traitlets.observe("glitch_gnd_config_repeat")
+    @observe_interceptor
+    def glitch_gnd_repeat_changed(self, change):
+        self.cracker.glitch_gnd_config(
+            self.glitch_gnd_config_wait,
+            self.glitch_gnd_config_level,
+            self.glitch_gnd_config_count,
+            self.glitch_gnd_config_delay,
+            change.get("new"),
+        )
+
+    @traitlets.observe("glitch_gnd_config_delay")
+    @observe_interceptor
+    def glitch_gnd_delay_changed(self, change):
+        self.cracker.glitch_gnd_config(
+            self.glitch_gnd_config_wait,
+            self.glitch_gnd_config_level,
+            self.glitch_gnd_config_count,
+            change.get("new"),
+            self.glitch_gnd_config_repeat,
+        )
+
+
+class CrackerG1Panel(
+    CrackerPanelWidget,
+    CrackerConfigG1GlitchPanel,
+    GlitchAcquisitionPanelWidget,
+    ScopePanelWidget,
+    MsgHandlerPanelWidget,
+):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackerG1Widget.js"
     _css = ""
 
