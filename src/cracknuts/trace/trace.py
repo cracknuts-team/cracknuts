@@ -326,11 +326,16 @@ class ZarrTraceDataset(TraceDataset):
             group_root = self._zarr_data.create_group(self._GROUP_ROOT_PATH)
             for i, _ in enumerate(self._channel_names):
                 channel_group = group_root.create_group(str(i))
+                zarr_array_chunk_max = 104_857_600  # 100M
+                zarr_array_chunks = (
+                    1,
+                    zarr_array_chunk_max if self._sample_count > zarr_array_chunk_max else self._sample_count,
+                )  # 一个chunk块只有一条曲线，单个chunk最大100M（未压缩前）
                 channel_group.create(
                     self._ARRAY_TRACES_PATH,
                     shape=(self._trace_count, self._sample_count),
                     dtype=trace_dtype,
-                    chunks=(300, sample_count),
+                    chunks=zarr_array_chunks,
                     **zarr_trace_group_kwargs,
                 )
                 if self._data_plaintext_length is not None:

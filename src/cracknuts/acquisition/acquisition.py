@@ -738,8 +738,20 @@ class Acquisition(abc.ABC):
         if config.osc_channel_1_enable:
             enable_channels.append(1)
         wave_dict = {}
+        max_wave_length = 32_000_000
         for c in enable_channels:
-            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
+            _count = sample_length // max_wave_length
+            _left = sample_length % max_wave_length
+            _offset = offset
+            waves = []
+            for _ in range(_count):
+                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, max_wave_length)
+                waves.append(_wave)
+                _offset += max_wave_length
+            if _left > 0:
+                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, _left)
+                waves.append(_wave)
+            wave_dict[c] = np.concatenate(waves)
         return wave_dict
 
     def _pre_finish(self): ...

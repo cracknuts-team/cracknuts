@@ -77,6 +77,7 @@ reStructuredText（reST）
     - style：代码格式修改（不影响功能）
     - refactor：重构代码（不引入新功能或修复 bug）
     - test：添加测试
+    - perf: 性能优化
     - chore：杂项更改（如构建工具、配置文件）
 
 4. 范围（Scope）：
