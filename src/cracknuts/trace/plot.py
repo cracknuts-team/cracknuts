@@ -2,7 +2,7 @@
 
 import numpy as np
 import plotly.graph_objects as go
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from plotly_resampler import FigureWidgetResampler
 
 from cracknuts.trace.trace import TraceDataset
@@ -15,7 +15,7 @@ class TracePlot:
 
     def __init__(self):
         self._trace_dataset: TraceDataset | None = None
-        self._traces: ArrayLike | None = None
+        self._traces: NDArray | None = None
         self._trace_names: list | None = None
         self._trace_name_prefix: list[str] | None = None
         self._fig = FigureWidgetResampler(go.Figure())
@@ -36,8 +36,9 @@ class TracePlot:
             paper_bgcolor="white",  # 整个画布背景白色
         )
         self._fig.update_layout(margin=dict(t=40, b=40, l=0))
-        self._fig.update_layout(height=350)
+        self._fig.update_layout(height=350, width=2000)
         self._has_plot = False
+        self._shift_map = {}
 
     def set_trace_dataset(self, trace_dataset: TraceDataset) -> None:
         """
@@ -47,7 +48,7 @@ class TracePlot:
         """
         self._trace_dataset = trace_dataset
 
-    def plot_line(self) -> FigureWidgetResampler:
+    def plot_line(self, width=None, height=None) -> FigureWidgetResampler:
         """
         显示曲线， 默认不通过配置 show_trace 配置显示曲线时，则显示 通道 0 的所有曲线
         """
@@ -56,14 +57,56 @@ class TracePlot:
         self._fig.data = []
         traces_list = [
             go.Scattergl(
-                name=f"{self._trace_names[i]}", showlegend=True, line={"width": 1}, mode="lines", y=self._traces[i, :]
+                name=f"{self._trace_names[i]}",
+                showlegend=True,
+                line={"width": 1},
+                mode="lines",
+                y=self._shifted_trace(i),
             )
             for i in range(self._traces.shape[0])
         ]
         self._fig.add_traces(traces_list)
+        if width is not None:
+            self._fig.update_layout(width=width)
+        if height is not None:
+            self._fig.update_layout(height=height)
         self._fig.reload_data()
         self._has_plot = True
         return self._fig
+
+    def _shifted_trace(self, i):
+        trace = self._traces[i, :]
+        if i in self._shift_map:
+            shift = self._shift_map[i]
+            return self._shift_array(trace, shift)
+        else:
+            return trace
+
+    @staticmethod
+    def _shift_array(a, shift, fill=0):
+        result = np.full_like(a, fill, dtype=np.int16)
+        if shift > 0:
+            result[shift:] = a[:-shift]
+        elif shift < 0:
+            result[:shift] = a[-shift:]
+        else:
+            result[:] = a
+        return result
+
+    def shift(self, ch_idx: int, trace_idx: int, shift: int) -> None:
+        """
+        对指定通道和曲线进行偏移
+
+        :param ch_idx: 通道索引
+        :type ch_idx: int
+        :param trace_idx: 曲线索引
+        :type trace_idx: int
+        :param shift: 偏移量
+        :type shift: int
+        """
+        self._shift_map[trace_idx] = shift
+        if self._has_plot:
+            self.plot_line()
 
     def show_trace(self, ch_idx: int | list[int] = 0, t_idx: list[slice, slice] | slice | None = None) -> None:
         """
