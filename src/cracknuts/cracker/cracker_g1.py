@@ -74,6 +74,9 @@ class CrackerG1(CrackerS1):
         self.interp_func_vc = interp1d(voltages, codes, kind="linear", fill_value="extrapolate")
 
     def glitch_vcc_arm(self):
+        """
+        设置glitch VCC 为armed状态。
+        """
         self._glitch_vcc_arm(True)
 
     # def glitch_vcc_disable(self):
@@ -120,6 +123,9 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def glitch_vcc_reset(self):
+        """
+        重置glitch VCC配置。
+        """
         self._logger.debug(f"glitch_vcc_reset payload: {None}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_RESET, payload=None)
         if status != protocol.STATUS_OK:
@@ -128,6 +134,9 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def glitch_vcc_force(self):
+        """
+        强制触发glitch VCC。
+        """
         self._logger.debug(f"glitch_vcc_force payload: {None}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_FORCE, payload=None)
         if status != protocol.STATUS_OK:
@@ -139,6 +148,9 @@ class CrackerG1(CrackerS1):
         return self.glitch_vcc_normal(voltage)
 
     def glitch_vcc_normal(self, voltage: float | str | int) -> tuple[int, None]:
+        """
+        设置glitch VCC为正常电压值。
+        """
         voltage = self._parse_voltage(voltage)
         dac_code = self._get_dac_code_from_voltage(voltage)
         payload = struct.pack(">I", dac_code)
