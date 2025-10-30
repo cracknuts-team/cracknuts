@@ -30,13 +30,12 @@ class TracePlot:
         self._fig.update_yaxes(  # type: ignore
             showline=True, linewidth=1, linecolor="#dddddd", mirror=True, gridwidth=1, gridcolor="#dddddd"
         )
-
         self._fig.update_layout(
             plot_bgcolor="white",  # 绘图区背景白色
             paper_bgcolor="white",  # 整个画布背景白色
         )
         self._fig.update_layout(margin=dict(t=40, b=40, l=0))
-        self._fig.update_layout(height=350, width=2000)
+        self._fig.update_layout(height=350)
         self._has_plot = False
         self._shift_map = {}
 
@@ -107,6 +106,30 @@ class TracePlot:
         self._shift_map[trace_idx] = shift
         if self._has_plot:
             self.plot_line()
+
+    def zoom(self, x: tuple[int, int] | None = None, y: tuple[int, int] | None = None) -> None:
+        """
+        曲线缩放
+        """
+        if x:
+            self._fig.layout.xaxis.range = x
+        if y:
+            self._fig.layout.yaxis.range = y
+        if not x and not y:
+            self._fig.layout.xaxis.range = None
+            self._fig.layout.yaxis.range = None
+
+    def zoom_x(self, x: tuple[int, int]) -> None:
+        """
+        X 轴缩放
+        """
+        self.zoom(x=x, y=None)
+
+    def zoom_y(self, y: tuple[int, int]) -> None:
+        """
+        Y 轴缩放
+        """
+        self.zoom(x=None, y=y)
 
     def show_trace(self, ch_idx: int | list[int] = 0, t_idx: list[slice, slice] | slice | None = None) -> None:
         """
