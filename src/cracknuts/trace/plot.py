@@ -150,8 +150,17 @@ class TracePlot:
                 self._traces = traces[t_idx]
                 self._trace_names = [f"T{i}" for i in self._slice_to_list(t_idx, traces.shape[0])]
             elif isinstance(t_idx, list):
-                self._traces = traces[t_idx[0]]
-                self._trace_names = [f"T{i}" for i in self._slice_to_list(t_idx[0], traces.shape[0])]
+                if isinstance(t_idx, list):
+                    _traces = []
+                    _trace_names = []
+                    for t_idx_slice in t_idx:
+                        _traces.append(traces[t_idx_slice])
+                        _trace_names.append([f"T{i}" for i in self._slice_to_list(t_idx_slice, traces.shape[0])])
+                    self._traces = np.vstack(_traces)
+                    self._trace_names = [x for row in _trace_names for x in row]
+                else:
+                    self._traces = traces[t_idx[0]]
+                    self._trace_names = [f"T{i}" for i in self._slice_to_list(t_idx[0], traces.shape[0])]
         elif isinstance(ch_idx, list):
             traces_list = []
             trace_names_list = []
