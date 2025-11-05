@@ -44,6 +44,7 @@ class Acquisition(abc.ABC):
     STATUS_STOPPED: int = 0
     STATUS_TESTING: int = 1
     STATUS_RUNNING: int = 2
+    STATUS_GLITCH_TEST_RUNNING: int = 3
     _STATUS_PAUSED_SWITCH: int = -1
 
     DO_ERROR_HANDLER_STRATEGY_EXIT: int = 0
@@ -102,26 +103,121 @@ class Acquisition(abc.ABC):
         self._run_thread_pause_event: threading.Event = threading.Event()
 
         self.cracker: CrackerBasic = cracker
-        self.trace_count: int = trace_count
-        self.sample_length = sample_length
-        self.sample_offset: int = sample_offset
+        self._trace_count: int = trace_count
+        self._sample_length = sample_length
+        self._sample_offset: int = sample_offset
         self.metadata_plaintext_length: int = data_plaintext_length
         self.metadata_ciphertext_length: int = data_ciphertext_length
         self.metadata_key_length: int = data_key_length
         self.metadata_extended_length: int = data_extended_length
-        self.trigger_judge_wait_time: float = trigger_judge_wait_time  # second
-        self.trigger_judge_timeout: float = trigger_judge_timeout  # second
+        self._trigger_judge_wait_time: float = trigger_judge_wait_time  # second
+        self._trigger_judge_timeout: float = trigger_judge_timeout  # second
         self.do_error_handler_strategy: int = do_error_handler_strategy
-        self.do_error_max_count: int = do_error_max_count  # -1 never exit
-        self.file_format: str = file_format
+        self._do_error_max_count: int = do_error_max_count  # -1 never exit
+        self._file_format: str = file_format
         if file_path is None or file_path == "auto":
             file_path = os.path.abspath(self._DATASET_DEFAULT_PATH)
-        self.file_path: str = file_path
-
+        self._file_path: str = file_path
+        self.current_timestamp = None  # Current timestamp for dataset
+        self.current_data = None
         self._on_wave_loaded_callback: typing.Callable[[typing.Any], None] | None = None
         self._on_status_change_listeners: list[typing.Callable[[int], None]] = []
         self._on_run_progress_changed_listeners: list[typing.Callable[[dict], None]] = []
-        self.trace_fetch_interval = trace_fetch_interval
+        self._on_config_changed_listener: list[typing.Callable[[str, typing.Any], None]] = []
+        self._trace_fetch_interval = trace_fetch_interval
+
+    def on_config_changed(self, listener: typing.Callable[[str, typing.Any], None]):
+        self._on_config_changed_listener.append(listener)
+
+    @property
+    def trace_count(self):
+        return self._trace_count
+
+    @trace_count.setter
+    def trace_count(self, value):
+        self._trace_count = value
+        for listener in self._on_config_changed_listener:
+            listener("trace_count", value)
+
+    @property
+    def sample_length(self):
+        return self._sample_length
+
+    @sample_length.setter
+    def sample_length(self, value):
+        self._sample_length = value
+        for listener in self._on_config_changed_listener:
+            listener("sample_length", value)
+
+    @property
+    def sample_offset(self):
+        return self._sample_offset
+
+    @sample_offset.setter
+    def sample_offset(self, value):
+        self._sample_offset = value
+        for listener in self._on_config_changed_listener:
+            listener("sample_offset", value)
+
+    @property
+    def trigger_judge_wait_time(self):
+        return self._trigger_judge_wait_time
+
+    @trigger_judge_wait_time.setter
+    def trigger_judge_wait_time(self, value):
+        self._trigger_judge_wait_time = value
+        for listener in self._on_config_changed_listener:
+            listener("trigger_judge_wait_time", value)
+
+    @property
+    def trigger_judge_timeout(self):
+        return self._trigger_judge_timeout
+
+    @trigger_judge_timeout.setter
+    def trigger_judge_timeout(self, value):
+        self._trigger_judge_timeout = value
+        for listener in self._on_config_changed_listener:
+            listener("trigger_judge_timeout", value)
+
+    @property
+    def do_error_max_count(self):
+        return self._do_error_max_count
+
+    @do_error_max_count.setter
+    def do_error_max_count(self, value):
+        self._do_error_max_count = value
+        for listener in self._on_config_changed_listener:
+            listener("do_error_max_count", value)
+
+    @property
+    def file_format(self):
+        return self._file_format
+
+    @file_format.setter
+    def file_format(self, value):
+        self._file_format = value
+        for listener in self._on_config_changed_listener:
+            listener("file_format", value)
+
+    @property
+    def file_path(self):
+        return self._file_path
+
+    @file_path.setter
+    def file_path(self, value):
+        self._file_path = value
+        for listener in self._on_config_changed_listener:
+            listener("file_path", value)
+
+    @property
+    def trace_fetch_interval(self):
+        return self._trace_fetch_interval
+
+    @trace_fetch_interval.setter
+    def trace_fetch_interval(self, value):
+        self._trace_fetch_interval = value
+        for listener in self._on_config_changed_listener:
+            listener("trace_fetch_interval", value)
 
     def get_status(self):
         return self._status
@@ -191,6 +287,7 @@ class Acquisition(abc.ABC):
         else:
             self._run(
                 test=False,
+                persistent=True,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -246,6 +343,7 @@ class Acquisition(abc.ABC):
         try:
             self._do_run(
                 test=False,
+                persistent=True,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -298,6 +396,7 @@ class Acquisition(abc.ABC):
             self._logger.debug("Start test mode.")
             self._run(
                 test=True,
+                persistent=False,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -340,6 +439,7 @@ class Acquisition(abc.ABC):
         try:
             self._do_run(
                 test=True,
+                persistent=False,
                 count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
@@ -382,6 +482,7 @@ class Acquisition(abc.ABC):
     def _run(
         self,
         test: bool = True,
+        persistent: bool = False,
         count: int = 1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
@@ -396,12 +497,14 @@ class Acquisition(abc.ABC):
         file_format: str | None = "zarr",
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
+        is_glitch: bool = False,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
             target=self._do_run,
             kwargs={
                 "test": test,
+                "persistent": persistent,
                 "count": count,
                 "sample_length": sample_length,
                 "sample_offset": sample_offset,
@@ -416,12 +519,14 @@ class Acquisition(abc.ABC):
                 "file_format": file_format,
                 "file_path": file_path,
                 "trace_fetch_interval": trace_fetch_interval,
+                "is_glitch": is_glitch,
             },
         ).start()
 
     def _do_run(
         self,
         test: bool = True,
+        persistent: bool = False,
         count: int = 1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
@@ -436,6 +541,7 @@ class Acquisition(abc.ABC):
         file_format: str | None = "zarr",
         file_path: str | None = "auto",
         trace_fetch_interval: float = 0.1,
+        is_glitch: bool = False,
     ):
         if self._status > 0:
             self._logger.warning(
@@ -443,7 +549,10 @@ class Acquisition(abc.ABC):
             )
             return
 
-        if not test:
+        if is_glitch:
+            self._status = self.STATUS_GLITCH_TEST_RUNNING
+            self._status_changed()
+        elif not test:
             self._status = self.STATUS_RUNNING
             self._status_changed()
         else:
@@ -477,10 +586,11 @@ class Acquisition(abc.ABC):
             self.file_path = file_path
         if trace_fetch_interval is not None:
             self.trace_fetch_interval = trace_fetch_interval
+        self.current_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.pre_init()
         self.init()
         self._post_init()
-        self._loop(not test, self.file_path, self.file_format)
+        self._loop(test, persistent, self.file_path, self.file_format)
         self._pre_finish()
         self.finish()
         self._post_finish()
@@ -489,7 +599,9 @@ class Acquisition(abc.ABC):
         for listener in self._on_status_change_listeners:
             listener(self._status)
 
-    def _loop(self, persistent: bool = True, file_path: str | None = None, file_format: str = "zarr"):
+    def _loop(
+        self, test: bool = True, persistent: bool = False, file_path: str | None = None, file_format: str = "zarr"
+    ):
         do_error_count = 0
         trace_index = 0
         self._progress_changed(AcqProgress(trace_index, self.trace_count))
@@ -511,7 +623,7 @@ class Acquisition(abc.ABC):
                 file_path = self._DATASET_DEFAULT_PATH
             if not file_path.endswith("/"):
                 file_path += "/"
-            file_path += datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            file_path += self.current_timestamp
             if file_format == "zarr":
                 file_path += ".zarr"
             elif file_format == "numpy":
@@ -557,6 +669,7 @@ class Acquisition(abc.ABC):
             start = time.time()
             try:
                 data = self.do(trace_index)
+                self.current_data = data
             except Exception as e:
                 self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
                 do_error_count += 1
@@ -603,12 +716,12 @@ class Acquisition(abc.ABC):
             if dataset is not None and self._last_wave is not None:
                 for k in self._last_wave.keys():
                     dataset.set_trace(str(k), trace_index, self._last_wave[k], data)
-            self._post_do()
+            self._post_do(trace_index, data)
             trace_index += 1
             self._current_trace_count = trace_index
             self._progress_changed(AcqProgress(trace_index, self.trace_count))
             # Reduce the execution frequency in test mode.
-            if not persistent:
+            if test:
                 if self.trace_fetch_interval is not None and self.trace_fetch_interval != 0:
                     time.sleep(self.trace_fetch_interval)
 
@@ -721,7 +834,7 @@ class Acquisition(abc.ABC):
             self._logger.error("Do error: %s", e.args)
             return False
 
-    def _post_do(self): ...
+    def _post_do(self, index, data): ...
 
     def _is_triggered(self):
         _, triggered = self.cracker.osc_is_triggered()
@@ -846,7 +959,7 @@ class AcquisitionBuilder:
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[CrackerBasic], None]):
+    def init(self, init_function: typing.Callable[[], None]):
         """
         The init function of acquisition.
 

@@ -10,6 +10,7 @@ from cracknuts import logger
 from cracknuts.acquisition.acquisition import Acquisition, AcquisitionConfig
 from traitlets import traitlets
 
+from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition, GlitchDoData
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 
 
@@ -46,6 +47,8 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         self.acquisition.on_status_changed(self.update_acq_status)
         self.acquisition.on_run_progress_changed(self.update_acq_run_progress)
         self.acq_status = self.acquisition.get_status()
+        self.sync_config_from_acquisition()
+        self.acquisition.on_config_changed(self.on_acq_config_changed)
 
     def sync_config_from_acquisition(self) -> None:
         if self.acquisition.trace_count != -1:
@@ -63,6 +66,28 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
             if self.acquisition.file_path is None or self.acquisition.file_path == "auto"
             else self.acquisition.file_path
         )
+
+    def on_acq_config_changed(self, key: str, value: typing.Any) -> None:
+        if key == "trace_count":
+            self.trace_count = value
+        elif key == "sample_offset":
+            self.sample_offset = value
+        elif key == "sample_length":
+            self.sample_length = value
+        elif key == "trigger_judge_wait_time":
+            self.trigger_judge_wait_time = value
+        elif key == "trigger_judge_timeout":
+            self.trigger_judge_timeout = value
+        elif key == "do_error_max_count":
+            self.do_error_max_count = value
+        elif key == "file_format":
+            self.file_format = value
+        elif key == "file_path":
+            self.file_path = value
+        elif key == "trace_fetch_interval":
+            self.trace_fetch_interval = value
+        else:
+            ...
 
     def before_test(self): ...
 
@@ -92,6 +117,7 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
 
     def msg_acq_status_changed(self, changed: dict[str, typing.Any]):
         status = changed.get("status")
+        # self._logger.warning(f"glitch_test....... {status}")
         if status == "pause":
             self.acquisition.pause()
         elif status == "test":
@@ -114,6 +140,17 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
                 do_error_max_count=self.do_error_max_count,
                 file_format=self.file_format,
                 file_path="auto" if self.file_path == "" or self.file_path is None else self.file_path,
+            )
+        elif status == "glitch_test":
+            self.before_test()
+            glitch_acq = typing.cast(GlitchAcquisition, self.acquisition)
+            glitch_acq.glitch_run(
+                sample_length=self.sample_length,
+                sample_offset=self.sample_offset,
+                trigger_judge_wait_time=self.trigger_judge_wait_time,
+                trigger_judge_timeout=self.trigger_judge_timeout,
+                do_error_max_count=self.do_error_max_count,
+                trace_fetch_interval=self.trace_fetch_interval,
             )
         else:
             self.acquisition.stop()
@@ -138,11 +175,6 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         directory_list = self._get_directory_list(path)
         self._logger.info(f"directory list: {directory_list}")
         self.send({"directoryList": [d.to_dict() for d in directory_list]})
-
-    @traitlets.observe("trace_fetch_interval")
-    def trace_fetch_interval_changed(self, change) -> None:
-        if change.get("new"):
-            self.acquisition.trace_fetch_interval = change["new"]
 
     def _get_partitions(self) -> list[str]:
         partitions = []
@@ -184,6 +216,51 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
 
         return directory_list
 
+    @traitlets.observe("trace_count")
+    def trace_count_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.trace_count = change["new"]
+
+    @traitlets.observe("trigger_judge_wait_time")
+    def trigger_judge_wait_time_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.trigger_judge_wait_time = change["new"]
+
+    @traitlets.observe("trigger_judge_timeout")
+    def trigger_judge_timeout_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.trigger_judge_timeout = change["new"]
+
+    @traitlets.observe("sample_offset")
+    def sample_offset_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.sample_offset = change["new"]
+
+    @traitlets.observe("sample_length")
+    def sample_length_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.sample_length = change["new"]
+
+    @traitlets.observe("do_error_max_count")
+    def do_error_max_count_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.do_error_max_count = change["new"]
+
+    @traitlets.observe("file_path")
+    def file_path_changed(self, change) -> None:
+        if change.get("new") is not None:
+            self.acquisition.file_path = "auto" if change["new"] == "" else change["new"]
+
+    @traitlets.observe("file_format")
+    def file_format_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.file_format = change["new"]
+
+    @traitlets.observe("trace_fetch_interval")
+    def trace_fetch_interval_changed(self, change) -> None:
+        if change.get("new"):
+            self.acquisition.trace_fetch_interval = change["new"]
+
 
 @dataclass
 class _DirectoryListNode:
@@ -209,3 +286,41 @@ class _DefaultDirectoryInfo:
             "path": self.path,
             "directoryList": [item.to_dict() for item in self.directory_list],
         }
+
+
+class GlitchAcquisitionPanelWidget(AcquisitionPanelWidget):
+    shadow_trace_count = traitlets.Int(1000).tag(sync=True)
+    glitch_test_result = traitlets.List([]).tag(sync=True)
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.glitch_acquisition: GlitchAcquisition = typing.cast(GlitchAcquisition, self.acquisition)
+        self.glitch_acquisition.on_glitch_result_added(self._update_glitch_test_result)
+        self._result_cache = []
+
+    def _update_glitch_test_result(self, index, param, data: "GlitchDoData") -> None:
+        if len(self._result_cache) >= 5:
+            del self._result_cache[0]
+        self._result_cache.append(
+            {
+                "no": index,
+                "normal": param.normal,
+                "glitch": param.glitch,
+                "wait": param.wait,
+                "repeat": param.repeat,
+                "interval": param.interval,
+                "status": data.glitch_status.value,
+            }
+        )
+        self.glitch_test_result = self._result_cache.copy()
+
+    @traitlets.observe("shadow_trace_count")
+    def shadow_trace_count_changed(self, change):
+        self.glitch_acquisition.shadow_trace_count = change.get("new")
+
+    def on_acq_config_changed(self, key: str, value: typing.Any):
+        super().on_acq_config_changed(key, value)
+        if key == "shadow_trace_count":
+            self.shadow_trace_count = value
+            # TODO update trace_count
+            # TODO update trace_count on glitch params changed

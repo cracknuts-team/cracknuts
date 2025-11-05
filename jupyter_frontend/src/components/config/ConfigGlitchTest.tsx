@@ -1,0 +1,458 @@
+import {Col, Form, InputNumber, Radio, Row, Select, SelectProps, Table} from "antd"
+import React, {useEffect, useState} from "react";
+import {CheckboxChangeEvent} from "antd/es/checkbox";
+import GlitchTestResult from "@/components/glitch-test/TestResult.tsx";
+import {useModelState} from "@anywidget/react";
+// import {useIntl} from "react-intl";
+
+type GlitchTestModelSelectProps = {
+    value?: number;
+    onChange?: SelectProps["onChange"];
+};
+
+const GlitchTestModelSelect: React.FC<GlitchTestModelSelectProps> = ({value, onChange}) => {
+    return (
+        <Select size={"small"}
+                value={value ?? 0}
+                style={{minWidth: 100}}
+                onChange={onChange}
+                options={[
+                    {value: 0, label: "Increase"},
+                    {value: 1, label: "Decrease"},
+                    {value: 2, label: "Random"},
+                    {value: 3, label: "Fixed"},
+                ]}
+        />
+    );
+};
+
+type GlitchGenerateParam = {
+    mode: 0 | 1 | 2 | 3; // 0: Increase, 1: Decrease, 2: Random, 3: Fixed
+    start: number;
+    end: number;
+    step: number;
+    count: number;
+};
+
+type GlitchGenerateParamProps = {
+    prop: string;
+    param: GlitchGenerateParam;
+    unit: string;
+    min?: number;
+    max?: number;
+}
+
+interface GlitchTestPropPanelData {
+    data: GlitchGenerateParamProps[];
+    setData: React.Dispatch<React.SetStateAction<GlitchGenerateParamProps[]>>;
+}
+
+const GlitchTestPropPanel: React.FC<GlitchTestPropPanelData> = ({data, setData}) => {
+
+    const updateField = (
+        index: number,
+        field: keyof GlitchGenerateParam,
+        value: number
+    ) => {
+        setData((prev) => {
+            const copy = [...prev];
+            copy[index] = {
+                ...copy[index],
+                param: {
+                    ...copy[index].param,
+                    [field]: value,
+                },
+            };
+            return copy;
+        });
+    };
+
+    const getPrecision = (step: number): number => {
+        const stepStr = step.toString();
+        if (stepStr.includes('.')) {
+            return stepStr.split('.')[1].length;
+        }
+        return 0;
+    }
+
+
+    const columns = [{
+        title: '',
+        dataIndex: 'prop',
+        key: 'prop',
+    }, {
+        title: 'Mode',
+        dataIndex: 'mode',
+        key: 'mode',
+    }, {
+        title: 'Start',
+        dataIndex: 'start',
+        key: 'start',
+    }, {
+        title: 'End',
+        dataIndex: 'end',
+        key: 'end',
+    }, {
+        title: 'Step',
+        dataIndex: 'step',
+        key: 'step',
+    }, {
+        title: 'Count',
+        dataIndex: 'count',
+        key: 'count',
+    }];
+
+    const dataSource = data.map((item, index) => {
+        return {
+            key: index,
+            prop: item.prop,
+            mode: <GlitchTestModelSelect
+                value={item.param.mode}
+                onChange={(val) => {
+                    updateField(index, 'mode', val as number)
+                }}/>,
+            start: (
+                <InputNumber
+                    size={"small"}
+                    min={item.min ?? 0}
+                    max={Math.min(item.max ?? 255, item.param.end)}
+                    precision={getPrecision(item.param.step)}
+                    step={item.param.step}
+                    changeOnWheel
+                    value={item.param.start}
+                    onChange={(val) => {
+                        updateField(index, 'start', val as number)
+                    }}
+                />
+            ),
+            end: (
+                <InputNumber
+                    size={"small"}
+                    min={Math.max(item.min ?? 0, item.param.start)}
+                    max={item.max ?? 255}
+                    precision={getPrecision(item.param.step)}
+                    step={item.param.step}
+                    changeOnWheel
+                    value={item.param.end}
+                    onChange={(val) => {
+                        updateField(index, 'end', val as number)
+                    }}
+                />
+            ),
+            step: (
+                <InputNumber
+                    size={"small"}
+                    min={0.1}
+                    max={item.max ?? 255}
+                    precision={getPrecision(item.param.step)}
+                    step={item.param.step}
+                    changeOnWheel
+                    value={item.param.step}
+                    onChange={(val) => {
+                        updateField(index, 'step', val as number)
+                    }}
+                />
+            ),
+            count: (
+                <InputNumber
+                    size={"small"}
+                    min={1}
+                    precision={0}
+                    step={1}
+                    changeOnWheel
+                    value={item.param.count}
+                    onChange={(val) => {
+                        updateField(index, 'count', val as number)
+                    }}
+                />
+            ),
+        };
+    });
+
+    return (
+        <Table
+            columns={columns}
+            dataSource={dataSource}
+            size={"small"}
+            pagination={false}
+        />
+    );
+};
+
+interface GlitchTestOnApplyParam {
+    type: 'vcc' | 'gnd' | 'clock';
+    data: Omit<GlitchGenerateParamProps, 'min' | 'max' | 'unit'>[];
+}
+
+const ConfigGlitchTest: React.FC = () => {
+
+    // const intl = useIntl();
+
+    const [traceCount, setTraceCount] = useModelState<number>("shadow_trace_count");
+    const [, setGlitchTestParams] = useModelState<GlitchTestOnApplyParam>("glitch_test_params");
+
+    const [vccGlitchParamGenerators, setVccGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
+        prop: 'normal',
+        param: {
+            mode: 3,
+            start: 3.5,
+            end: 3.5,
+            step: 0.1,
+            count: 1,
+        },
+        min: 1.5,
+        max: 5.0,
+        unit: 'v',
+    }, {
+        prop: 'glitch',
+        param: {
+            mode: 3,
+            start: 1.5,
+            end: 1.5,
+            step: 0.1,
+            count: 1,
+        },
+        min: 1.5,
+        max: 5.0,
+        unit: 'v',
+    }, {
+        prop: 'wait',
+        param: {
+            mode: 3,
+            start: 0,
+            end: 0,
+            step: 1,
+            count: 1,
+        },
+        min: 0,
+        max: Number.MAX_VALUE,
+        unit: '5ns',
+    }, {
+        prop: 'count',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: 'times',
+    }, {
+        prop: 'repeat',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: 'times',
+    }, {
+        prop: 'interval',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: '5ns',
+    }]);
+    const [gndGlitchParamGenerators, setGndGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
+        prop: 'normal',
+        param: {
+            mode: 3,
+            start: 0,
+            end: 0,
+            step: 0.1,
+            count: 1,
+        },
+        min: 0,
+        max: 5.0,
+        unit: 'v',
+    }, {
+        prop: 'glitch',
+        param: {
+            mode: 3,
+            start: 1.5,
+            end: 1.5,
+            step: 0.1,
+            count: 1,
+        },
+        min: 0,
+        max: 5.0,
+        unit: 'v',
+    }, {
+        prop: 'wait',
+        param: {
+            mode: 3,
+            start: 0,
+            end: 0,
+            step: 1,
+            count: 1,
+        },
+        min: 0,
+        max: Number.MAX_VALUE,
+        unit: '5ns',
+    }, {
+        prop: 'count',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: 'times',
+    }, {
+        prop: 'repeat',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: 'times',
+    }, {
+        prop: 'interval',
+        param: {
+            mode: 3,
+            start: 1,
+            end: 1,
+            step: 1,
+            count: 1,
+        },
+        min: 1,
+        max: Number.MAX_VALUE,
+        unit: '5ns',
+    }]);
+    const [clockGlitchParamGenerators, setClockGlitchParamGenerators] = useState<GlitchGenerateParamProps[]>([{
+        prop: 'normal',
+        param: {
+            mode: 0,
+            start: 0,
+            end: 255,
+            step: 1,
+            count: 10,
+        },
+        min: 0,
+        max: 255,
+        unit: 'MHz',
+    }, {
+        prop: 'wait',
+        param: {
+            mode: 0,
+            start: 0,
+            end: 255,
+            step: 1,
+            count: 10,
+        },
+        min: 0,
+        max: 255,
+        unit: 'MHz',
+    }]);
+
+    const [selected, setSelected] = useState<GlitchType>('vcc');
+
+    useEffect(() => {
+        setGlitchTestParams({
+            type: selected,
+            data: dataMap[selected].data.map(({prop, param}) => ({prop, param}))
+        })
+    }, [vccGlitchParamGenerators, gndGlitchParamGenerators, clockGlitchParamGenerators, selected]);
+
+    type GlitchType = 'vcc' | 'gnd' | 'clock';
+
+    const dataMap: Record<GlitchType, {
+        data: GlitchGenerateParamProps[];
+        setData: React.Dispatch<React.SetStateAction<GlitchGenerateParamProps[]>>;
+    }> = {
+        vcc: {data: vccGlitchParamGenerators, setData: setVccGlitchParamGenerators},
+        gnd: {data: gndGlitchParamGenerators, setData: setGndGlitchParamGenerators},
+        clock: {data: clockGlitchParamGenerators, setData: setClockGlitchParamGenerators},
+    };
+
+    return (
+        <div>
+            <Row>
+                {/*<Col span={6} style={{minWidth: 600}}>*/}
+                <Col span={24}>
+                    <Row style={{marginBottom: 10}}>
+                        <Col flex={"none"}>
+                            <Form layout={"inline"}>
+                                <Form.Item>
+                                    <Radio.Group
+                                        value={selected}
+                                        buttonStyle="solid"
+                                        onChange={(e: CheckboxChangeEvent) => {
+                                            setSelected(e.target.value as 'vcc' | 'gnd' | 'clock');
+                                        }}
+                                        size={"small"}
+                                    >
+                                        <Radio.Button value={"vcc"}>
+                                            VCC
+                                        </Radio.Button>
+                                        <Radio.Button value={"gnd"}>
+                                            GND
+                                        </Radio.Button>
+                                        <Radio.Button value={"clock"}>
+                                            CLOCK
+                                        </Radio.Button>
+                                    </Radio.Group>
+                                </Form.Item>
+                                <Form.Item label={"Test Count"}>
+                                    <InputNumber
+                                        size={"small"}
+                                        value={traceCount}
+                                        onChange={(v) => {
+                                            setTraceCount(Number(v));
+                                        }}
+                                        changeOnWheel
+                                    />
+                                </Form.Item>
+                                {/*<Form.Item>*/}
+                                {/*    <Progress style={{width: 300}} type={"line"} size={"small"}/>*/}
+                                {/*</Form.Item>*/}
+                                {/*<Form.Item>*/}
+                                {/*<Button size={"small"} onClick={() => {*/}
+                                {/*    setGlitchTestParams({*/}
+                                {/*        type: selected,*/}
+                                {/*        data: dataMap[selected].data.map(({prop, param}) => ({prop, param}))*/}
+                                {/*    })*/}
+                                {/*}}>Test</Button>*/}
+                                {/*</Form.Item>*/}
+                            </Form>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col span={24}>
+                            <GlitchTestPropPanel
+                                data={dataMap[selected].data}
+                                setData={dataMap[selected].setData}
+                            />
+                        </Col>
+                    </Row>
+                </Col>
+            </Row>
+            <Row>
+                <Col span={24}>
+                    <GlitchTestResult/>
+                </Col>
+            </Row>
+        </div>
+    );
+};
+
+export default ConfigGlitchTest;
+export type {GlitchTestOnApplyParam, GlitchTestModelSelectProps};

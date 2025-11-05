@@ -103,16 +103,20 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 self._logger.warning(f"Parse config bytes error: {k} is not a valid config key.")
             else:
                 default_value = getattr(config, k)
-                if k == "nut_voltage":
-                    v = v / 1000
-                elif k == "nut_spi_speed":
-                    v = round(100e6 / 2 / v, 2)
-                elif default_value is not None and isinstance(default_value, Enum):
+                v = self._parse_config_special_case(k, v)
+                if default_value is not None and isinstance(default_value, Enum):
                     v = default_value.__class__(v)
 
                 setattr(config, k, v)
 
         return config
+
+    def _parse_config_special_case(self, k, v):
+        if k == "nut_voltage":
+            v = v / 1000
+        elif k == "nut_spi_speed":
+            v = round(100e6 / 2 / v, 2)
+        return v
 
     def _get_config_bytes_format(self) -> tuple[dict[str, str], ConfigS1]:
         return (
