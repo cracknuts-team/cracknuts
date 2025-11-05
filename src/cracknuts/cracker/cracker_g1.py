@@ -1,4 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
+
+# Copyright 2024 CrackNuts. All rights reserved.
 import os
 import re
 import struct
