@@ -649,6 +649,44 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         else:
             raise ValueError("The trace parameter type is not supported.")
 
+    def shift(self, ch_idx: int, trace_idx: int, shift: int):
+        """
+        曲线偏移，执行后如果果当前展示的曲线包含该通道和曲线索引，则会自动更新展示
+
+        :param ch_idx: 通道索引
+        :type ch_idx: int
+        :param trace_idx: 曲线索引
+        :type trace_idx: int
+        :param shift: 偏移量，正数表示向右偏移，负数表示向左偏移
+        :type shift: int
+        """
+        _, _, origin_trace, _ = self._trace_dataset.trace_data_with_indices[ch_idx, trace_idx]
+        self._trace_cache_traces[ch_idx, trace_idx, :] = self._do_shift(origin_trace[ch_idx, trace_idx, :], shift)
+
+        self._trace_series = self._get_trace_series_by_index_range(
+            self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        )
+        self._trace_series.percent_range = [
+            self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
+            self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
+
+        self._update_overview_trace()
+
+        if self._auto_sync:
+            self._trace_series_send_state()
+
+    @staticmethod
+    def _do_shift(trace, shift):
+        result = np.full_like(trace, 0, dtype=np.int16)
+        if shift > 0:
+            result[shift:] = trace[:-shift]
+        elif shift < 0:
+            result[:shift] = trace[-shift:]
+        else:
+            result[:] = trace
+        return result
+
     @traitlets.observe("selected_range")
     def selected_range_changed(self, change) -> None:
         if change.get("new") is not None:
