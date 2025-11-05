@@ -6,3 +6,4 @@ pytest-html~=4.1.1
 ruff~=0.7
 mypy~=1.13
 watchfiles~=1.0.0
+nbstripout~=0.8.1
