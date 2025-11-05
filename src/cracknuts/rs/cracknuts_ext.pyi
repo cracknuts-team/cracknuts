@@ -1,0 +1,3 @@
+import numpy as np
+
+def down_sample(value: np.ndarray, mn, mx, down_count) -> tuple[np.ndarray, np.ndarray]: ...

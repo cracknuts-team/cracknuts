@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "cracknuts"
@@ -57,3 +57,8 @@ extend-exclude = [
     "demo",
     "tests"
 ]
+
+[tool.maturin]
+manifest-path = "rust/Cargo.toml"
+features = ["pyo3/extension-module"]
+module-name = "cracknuts.rs.cracknuts_ext"
