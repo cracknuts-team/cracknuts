@@ -650,6 +650,16 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             raise ValueError("The trace parameter type is not supported.")
 
     def shift(self, ch_idx: int, trace_idx: int, shift: int):
+        """
+        曲线偏移，执行后如果果当前展示的曲线包含该通道和曲线索引，则会自动更新展示
+
+        :param ch_idx: 通道索引
+        :type ch_idx: int
+        :param trace_idx: 曲线索引
+        :type trace_idx: int
+        :param shift: 偏移量，正数表示向右偏移，负数表示向左偏移
+        :type shift: int
+        """
         _, _, origin_trace, _ = self._trace_dataset.trace_data_with_indices[ch_idx, trace_idx]
         self._trace_cache_traces[ch_idx, trace_idx, :] = self._do_shift(origin_trace[ch_idx, trace_idx, :], shift)
 
