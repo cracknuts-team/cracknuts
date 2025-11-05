@@ -94,7 +94,7 @@ const render = createRender(() => {
                     {crackerModel == "s1" && (<CrackerS1Panel hasAcquisition={true} connectStatusChanged={(s) => {
                         setConnected(s);
                     }} languageChanged={setLanguage}/>)}
-                    {/*{crackerModel == "g1" && (<CrackerG1Panel hasAcquisition={true} connectStatusChanged={(s) => {setConnected(s);}}/>)}*/}
+                    {/*{crackerModel == "g1" && (<CrackerG1 hasAcquisition={true} connectStatusChanged={(s) => {setConnected(s);}}/>)}*/}
                     <ScopePanel disable={!connected}></ScopePanel>
                 </div>
             </ConfigProvider>
