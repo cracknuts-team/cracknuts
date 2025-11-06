@@ -189,9 +189,14 @@ const TracePanel: React.FC = () => {
       },
       confine: true,
       triggerOn: "click",
-      enterable: true
+      enterable: true,
+      formatter: () => '',
     },
     animation: false,
+    animationDuration: 0,
+    animationDurationUpdate: 0,
+    animationEasing: 'linear',
+    animationEasingUpdate: 'linear',
     toolbox: {
       show: true,
       feature: {
