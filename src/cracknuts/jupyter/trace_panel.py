@@ -10,16 +10,13 @@ from numbers import Number
 
 import numpy as np
 import zarr
-from numpy import ndarray
-
 from cracknuts import logger
-
-from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset
-from traitlets import traitlets
-
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
-
+from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset
 from cracknuts.utils import user_config
+from numpy import ndarray
+from traitlets import traitlets
+from cracknuts.trace.downsample import minmax
 
 
 @dataclass
@@ -194,7 +191,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         c_idx = self._trace_cache_channel_indices.index(overview_channel_index)
         t_idx = self._trace_cache_trace_indices.index(overview_trace_index)
-
         x_idx, y_data = self._get_by_range(
             self._trace_cache_traces[c_idx, t_idx, :],
             0,
@@ -235,32 +231,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         pixel = self.chart_size["width"]
         if pixel is None or pixel == 0:
             pixel = 1920
-        x_idx, y_data = self._down_sample(trace, start, end, pixel)
+        x_idx, y_data = minmax(trace, start, end, pixel)
         return x_idx, y_data
-
-    @staticmethod
-    def _down_sample(value: np.ndarray, mn, mx, down_count) -> tuple[np.ndarray, np.ndarray]:
-        mn = max(0, mn)
-        mx = min(value.shape[0], mx)
-
-        _value = value[mn:mx]
-        _index = np.arange(mn, mx).astype(np.int32)
-
-        ds = int(max(1, int(mx - mn) / down_count))
-
-        if ds == 1:
-            return _index, _value
-        sample_count = int((mx - mn) // ds)
-
-        down_index = np.empty((sample_count, 2), dtype=np.int32)
-        down_index[:] = _index[: sample_count * ds : ds, np.newaxis]
-
-        _value = _value[: sample_count * ds].reshape((sample_count, ds))
-        down_value = np.empty((sample_count, 2))
-        down_value[:, 0] = _value.max(axis=1)
-        down_value[:, 1] = _value.min(axis=1)
-
-        return down_index.reshape(sample_count * 2), down_value.reshape(sample_count * 2)
 
     def _change_range(self, start: int, end: int):
         if self._trace_cache_x_indices is not None:
@@ -518,12 +490,14 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if not self._is_correlation_traces_setting:
             self._correlation_traces = None
         self._trace_dataset = trace_dataset
-        if show_all_trace:
-            self.show_all_trace()
-        elif channel_slice is not None and trace_slice is not None:
-            self._show_trace(channel_slice, trace_slice)
-        else:
-            self.show_default_trace()
+
+        if self._auto_sync:
+            if show_all_trace:
+                self.show_all_trace()
+            elif channel_slice is not None and trace_slice is not None:
+                self._show_trace(channel_slice, trace_slice)
+            else:
+                self.show_default_trace()
 
     def open_numpy_file(self, path: str):
         if os.path.isdir(path):
