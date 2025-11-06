@@ -4,7 +4,6 @@ import colorsys
 import functools
 import os
 import pathlib
-import time
 import typing
 from dataclasses import dataclass, field
 from numbers import Number
@@ -321,8 +320,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         x_idx = None
         for c, channel_index in enumerate(self._trace_cache_channel_indices):
-            s = time.time()
-            print("start downsample")
             for t, trace_index in enumerate(self._trace_cache_trace_indices):
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 color, z_increase = self._get_highlight_color(
@@ -342,7 +339,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                         else self._DEFAULT_SERIES_Z + z_increase + c * len(self._trace_cache_trace_indices) + t,
                     )
                 )
-            print(f"downsampel finished, time: {time.time() - s}")
 
         self._trace_cache_x_indices = x_idx
 
