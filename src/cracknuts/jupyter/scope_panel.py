@@ -21,6 +21,7 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
     # dict[int, list[tuple[int, int]]]  ==> {channel: [(x1, y1), (x2, y2), ...]}
     series = traitlets.Dict({}).tag(sync=True)
     overview_series = traitlets.Dict({}).tag(sync=True)
+    overview_select_range = traitlets.List([0, 0]).tag(sync=True)
 
     custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"0": (0, 0), "1": (0, 0)}).tag(sync=True)
     y_range: dict[int, tuple[int, int]] = traitlets.Dict({0: (None, None), 1: (None, None)}).tag(sync=True)
@@ -86,9 +87,10 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
 
         self.y_range = {0: (mn0, mx0), 1: (mn1, mx1)}
 
-        self.overview_series = {k: minmax(v, 0, v.shape[0], 1920) for k, v in series_data.items()}
+        self.overview_series = {k: list(zip(*minmax(v, 0, v.shape[0], 1920))) for k, v in series_data.items()}
+
         # todo zoom params...
-        self.series = {k: minmax(v) for k, v in series_data.items()}
+        self.series = {k: list(zip(*minmax(v, 0, v.shape[0], 1920))) for k, v in series_data.items()}
 
     @traitlets.observe("scope_status")
     def scope_status_changed(self, change) -> None:
