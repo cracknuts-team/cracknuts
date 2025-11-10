@@ -1,12 +1,12 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Button, Form, Input, InputNumber, Radio, Select, Space, Spin} from "antd";
+import {Button, Form, Input, InputNumber, Radio, Select, Slider, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useRef, useState} from "react";
 import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
 import {FormattedMessage, useIntl} from "react-intl";
-import Slider from "@/Slider.tsx";
-import type {ECharts} from "echarts";
+import type {ECharts, EChartsOption} from "echarts";
+import {EChartsInstance} from "echarts-for-react/src/types.ts";
 
 // interface SeriesData {
 //     0: number[] | undefined;
@@ -56,6 +56,25 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [xRangeBrushEnabled, setXRangeBrushEnabled] = useState<boolean>(false)
 
     const intl = useIntl();
+
+    const onChartReady = (chart: ECharts) => {
+        chart.on("brushEnd", (params) => {
+            const brushParams = params as BrushEndParams;
+            if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
+                const [newStart, newEnd] = brushParams.areas[0].coordRange
+                setSelectedRange([newStart, newEnd])
+            }
+
+        });
+    };
+
+    useEffect(() => {
+        if (chartRef.current?.getEchartsInstance) {
+            onChartReady(chartRef.current.getEchartsInstance());
+        }
+        return () => {
+        }
+    }, []);
 
     const setCustomC0YMinLink = (v: number) => {
         if (customC0YRangeLink) {
@@ -140,6 +159,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             axisLine: {
                 onZero: false,
             },
+            min: 'dataMin',
+            max: 'dataMax'
         },
         dataZoom: [
             {
@@ -147,11 +168,14 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 moveOnMouseMove: "alt",
                 zoomOnMouseWheel: "alt",
             },
-            {
-                type: "slider",
-            },
         ],
         yAxis: getEchartsYAxis(),
+        grid: {
+            left: "40",
+            right: "40",
+            bottom: "40",
+            top: 50,
+        },
         series: [
             {
                 name: "channel 1",
@@ -229,7 +253,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         }
     };
 
-    const setZoomRange = (param: any) => {
+    const setZoomRange = (param: { batch: { startValue: number, endValue: number }[] }) => {
         if (param.batch) {
             const {startValue, endValue} = param.batch[0]
             setCustomXMin(startValue);
@@ -259,7 +283,7 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         setCustomXMax(value);
     };
 
-    const onChartReady = (instance: any) => {
+    const onChartReady = (instance: EChartsInstance) => {
         instance.on('dataZoom', setZoomRange);
     };
 
@@ -358,10 +382,14 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         }[];
     }
 
-    const [, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
-    const [overviewTraceSeries] = useModelState<TraceSeries>("overview_trace_series");
-    const [overviewRange, _setOverviewRange] = useState<Array<number>>([0, 100])
+    // const [overviewSelectedRange, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
+    const [selectedRange, setSelectedRange] = useModelState<Array<number>>("selected_range");
+    const [overviewSeries] = useModelState<TraceSeries>("overview_series");
+    const [overviewRange, setOverviewRange] = useState<Array<number> | null>(null);
 
+    useEffect(() => {
+        setOverviewRange(selectedRange)
+    }, [selectedRange]);
 
     const overviewChartRef = useRef<ReactEcharts>(null);
     const onOverviewChartReady = (chart: ECharts) => {
@@ -371,7 +399,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 && brushParams.areas[0].coordRange
                 && brushParams.areas[0].coordRange.length == 2) {
                 const [newStart, newEnd] = brushParams.areas[0].coordRange
-                console.info([newStart, newEnd])
                 setOverviewSelectedRange([newStart, newEnd])
             }
 
@@ -404,25 +431,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         });
     }, [overviewRange]);
 
-    useEffect(() => {
-        if (overviewTraceSeries == undefined) {
-            return
-        }
-        overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
-            type: 'brush',
-            areas: [
-                {
-                    brushType: 'lineX',
-                    xAxisIndex: 0,
-                    coordRange: [0, 100]
-                }
-            ],
-            removeOnClick: false,
-            transformable: false
-        });
-    }, [overviewTraceSeries]);
 
-    const overviewOption = {
+    const [overviewOption, setOverviewOption] = useState<EChartsOption>({
         brush: {
             xAxisIndex: 0,
             // transformable: false,
@@ -447,8 +457,8 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             show: true
         },
         animation: false,
-        series: overviewTraceSeries,
-        yAxis: {
+        series: [],
+        yAxis: [{
             axisTick: {
                 show: false,
             },
@@ -461,7 +471,20 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             splitLine: {
                 show: false
             }
-        },
+        }, {
+            axisTick: {
+                show: false,
+            },
+            axisLine: {
+                show: false,
+            },
+            axisLabel: {
+                show: false,
+            },
+            splitLine: {
+                show: false
+            }
+        }],
         xAxis: {
             type: "value",
             axisTick: {
@@ -472,9 +495,47 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             },
             axisLabel: {
                 show: false,
-            }
+            },
+            min: 'dataMin',
+            max: 'dataMax'
         },
-    }
+    });
+
+    useEffect(() => {
+        setOverviewOption({
+            ...overviewOption,
+            series: [
+                {
+                    name: "channel 1",
+                    data: overviewSeries["1"] ? overviewSeries["1"] : undefined,
+                    type: "line",
+                    lineStyle: {
+                        color: colors[1],
+                        width: 1,
+                    },
+                    symbol: "none",
+                    emphasis: {
+                        disabled: true,
+                    },
+                    yAxisIndex: 1,
+                },
+                {
+                    name: "channel 0",
+                    data: overviewSeries["0"] ? overviewSeries["0"] : undefined,
+                    type: "line",
+                    lineStyle: {
+                        color: colors[0],
+                        width: 1,
+                    },
+                    symbol: "none",
+                    emphasis: {
+                        disabled: true,
+                    },
+                    yAxisIndex: 0,
+                }
+            ]
+        });
+    }, [overviewSeries]);
 
     return (
         <Spin indicator={<span></span>} spinning={disable}>
@@ -615,19 +676,31 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                     ]} onChange={setMonitorPeriod} value={monitorPeriod}/>
                 </Form.Item>
             </Form>
-            <ReactEcharts option={option} ref={chartRef} onChartReady={onChartReady}
-                          style={{
-                              height: 350, marginTop: 5, padding: 8,
-                              borderRadius: 3,
-                              boxShadow: "inset 2px 2px 10px rgba(0, 0, 0, 0.1), inset -2px -2px 10px rgba(0, 0, 0, 0.1)"
-                          }}/>
-            <ReactEcharts ref={overviewChartRef} option={overviewOption} notMerge={true} style={{height: 60}}/>
-            {/*<Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {*/}
-            {/*    setPercentRange([s, e]);*/}
-            {/*    setOverviewRange(s, e)*/}
-            {/*}} onChange={(s, e) => {*/}
-            {/*    setOverviewRange(s, e);*/}
-            {/*}}/>*/}
+            <div style={{
+                height: 400,
+                borderRadius: 3,
+            }}>
+                <ReactEcharts option={option} ref={chartRef} onChartReady={onChartReady}
+                              style={{
+                                  marginTop: 5,
+                                  padding: "8 8 0 8",
+                                  height: 350
+                              }}
+                />
+                <ReactEcharts ref={overviewChartRef} option={overviewOption} notMerge={true} style={{
+                    height: 40,
+                    marginRight: 40,
+                    marginLeft: 40,
+                    marginBottom: 40
+                }}/>
+            </div>
+
+            <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
+                setPercentRange([s, e]);
+                setOverviewRange(s, e)
+            }} onChange={(s, e) => {
+                setOverviewRange(s, e);
+            }}/>
         </Spin>
     );
 };
