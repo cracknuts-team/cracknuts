@@ -1,9 +1,9 @@
-from numba import prange
+from numba import prange, njit
 from numpy.typing import NDArray
 import numpy as np
 
 
-# @njit(parallel=True, cache=True)
+@njit(parallel=True, cache=True)
 def minmax(value: NDArray[np.int16], mn: int, mx: int, down_count: int) -> tuple[NDArray[np.int32], NDArray[np.int16]]:
     mn = max(0, mn)
     mx = min(value.shape[0], mx)
