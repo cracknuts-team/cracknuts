@@ -93,10 +93,15 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
         self.y_range = {0: (mn0, mx0), 1: (mn1, mx1)}
         for k, v in series_data.items():
             self.origin_range = (0, v.shape[0])
-        self.overview_series = {k: list(zip(*minmax(v, 0, v.shape[0], 1920))) for k, v in series_data.items()}
+        self.overview_series = {
+            k: list(zip(*minmax(np.array(v, dtype=np.int16), 0, v.shape[0], 1920))) for k, v in series_data.items()
+        }
         if not self._zoomed:
             self._range = self.origin_range
-        self.series = {k: list(zip(*minmax(v, self._range[0], self._range[1], 1920))) for k, v in series_data.items()}
+        self.series = {
+            k: list(zip(*minmax(np.array(v, dtype=np.int16), self._range[0], self._range[1], 1920)))
+            for k, v in series_data.items()
+        }
 
     def _change_range(self, start: int, end: int):
         start = math.floor(start)
