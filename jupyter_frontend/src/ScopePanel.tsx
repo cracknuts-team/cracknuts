@@ -1,5 +1,5 @@
 import {useModel, useModelState} from "@anywidget/react";
-import {Button, Form, Input, InputNumber, Radio, Select, Slider, Space, Spin} from "antd";
+import {Button, Form, Input, InputNumber, Radio, Select, Space, Spin} from "antd";
 import ReactEcharts from "echarts-for-react";
 import React, {useEffect, useRef, useState} from "react";
 import {LinkOutlined, MinusCircleOutlined, PlusCircleOutlined} from "@ant-design/icons";
@@ -7,6 +7,9 @@ import {CheckboxChangeEvent} from "antd/es/checkbox";
 import {FormattedMessage, useIntl} from "react-intl";
 import type {ECharts, EChartsOption} from "echarts";
 import {EChartsInstance} from "echarts-for-react/src/types.ts";
+import Slider from "@/Slider.tsx";
+import {throttle} from "echarts";
+import {YAXisOption} from "echarts/types/dist/shared";
 
 // interface SeriesData {
 //     0: number[] | undefined;
@@ -37,7 +40,11 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [lockScopeOperation] = useModelState<boolean>("lock_scope_operation");
     const [scopeStatus, setScopeStatus] = useModelState<number>("scope_status");
     const [monitorPeriod, setMonitorPeriod] = useModelState<number>("monitor_period")
-
+    const [originRange] = useModelState<Array<number>>("origin_range")
+    const originRangeRef = useRef(originRange)
+    useEffect(() => {
+        originRangeRef.current = originRange;
+    }, [originRange]);
     const [yRange] = useModelState<RangeData>("y_range");
 
     const [customRangeModel, setCustomRangeModel] = useState<boolean>(false)
@@ -57,24 +64,15 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
 
     const intl = useIntl();
 
-    const onChartReady = (chart: ECharts) => {
-        chart.on("brushEnd", (params) => {
-            const brushParams = params as BrushEndParams;
-            if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
-                const [newStart, newEnd] = brushParams.areas[0].coordRange
-                setSelectedRange([newStart, newEnd])
-            }
+    const anyWidgetModel = useModel();
 
-        });
-    };
-
-    useEffect(() => {
-        if (chartRef.current?.getEchartsInstance) {
-            onChartReady(chartRef.current.getEchartsInstance());
-        }
-        return () => {
-        }
-    }, []);
+    // useEffect(() => {
+    //     if (chartRef.current?.getEchartsInstance) {
+    //         onChartReady(chartRef.current.getEchartsInstance());
+    //     }
+    //     return () => {
+    //     }
+    // }, []);
 
     const setCustomC0YMinLink = (v: number) => {
         if (customC0YRangeLink) {
@@ -122,29 +120,45 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     };
 
     const colors = ["green", "red"];
+    const [xAxisMinMax, setXAxisMinMax] = useState<Array<'dataMin' | 'dataMax' | number>>(['dataMin', 'dataMax'])
 
-    const option: object = {
+    const resetRange = () => {
+        setXAxisMinMax(originRangeRef.current)
+        setSelectedRange(originRangeRef.current)
+        setZoomed(false)
+        anyWidgetModel.send({source: "reset", event: "onClick"});
+    };
+
+    const [option, setOption] = useState<EChartsOption>({
         toolbox: {
             feature: {
-                dataZoom: {
-                    id: "toolboxDataZoom",
-                    show: true,
+                brush: {
                     title: {
-                        zoom: intl.formatMessage({id: "cracker.scope.echarts.toolbox.dataZoom.zoom"}),
-                        back: intl.formatMessage({id: "cracker.scope.echarts.toolbox.dataZoom.back"}),
-                    },
-                    xAxisIndex: 0,
-                    yAxisIndex: false,
-                    brushStyle: {
-                        color: "rgba(144, 238, 144, 0.4)",
-                    },
-                    filterMode: "none",
+                        lineX: intl.formatMessage({id: "trace.echarts.toolbox.brush.lineX"}),
+                    }
+                },
+                myReset: {
+                    show: true,
+                    title: intl.formatMessage({id: "trace.echarts.toolbox.myReset"}),
+                    icon: 'M3.8,33.4 M47,18.9h9.8V8.7 M56.3,20.1 C52.1,9,40.5,0.6,26.8,2.1C12.6,3.7,1.6,16.2,2.1,30.6 M13,41.1H3.1v10.2 M3.7,39.9c4.2,11.1,15.8,19.5,29.5,18 c14.2-1.6,25.2-14.1,24.7-28.5',
+                    onclick: function () {
+                        resetRange();
+                    }
                 },
                 saveAsImage: {
                     show: true,
                     title: intl.formatMessage({id: "cracker.scope.echarts.toolbox.saveAsImage"})
                 },
             },
+        },
+        brush: {
+            toolbox: ['lineX'],
+            xAxisIndex: 0,
+            brushStyle: {
+                borderWidth: 1,
+                color: 'rgba(128, 128, 128, 0.5)',
+                borderColor: 'rgba(128, 128, 128, 0.1)'
+            }
         },
         tooltip: {
             trigger: "axis",
@@ -176,40 +190,66 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             bottom: "40",
             top: 50,
         },
-        series: [
-            {
-                name: "channel 1",
-                data: series["1"] ? series["1"] : undefined,
-                type: "line",
-                lineStyle: {
-                    color: colors[1],
-                    width: 1,
-                },
-                symbol: "none",
-                emphasis: {
-                    disabled: true,
-                },
-                yAxisIndex: 1,
-            },
-            {
-                name: "channel 0",
-                data: series["0"] ? series["0"] : undefined,
-                type: "line",
-                lineStyle: {
-                    color: colors[0],
-                    width: 1,
-                },
-                symbol: "none",
-                emphasis: {
-                    disabled: true,
-                },
-                yAxisIndex: 0,
-            }
-        ]
-    };
+        series: []
+    });
 
-    function getEchartsYAxis() {
-        const yAxis = [];
+    useEffect(() => {
+        setOption({
+            ...option,
+            xAxis: {
+                ...option.xAxis,
+                min: xAxisMinMax[0],
+                max: xAxisMinMax[1]
+            }
+        })
+    }, [xAxisMinMax]);
+
+    useEffect(() => {
+        if (!zoomed) {
+            setSelectedRange(originRange)
+        }
+        setOption({
+            ...option,
+            xAxis: {
+                ...option.xAxis,
+                min: 'dataMin',
+                max: 'dataMax'
+            },
+            series: [
+                {
+                    name: "channel 1",
+                    data: series["1"] ? series["1"] : undefined,
+                    type: "line",
+                    lineStyle: {
+                        color: colors[1],
+                        width: 1,
+                    },
+                    symbol: "none",
+                    emphasis: {
+                        disabled: true,
+                    },
+                    yAxisIndex: 1,
+                },
+                {
+                    name: "channel 0",
+                    data: series["0"] ? series["0"] : undefined,
+                    type: "line",
+                    lineStyle: {
+                        color: colors[0],
+                        width: 1,
+                    },
+                    symbol: "none",
+                    emphasis: {
+                        disabled: true,
+                    },
+                    yAxisIndex: 0,
+                }
+            ]
+        })
+    }, [series]);
+
+    function getEchartsYAxis(): YAXisOption[] {
+        const yAxis: YAXisOption[] = [];
 
         yAxis.push({
             type: "value",
@@ -253,14 +293,6 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         }
     };
 
-    const setZoomRange = (param: { batch: { startValue: number, endValue: number }[] }) => {
-        if (param.batch) {
-            const {startValue, endValue} = param.batch[0]
-            setCustomXMin(startValue);
-            setCustomXMax(endValue)
-        }
-    }
-
     const setCustomXRangeMin = (value: number) => {
         const chartInstance = chartRef.current?.getEchartsInstance();
         if (chartInstance) {
@@ -284,7 +316,19 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     };
 
     const onChartReady = (instance: EChartsInstance) => {
-        instance.on('dataZoom', setZoomRange);
+        // instance.on('dataZoom', setZoomRange);
+        instance.on("brushEnd", (params: BrushEndParams) => {
+            if (params && params.areas && params.areas.length > 0 && params.areas[0].coordRange && params.areas[0].coordRange.length == 2) {
+                const [newStart, newEnd] = params.areas[0].coordRange
+                setSelectedRange([newStart, newEnd])
+                setXAxisMinMax([Math.floor(newStart), Math.ceil(newEnd)])
+                setZoomed(true)
+            }
+            instance.dispatchAction({
+                type: 'brush',
+                areas: []
+            });
+        });
     };
 
     const chARangeIncrease = () => {
@@ -382,14 +426,16 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
         }[];
     }
 
-    // const [overviewSelectedRange, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
+    // const [, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
     const [selectedRange, setSelectedRange] = useModelState<Array<number>>("selected_range");
     const [overviewSeries] = useModelState<TraceSeries>("overview_series");
-    const [overviewRange, setOverviewRange] = useState<Array<number> | null>(null);
+    // const [overviewRange, setOverviewRange] = useState<Array<number> | null>(null);
+    const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>([0, 100])
+    const [zoomed, setZoomed] =  useState<boolean>(false)
 
-    useEffect(() => {
-        setOverviewRange(selectedRange)
-    }, [selectedRange]);
+    // useEffect(() => {
+    //     setOverviewRange(selectedRange)
+    // }, [selectedRange]);
 
     const overviewChartRef = useRef<ReactEcharts>(null);
     const onOverviewChartReady = (chart: ECharts) => {
@@ -398,23 +444,26 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
             if (brushParams && brushParams.areas && brushParams.areas.length > 0
                 && brushParams.areas[0].coordRange
                 && brushParams.areas[0].coordRange.length == 2) {
-                const [newStart, newEnd] = brushParams.areas[0].coordRange
-                setOverviewSelectedRange([newStart, newEnd])
+                let [newStart, newEnd] = brushParams.areas[0].coordRange
+                newStart = Math.floor(newStart)
+                newEnd = Math.ceil(newEnd)
+                setSelectedRange([newStart, newEnd])
+                setZoomed(true)
             }
 
         });
     };
 
-    useEffect(() => {
-        if (overviewChartRef.current?.getEchartsInstance) {
-            onOverviewChartReady(overviewChartRef.current.getEchartsInstance());
-        }
-        return () => {
-        }
-    }, []);
+    // useEffect(() => {
+    //     if (overviewChartRef.current?.getEchartsInstance) {
+    //         onOverviewChartReady(overviewChartRef.current.getEchartsInstance());
+    //     }
+    //     return () => {
+    //     }
+    // }, []);
 
     useEffect(() => {
-        if (overviewRange == undefined) {
+        if (selectedRange == undefined) {
             return
         }
         overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
@@ -423,13 +472,13 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 {
                     brushType: 'lineX',
                     xAxisIndex: 0,
-                    coordRange: [overviewRange[0], overviewRange[1]]
+                    coordRange: [selectedRange[0], selectedRange[1]]
                 }
             ],
             removeOnClick: false,
             transformable: false
         });
-    }, [overviewRange]);
+    }, [selectedRange]);
 
 
     const [overviewOption, setOverviewOption] = useState<EChartsOption>({
@@ -680,26 +729,31 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                 height: 400,
                 borderRadius: 3,
             }}>
-                <ReactEcharts option={option} ref={chartRef} onChartReady={onChartReady}
+                <ReactEcharts option={option}
+                              ref={chartRef}
+                              onChartReady={onChartReady}
                               style={{
                                   marginTop: 5,
                                   padding: "8 8 0 8",
                                   height: 350
                               }}
                 />
-                <ReactEcharts ref={overviewChartRef} option={overviewOption} notMerge={true} style={{
-                    height: 40,
-                    marginRight: 40,
-                    marginLeft: 40,
-                    marginBottom: 40
-                }}/>
+                <ReactEcharts ref={overviewChartRef}
+                              option={overviewOption}
+                              onChartReady={onOverviewChartReady}
+                              style={{
+                                  height: 40,
+                                  marginRight: 40,
+                                  marginLeft: 40,
+                                  marginBottom: 40
+                              }}/>
             </div>
 
             <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
-                setPercentRange([s, e]);
-                setOverviewRange(s, e)
+                // setPercentRange([s, e]);
+                // setOverviewRange(s, e)
             }} onChange={(s, e) => {
-                setOverviewRange(s, e);
+                // setOverviewRange(s, e);
             }}/>
         </Spin>
     );

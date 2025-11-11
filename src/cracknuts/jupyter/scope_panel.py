@@ -1,5 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
-
+import math
 import pathlib
 import threading
 import time
@@ -21,7 +21,9 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
     # dict[int, list[tuple[int, int]]]  ==> {channel: [(x1, y1), (x2, y2), ...]}
     series = traitlets.Dict({}).tag(sync=True)
     overview_series = traitlets.Dict({}).tag(sync=True)
-    overview_select_range = traitlets.List([0, 0]).tag(sync=True)
+    overview_select_range = traitlets.Tuple((0, 0)).tag(sync=True)
+    selected_range = traitlets.Tuple((0, 0)).tag(sync=True)
+    origin_range = traitlets.Tuple((0, 0)).tag(sync=True)
 
     custom_y_range: dict[str, tuple[int, int]] = traitlets.Dict({"0": (0, 0), "1": (0, 0)}).tag(sync=True)
     y_range: dict[int, tuple[int, int]] = traitlets.Dict({0: (None, None), 1: (None, None)}).tag(sync=True)
@@ -48,6 +50,9 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
         self._scope_acquisition = ScopeAcquisition(self._acquisition.cracker, trace_fetch_interval=self.monitor_period)
         self._acquisition.on_status_changed(self._change_acquisition_source)
         self._scope_acquisition.on_status_changed(self._change_scope_acquisition_status)
+        self._range: tuple[int, int] | None = None
+        self._zoomed: bool = False
+        self.reg_msg_handler("reset", "onClick", self.reset)
 
     def _change_acquisition_source(self, status: int) -> None:
         # Listen the acquisition thread status change and update scope monitor status.
@@ -86,11 +91,21 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
             mn1, mx1 = np.min(c1), np.max(c1)
 
         self.y_range = {0: (mn0, mx0), 1: (mn1, mx1)}
-
+        for k, v in series_data.items():
+            self.origin_range = (0, v.shape[0])
         self.overview_series = {k: list(zip(*minmax(v, 0, v.shape[0], 1920))) for k, v in series_data.items()}
+        if not self._zoomed:
+            self._range = self.origin_range
+        self.series = {k: list(zip(*minmax(v, self._range[0], self._range[1], 1920))) for k, v in series_data.items()}
 
-        # todo zoom params...
-        self.series = {k: list(zip(*minmax(v, 0, v.shape[0], 1920))) for k, v in series_data.items()}
+    def _change_range(self, start: int, end: int):
+        start = math.floor(start)
+        end = math.floor(end)
+        self._range = (start, end)
+        self._zoomed = True
+
+    def reset(self, args):
+        self._zoomed = False
 
     @traitlets.observe("scope_status")
     def scope_status_changed(self, change) -> None:
@@ -105,6 +120,12 @@ class ScopePanelWidget(MsgHandlerPanelWidget):
     def monitor_period_changed(self, change) -> None:
         if change.get("new"):
             self._scope_acquisition.trace_fetch_interval = change["new"]
+
+    @traitlets.observe("selected_range")
+    def selected_range_changed(self, change) -> None:
+        if change.get("new") is not None:
+            s, e = change.get("new")
+            self._change_range(s, e)
 
     def run(self, status: int) -> None:
         if not self.lock_scope_operation:
