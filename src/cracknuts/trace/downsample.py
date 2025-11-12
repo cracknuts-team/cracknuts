@@ -1,4 +1,6 @@
-from numba import njit, prange
+# Copyright 2024 CrackNuts. All rights reserved.
+
+from numba import prange, njit
 from numpy.typing import NDArray
 import numpy as np
 
@@ -9,8 +11,8 @@ def minmax(value: NDArray[np.int16], mn: int, mx: int, down_count: int) -> tuple
     mx = min(value.shape[0], mx)
     ds = max(1, int((mx - mn) / down_count))
     if ds == 1:
-        _value = value[mn:mx]
         _index = np.arange(mn, mx, dtype=np.int32)
+        _value = value[mn:mx]
         return _index, _value
     sample_count = (mx - mn) // ds
     down_index = np.empty(sample_count * 2, dtype=np.int32)
