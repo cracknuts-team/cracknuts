@@ -16,7 +16,7 @@ from cracknuts.trace.downsample import minmax
 
 class ScopePanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "ScopePanelWidget.js"
-    _css = ""
+    _css = pathlib.Path(__file__).parent / "static" / "ScopePanelWidget.css"
 
     # dict[int, list[tuple[int, int]]]  ==> {channel: [(x1, y1), (x2, y2), ...]}
     series = traitlets.Dict({}).tag(sync=True)

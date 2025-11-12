@@ -8,7 +8,6 @@ import {FormattedMessage, useIntl} from "react-intl";
 import type {ECharts, EChartsOption} from "echarts";
 import {EChartsInstance} from "echarts-for-react/src/types.ts";
 import Slider from "@/Slider.tsx";
-import {throttle} from "echarts";
 import {YAXisOption} from "echarts/types/dist/shared";
 
 // interface SeriesData {
@@ -430,12 +429,34 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
     const [selectedRange, setSelectedRange] = useModelState<Array<number>>("selected_range");
     const [overviewSeries] = useModelState<TraceSeries>("overview_series");
     // const [overviewRange, setOverviewRange] = useState<Array<number> | null>(null);
-    const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>([0, 100])
-    const [zoomed, setZoomed] =  useState<boolean>(false)
+    const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>([0, 0])
+    const [zoomed, setZoomed] = useState<boolean>(false)
 
-    // useEffect(() => {
-    //     setOverviewRange(selectedRange)
-    // }, [selectedRange]);
+    useEffect(() => {
+        let maxX = 0;
+        if (overviewSeries["1"]) {
+            maxX = overviewSeries["1"][overviewSeries["1"].length - 1][0]
+        } else if (overviewSeries["0"]) {
+            maxX = overviewSeries["0"][overviewSeries["0"].length - 1][0]
+        } else {
+            // do nothing
+            return
+        }
+        setSliderPercentRange([Math.min(100, Math.max(0, selectedRange[0]/maxX*100)), Math.max(0, Math.min(100, selectedRange[1]/maxX*100))])
+    }, [selectedRange, overviewSeries]);
+
+    const setSelectedPercentRange = (startPercent: number, endPercent: number) => {
+        let maxX = 0;
+        if (overviewSeries["1"]) {
+            maxX = overviewSeries["1"][overviewSeries["1"].length - 1][0]
+        } else if (overviewSeries["0"]) {
+            maxX = overviewSeries["0"][overviewSeries["0"].length - 1][0]
+        } else {
+            // do nothing
+            return
+        }
+        setSelectedRange([(maxX) * startPercent / 100, (maxX) * endPercent / 100])
+    }
 
     const overviewChartRef = useRef<ReactEcharts>(null);
     const onOverviewChartReady = (chart: ECharts) => {
@@ -745,16 +766,18 @@ const ScopePanel: React.FC<ScopePanelProperties> = ({disable = false}) => {
                                   height: 40,
                                   marginRight: 40,
                                   marginLeft: 40,
-                                  marginBottom: 40
+                                  marginBottom: 0
                               }}/>
+                <Slider style={{marginTop: 0, marginBottom: 10, marginLeft: 40, marginRight: 40}}
+                        start={sliderPercentRange[0]}
+                        end={sliderPercentRange[1]}
+                        onChangeFinish={(s, e) => {
+                            setSelectedPercentRange(s, e);
+                        }}
+                />
             </div>
 
-            <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
-                // setPercentRange([s, e]);
-                // setOverviewRange(s, e)
-            }} onChange={(s, e) => {
-                // setOverviewRange(s, e);
-            }}/>
+
         </Spin>
     );
 };
