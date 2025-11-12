@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 from numba import prange, njit
 from numpy.typing import NDArray
 import numpy as np
