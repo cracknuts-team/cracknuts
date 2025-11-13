@@ -180,6 +180,15 @@ const TracePanel: React.FC = () => {
     //   }
     // };
 
+    type TooltipFormatterParam = {
+        seriesId: string;
+        seriesName: string;
+        seriesIndex: number;
+        marker: string;
+        value: Array<number>;
+        axisValue?: string | number;
+    }
+
     const [option, setOption] = useState<EChartsOption>({
         grid: {
             left: "40",
@@ -194,7 +203,65 @@ const TracePanel: React.FC = () => {
             confine: true,
             triggerOn: "click",
             enterable: true,
-            formatter: () => '',
+            extraCssText: `
+                max-height: 155px; 
+                overflow-y: scroll;
+                width: 350px;
+                display: block;
+                box-sizing: border-box;
+            `,
+            formatter: function (_params) {
+                const params = _params as TooltipFormatterParam[]
+                if (!params || !params.length) return '';
+
+                const seen = new Set();
+                const uniqueParams = params.filter(p => {
+                    if (seen.has(p.seriesId)) return false;
+                    seen.add(p.seriesId);
+                    return true;
+                });
+
+                const xValue = uniqueParams[0]?.value?.[0] ?? uniqueParams[0]?.axisValue ?? '';
+
+                const maxRows = 5;
+                const maxCols = 3;
+                const n = uniqueParams.length;
+                let rows = Math.min(maxRows, n);
+                let cols = Math.ceil(n / rows);
+                if (cols > maxCols) {
+                    cols = maxCols;
+                    rows = Math.ceil(n / cols);
+                }
+
+                const columns: Array<Array<TooltipFormatterParam>> = Array.from({length: cols}, () => []);
+                for (let i = 0; i < n; i++) {
+                    const colIndex = Math.floor(i / rows);
+                    columns[colIndex].push(uniqueParams[i]);
+                }
+
+                const columnHtml = columns.map(colItems => {
+                    const rowsHtml = colItems.map((p) => {
+                        const marker = p.marker || '';
+                        const val = Array.isArray(p.value)
+                            ? p.value[1]
+                            : (p.value ?? '-');
+                        return `
+                          <div style="display:flex;align-items:center;gap:6px;line-height:1.4;">
+                            <span>${marker}</span>
+                            <span>${p.seriesName}: ${val}</span>
+                          </div>
+                        `;
+                    }).join('');
+                    return `<div style="display:flex;flex-direction:column;gap:2px;">${rowsHtml}</div>`;
+                }).join('<div style="width:16px;"></div>');
+
+                return `
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-weight:bold;margin-bottom:4px;">X: ${xValue}</div>
+                    <div style="display:flex;align-items:flex-start;">${columnHtml}</div>
+                  </div>
+                `;
+            }
         },
         animation: false,
         animationDuration: 0,
