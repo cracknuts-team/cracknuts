@@ -4,6 +4,11 @@ import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
 import {ECharts, EChartsOption} from "echarts";
 import {useIntl} from "react-intl";
+import {Button, Input, InputNumber, Tabs} from "antd";
+import {CompatibilityProps} from "antd/es/tabs";
+import type {Tab} from 'rc-tabs/lib/interface';
+import GeneralControl, {TraceIndexFilter} from "@/components/trace/GeneralControl.tsx";
+import ShiftControl from "@/components/trace/ShiftControl.tsx";
 
 interface SeriesData {
     color: string;
@@ -458,8 +463,67 @@ const TracePanel: React.FC = () => {
         });
     }, [overviewTraceSeries]);
 
+    const [traceGroups,] = useState([{
+        name: 'Traces',
+        path: 'traces'
+    }]);
+    const [traceChannels,] = useState([{
+        name: 'A',
+        path: 'A'
+    }, {
+        name: 'B',
+        path: 'B'
+    }]);
+    const [selectedTraceGroupPaths, setSelectedTraceGroupPaths] = useState(['traces']);
+    const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState(['B'])
+    const [traceIndexFilter, setTraceIndexFilter] = useState<TraceIndexFilter[]>([
+        {
+            index: 'traces-b',
+            name: 'Traces/B',
+            group: 'traces',
+            channel: 'b',
+            filter: <input value={'1,3-10'}/> ,
+        },{
+            index: 'traces-a',
+            name: 'Traces/A',
+            group: 'traces',
+            channel: 'a',
+            filter: <input value={'1,3-10'}/>,
+        }
+    ])
+    const onTraceIndexFilterChange = (index: string, filter: string) => {
+
+    };
+
+    const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
+        key: "1",
+        label: 'General',
+        children: <GeneralControl
+            groups={traceGroups}
+            channels={traceChannels}
+            selectedGroupPaths={selectedTraceGroupPaths}
+            selectedChannelPaths={selectTraceChannelPaths}
+            onSelectedGroupPathsChange={setSelectedTraceGroupPaths}
+            onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
+            traceIndexFilter={traceIndexFilter}
+            onTraceIndexFilterChange={onTraceIndexFilterChange}
+        />
+    }, {
+        key: "2",
+        label: "Shift",
+        children: <ShiftControl traces={[{
+            index: 'traces-b-0',
+            group: 'traces',
+            channel: 'b',
+            trace: 0,
+            offset: <div><InputNumber value={100} size={"small"}/> </div>,
+            operator: <Button size={"small"}>Apply</Button>
+        }]} />
+    }]
+
     return (
         <div ref={chartBoxRef}>
+            <Tabs items={tabsItems} size={"small"}/>
             <ReactEcharts ref={chartRef} option={option} style={{height: 400}}/>
             <ReactEcharts ref={overviewChartRef} option={overviewOption} style={{height: 60}}/>
             <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
