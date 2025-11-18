@@ -92,6 +92,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
 
+    _f_trace_index_filters = traitlets.List([]).tag(sync=True)
+
     language = traitlets.Unicode("en").tag(sync=True)
 
     _DEFAULT_SHOW_INDEX_THRESHOLD = 3
@@ -144,6 +146,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     @correlation_zarr_substitute("_correlation_zarr_show_trace")
     def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
+        print(f"get slice: {channel_slice}, {trace_slice}")
         channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
@@ -684,6 +687,28 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if change.get("new") is not None:
             s, e = change.get("new")
             self.change_percent_range(s, e)
+
+    @traitlets.observe("_f_trace_index_filters")
+    def _f_trace_index_filters_changed(self, change) -> None:
+        if change.get("new") is not None:
+            filters = change.get("new")
+            print(f"get filter changed: {filters}")
+            for f in filters:
+                # group = f["group"]  # Temporarily unused.
+                channel = f["channelIndex"]
+                if channel == 1:  # now only support channel 0
+                    continue
+                index_filter = f["filter"]
+                self._show_trace(channel, self._str_to_slice(index_filter))
+
+    @staticmethod
+    def _str_to_slice(s: str) -> slice:
+        parts = s.split(":")
+        if len(parts) > 3:
+            raise ValueError("Invalid slice format")
+        args = [int(p) if p else None for p in parts]
+        print(f"get slice args: {args}")
+        return slice(*args)
 
 
 class ShowTrace:

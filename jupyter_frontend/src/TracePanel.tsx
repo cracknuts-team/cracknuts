@@ -4,7 +4,7 @@ import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
 import {ECharts, EChartsOption} from "echarts";
 import {useIntl} from "react-intl";
-import {Button, Input, InputNumber, Tabs} from "antd";
+import {Button, Tabs} from "antd";
 import {CompatibilityProps} from "antd/es/tabs";
 import type {Tab} from 'rc-tabs/lib/interface';
 import GeneralControl, {TraceIndexFilter} from "@/components/trace/GeneralControl.tsx";
@@ -66,6 +66,8 @@ const TracePanel: React.FC = () => {
 
     const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>(traceSeries.percentRange)
 
+    const [__traceIndexFilters, __setTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
+
     const anyWidgetModel = useModel();
 
     const intl = useIntl();
@@ -96,6 +98,7 @@ const TracePanel: React.FC = () => {
 
     const onChartReady = (chart: ECharts) => {
         chart.on("brushEnd", (params) => {
+            console.log('get chart brushed event.')
             const brushParams = params as BrushEndParams;
             if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
                 let [newStart, newEnd] = brushParams.areas[0].coordRange
@@ -110,13 +113,13 @@ const TracePanel: React.FC = () => {
         });
     };
 
-    useEffect(() => {
-        if (chartRef.current?.getEchartsInstance) {
-            onChartReady(chartRef.current.getEchartsInstance());
-        }
-        return () => {
-        }
-    }, []);
+    // useEffect(() => {
+    //     if (chartRef.current?.getEchartsInstance) {
+    //         onChartReady(chartRef.current.getEchartsInstance());
+    //     }
+    //     return () => {
+    //     }
+    // }, []);
 
     const getSeries = (): Array<object> => {
         const series: Array<object> = [];
@@ -403,13 +406,13 @@ const TracePanel: React.FC = () => {
         });
     };
 
-    useEffect(() => {
-        if (overviewChartRef.current?.getEchartsInstance) {
-            onOverviewChartReady(overviewChartRef.current.getEchartsInstance());
-        }
-        return () => {
-        }
-    }, []);
+    // useEffect(() => {
+    //     if (overviewChartRef.current?.getEchartsInstance) {
+    //         onOverviewChartReady(overviewChartRef.current.getEchartsInstance());
+    //     }
+    //     return () => {
+    //     }
+    // }, []);
 
     useEffect(() => {
         if (overviewRange == undefined) {
@@ -476,23 +479,29 @@ const TracePanel: React.FC = () => {
     }]);
     const [selectedTraceGroupPaths, setSelectedTraceGroupPaths] = useState(['traces']);
     const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState(['B'])
-    const [traceIndexFilter, setTraceIndexFilter] = useState<TraceIndexFilter[]>([
+    const [traceIndexFilters, setTraceIndexFilters] = useState<TraceIndexFilter[]>([
         {
             index: 'traces-b',
             name: 'Traces/B',
             group: 'traces',
             channel: 'b',
-            filter: <input value={'1,3-10'}/> ,
+            channelIndex: 1,
+            filter: '0',
         },{
             index: 'traces-a',
             name: 'Traces/A',
             group: 'traces',
             channel: 'a',
-            filter: <input value={'1,3-10'}/>,
+            channelIndex: 0,
+            filter: '0',
         }
     ])
-    const onTraceIndexFilterChange = (index: string, filter: string) => {
-
+    const onTraceIndexFilterApply = (index: string, filter: string) => {
+        setTraceIndexFilters(prev => {
+            const filters = prev.map(f => (f.index === index ? {...f, filter: filter} : f))
+            __setTraceIndexFilters(filters)
+            return filters
+        })
     };
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
@@ -505,8 +514,8 @@ const TracePanel: React.FC = () => {
             selectedChannelPaths={selectTraceChannelPaths}
             onSelectedGroupPathsChange={setSelectedTraceGroupPaths}
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
-            traceIndexFilter={traceIndexFilter}
-            onTraceIndexFilterChange={onTraceIndexFilterChange}
+            traceIndexFilters={traceIndexFilters}
+            onTraceIndexFilterApply={onTraceIndexFilterApply}
         />
     }, {
         key: "2",
@@ -516,7 +525,7 @@ const TracePanel: React.FC = () => {
             group: 'traces',
             channel: 'b',
             trace: 0,
-            offset: <div><InputNumber value={100} size={"small"}/> </div>,
+            offset: 100,
             operator: <Button size={"small"}>Apply</Button>
         }]} />
     }]
@@ -524,8 +533,8 @@ const TracePanel: React.FC = () => {
     return (
         <div ref={chartBoxRef}>
             <Tabs items={tabsItems} size={"small"}/>
-            <ReactEcharts ref={chartRef} option={option} style={{height: 400}}/>
-            <ReactEcharts ref={overviewChartRef} option={overviewOption} style={{height: 60}}/>
+            <ReactEcharts ref={chartRef} option={option} style={{height: 400}} replaceMerge={"series"} onChartReady={onChartReady}/>
+            <ReactEcharts ref={overviewChartRef} option={overviewOption} style={{height: 60}} replaceMerge={"series"} onChartReady={onOverviewChartReady}/>
             <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
                 setPercentRange([s, e]);
                 setOverviewRange(s, e)

@@ -6,7 +6,7 @@ interface TraceInfo {
     group: string,
     channel: string,
     trace: number,
-    offset: number,
+    offset: number | React.ReactNode,
     operator: React.ReactNode
 }
 
@@ -37,14 +37,21 @@ interface ShiftControlProp {
 }
 
 const ShiftControl: React.FC<ShiftControlProp> = ({traces}) => {
+    const _traces: TraceInfo[] = traces.map(t => {
+        return {
+            ...t,
+            offset: <div><InputNumber value={100} size={"small"}/></div>
+        }
+    })
     return (
         <Table
             size={"small"}
             columns={columns}
-            dataSource={traces}
+            dataSource={_traces}
             pagination={false}
         />
     );
 };
 
 export default ShiftControl;
+export type {ShiftControl}
