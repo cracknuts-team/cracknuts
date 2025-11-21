@@ -66,8 +66,6 @@ const TracePanel: React.FC = () => {
 
     const [sliderPercentRange, setSliderPercentRange] = useState<Array<number>>(traceSeries.percentRange)
 
-    const [__traceIndexFilters, __setTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
-
     const anyWidgetModel = useModel();
 
     const intl = useIntl();
@@ -479,30 +477,24 @@ const TracePanel: React.FC = () => {
     }]);
     const [selectedTraceGroupPaths, setSelectedTraceGroupPaths] = useState(['traces']);
     const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState(['B'])
-    const [traceIndexFilters, setTraceIndexFilters] = useState<TraceIndexFilter[]>([
-        {
-            index: 'traces-b',
-            name: 'Traces/B',
-            group: 'traces',
-            channel: 'b',
-            channelIndex: 1,
-            filter: '0',
-        },{
-            index: 'traces-a',
-            name: 'Traces/A',
-            group: 'traces',
-            channel: 'a',
-            channelIndex: 0,
-            filter: '0',
-        }
-    ])
-    const onTraceIndexFilterApply = (index: string, filter: string) => {
-        setTraceIndexFilters(prev => {
-            const filters = prev.map(f => (f.index === index ? {...f, filter: filter} : f))
-            __setTraceIndexFilters(filters)
-            return filters
-        })
-    };
+    // const [traceIndexFilters, setTraceIndexFilters] = useState<TraceIndexFilter[]>([
+    //     {
+    //         index: 'traces-b',
+    //         name: 'Traces/B',
+    //         group: 'traces',
+    //         channel: 'b',
+    //         channelIndex: 1,
+    //         filter: '0',
+    //     },{
+    //         index: 'traces-a',
+    //         name: 'Traces/A',
+    //         group: 'traces',
+    //         channel: 'a',
+    //         channelIndex: 0,
+    //         filter: '0',
+    //     }
+    // ])
+    const [_b_traceIndexFilters, _b_setTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
         key: "1",
@@ -514,8 +506,8 @@ const TracePanel: React.FC = () => {
             selectedChannelPaths={selectTraceChannelPaths}
             onSelectedGroupPathsChange={setSelectedTraceGroupPaths}
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
-            traceIndexFilters={traceIndexFilters}
-            onTraceIndexFilterApply={onTraceIndexFilterApply}
+            traceIndexFilters={_b_traceIndexFilters}
+            onTraceIndexFilterApply={_b_setTraceIndexFilters}
         />
     }, {
         key: "2",

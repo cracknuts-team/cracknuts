@@ -18,7 +18,6 @@ interface TraceIndexFilter {
 
 interface _TraceIndexFilter extends Omit<TraceIndexFilter, "filter"> {
     filter: React.ReactNode,
-    operation: React.ReactNode
 }
 
 const columns: TableProps<_TraceIndexFilter>['columns'] = [{
@@ -51,7 +50,7 @@ interface GeneralProp {
     onSelectedChannelPathsChange: (paths: string[]) => void;
 
     traceIndexFilters: TraceIndexFilter[];
-    onTraceIndexFilterApply: (index: string, filter: string) => void;
+    onTraceIndexFilterApply: (filters: TraceIndexFilter[]) => void;
 
 }
 
@@ -73,15 +72,6 @@ const GeneralControl: React.FC<GeneralProp> = ({
         );
     };
 
-    const handleFilterApply = (index: string) => {
-        const currentFilter = filters.find(f => f.index === index)?.filter;
-        if (currentFilter) {
-            onTraceIndexFilterApply(index, currentFilter);
-        } else {
-            console.error(`Can't find the filter item with index ${index}`)
-        }
-    }
-
     const _traceIndexFilters: _TraceIndexFilter[] = filters.map(f => ({
         ...f,
         filter: (
@@ -91,13 +81,6 @@ const GeneralControl: React.FC<GeneralProp> = ({
                 value={f.filter}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => handleFilterChange(f.index, e.target.value)}
             />
-        ),
-        operation: (
-            <Button
-                key={`btn-${f.index}`}
-                onClick={() => handleFilterApply(f.index)}>
-                Apply
-            </Button>
         ),
     }));
 
@@ -122,6 +105,9 @@ const GeneralControl: React.FC<GeneralProp> = ({
                         value={selectedChannelPaths}
                         onChange={onSelectedChannelPathsChange}
                     />
+                    <Button onClick={() => {
+                        onTraceIndexFilterApply(filters)
+                    }}>Apply</Button>
                 </Flex>
                 <Flex gap={"small"} align={"start"} style={{width: '100%'}}>
                     <div style={{width: 60}}></div>

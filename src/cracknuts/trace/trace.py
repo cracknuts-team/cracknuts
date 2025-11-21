@@ -36,6 +36,131 @@ class TraceDatasetData:
             return self._get_trace_data(*index)
 
 
+class TraceIndexFilter:
+    def __init__(self, channel: str | int | None = None, group: str | None = None, trace: str | None = None):
+        self.group: str | None = None
+        self.channel: str | int | None = None
+        self.filter: str | None = None
+
+    def trace_indices(self, trace_count: int) -> list[int]:
+        return self.parse_index_string(self.filter, trace_count)
+
+    def __str__(self):
+        return f"TraceIndexFilter(group={self.group}, channel={self.channel}, trace={self.filter})"
+
+    @staticmethod
+    def parse_index_string(index_str: str, length: int = None) -> list[int]:
+        """
+        解析索引字符串，支持逗号分隔、标准 Python 切片语法（包括开放切片如 5:）。
+
+        参数:
+            index_str: 类似 "1, 3, 5:, :-2, ::2" 的字符串
+            length: (可选) 被切片数组的总长度。
+                    注意：如果字符串中包含依赖长度的切片（如 "5:" 或负数索引），则必须提供此参数。
+
+        返回:
+            解析后的整数索引列表。
+        """
+        if not index_str or not index_str.strip():
+            return []
+
+        indices = []
+        groups = index_str.split(",")
+
+        for group in groups:
+            group = group.strip()
+            if not group:
+                continue
+
+            if ":" in group:
+                # 1. 处理切片语法
+                try:
+                    # 将 "1:10:2" 或 "5:" 分割并将空字符串转换为 None
+                    # 例如: "5:" -> ['5', ''] -> [5, None]
+                    parts = [int(x) if x.strip() else None for x in group.split(":")]
+
+                    # 构建 slice 对象
+                    # slice(*parts) 等同于 slice(start, stop, step)
+                    s_obj = slice(*parts)
+
+                    if length is not None:
+                        # 核心逻辑：利用 .indices() 自动计算具体的 start, stop, step
+                        # 它会自动处理 None (转为 0 或 length) 以及负数索引
+                        start, stop, step = s_obj.indices(length)
+                        indices.extend(range(start, stop, step))
+                    else:
+                        # 如果没有提供 length，尝试手动解析简单的 start:stop
+                        # 但无法支持 open-ended 切片 (如 5:) 或负数索引
+                        start = s_obj.start if s_obj.start is not None else 0
+                        step = s_obj.step if s_obj.step is not None else 1
+                        stop = s_obj.stop
+
+                        if stop is None:
+                            raise ValueError(f"遇到开放切片 '{group}'，但未提供 length 参数，无法确定结束位置。")
+
+                        indices.extend(range(start, stop, step))
+
+                except TypeError as e:
+                    print(f"警告: 切片格式错误 '{group}' ({e})，已跳过。")
+                except ValueError as e:
+                    print(f"警告: {e}")
+            else:
+                # 2. 处理单个数字
+                try:
+                    idx = int(group)
+                    # 如果提供了 length，我们可以支持负数索引转正 (例如 -1 代表最后一个)
+                    if length is not None and idx < 0:
+                        idx += length
+                    indices.append(idx)
+                except ValueError:
+                    print(f"警告: '{group}' 不是有效的整数，已跳过。")
+
+        return indices
+
+    @staticmethod
+    def to_index_string(indices: list[int | slice]) -> str:
+        """
+        将包含整数和切片对象的列表转换为字符串格式。
+        是 parse_index_string 的反向操作。
+
+        参数:
+            indices: 一个列表，元素可以是 int 或 slice 对象。
+                     例如: [1, 5, slice(10, 20), slice(5, None), slice(None, None, 2)]
+
+        返回:
+            类似 "1, 5, 10:20, 5:, ::2" 的字符串
+        """
+        parts = []
+
+        for item in indices:
+            if isinstance(item, int):
+                parts.append(str(item))
+
+            elif isinstance(item, slice):
+                # 获取 start, stop, step，如果是 None 则转为空字符串
+                # 注意：Python 的 slice 属性如果是 None，代表该位置为空
+                start = item.start if item.start is not None else ""
+                stop = item.stop if item.stop is not None else ""
+                step = item.step
+
+                # 构建字符串
+                if step is not None and step != 1:
+                    # 包含步长的情况 (例如 1:10:2 或 ::-1)
+                    parts.append(f"{start}:{stop}:{step}")
+                else:
+                    # 标准切片 (例如 1:10 或 5:)
+                    # 如果 start 和 stop 都是空 (即 slice(None)), 变成 ":"
+                    if start == "" and stop == "":
+                        parts.append(":")
+                    else:
+                        parts.append(f"{start}:{stop}")
+
+            else:
+                raise TypeError(f"不支持的类型: {type(item)}, 仅支持 int 和 slice")
+
+        return ", ".join(parts)
+
+
 class TraceDataset(abc.ABC):
     _channel_names: list[str] | None
     _channel_count: int | None
@@ -127,6 +252,12 @@ class TraceDataset(abc.ABC):
 
     @abc.abstractmethod
     def _get_data(self, channel_slice, trace_slice) -> np.ndarray: ...
+
+    def get_traces_by_filters(self, trace_index_filters: list[TraceIndexFilter]):
+        """
+        根据执行的通道和曲线索引列表返回曲线数据，并包含坐标信息（通道-曲线索引）
+        """
+        ...
 
     @staticmethod
     def _parse_slice(origin_count, index_slice) -> list:
@@ -237,8 +368,42 @@ class _InfoRender:
 
 
 class ZarrTraceDataset(TraceDataset):
+    """
+    数组格式说明
+    MyData.zarr/                        <-- [根目录]
+    │
+    ├── origin/ (或者 "0")               <-- [一级分组] 数据集类型 (兼容旧名 "0")
+    │   │
+    │   ├── 0/                          <-- [二级分组] 通道 0
+    │   │   ├── trace                   [Array] (该通道的波形数据)
+    │   │   ├── plaintext               [Array]
+    │   │   ├── ciphertext              [Array]
+    │   │   ├── key                     [Array]
+    │   │   └── ...                     [Array]
+    │   │
+    │   ├── 1/                          <-- [二级分组] 通道 1 (如果有双通道采集)
+    │   │   ├── trace                   [Array]
+    │   │   ├── plaintext               [Array]
+    │   │   ├── ciphertext              [Array]
+    │   │   ├── key                     [Array]
+    │   │   └── ...
+    │
+    └── aligned/                        <-- [一级分组] 处理后的数据集
+        │
+        ├── 0/                          <-- [二级分组] 对应通道 0 的对齐数据
+        │   ├── trace                   [Array] (对齐后的波形)
+        │   └── ...
+        │
+        └── 1/
+            └── ...
+    ├── ...
+    └── attrs
+
+    """
+
     _ATTR_METADATA_KEY = "metadata"
     _GROUP_ROOT_PATH = "0"
+    _GROUP_ORIGIN_PATH = "origin"  # 采集到的原始波形，但实际分组是 "/0"
     _ARRAY_TRACES_PATH = "traces"
     _ARRAY_DATA_PLAINTEXT_PATH = "plaintext"
     _ARRAY_DATA_CIPHERTEXT_PATH = "ciphertext"
@@ -666,6 +831,33 @@ class ZarrTraceDataset(TraceDataset):
             data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
         return data
+
+    def get_traces_by_filters(self, trace_index_filters: list[TraceIndexFilter]):
+        groups = []
+        channels_indices = []
+        trace_indices_list = []
+        traces_list = []
+        for trace_index_filter in trace_index_filters:
+            group = trace_index_filter.group.strip()
+            if not group or group == self._GROUP_ORIGIN_PATH:  # 这里兼容原有格式，origin波形分组对应到 “/0”，
+                group = self._GROUP_ROOT_PATH
+            channel = trace_index_filter.channel
+            if channel.lower() == "a":
+                channel = "0"
+            if channel.lower() == "b":
+                channel = "1"
+            trace_indices = trace_index_filter.trace_indices(self._trace_count)
+            try:
+                traces = self._zarr_data[group][channel][self._ARRAY_TRACES_PATH][trace_indices]
+            except Exception as e:
+                self._logger.error(f"Error getting traces for filter {trace_index_filter}: {e}")
+                continue
+            groups.append(group)
+            channels_indices.append(channel)
+            trace_indices_list.append(trace_indices)
+            traces_list.append(traces)
+
+        return groups, channels_indices, trace_indices_list, traces_list
 
 
 class ScarrTraceDataset(ZarrTraceDataset):

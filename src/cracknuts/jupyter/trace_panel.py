@@ -13,7 +13,7 @@ import numpy as np
 import zarr
 from cracknuts import logger
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
-from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset
+from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset, TraceIndexFilter
 from cracknuts.utils import user_config
 from numpy import ndarray
 from traitlets import traitlets
@@ -92,6 +92,13 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
 
+    # Format of _f_trace_index_filters
+    # index: 'traces-b',
+    # name: 'Traces/B',
+    # group: 'traces',
+    # channel: 'b',
+    # channelIndex: 1,
+    # filter: '0',
     _f_trace_index_filters = traitlets.List([]).tag(sync=True)
 
     language = traitlets.Unicode("en").tag(sync=True)
@@ -150,6 +157,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
+        print(f"get trace indices after show_trace {trace_indices}")
         self._trace_cache_channel_indices = channel_indexes
         self._trace_cache_trace_indices = trace_indices
         self._trace_cache_traces = traces
@@ -191,6 +199,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 overview_trace_index = self._trace_cache_trace_indices[0]
 
         else:
+            print(f"get trace indices before overview update {self._trace_cache_trace_indices}")
             overview_channel_index = self._trace_cache_channel_indices[0]
             overview_trace_index = self._trace_cache_trace_indices[0]
 
@@ -691,24 +700,55 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     @traitlets.observe("_f_trace_index_filters")
     def _f_trace_index_filters_changed(self, change) -> None:
         if change.get("new") is not None:
-            filters = change.get("new")
-            print(f"get filter changed: {filters}")
-            for f in filters:
-                # group = f["group"]  # Temporarily unused.
-                channel = f["channelIndex"]
-                if channel == 1:  # now only support channel 0
-                    continue
-                index_filter = f["filter"]
-                self._show_trace(channel, self._str_to_slice(index_filter))
+            filters_map = change.get("new")
+            print(f"get filter changed: {filters_map}")
+            filters = []
+            for f in filters_map:
+                trace_index_filter_map = {
+                    "group": f.get("group"),
+                    "channel": f.get("channel"),
+                    "filter": f.get("filter"),
+                }
+                filters.append(TraceIndexFilter(**trace_index_filter_map))
+            self.show_traces2(filters)
 
-    @staticmethod
-    def _str_to_slice(s: str) -> slice:
-        parts = s.split(":")
-        if len(parts) > 3:
-            raise ValueError("Invalid slice format")
-        args = [int(p) if p else None for p in parts]
-        print(f"get slice args: {args}")
-        return slice(*args)
+    def _update_f_trace_index_filters(self, channels: list[int], traces: list[int]) -> None:
+        _groups = "traces"
+        _channels = []
+        for c in channels:
+            if c == 0:
+                c = "A"
+            elif c == 1:
+                c = "B"
+
+    def show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
+        groups, channel_indices, trace_indices, traces = self._trace_dataset.get_traces_by_filters(trace_index_filters)
+        self._trace_cache_channel_indices = channel_indices
+        self._trace_cache_trace_indices = trace_indices
+        self._trace_cache_traces = np.array(traces)
+        self._trace_cache_trace_indices.sort()
+
+        if display_range is None:
+            if self._trace_cache_x_range_start is None:
+                self._trace_cache_x_range_start = 0
+            if self._trace_cache_x_range_end is None:
+                self._trace_cache_x_range_end = self._trace_dataset.sample_count - 1
+        else:
+            self._trace_cache_x_range_start = display_range[0]
+            self._trace_cache_x_range_end = display_range[1]
+
+        self._trace_series = self._get_trace_series_by_index_range(
+            self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        )
+        self._trace_series.percent_range = [
+            self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
+            self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
+
+        self._update_overview_trace()
+
+        if self._auto_sync:
+            self._trace_series_send_state()
 
 
 class ShowTrace:
