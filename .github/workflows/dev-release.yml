@@ -57,9 +57,9 @@ jobs:
     - name: Build the project
       run: |
         python -m build
-    - name: Upload to test pypi
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{secrets.TESTPYPI_TOKEN}}
-      run: |
-        python -m twine upload --repository testpypi dist/* --non-interactive
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cracknuts-dist-${{ github.sha }}
+        path: dist/
+        retention-days: 7
