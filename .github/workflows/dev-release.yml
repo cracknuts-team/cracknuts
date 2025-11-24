@@ -15,7 +15,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-          # get tag history for version number
           fetch-depth: 0
           submodules: true
           lfs: true
