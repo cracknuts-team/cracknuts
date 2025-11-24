@@ -43,7 +43,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version-file: '.node-version'
     - name: Install node dependencies
       run: |
         cd jupyter_frontend
@@ -59,7 +59,7 @@ jobs:
     - name: Build jupyter frontend
       run: |
         cd jupyter_frontend
-        npm run clean-build
+        pnpm run clean-build
     - name: Build the project
       run: |
         python -m build
