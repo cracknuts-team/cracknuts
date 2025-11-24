@@ -18,6 +18,7 @@ jobs:
           # get tag history for version number
           fetch-depth: 0
           submodules: true
+          lfs: true
     - name: Update version.
       run: |
         incremented_version=`grep '__version__ = ' src/cracknuts/__init__.py | awk -F'"' '{print $2}' | awk -F'-' '
