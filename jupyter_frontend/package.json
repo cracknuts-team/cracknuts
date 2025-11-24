@@ -3,7 +3,7 @@
 		"dev": "node esbuild.dev.config.mjs",
 		"clean": "rimraf --glob ../src/cracknuts/jupyter/static/*",
 		"build": "node esbuild.prod.config.mjs",
-		"clean-build": "pnpm run clean && npm run build",
+		"clean-build": "pnpm run clean && pnpm run build",
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint src"
 	},
