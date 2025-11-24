@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "workflows/*"
 jobs:
   build:
     if: "!startsWith(github.event.head_commit.message, 'release:')"
@@ -42,11 +43,11 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version-file: '.node-version'
     - name: Install node dependencies
       run: |
         cd jupyter_frontend
-        npx pnpm install
+        pnpm install
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -58,7 +59,7 @@ jobs:
     - name: Build jupyter frontend
       run: |
         cd jupyter_frontend
-        npm run clean-build
+        pnpm run clean-build
     - name: Build the project
       run: |
         python -m build
