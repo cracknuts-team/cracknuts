@@ -92,14 +92,9 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
 
-    # Format of _f_trace_index_filters
-    # index: 'traces-b',
-    # name: 'Traces/B',
-    # group: 'traces',
-    # channel: 'b',
-    # channelIndex: 1,
-    # filter: '0',
     _f_trace_index_filters = traitlets.List([]).tag(sync=True)
+    _f_dataset_info_groups = traitlets.List([]).tag(sync=True)
+    _f_dataset_info_channels = traitlets.List([]).tag(sync=True)
 
     language = traitlets.Unicode("en").tag(sync=True)
 
@@ -153,11 +148,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     @correlation_zarr_substitute("_correlation_zarr_show_trace")
     def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
-        print(f"get slice: {channel_slice}, {trace_slice}")
+        print(f"get {channel_slice}, {trace_slice}, {display_range}")
         channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
-        print(f"get trace indices after show_trace {trace_indices}")
         self._trace_cache_channel_indices = channel_indexes
         self._trace_cache_trace_indices = trace_indices
         self._trace_cache_traces = traces
@@ -199,7 +193,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 overview_trace_index = self._trace_cache_trace_indices[0]
 
         else:
-            print(f"get trace indices before overview update {self._trace_cache_trace_indices}")
             overview_channel_index = self._trace_cache_channel_indices[0]
             overview_trace_index = self._trace_cache_trace_indices[0]
 
@@ -265,7 +258,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         """
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
-        self._trace_series = self._get_trace_series_by_index_range(start, end)
+        self._trace_series = self._get_trace_series_by_index_range2(start, end)
 
         percent_start = start / (self._trace_dataset.sample_count - 1) * 100
         percent_end = end / (self._trace_dataset.sample_count - 1) * 100
@@ -286,7 +279,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         end = math.ceil(end)
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
-        self._trace_series = self._get_trace_series_by_index_range(start, end)
+        self._trace_series = self._get_trace_series_by_index_range2(start, end)
 
         self._trace_series.percent_range = [
             start / (self._trace_dataset.sample_count - 1) * 100,
@@ -310,8 +303,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
-
-        self._trace_series = self._get_trace_series_by_index_range(start, end)
+        print(f"update percent range to {percent_start} - {percent_end}, index range to {start} - {end}")
+        self._trace_series = self._get_trace_series_by_index_range2(start, end)
 
         self._trace_series.percent_range = [percent_start, percent_end]
 
@@ -338,6 +331,46 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         # x_idx = None
         for c, channel_index in enumerate(self._trace_cache_channel_indices):
             for t, trace_index in enumerate(self._trace_cache_trace_indices):
+                x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
+                data = np.column_stack([x_idx, y_data])
+                color, z_increase = self._get_highlight_color(
+                    channel_index, trace_index, None if highlight_colors is None else highlight_colors[color_i]
+                )
+                if z_increase > 0:
+                    color_i += 1
+                series_data_list.append(
+                    _TraceSeriesData(
+                        name=str(channel_index) + "-" + str(trace_index),
+                        data=data,
+                        color=color,
+                        trace_index=trace_index,
+                        channel_index=channel_index,
+                        z=self._DEFAULT_SERIES_Z
+                        if z_increase == 0
+                        else self._DEFAULT_SERIES_Z + z_increase + c * len(self._trace_cache_trace_indices) + t,
+                    )
+                )
+
+        # self._trace_cache_x_indices = x_idx
+
+        return _TraceSeries(series_data_list=series_data_list)
+
+    def _get_trace_series_by_index_range2(self, start: int, end: int) -> _TraceSeries:
+        series_data_list = []
+
+        if self._trace_cache_trace_highlight_indices is not None:
+            highlight_colors = self._generate_colors(
+                sum(len(v) for v in self._trace_cache_trace_highlight_indices.values())
+            )
+            highlight_colors.append(self._trace_series_color_background)
+            color_i = 0
+        else:
+            highlight_colors = None
+            color_i = 0
+
+        # x_idx = None
+        for c, channel_index in enumerate(self._trace_cache_channel_indices):
+            for t, trace_index in enumerate(self._trace_cache_trace_indices[c]):
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 data = np.column_stack([x_idx, y_data])
                 color, z_increase = self._get_highlight_color(
@@ -396,6 +429,9 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 trace_count if trace_count < self._DEFAULT_SHOW_INDEX_THRESHOLD else self._DEFAULT_SHOW_INDEX_THRESHOLD,
             ),
         )
+
+    def show_default_trace2(self):
+        self._show_traces2([TraceIndexFilter(channel="0", trace_slice=slice(0, self._trace_dataset.trace_count))])
 
     def show_all_trace(self):
         """
@@ -477,7 +513,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_cache_trace_highlight_indices = None
         self._trace_cache_x_range_start = 0
         self._trace_cache_x_range_end = self._trace_dataset.sample_count - 1
-        self._trace_series = self._get_trace_series_by_index_range(
+        self._trace_series = self._get_trace_series_by_index_range2(
             self._trace_cache_x_range_start, self._trace_cache_x_range_end
         )
         self._trace_series.percent_range = [
@@ -508,14 +544,23 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if not self._is_correlation_traces_setting:
             self._correlation_traces = None
         self._trace_dataset = trace_dataset
+        zd: zarr.hierarchy.Group = self._trace_dataset.get_origin_data()
+        groups = list(zd.group_keys())
+        self._f_dataset_info_groups = [{"name": "origin" if g == "0" else g, "path": g} for g in groups]
+        self._trace_dataset.info()
+        self._f_dataset_info_channels = []
 
         if self._auto_sync:
             if show_all_trace:
                 self.show_all_trace()
             elif channel_slice is not None and trace_slice is not None:
-                self._show_trace(channel_slice, trace_slice)
+                # self._show_trace(channel_slice, trace_slice)
+                self._show_traces2(
+                    [TraceIndexFilter(group="origin", channel=channel_slice.stop, trace_slice=trace_slice)]
+                )
             else:
-                self.show_default_trace()
+                # self.show_default_trace()
+                self.show_default_trace2()
 
     def open_numpy_file(self, path: str):
         if os.path.isdir(path):
@@ -707,21 +752,29 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 trace_index_filter_map = {
                     "group": f.get("group"),
                     "channel": f.get("channel"),
-                    "filter": f.get("filter"),
+                    "trace_slice": f.get("filter"),
                 }
                 filters.append(TraceIndexFilter(**trace_index_filter_map))
-            self.show_traces2(filters)
+            self._show_traces2(filters)
 
-    def _update_f_trace_index_filters(self, channels: list[int], traces: list[int]) -> None:
-        _groups = "traces"
-        _channels = []
-        for c in channels:
-            if c == 0:
-                c = "A"
-            elif c == 1:
-                c = "B"
+    def _update_f_trace_index_filters(self, trace_index_filters: list[TraceIndexFilter]) -> None:
+        self._f_trace_index_filters = [
+            {
+                "name": f"{f.group}/{f.channel}",
+                "group": f.group,
+                "channel": f.channel,
+                "filter": f.slice_to_string(f.trace_slice),
+            }
+            for f in trace_index_filters
+        ]
 
-    def show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
+    def show_trace2(self, filters: list[dict[str, str | int]] | list[TraceIndexFilter]):
+        if isinstance(filters[0], dict):
+            self._show_traces2([TraceIndexFilter(**f) for f in filters])
+        else:
+            self._show_traces2(filters)
+
+    def _show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
         groups, channel_indices, trace_indices, traces = self._trace_dataset.get_traces_by_filters(trace_index_filters)
         self._trace_cache_channel_indices = channel_indices
         self._trace_cache_trace_indices = trace_indices
@@ -737,7 +790,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_cache_x_range_start = display_range[0]
             self._trace_cache_x_range_end = display_range[1]
 
-        self._trace_series = self._get_trace_series_by_index_range(
+        self._trace_series = self._get_trace_series_by_index_range2(
             self._trace_cache_x_range_start, self._trace_cache_x_range_end
         )
         self._trace_series.percent_range = [
@@ -749,6 +802,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         if self._auto_sync:
             self._trace_series_send_state()
+
+        self._update_f_trace_index_filters(trace_index_filters)
+
+    def on_group_selected_changed(self): ...
 
 
 class ShowTrace:

@@ -7,7 +7,7 @@ import {useIntl} from "react-intl";
 import {Button, Tabs} from "antd";
 import {CompatibilityProps} from "antd/es/tabs";
 import type {Tab} from 'rc-tabs/lib/interface';
-import GeneralControl, {TraceIndexFilter} from "@/components/trace/GeneralControl.tsx";
+import GeneralControl, {TraceIndex, TraceIndexFilter} from "@/components/trace/GeneralControl.tsx";
 import ShiftControl from "@/components/trace/ShiftControl.tsx";
 
 interface SeriesData {
@@ -464,50 +464,31 @@ const TracePanel: React.FC = () => {
         });
     }, [overviewTraceSeries]);
 
-    const [traceGroups,] = useState([{
-        name: 'Traces',
-        path: 'traces'
-    }]);
-    const [traceChannels,] = useState([{
-        name: 'A',
-        path: 'A'
-    }, {
-        name: 'B',
-        path: 'B'
-    }]);
-    const [selectedTraceGroupPaths, setSelectedTraceGroupPaths] = useState(['traces']);
-    const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState(['B'])
-    // const [traceIndexFilters, setTraceIndexFilters] = useState<TraceIndexFilter[]>([
-    //     {
-    //         index: 'traces-b',
-    //         name: 'Traces/B',
-    //         group: 'traces',
-    //         channel: 'b',
-    //         channelIndex: 1,
-    //         filter: '0',
-    //     },{
-    //         index: 'traces-a',
-    //         name: 'Traces/A',
-    //         group: 'traces',
-    //         channel: 'a',
-    //         channelIndex: 0,
-    //         filter: '0',
-    //     }
-    // ])
-    const [_b_traceIndexFilters, _b_setTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
+    const [_bTraceIndexFilters, _bSetTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
+    const [_bInfoGroups,] = useModelState<Array<TraceIndex>>("_f_dataset_info_groups")
+    const [_bInfoChannels,] = useModelState<Array<TraceIndex>>("_f_dataset_info_channels")
+
+    const [selectedTraceGroupPaths, setSelectedTraceGroupPaths] = useState<string[]>([]);
+    const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState<string[]>([])
+
+    useEffect(() => {
+        console.log(`update selected trace index filters: ${JSON.stringify(_bTraceIndexFilters)}`);
+        setSelectedTraceGroupPaths([...new Set(_bTraceIndexFilters.map(f => f.group))]);
+        setSelectedTraceChannelPaths([...new Set(_bTraceIndexFilters.map(f => f.channel))])
+    }, [_bTraceIndexFilters]);
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
         key: "1",
         label: 'General',
         children: <GeneralControl
-            groups={traceGroups}
-            channels={traceChannels}
+            groups={_bInfoGroups}
+            channels={_bInfoChannels}
             selectedGroupPaths={selectedTraceGroupPaths}
             selectedChannelPaths={selectTraceChannelPaths}
             onSelectedGroupPathsChange={setSelectedTraceGroupPaths}
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
-            traceIndexFilters={_b_traceIndexFilters}
-            onTraceIndexFilterApply={_b_setTraceIndexFilters}
+            traceIndexFilters={_bTraceIndexFilters}
+            onTraceIndexFilterApply={_bSetTraceIndexFilters}
         />
     }, {
         key: "2",
@@ -519,14 +500,17 @@ const TracePanel: React.FC = () => {
             trace: 0,
             offset: 100,
             operator: <Button size={"small"}>Apply</Button>
-        }]} />
+        }]}/>
     }]
 
     return (
         <div ref={chartBoxRef}>
+            {selectTraceChannelPaths}-{selectedTraceGroupPaths}
             <Tabs items={tabsItems} size={"small"}/>
-            <ReactEcharts ref={chartRef} option={option} style={{height: 400}} replaceMerge={"series"} onChartReady={onChartReady}/>
-            <ReactEcharts ref={overviewChartRef} option={overviewOption} style={{height: 60}} replaceMerge={"series"} onChartReady={onOverviewChartReady}/>
+            <ReactEcharts ref={chartRef} option={option} style={{height: 400}} replaceMerge={"series"}
+                          onChartReady={onChartReady}/>
+            <ReactEcharts ref={overviewChartRef} option={overviewOption} style={{height: 60}} replaceMerge={"series"}
+                          onChartReady={onOverviewChartReady}/>
             <Slider start={sliderPercentRange[0]} end={sliderPercentRange[1]} onChangeFinish={(s, e) => {
                 setPercentRange([s, e]);
                 setOverviewRange(s, e)

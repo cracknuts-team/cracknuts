@@ -1,6 +1,6 @@
 import React from "React"
 import {Button, Flex, Form, Input, InputNumber, Select, Table, TableProps} from "antd";
-import {ChangeEvent, useState} from "react";
+import {ChangeEvent, useEffect, useState} from "react";
 
 interface TraceIndex {
     name: string;
@@ -66,6 +66,11 @@ const GeneralControl: React.FC<GeneralProp> = ({
                                                }: GeneralProp) => {
 
     const [filters, setFilters] = useState(traceIndexFilters);
+
+    useEffect(() => {
+        setFilters(traceIndexFilters)
+    }, [traceIndexFilters]);
+
     const handleFilterChange = (index: string, filter: string) => {
         setFilters(prev =>
             prev.map(f => (f.index === index ? {...f, filter: filter} : f))
@@ -93,7 +98,7 @@ const GeneralControl: React.FC<GeneralProp> = ({
                         style={{minWidth: 80}}
                         size={"small"}
                         mode={"multiple"}
-                        options={groups.map(g => ({label: g.name, value: g.path}))}
+                        options={groups?groups.map(g => ({label: g.name, value: g.path})):[]}
                         value={selectedGroupPaths}
                         onChange={onSelectedGroupPathsChange}
                     />
@@ -101,13 +106,18 @@ const GeneralControl: React.FC<GeneralProp> = ({
                         style={{minWidth: 80}}
                         size={"small"}
                         mode={"multiple"}
-                        options={channels.map(c => ({label: c.name, value: c.path}))}
+                        options={groups?channels.map(c => ({label: c.name, value: c.path})):[]}
                         value={selectedChannelPaths}
                         onChange={onSelectedChannelPathsChange}
                     />
-                    <Button onClick={() => {
-                        onTraceIndexFilterApply(filters)
-                    }}>Apply</Button>
+                    <Button
+                        onClick={() => {
+                            onTraceIndexFilterApply(filters)
+                        }}
+                        size={"small"}
+                    >
+                        Apply
+                    </Button>
                 </Flex>
                 <Flex gap={"small"} align={"start"} style={{width: '100%'}}>
                     <div style={{width: 60}}></div>
@@ -118,6 +128,7 @@ const GeneralControl: React.FC<GeneralProp> = ({
                         dataSource={_traceIndexFilters}
                         rowKey={"index"}
                         pagination={false}
+                        locale={{emptyText: null}}
                     />
                 </Flex>
             </Flex>
@@ -138,4 +149,4 @@ const GeneralControl: React.FC<GeneralProp> = ({
 }
 
 export default GeneralControl;
-export type {TraceIndexFilter};
+export type {TraceIndex, TraceIndexFilter};
