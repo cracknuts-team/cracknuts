@@ -26,7 +26,7 @@ class _TraceSeriesData:
     name: str
     data: NDArray[np.int32]
     color: None | str
-    channel_index: int
+    channel_index: int | str
     trace_index: int
     z: int
 
@@ -113,6 +113,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_cache_channel_indices: list | None = None
         self._trace_cache_trace_indices: list | None = None
         self._trace_cache_traces: ndarray | None = None
+        self.trace_index_filters: list[ndarray] | None = None
         # self._trace_cache_x_indices: ndarray | None = None
         self._trace_cache_x_range_start: int | None = None
         self._trace_cache_x_range_end: int | None = None
@@ -178,27 +179,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_series_send_state()
 
     def _update_overview_trace(self):
-        if self._trace_cache_trace_highlight_indices is not None:
-            overview_channel_index, overview_trace_indices = list(self._trace_cache_trace_highlight_indices.items())[0]
-            overview_trace_index = overview_trace_indices[0]
-            if (
-                overview_channel_index not in self._trace_cache_channel_indices
-                or overview_trace_index not in self._trace_cache_trace_indices
-            ):
-                self.highlight(None)
-            if overview_channel_index not in self._trace_cache_channel_indices:
-                overview_channel_index = self._trace_cache_channel_indices[0]
-            if overview_trace_index not in self._trace_cache_trace_indices:
-                overview_trace_index = self._trace_cache_trace_indices[0]
-
-        else:
-            overview_channel_index = self._trace_cache_channel_indices[0]
-            overview_trace_index = self._trace_cache_trace_indices[0]
-
-        c_idx = self._trace_cache_channel_indices.index(overview_channel_index)
-        t_idx = self._trace_cache_trace_indices.index(overview_trace_index)
         x_idx, y_data = self._get_by_range(
-            self._trace_cache_traces[c_idx, t_idx, :],
+            self._trace_cache_traces[0][0, :],
             0,
             self._trace_dataset.sample_count,
         )
@@ -206,10 +188,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._overview_trace_series = _TraceSeries(
             series_data_list=[
                 _TraceSeriesData(
-                    name=str(overview_channel_index) + "-" + str(overview_trace_index),
+                    name="",
                     data=data,
-                    trace_index=overview_trace_index,
-                    channel_index=overview_channel_index,
+                    trace_index=0,
+                    channel_index=0,
                     z=self._DEFAULT_SERIES_Z,
                     color="blue",
                 )
@@ -356,43 +338,20 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     def _get_trace_series_by_index_range2(self, start: int, end: int) -> _TraceSeries:
         series_data_list = []
-
-        if self._trace_cache_trace_highlight_indices is not None:
-            highlight_colors = self._generate_colors(
-                sum(len(v) for v in self._trace_cache_trace_highlight_indices.values())
-            )
-            highlight_colors.append(self._trace_series_color_background)
-            color_i = 0
-        else:
-            highlight_colors = None
-            color_i = 0
-
-        # x_idx = None
-        for c, channel_index in enumerate(self._trace_cache_channel_indices):
-            for t, trace_index in enumerate(self._trace_cache_trace_indices[c]):
-                print(f"the trace cache shape: {self._trace_cache_traces.shape}")
-                x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
+        for i, f in enumerate(self._trace_index_filters):
+            for j, trace_index in enumerate(self._trace_cache_trace_indices[i]):
+                x_idx, y_data = self._get_by_range(self._trace_cache_traces[i][j, :], start, end)
                 data = np.column_stack([x_idx, y_data])
-                color, z_increase = self._get_highlight_color(
-                    channel_index, trace_index, None if highlight_colors is None else highlight_colors[color_i]
-                )
-                if z_increase > 0:
-                    color_i += 1
                 series_data_list.append(
                     _TraceSeriesData(
-                        name=str(channel_index) + "-" + str(trace_index),
+                        name=f"{f.group}/{f.channel}/{trace_index}",
                         data=data,
-                        color=color,
                         trace_index=trace_index,
-                        channel_index=channel_index,
-                        z=self._DEFAULT_SERIES_Z
-                        if z_increase == 0
-                        else self._DEFAULT_SERIES_Z + z_increase + c * len(self._trace_cache_trace_indices) + t,
+                        channel_index=f.channel_path,
+                        z=1,
+                        color=None,
                     )
                 )
-
-        # self._trace_cache_x_indices = x_idx
-
         return _TraceSeries(series_data_list=series_data_list)
 
     def _get_highlight_color(
@@ -552,7 +511,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             elif channel_slice is not None and trace_slice is not None:
                 # self._show_trace(channel_slice, trace_slice)
                 self._show_traces2(
-                    [TraceIndexFilter(group="origin", channel=channel_slice.stop, trace_slice=trace_slice)]
+                    [TraceIndexFilter(group="origin", channel=channel_slice.stop, index_filter=trace_slice)]
                 )
             else:
                 # self.show_default_trace()
@@ -777,13 +736,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._show_traces2(filters)
 
     def _show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
-        groups, channel_indices, trace_indices, traces = self._trace_dataset.get_traces_by_filters(trace_index_filters)
-        print(f"get traces by filters: {groups}, {channel_indices}, {trace_indices}, {traces.shape}")
-        self._trace_cache_channel_indices = channel_indices
-        self._trace_cache_trace_indices = trace_indices
-        self._trace_cache_traces = traces
-        self._trace_cache_trace_indices.sort()
-
+        self._trace_cache_trace_indices, self._trace_cache_traces = self._trace_dataset.get_traces_by_filters(
+            trace_index_filters
+        )
+        self._trace_index_filters = trace_index_filters
         if display_range is None:
             if self._trace_cache_x_range_start is None:
                 self._trace_cache_x_range_start = 0

@@ -846,7 +846,7 @@ class ZarrTraceDataset(TraceDataset):
             shapes.add(traces.shape[1])
         if len(shapes) > 1:
             raise ValueError(f"The traces obtained by the filters have different shapes: {shapes}.")
-        return groups, channels_indices, trace_indices_list, np.array(traces_list)
+        return trace_indices_list, traces_list
 
 
 class ScarrTraceDataset(ZarrTraceDataset):

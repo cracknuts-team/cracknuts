@@ -210,9 +210,8 @@ const TracePanel: React.FC = () => {
             triggerOn: "click",
             enterable: true,
             extraCssText: `
-                max-height: 155px; 
-                overflow-y: scroll;
-                width: 350px;
+                max-height: 170px;
+                overflow-y: auto;
                 display: block;
                 box-sizing: border-box;
             `,
@@ -259,8 +258,7 @@ const TracePanel: React.FC = () => {
                         `;
                     }).join('');
                     return `<div style="display:flex;flex-direction:column;gap:2px;">${rowsHtml}</div>`;
-                }).join('<div style="width:16px;"></div>');
-
+                }).join('<div style="width:18px;"></div>');
                 return `
                   <div style="display:flex;flex-direction:column;gap:8px;">
                     <div style="font-weight:bold;margin-bottom:4px;">X: ${xValue}</div>
@@ -473,13 +471,16 @@ const TracePanel: React.FC = () => {
         setSelectedTraceChannelPaths(_bTraceIndexFilters.map(f => `${f.groupPath}/${f.channelPath}`))
     }, [_bTraceIndexFilters]);
 
-    console.log(`get filters update: ${JSON.stringify(_bTraceIndexFilters)} - selected paths: ${JSON.stringify(selectTraceChannelPaths)}`)
+    // const handleSelectedTraceChannelPathsChange = (paths: string[]) => {
+    //     setSelectedTraceChannelPaths(paths);
+    //     _bSetTraceIndexFilters()
+    // }
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
         key: "1",
         label: 'General',
         children: <GeneralControl
-            channels={_bInfoChannels}
+            groupChannels={_bInfoChannels}
             selectedChannelPaths={selectTraceChannelPaths}
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
             traceIndexFilters={_bTraceIndexFilters}

@@ -1,4 +1,4 @@
-import React from "React"
+import React, {useCallback} from "React"
 import {Button, Flex, Form, Input, InputNumber, Select, Table, TableProps} from "antd";
 import {ChangeEvent, useEffect, useState} from "react";
 
@@ -42,7 +42,7 @@ const columns: TableProps<_TraceIndexFilter>['columns'] = [{
 }];
 
 interface GeneralProp {
-    channels: TraceIndex[];
+    groupChannels: TraceIndex[];
 
     selectedChannelPaths: string[];
     onSelectedChannelPathsChange: (paths: string[]) => void;
@@ -53,33 +53,31 @@ interface GeneralProp {
 }
 
 const GeneralControl: React.FC<GeneralProp> = ({
-                                                   channels,
+                                                   groupChannels,
                                                    selectedChannelPaths,
                                                    onSelectedChannelPathsChange,
                                                    traceIndexFilters,
                                                    onTraceIndexFilterApply
                                                }: GeneralProp) => {
-
-    const [filters, setFilters] = useState(traceIndexFilters);
+    const [filtersCache, setFiltersCache] = useState<TraceIndexFilter[]>(traceIndexFilters); // cache the filter from python
+    const [filters, setFilters] = useState<TraceIndexFilter[]>(traceIndexFilters);
     const [channelSelectOptions, setChannelSelectOptions] = useState<{
         label: React.ReactNode;
         options: object[]
     }[]>([]);
 
     useEffect(() => {
-        setChannelSelectOptions(channels.map(channel => ({
+        setChannelSelectOptions(groupChannels.map(channel => ({
             label: <span>{channel.name}</span>,
             options: channel.children?.map(child => ({
                 label: <span>{child.name}</span>,
                 value: `${child.path}`,
             })) ?? []
         })))
-    }, [channels]);
-
-    console.log(`get update ${JSON.stringify(channels)} - ${JSON.stringify(channelSelectOptions)}`)
-
+    }, [groupChannels]);
 
     useEffect(() => {
+        setFiltersCache(traceIndexFilters)
         setFilters(traceIndexFilters)
     }, [traceIndexFilters]);
 
@@ -88,6 +86,36 @@ const GeneralControl: React.FC<GeneralProp> = ({
             prev.map(f => (f.index === index ? {...f, filter: filter} : f))
         );
     };
+
+    const handleChannelChange = useCallback((paths: string[]) => {
+        onSelectedChannelPathsChange(paths);
+        console.log(`filter cache ${JSON.stringify(filtersCache)}`)
+        console.log(`group-channels: ${JSON.stringify(groupChannels)}`)
+        const newFilters: TraceIndexFilter[] = [];
+        for (const path of paths) {
+            for (const group of groupChannels) {
+                for (const channel of group.children || []) {
+                    if (path === channel.path) {
+                        const newFilter = {
+                            index: `${channel.path}`,
+                            group: group.name,
+                            groupPath: group.path,
+                            channel: channel.name.split("/")[1],
+                            channelPath: channel.path.split("/")[1],
+                            name: `${channel.name}`,
+                            filter: '',
+                        };
+                        const existFilter = filtersCache.find(f => f.index === newFilter.index)
+                        if (existFilter) {
+                            newFilter.filter = existFilter.filter
+                        }
+                        newFilters.push(newFilter)
+                    }
+                }
+            }
+        }
+        setFilters(newFilters);
+    }, [filtersCache]);
 
     const _traceIndexFilters: _TraceIndexFilter[] = filters.map(f => ({
         ...f,
@@ -106,21 +134,13 @@ const GeneralControl: React.FC<GeneralProp> = ({
             <Flex vertical gap={"middle"} style={{width: '100%'}}>
                 <Flex gap={"small"} align={"start"}>
                     <div style={{width: 60}}>Show</div>
-                    {/*<Select*/}
-                    {/*    style={{minWidth: 80}}*/}
-                    {/*    size={"small"}*/}
-                    {/*    mode={"multiple"}*/}
-                    {/*    options={groups ? groups.map(g => ({label: g.name, value: g.path})) : []}*/}
-                    {/*    value={selectedGroupPaths}*/}
-                    {/*    onChange={onSelectedGroupPathsChange}*/}
-                    {/*/>*/}
                     <Select
                         style={{minWidth: 120, fontSize: 12}}
                         size={"small"}
                         mode={"multiple"}
                         options={channelSelectOptions}
                         value={selectedChannelPaths}
-                        onChange={onSelectedChannelPathsChange}
+                        onChange={handleChannelChange}
                     />
                     <Button
                         onClick={() => {
