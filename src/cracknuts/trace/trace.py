@@ -37,15 +37,28 @@ class TraceDatasetData:
 
 
 class TraceIndexFilter:
-    def __init__(
-        self, group: str | None = None, channel: str | int | None = None, trace_slice: str | slice | None = None
-    ):
-        self.group: str | None = group
-        self.channel: str | None = channel if isinstance(channel, str) else str(channel)
-        self.trace_slice: slice | None = self.parse_slice(trace_slice) if isinstance(trace_slice, str) else trace_slice
+    def __init__(self, group: str, channel: str | int, index_filter: str | slice):
+        self.group: str = group
+        self.group_path: str = "0" if self.group is not None and self.group == "origin" else self.group
+        self.channel: str = channel if isinstance(channel, str) else str(channel)
+        self.channel_path: str = self.channel
+        self.filter: slice = self.parse_slice(index_filter) if isinstance(index_filter, str) else index_filter
+        self.index: str = f"{self.group_path}/{self.channel_path}"
+        self.name: str = f"{self.group}/{self.channel}"
 
     def __str__(self):
-        return f"TraceIndexFilter(group={self.group}, channel={self.channel}, trace_slice={self.trace_slice})"
+        return self.to_dict().__str__()
+
+    def to_dict(self):
+        return {
+            "index": self.index,
+            "name": self.name,
+            "group": self.group,
+            "groupPath": self.group_path,
+            "channel": self.channel,
+            "channelPath": self.channel_path,
+            "filter": self.slice_to_string(self.filter),
+        }
 
     @staticmethod
     def slice_to_string(s: slice) -> str:
@@ -816,17 +829,24 @@ class ZarrTraceDataset(TraceDataset):
             else:
                 channel = str(channel)
             try:
-                traces = self._zarr_data[group][channel][self._ARRAY_TRACES_PATH][trace_index_filter.trace_slice]
+                traces = self._zarr_data[group][channel][self._ARRAY_TRACES_PATH][trace_index_filter.filter]
             except Exception as e:
                 self._logger.error(f"Error getting traces for filter {trace_index_filter}: {e}")
                 continue
 
             groups.append(group)
             channels_indices.append(channel)
-            start, stop, step = trace_index_filter.trace_slice.indices(self._trace_count)
+            start, stop, step = trace_index_filter.filter.indices(self._trace_count)
             trace_indices_list.append(list(range(start, stop, step)))
             traces_list.append(traces)
-        return groups, channels_indices, trace_indices_list, traces_list
+        shapes = set()
+        for traces in traces_list:
+            if len(traces.shape) != 2:
+                raise ValueError(f"The traces obtained by the filters must be 2-dimensional, but got {traces.shape}.")
+            shapes.add(traces.shape[1])
+        if len(shapes) > 1:
+            raise ValueError(f"The traces obtained by the filters have different shapes: {shapes}.")
+        return groups, channels_indices, trace_indices_list, np.array(traces_list)
 
 
 class ScarrTraceDataset(ZarrTraceDataset):

@@ -5,14 +5,16 @@ import {ChangeEvent, useEffect, useState} from "react";
 interface TraceIndex {
     name: string;
     path: string;
+    children?: TraceIndex[]
 }
 
 interface TraceIndexFilter {
     index: string,
     name: string,
     group: string,
+    groupPath: string,
     channel: string,
-    channelIndex: number,
+    channelPath: string,
     filter: string,
 }
 
@@ -40,11 +42,7 @@ const columns: TableProps<_TraceIndexFilter>['columns'] = [{
 }];
 
 interface GeneralProp {
-    groups: TraceIndex[];
     channels: TraceIndex[];
-
-    selectedGroupPaths: string[];
-    onSelectedGroupPathsChange: (paths: string[]) => void;
 
     selectedChannelPaths: string[];
     onSelectedChannelPathsChange: (paths: string[]) => void;
@@ -55,10 +53,7 @@ interface GeneralProp {
 }
 
 const GeneralControl: React.FC<GeneralProp> = ({
-                                                   groups,
                                                    channels,
-                                                   selectedGroupPaths,
-                                                   onSelectedGroupPathsChange,
                                                    selectedChannelPaths,
                                                    onSelectedChannelPathsChange,
                                                    traceIndexFilters,
@@ -66,6 +61,23 @@ const GeneralControl: React.FC<GeneralProp> = ({
                                                }: GeneralProp) => {
 
     const [filters, setFilters] = useState(traceIndexFilters);
+    const [channelSelectOptions, setChannelSelectOptions] = useState<{
+        label: React.ReactNode;
+        options: object[]
+    }[]>([]);
+
+    useEffect(() => {
+        setChannelSelectOptions(channels.map(channel => ({
+            label: <span>{channel.name}</span>,
+            options: channel.children?.map(child => ({
+                label: <span>{child.name}</span>,
+                value: `${child.path}`,
+            })) ?? []
+        })))
+    }, [channels]);
+
+    console.log(`get update ${JSON.stringify(channels)} - ${JSON.stringify(channelSelectOptions)}`)
+
 
     useEffect(() => {
         setFilters(traceIndexFilters)
@@ -94,19 +106,19 @@ const GeneralControl: React.FC<GeneralProp> = ({
             <Flex vertical gap={"middle"} style={{width: '100%'}}>
                 <Flex gap={"small"} align={"start"}>
                     <div style={{width: 60}}>Show</div>
+                    {/*<Select*/}
+                    {/*    style={{minWidth: 80}}*/}
+                    {/*    size={"small"}*/}
+                    {/*    mode={"multiple"}*/}
+                    {/*    options={groups ? groups.map(g => ({label: g.name, value: g.path})) : []}*/}
+                    {/*    value={selectedGroupPaths}*/}
+                    {/*    onChange={onSelectedGroupPathsChange}*/}
+                    {/*/>*/}
                     <Select
-                        style={{minWidth: 80}}
+                        style={{minWidth: 120, fontSize: 12}}
                         size={"small"}
                         mode={"multiple"}
-                        options={groups?groups.map(g => ({label: g.name, value: g.path})):[]}
-                        value={selectedGroupPaths}
-                        onChange={onSelectedGroupPathsChange}
-                    />
-                    <Select
-                        style={{minWidth: 80}}
-                        size={"small"}
-                        mode={"multiple"}
-                        options={groups?channels.map(c => ({label: c.name, value: c.path})):[]}
+                        options={channelSelectOptions}
                         value={selectedChannelPaths}
                         onChange={onSelectedChannelPathsChange}
                     />

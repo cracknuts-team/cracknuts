@@ -93,7 +93,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
 
     _f_trace_index_filters = traitlets.List([]).tag(sync=True)
-    _f_dataset_info_groups = traitlets.List([]).tag(sync=True)
     _f_dataset_info_channels = traitlets.List([]).tag(sync=True)
 
     language = traitlets.Unicode("en").tag(sync=True)
@@ -371,6 +370,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         # x_idx = None
         for c, channel_index in enumerate(self._trace_cache_channel_indices):
             for t, trace_index in enumerate(self._trace_cache_trace_indices[c]):
+                print(f"the trace cache shape: {self._trace_cache_traces.shape}")
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
                 data = np.column_stack([x_idx, y_data])
                 color, z_increase = self._get_highlight_color(
@@ -544,11 +544,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if not self._is_correlation_traces_setting:
             self._correlation_traces = None
         self._trace_dataset = trace_dataset
-        zd: zarr.hierarchy.Group = self._trace_dataset.get_origin_data()
-        groups = list(zd.group_keys())
-        self._f_dataset_info_groups = [{"name": "origin" if g == "0" else g, "path": g} for g in groups]
-        self._trace_dataset.info()
-        self._f_dataset_info_channels = []
+        self._update_group_channel_info()
 
         if self._auto_sync:
             if show_all_trace:
@@ -561,6 +557,20 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             else:
                 # self.show_default_trace()
                 self.show_default_trace2()
+
+    def _update_group_channel_info(self):
+        zd: zarr.hierarchy.Group = self._trace_dataset.get_origin_data()
+        print(zd.info)
+        self._f_dataset_info_groups = [{"name": "origin" if g == "0" else g, "path": g} for g in zd.group_keys()]
+        channels = []
+        for group in self._f_dataset_info_groups:
+            channel_info = {"name": group["name"], "path": group["path"], "children": []}
+            for channel in zd[group["path"]].group_keys():
+                channel_info["children"].append(
+                    {"name": f"{channel_info["name"]}/{channel}", "path": f"{channel_info["path"]}/{channel}"}
+                )
+            channels.append(channel_info)
+        self._f_dataset_info_channels = channels
 
     def open_numpy_file(self, path: str):
         if os.path.isdir(path):
@@ -752,21 +762,13 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 trace_index_filter_map = {
                     "group": f.get("group"),
                     "channel": f.get("channel"),
-                    "trace_slice": f.get("filter"),
+                    "index_filter": f.get("filter"),
                 }
                 filters.append(TraceIndexFilter(**trace_index_filter_map))
             self._show_traces2(filters)
 
     def _update_f_trace_index_filters(self, trace_index_filters: list[TraceIndexFilter]) -> None:
-        self._f_trace_index_filters = [
-            {
-                "name": f"{f.group}/{f.channel}",
-                "group": f.group,
-                "channel": f.channel,
-                "filter": f.slice_to_string(f.trace_slice),
-            }
-            for f in trace_index_filters
-        ]
+        self._f_trace_index_filters = [f.to_dict() for f in trace_index_filters]
 
     def show_trace2(self, filters: list[dict[str, str | int]] | list[TraceIndexFilter]):
         if isinstance(filters[0], dict):
@@ -776,9 +778,10 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     def _show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
         groups, channel_indices, trace_indices, traces = self._trace_dataset.get_traces_by_filters(trace_index_filters)
+        print(f"get traces by filters: {groups}, {channel_indices}, {trace_indices}, {traces.shape}")
         self._trace_cache_channel_indices = channel_indices
         self._trace_cache_trace_indices = trace_indices
-        self._trace_cache_traces = np.array(traces)
+        self._trace_cache_traces = traces
         self._trace_cache_trace_indices.sort()
 
         if display_range is None:

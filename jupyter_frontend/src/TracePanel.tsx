@@ -465,27 +465,22 @@ const TracePanel: React.FC = () => {
     }, [overviewTraceSeries]);
 
     const [_bTraceIndexFilters, _bSetTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
-    const [_bInfoGroups,] = useModelState<Array<TraceIndex>>("_f_dataset_info_groups")
     const [_bInfoChannels,] = useModelState<Array<TraceIndex>>("_f_dataset_info_channels")
 
-    const [selectedTraceGroupPaths, setSelectedTraceGroupPaths] = useState<string[]>([]);
     const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState<string[]>([])
 
     useEffect(() => {
-        console.log(`update selected trace index filters: ${JSON.stringify(_bTraceIndexFilters)}`);
-        setSelectedTraceGroupPaths([...new Set(_bTraceIndexFilters.map(f => f.group))]);
-        setSelectedTraceChannelPaths([...new Set(_bTraceIndexFilters.map(f => f.channel))])
+        setSelectedTraceChannelPaths(_bTraceIndexFilters.map(f => `${f.groupPath}/${f.channelPath}`))
     }, [_bTraceIndexFilters]);
+
+    console.log(`get filters update: ${JSON.stringify(_bTraceIndexFilters)} - selected paths: ${JSON.stringify(selectTraceChannelPaths)}`)
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
         key: "1",
         label: 'General',
         children: <GeneralControl
-            groups={_bInfoGroups}
             channels={_bInfoChannels}
-            selectedGroupPaths={selectedTraceGroupPaths}
             selectedChannelPaths={selectTraceChannelPaths}
-            onSelectedGroupPathsChange={setSelectedTraceGroupPaths}
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
             traceIndexFilters={_bTraceIndexFilters}
             onTraceIndexFilterApply={_bSetTraceIndexFilters}
@@ -505,7 +500,6 @@ const TracePanel: React.FC = () => {
 
     return (
         <div ref={chartBoxRef}>
-            {selectTraceChannelPaths}-{selectedTraceGroupPaths}
             <Tabs items={tabsItems} size={"small"}/>
             <ReactEcharts ref={chartRef} option={option} style={{height: 400}} replaceMerge={"series"}
                           onChartReady={onChartReady}/>
