@@ -44,7 +44,7 @@ interface BrushEndParams {
 
 const TracePanel: React.FC = () => {
 
-    const [, setSelectedRange] = useModelState<Array<number>>("selected_range");
+    const [selectedRange, setSelectedRange] = useModelState<Array<number>>("selected_range");
     const [, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
     const [, setPercentRange] = useModelState<Array<number>>("percent_range");
 
@@ -395,7 +395,6 @@ const TracePanel: React.FC = () => {
                 && brushParams.areas[0].coordRange
                 && brushParams.areas[0].coordRange.length == 2) {
                 const [newStart, newEnd] = brushParams.areas[0].coordRange
-                console.info([newStart, newEnd])
                 setOverviewSelectedRange([newStart, newEnd])
             }
 
@@ -485,6 +484,12 @@ const TracePanel: React.FC = () => {
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
             traceIndexFilters={_bTraceIndexFilters}
             onTraceIndexFilterApply={_bSetTraceIndexFilters}
+            zoomStart={selectedRange[0]}
+            zoomEnd={selectedRange[1]}
+            zoomApply={(start: number, end: number) => {
+                setSelectedRange([start, end]);
+                // setOverviewRange(start, end);
+            }}
         />
     }, {
         key: "2",

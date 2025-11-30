@@ -845,7 +845,14 @@ class ZarrTraceDataset(TraceDataset):
                 raise ValueError(f"The traces obtained by the filters must be 2-dimensional, but got {traces.shape}.")
             shapes.add(traces.shape[1])
         if len(shapes) > 1:
-            raise ValueError(f"The traces obtained by the filters have different shapes: {shapes}.")
+            d2_max_len = max(shapes)
+            for i in range(len(traces_list)):
+                d1, d2 = traces_list[i].shape
+                if d2 < d2_max_len:
+                    padded_traces = np.zeros((d1, d2_max_len), dtype=traces_list[i].dtype)
+                    padded_traces[:, :d2] = traces_list[i]
+                    traces_list[i] = padded_traces
+
         return trace_indices_list, traces_list
 
 

@@ -50,6 +50,9 @@ interface GeneralProp {
     traceIndexFilters: TraceIndexFilter[];
     onTraceIndexFilterApply: (filters: TraceIndexFilter[]) => void;
 
+    zoomStart: number;
+    zoomEnd: number;
+    zoomApply: (start: number, end: number) => void;
 }
 
 const GeneralControl: React.FC<GeneralProp> = ({
@@ -57,7 +60,10 @@ const GeneralControl: React.FC<GeneralProp> = ({
                                                    selectedChannelPaths,
                                                    onSelectedChannelPathsChange,
                                                    traceIndexFilters,
-                                                   onTraceIndexFilterApply
+                                                   onTraceIndexFilterApply,
+                                                   zoomStart,
+                                                   zoomEnd,
+                                                   zoomApply
                                                }: GeneralProp) => {
     const [filtersCache, setFiltersCache] = useState<TraceIndexFilter[]>(traceIndexFilters); // cache the filter from python
     const [filters, setFilters] = useState<TraceIndexFilter[]>(traceIndexFilters);
@@ -129,6 +135,16 @@ const GeneralControl: React.FC<GeneralProp> = ({
         ),
     }));
 
+    const [zoomStartInput, setZoomStartInput] = useState<number>(zoomStart);
+    const [zoomEndInput, setZoomEndInput] = useState<number>(zoomEnd);
+
+    useEffect(() => {
+        setZoomStartInput(zoomStart);
+    }, [zoomStart]);
+    useEffect(() => {
+        setZoomEndInput(zoomEnd);
+    }, [zoomEnd]);
+
     return (
         <div>
             <Flex vertical gap={"middle"} style={{width: '100%'}}>
@@ -168,12 +184,12 @@ const GeneralControl: React.FC<GeneralProp> = ({
                 <div style={{width: 60}}>Zoom</div>
                 <Form layout={"inline"} size={"small"}>
                     <Form.Item label={"Start"}>
-                        <InputNumber/>
+                        <InputNumber value={zoomStartInput} onChange={(v) => setZoomStartInput(Number(v))}/>
                     </Form.Item>
                     <Form.Item label={"End"}>
-                        <InputNumber/>
+                        <InputNumber value={zoomEndInput} onChange={(v) => setZoomEndInput(Number(v))}/>
                     </Form.Item>
-                    <Button>Apply</Button>
+                    <Button onClick={() => {zoomApply(zoomStartInput, zoomEndInput);}}>Apply</Button>
                 </Form>
             </Flex>
         </div>
