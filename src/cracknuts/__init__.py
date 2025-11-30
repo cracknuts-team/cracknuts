@@ -1,6 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-__version__ = "0.20.0-alpha.5"
+__version__ = "0.20.0-alpha.5+bms"
 
 import sys
 import typing
