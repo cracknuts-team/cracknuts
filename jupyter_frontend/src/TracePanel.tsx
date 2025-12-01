@@ -15,6 +15,7 @@ interface SeriesData {
     name: string;
     data: Array<Array<number>>;
     z: number;
+    realSampleCount: number
 }
 
 interface TraceSeries {
@@ -44,7 +45,9 @@ interface BrushEndParams {
 
 const TracePanel: React.FC = () => {
 
-    const [selectedRange, setSelectedRange] = useModelState<Array<number>>("selected_range");
+    const [, setSelectedRange] = useModelState<Array<number>>("selected_range");
+    const [showRange,] = useModelState<Array<number>>("show_range");
+    const [maxRange,] = useModelState<Array<number>>("max_range");
     const [, setOverviewSelectedRange] = useModelState<Array<number>>("overview_select_range");
     const [, setPercentRange] = useModelState<Array<number>>("percent_range");
 
@@ -59,7 +62,7 @@ const TracePanel: React.FC = () => {
 
     const setOverviewRange = (percentStart: number, percentEnd: number) => {
         if (overviewTraceSeries && overviewTraceSeries.seriesDataList && overviewTraceSeries.seriesDataList.length > 0) {
-            const seriesDataLen = overviewTraceSeries.seriesDataList[0].data.length;
+            const seriesDataLen = overviewTraceSeries.seriesDataList[0].realSampleCount
             _setOverviewRange([(seriesDataLen - 1) * percentStart / 100, (seriesDataLen - 1) * percentEnd / 100])
         }
     };
@@ -96,17 +99,24 @@ const TracePanel: React.FC = () => {
 
     const onChartReady = (chart: ECharts) => {
         chart.on("brushEnd", (params) => {
-            console.log('get chart brushed event.')
             const brushParams = params as BrushEndParams;
             if (brushParams && brushParams.areas && brushParams.areas.length > 0 && brushParams.areas[0].coordRange && brushParams.areas[0].coordRange.length == 2) {
                 let [newStart, newEnd] = brushParams.areas[0].coordRange
-                newStart = Math.floor(newStart)
-                newEnd = Math.ceil(newEnd)
+                newStart = Math.max(Math.floor(newStart), maxRange[0])
+                newEnd = Math.min(Math.ceil(newEnd), maxRange[1])
                 setSelectedRange([newStart, newEnd])
                 chart.dispatchAction({
                     type: 'brush',
                     areas: []
                 })
+            }
+        });
+        chart.dispatchAction({
+            type: 'takeGlobalCursor',
+            key: 'brush',
+            brushOption: {
+                brushType: 'lineX',
+                brushMode: 'single',
             }
         });
     };
@@ -394,10 +404,32 @@ const TracePanel: React.FC = () => {
             if (brushParams && brushParams.areas && brushParams.areas.length > 0
                 && brushParams.areas[0].coordRange
                 && brushParams.areas[0].coordRange.length == 2) {
-                const [newStart, newEnd] = brushParams.areas[0].coordRange
+                let [newStart, newEnd] = brushParams.areas[0].coordRange
+                newStart = Math.max(Math.floor(newStart), maxRange[0])
+                newEnd = Math.min(Math.ceil(newEnd), maxRange[1])
                 setOverviewSelectedRange([newStart, newEnd])
             }
-
+        });
+        chart.dispatchAction({
+            type: 'takeGlobalCursor',
+            key: 'brush',
+            brushOption: {
+                brushType: 'lineX',
+                brushMode: 'single',
+                removeOnClick: false,
+            }
+        });
+        chart.dispatchAction({
+            type: 'brush',
+            areas: [
+                {
+                    brushType: 'lineX',
+                    xAxisIndex: 0,
+                    coordRange: [overviewTraceSeries.range[0], overviewTraceSeries.range[1]]
+                }
+            ],
+            removeOnClick: false,
+            transformable: false
         });
     };
 
@@ -443,13 +475,6 @@ const TracePanel: React.FC = () => {
             removeOnClick: false,
             transformable: false
         });
-    }, [overviewTraceSeries]);
-
-    useEffect(() => {
-        setSliderPercentRange(traceSeries.percentRange)
-    }, [traceSeries]);
-
-    useEffect(() => {
         overviewChartRef.current?.getEchartsInstance()?.dispatchAction({
             type: 'takeGlobalCursor',
             key: 'brush',
@@ -460,6 +485,10 @@ const TracePanel: React.FC = () => {
             }
         });
     }, [overviewTraceSeries]);
+
+    useEffect(() => {
+        setSliderPercentRange(traceSeries.percentRange)
+    }, [traceSeries]);
 
     const [_bTraceIndexFilters, _bSetTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
     const [_bInfoChannels,] = useModelState<Array<TraceIndex>>("_f_dataset_info_channels")
@@ -484,8 +513,9 @@ const TracePanel: React.FC = () => {
             onSelectedChannelPathsChange={setSelectedTraceChannelPaths}
             traceIndexFilters={_bTraceIndexFilters}
             onTraceIndexFilterApply={_bSetTraceIndexFilters}
-            zoomStart={selectedRange[0]}
-            zoomEnd={selectedRange[1]}
+            range={maxRange}
+            zoomStart={showRange[0]}
+            zoomEnd={showRange[1]}
             zoomApply={(start: number, end: number) => {
                 setSelectedRange([start, end]);
                 // setOverviewRange(start, end);

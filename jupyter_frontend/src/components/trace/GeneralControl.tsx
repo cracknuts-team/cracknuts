@@ -1,5 +1,5 @@
 import React, {useCallback} from "React"
-import {Button, Flex, Form, Input, InputNumber, Select, Table, TableProps} from "antd";
+import {Button, Flex, Form, Input, InputNumber, Select, Space, Table, TableProps} from "antd";
 import {ChangeEvent, useEffect, useState} from "react";
 
 interface TraceIndex {
@@ -49,7 +49,7 @@ interface GeneralProp {
 
     traceIndexFilters: TraceIndexFilter[];
     onTraceIndexFilterApply: (filters: TraceIndexFilter[]) => void;
-
+    range: number[];
     zoomStart: number;
     zoomEnd: number;
     zoomApply: (start: number, end: number) => void;
@@ -61,6 +61,7 @@ const GeneralControl: React.FC<GeneralProp> = ({
                                                    onSelectedChannelPathsChange,
                                                    traceIndexFilters,
                                                    onTraceIndexFilterApply,
+                                                   range,
                                                    zoomStart,
                                                    zoomEnd,
                                                    zoomApply
@@ -184,12 +185,44 @@ const GeneralControl: React.FC<GeneralProp> = ({
                 <div style={{width: 60}}>Zoom</div>
                 <Form layout={"inline"} size={"small"}>
                     <Form.Item label={"Start"}>
-                        <InputNumber value={zoomStartInput} onChange={(v) => setZoomStartInput(Number(v))}/>
+                        <InputNumber
+                            min={range[0]}
+                            max={range[1]}
+                            value={zoomStartInput}
+                            onChange={(v) => setZoomStartInput(Number(v))}/>
                     </Form.Item>
                     <Form.Item label={"End"}>
-                        <InputNumber value={zoomEndInput} onChange={(v) => setZoomEndInput(Number(v))}/>
+                        <InputNumber
+                            min={range[0]}
+                            max={range[1]}
+                            value={zoomEndInput}
+                            onChange={(v) => setZoomEndInput(Number(v))}/>
                     </Form.Item>
-                    <Button onClick={() => {zoomApply(zoomStartInput, zoomEndInput);}}>Apply</Button>
+                    <Space.Compact>
+                        <Button onClick={() => {
+                            console.log(`zoom out pre start-end: ${zoomStartInput}, ${zoomEndInput}`)
+                            const center = (zoomStartInput + zoomEndInput) / 2;
+                            const newStart = Math.floor(Math.max(range[0], center - (zoomEndInput - zoomStartInput) / 2 * 1.2));
+                            const newEnd = Math.ceil(Math.min(range[1], center + (zoomEndInput - zoomStartInput) / 2 * 1.2));
+                            setZoomStartInput(newStart);
+                            setZoomEndInput(newEnd);
+                            console.log(`zoom out new start-end: ${newStart}, ${newEnd}`)
+                            zoomApply(newStart, newEnd)
+                        }}>Zoom Out</Button>
+                        <Button onClick={() => {
+                            console.log(`zoom in pre start-end: ${zoomStartInput}, ${zoomEndInput}`)
+                            if (zoomEndInput - zoomStartInput >= 100) { // minimum zoom range is 100
+                                const center = (zoomStartInput + zoomEndInput) / 2;
+                                const newStart = Math.floor(Math.max(range[0], center - (zoomEndInput - zoomStartInput) / 2 / 1.2));
+                                const newEnd = Math.ceil(Math.min(range[1], center + (zoomEndInput - zoomStartInput) / 2 / 1.2));
+                                setZoomStartInput(newStart);
+                                setZoomEndInput(newEnd);
+                                console.log(`zoom in new start-end: ${newStart}, ${newEnd}`)
+                                zoomApply(newStart, newEnd)
+                            }
+                        }}>Zoom In</Button>
+                        <Button onClick={() => {zoomApply(zoomStartInput, zoomEndInput);}}>Apply</Button>
+                    </Space.Compact>
                 </Form>
             </Flex>
         </div>
