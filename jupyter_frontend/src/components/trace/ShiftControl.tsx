@@ -1,16 +1,20 @@
 import React from "React";
-import {InputNumber, Table, TableProps} from "antd";
+import {Button, InputNumber, Table, TableProps} from "antd";
 
 interface TraceInfo {
     index: string,
     group: string,
     channel: string,
     trace: number,
-    offset: number | React.ReactNode,
-    operator: React.ReactNode
+    offset: number
 }
 
-const columns: TableProps<TraceInfo>['columns'] = [{
+interface _TraceInfo extends Omit<TraceInfo, "offset"> {
+    offset: React.ReactNode
+    operation: React.ReactNode
+}
+
+const columns: TableProps<_TraceInfo>['columns'] = [{
     key: 'group',
     dataIndex: 'group',
     title: 'Group'
@@ -27,31 +31,44 @@ const columns: TableProps<TraceInfo>['columns'] = [{
     dataIndex: 'offset',
     title: 'Offset'
 }, {
-    key: 'operator',
-    dataIndex: 'operator',
-    title: 'Operator'
+    key: 'operation',
+    dataIndex: 'operation',
+    title: 'Operation'
 }];
 
 interface ShiftControlProp {
-    traces: TraceInfo[]
+    traces: TraceInfo[],
+    onOffsetChanged: (group: string, channel: string, trace_index: number, offset: number) => void,
+    onOffsetApply: (group: string, channel: string, trace_index: number) => void
 }
 
-const ShiftControl: React.FC<ShiftControlProp> = ({traces}) => {
-    const _traces: TraceInfo[] = traces.map(t => {
+const ShiftControl: React.FC<ShiftControlProp> = ({traces, onOffsetChanged, onOffsetApply}) => {
+    const _traces: _TraceInfo[] = traces.map(t => {
         return {
             ...t,
-            offset: <div><InputNumber value={100} size={"small"}/></div>
+            offset: <InputNumber
+                key={`offset-${t.index}`}
+                value={t.offset}
+                size={"small"}
+                onChange={v => {onOffsetChanged(t.group, t.channel, t.trace, Number(v))}}
+            />,
+            operation: <Button
+                onClick={() => {onOffsetApply(t.group, t.channel, t.trace)}}
+                size={"small"}
+                key={`apply-${t.index}`}
+            >Apply</Button>
         }
     })
     return (
         <Table
+            style={{width: 800}}
             size={"small"}
             columns={columns}
             dataSource={_traces}
-            pagination={false}
+            pagination={{pageSize:5, size:"small"}}
         />
     );
 };
 
 export default ShiftControl;
-export type {ShiftControl}
+export type {ShiftControlProp, TraceInfo}

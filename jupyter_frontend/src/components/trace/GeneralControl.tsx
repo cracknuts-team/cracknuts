@@ -16,6 +16,7 @@ interface TraceIndexFilter {
     channel: string,
     channelPath: string,
     filter: string,
+    indices?: number[]
 }
 
 interface _TraceIndexFilter extends Omit<TraceIndexFilter, "filter"> {

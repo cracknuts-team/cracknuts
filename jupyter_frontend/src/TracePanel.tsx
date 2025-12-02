@@ -4,11 +4,11 @@ import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
 import {ECharts, EChartsOption} from "echarts";
 import {useIntl} from "react-intl";
-import {Button, Tabs} from "antd";
+import {Tabs} from "antd";
 import {CompatibilityProps} from "antd/es/tabs";
 import type {Tab} from 'rc-tabs/lib/interface';
 import GeneralControl, {TraceIndex, TraceIndexFilter} from "@/components/trace/GeneralControl.tsx";
-import ShiftControl from "@/components/trace/ShiftControl.tsx";
+import ShiftControl, {TraceInfo} from "@/components/trace/ShiftControl.tsx";
 
 interface SeriesData {
     color: string;
@@ -492,17 +492,40 @@ const TracePanel: React.FC = () => {
 
     const [_bTraceIndexFilters, _bSetTraceIndexFilters] = useModelState<Array<TraceIndexFilter>>("_f_trace_index_filters")
     const [_bInfoChannels,] = useModelState<Array<TraceIndex>>("_f_dataset_info_channels")
+    const [, _bSetTraceOffset] = useModelState<TraceInfo>("_f_trace_offset")
 
     const [selectTraceChannelPaths, setSelectedTraceChannelPaths] = useState<string[]>([])
+    const [selectedTraceIndex, setSelectedTraceIndex] = useState<Array<TraceInfo>>([])
 
     useEffect(() => {
         setSelectedTraceChannelPaths(_bTraceIndexFilters.map(f => `${f.groupPath}/${f.channelPath}`))
+        const traceIndices = _bTraceIndexFilters
+            .flatMap(f =>
+                f.indices?.map(index => ({
+                    index: `${f.index}/${index}`,
+                    group: f.group,
+                    channel: f.channel,
+                    trace: index,
+                    offset: 0
+                })) ?? []
+            );
+        setSelectedTraceIndex(traceIndices);
     }, [_bTraceIndexFilters]);
 
-    // const handleSelectedTraceChannelPathsChange = (paths: string[]) => {
-    //     setSelectedTraceChannelPaths(paths);
-    //     _bSetTraceIndexFilters()
-    // }
+    const handleOffsetChanged = (group: string, channel: string, trace_index: number, offset: number) => {
+        setSelectedTraceIndex(prev =>
+            prev.map(t => (t.group === group && t.channel === channel && t.trace === trace_index ? {...t, offset: offset} : t))
+        );
+    }
+
+    const handleOffsetApply = (group: string, channel: string, trace_index: number) => {
+        console.log(`Apply offset for ${group}/${channel}/${trace_index}: offset=${selectedTraceIndex.find(t => t.group === group && t.channel === channel && t.trace === trace_index)?.offset}`);
+        const traceIndex = selectedTraceIndex.find(t => t.group === group && t.channel === channel && t.trace === trace_index);
+        if (traceIndex) {
+            _bSetTraceOffset(traceIndex);
+        }
+    };
+
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
         key: "1",
@@ -524,14 +547,11 @@ const TracePanel: React.FC = () => {
     }, {
         key: "2",
         label: "Shift",
-        children: <ShiftControl traces={[{
-            index: 'traces-b-0',
-            group: 'traces',
-            channel: 'b',
-            trace: 0,
-            offset: 100,
-            operator: <Button size={"small"}>Apply</Button>
-        }]}/>
+        children: <ShiftControl
+            onOffsetChanged={handleOffsetChanged}
+            onOffsetApply={handleOffsetApply}
+            traces={selectedTraceIndex}
+        />
     }]
 
     return (

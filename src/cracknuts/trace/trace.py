@@ -37,7 +37,7 @@ class TraceDatasetData:
 
 
 class TraceIndexFilter:
-    def __init__(self, group: str, channel: str | int, index_filter: str | slice):
+    def __init__(self, group: str, channel: str | int, index_filter: str | slice, count: int = None):
         self.group: str = group
         self.group_path: str = "0" if self.group is not None and self.group == "origin" else self.group
         self.channel: str = channel if isinstance(channel, str) else str(channel)
@@ -45,9 +45,14 @@ class TraceIndexFilter:
         self.filter: slice = self.parse_slice(index_filter) if isinstance(index_filter, str) else index_filter
         self.index: str = f"{self.group_path}/{self.channel_path}"
         self.name: str = f"{self.group}/{self.channel}"
+        self.count: int = count
 
     def __str__(self):
         return self.to_dict().__str__()
+
+    @staticmethod
+    def _slice_to_list(s: slice, count: int) -> list[int]:
+        return list(range(*s.indices(count)))
 
     def to_dict(self):
         return {
@@ -58,6 +63,7 @@ class TraceIndexFilter:
             "channel": self.channel,
             "channelPath": self.channel_path,
             "filter": self.slice_to_string(self.filter),
+            "indices": self._slice_to_list(self.filter, self.count) if self.count is not None else None,
         }
 
     @staticmethod
@@ -1212,14 +1218,6 @@ class NumpyTraceDataset(TraceDataset):
         ciphertext = None if self._ciphertext_array is None else self._ciphertext_array[channel_slice, trace_slice]
         key = None if self._key_array is None else self._key_array[channel_slice, trace_slice]
         extended = None if self._extended_array is None else self._extended_array[channel_slice, trace_slice]
-
-        print(
-            "trace shape",
-            self._trace_array.shape,
-            self._trace_array[channel_slice, trace_slice].shape,
-            channel_slice,
-            trace_slice,
-        )
         return c, t, self._trace_array[channel_slice, trace_slice], [plaintext, ciphertext, key, extended]
 
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:

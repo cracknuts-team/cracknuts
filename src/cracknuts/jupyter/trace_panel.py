@@ -10,6 +10,7 @@ from numbers import Number
 
 import numpy as np
 import zarr
+
 from cracknuts import logger
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset, TraceIndexFilter
@@ -97,6 +98,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     _f_trace_index_filters = traitlets.List([]).tag(sync=True)
     _f_dataset_info_channels = traitlets.List([]).tag(sync=True)
+    _f_trace_offset = traitlets.Dict({}).tag(sync=True)
 
     language = traitlets.Unicode("en").tag(sync=True)
 
@@ -151,7 +153,6 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
     @correlation_zarr_substitute("_correlation_zarr_show_trace")
     def _show_trace(self, channel_slice, trace_slice, display_range: tuple[int, int] = None):
-        print(f"get {channel_slice}, {trace_slice}, {display_range}")
         channel_indexes, trace_indices, traces, data = self._trace_dataset.trace_data_with_indices[
             channel_slice, trace_slice
         ]
@@ -394,7 +395,16 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         )
 
     def show_default_trace2(self):
-        self._show_traces2([TraceIndexFilter(channel="0", index_filter=slice(0, self._trace_dataset.trace_count))])
+        self._show_traces2(
+            [
+                TraceIndexFilter(
+                    group="origin",
+                    channel="0",
+                    index_filter=slice(0, self._trace_dataset.trace_count),
+                    count=self._trace_dataset.trace_count,
+                )
+            ]
+        )
 
     def show_all_trace(self):
         """
@@ -518,7 +528,14 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             elif channel_slice is not None and trace_slice is not None:
                 # self._show_trace(channel_slice, trace_slice)
                 self._show_traces2(
-                    [TraceIndexFilter(group="origin", channel=channel_slice.stop, index_filter=trace_slice)]
+                    [
+                        TraceIndexFilter(
+                            group="origin",
+                            channel=channel_slice.stop,
+                            index_filter=trace_slice,
+                            count=self._trace_dataset.trace_count,
+                        )
+                    ]
                 )
             else:
                 # self.show_default_trace()
@@ -688,6 +705,30 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if self._auto_sync:
             self._trace_series_send_state()
 
+    def shift2(self, group: str, channel: str, trace: int, shift: int):
+        origin_trace = self._trace_dataset.get_traces_by_filters([TraceIndexFilter(group, channel, str(trace))])[1][0][
+            0
+        ]
+
+        for i, f in enumerate(self._trace_index_filters):
+            if f.group == group and f.channel == channel:
+                for j, trace_index in enumerate(self._trace_cache_trace_indices[i]):
+                    if trace_index == trace:
+                        self._trace_cache_traces[i][j, :] = self._do_shift(origin_trace, shift)
+
+        self._trace_series = self._get_trace_series_by_index_range2(
+            self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        )
+        self._trace_series.percent_range = [
+            self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
+            self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
+
+        self._update_overview_trace()
+
+        if self._auto_sync:
+            self._trace_series_send_state()
+
     @staticmethod
     def _do_shift(trace, shift):
         result = np.full_like(trace, 0, dtype=np.int16)
@@ -727,17 +768,31 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                     "group": f.get("group"),
                     "channel": f.get("channel"),
                     "index_filter": f.get("filter"),
+                    "count": self._trace_dataset.trace_count,
                 }
                 filters.append(TraceIndexFilter(**trace_index_filter_map))
             self._show_traces2(filters)
+
+    @traitlets.observe("_f_trace_offset")
+    def _f_trace_offset_changed(self, change) -> None:
+        if change.get("new") is not None:
+            offset_map = change.get("new")
+            self.shift2(offset_map["group"], offset_map["channel"], offset_map["trace"], offset_map["offset"])
 
     def _update_f_trace_index_filters(self, trace_index_filters: list[TraceIndexFilter]) -> None:
         self._f_trace_index_filters = [f.to_dict() for f in trace_index_filters]
 
     def show_trace2(self, filters: list[dict[str, str | int]] | list[TraceIndexFilter]):
         if isinstance(filters[0], dict):
-            self._show_traces2([TraceIndexFilter(**f) for f in filters])
+            fs = []
+            for f in filters:
+                _f = TraceIndexFilter(**f)
+                _f.count = self._trace_dataset.trace_count
+                fs.append(_f)
+            self._show_traces2(fs)
         else:
+            for f in filters:
+                f.count = self._trace_dataset.trace_count
             self._show_traces2(filters)
 
     def _show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
