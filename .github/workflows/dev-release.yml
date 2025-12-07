@@ -39,6 +39,7 @@ jobs:
       with:
         node-version-file: './jupyter_frontend/.node-version'
         cache: 'pnpm'
+        cache-dependency-path: './jupyter_frontend/pnpm-lock.yaml'
     - name: Install node dependencies
       run: |
         cd jupyter_frontend
