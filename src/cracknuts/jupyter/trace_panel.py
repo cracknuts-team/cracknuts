@@ -10,23 +10,26 @@ from numbers import Number
 
 import numpy as np
 import zarr
+
 from cracknuts import logger
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
-from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset
+from cracknuts.trace.trace import TraceDataset, NumpyTraceDataset, TraceIndexFilter
 from cracknuts.utils import user_config
 from numpy import ndarray
 from traitlets import traitlets
 from cracknuts.trace.downsample import minmax
+from numpy.typing import NDArray
 
 
 @dataclass
 class _TraceSeriesData:
     name: str
-    data: ndarray
+    data: NDArray[np.int32]
     color: None | str
-    channel_index: int
+    channel_index: int | str
     trace_index: int
     z: int
+    real_sample_count: int | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -36,6 +39,7 @@ class _TraceSeriesData:
             "channel_index": self.channel_index,
             "trace_index": self.trace_index,
             "z": self.z,
+            "realSampleCount": self.real_sample_count,
         }
 
 
@@ -60,14 +64,14 @@ def correlation_zarr_substitute(substitute_func_name: str):
 @dataclass
 class _TraceSeries:
     series_data_list: list[_TraceSeriesData] = field(default_factory=list)
-    x_data: ndarray = field(default_factory=lambda: np.empty(0))
+    # x_data: ndarray = field(default_factory=lambda: np.empty(0))
     percent_range: list = field(default_factory=lambda: [0, 100])
     range: list = field(default_factory=lambda: [0, 0])
 
     def to_dict(self) -> dict:
         return {
             "seriesDataList": [s.to_dict() for s in self.series_data_list],
-            "xData": self.x_data,
+            # "xData": self.x_data,
             "percentRange": self.percent_range,
             "range": self.range,
         }
@@ -84,11 +88,17 @@ class TracePanelWidget(MsgHandlerPanelWidget):
     range_start = traitlets.Float(0).tag(sync=True)
     range_end = traitlets.Float(100).tag(sync=True)
 
+    max_range = traitlets.Tuple((0, 0)).tag(sync=True)
+    show_range = traitlets.Tuple((0, 0)).tag(sync=True)
     selected_range = traitlets.Tuple((0, 0)).tag(sync=True)
     percent_range = traitlets.Tuple((0, 100)).tag(sync=True)
     overview_select_range = traitlets.Tuple((0, 0)).tag(sync=True)
 
     overview_trace_series = traitlets.Dict(_TraceSeries().to_dict()).tag(sync=True)
+
+    _f_trace_index_filters = traitlets.List([]).tag(sync=True)
+    _f_dataset_info_channels = traitlets.List([]).tag(sync=True)
+    _f_trace_offset = traitlets.Dict({}).tag(sync=True)
 
     language = traitlets.Unicode("en").tag(sync=True)
 
@@ -108,7 +118,8 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_cache_channel_indices: list | None = None
         self._trace_cache_trace_indices: list | None = None
         self._trace_cache_traces: ndarray | None = None
-        self._trace_cache_x_indices: ndarray | None = None
+        self.trace_index_filters: list[ndarray] | None = None
+        # self._trace_cache_x_indices: ndarray | None = None
         self._trace_cache_x_range_start: int | None = None
         self._trace_cache_x_range_end: int | None = None
         self._trace_cache_trace_highlight_indices: dict[int, list[int]] | None = None
@@ -172,50 +183,32 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             self._trace_series_send_state()
 
     def _update_overview_trace(self):
-        if self._trace_cache_trace_highlight_indices is not None:
-            overview_channel_index, overview_trace_indices = list(self._trace_cache_trace_highlight_indices.items())[0]
-            overview_trace_index = overview_trace_indices[0]
-            if (
-                overview_channel_index not in self._trace_cache_channel_indices
-                or overview_trace_index not in self._trace_cache_trace_indices
-            ):
-                self.highlight(None)
-            if overview_channel_index not in self._trace_cache_channel_indices:
-                overview_channel_index = self._trace_cache_channel_indices[0]
-            if overview_trace_index not in self._trace_cache_trace_indices:
-                overview_trace_index = self._trace_cache_trace_indices[0]
-
-        else:
-            overview_channel_index = self._trace_cache_channel_indices[0]
-            overview_trace_index = self._trace_cache_trace_indices[0]
-
-        c_idx = self._trace_cache_channel_indices.index(overview_channel_index)
-        t_idx = self._trace_cache_trace_indices.index(overview_trace_index)
         x_idx, y_data = self._get_by_range(
-            self._trace_cache_traces[c_idx, t_idx, :],
+            self._trace_cache_traces[0][0, :],
             0,
             self._trace_dataset.sample_count,
         )
+        data = np.column_stack((x_idx, y_data))
         self._overview_trace_series = _TraceSeries(
             series_data_list=[
                 _TraceSeriesData(
-                    name=str(overview_channel_index) + "-" + str(overview_trace_index),
-                    data=y_data,
-                    trace_index=overview_trace_index,
-                    channel_index=overview_channel_index,
+                    name="",
+                    data=data,
+                    trace_index=0,
+                    channel_index=0,
                     z=self._DEFAULT_SERIES_Z,
                     color="blue",
+                    real_sample_count=self._trace_dataset.sample_count,
                 )
             ],
-            x_data=x_idx,
         )
 
         percent_start = self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100
         percent_end = self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100
 
         self._overview_trace_series.range = [
-            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_start / 100),
-            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_end / 100),
+            round(self._overview_trace_series.series_data_list[0].data[-1][0] * percent_start / 100),
+            round(self._overview_trace_series.series_data_list[0].data[-1][0] * percent_end / 100),
         ]
 
         if self._auto_sync:
@@ -231,12 +224,13 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         pixel = self.chart_size["width"]
         if pixel is None or pixel == 0:
             pixel = 1920
+
         x_idx, y_data = minmax(trace, start, end, pixel)
         return x_idx, y_data
 
     def _change_range(self, start: int, end: int):
-        if self._trace_cache_x_indices is not None:
-            start, end = self._trace_cache_x_indices[start], self._trace_cache_x_indices[end]
+        # if self._trace_cache_x_indices is not None:
+        #     start, end = self._trace_cache_x_indices[start], self._trace_cache_x_indices[end]
         self.change_range(start, end)
 
     def change_range(self, start: int, end: int):
@@ -250,31 +244,34 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         """
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
-        self._trace_series = self._get_trace_series_by_index_range(start, end)
+        self._trace_series = self._get_trace_series_by_index_range2(start, end)
 
         percent_start = start / (self._trace_dataset.sample_count - 1) * 100
         percent_end = end / (self._trace_dataset.sample_count - 1) * 100
         self._trace_series.percent_range = [percent_start, percent_end]
-
-        self._overview_trace_series.range = [
-            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_start / 100),
-            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_end / 100),
-        ]
-
+        self.show_range = (start, end)
+        if self._overview_trace_series is not None:
+            self._overview_trace_series.range = [
+                round((self._overview_trace_series.series_data_list[0].data[-1][0]) * percent_start / 100),
+                round((self._overview_trace_series.series_data_list[0].data[-1][0]) * percent_end / 100),
+            ]
         if self._auto_sync:
             self._trace_series_send_state()
 
     def _overview_selected_range_changed(self, start: int, end: int):
-        start = int(self._overview_trace_series.x_data[start])
-        end = int(self._overview_trace_series.x_data[end])
+        # start = int(self._overview_trace_series.x_data[start])
+        # end = int(self._overview_trace_series.x_data[end])
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
-        self._trace_series = self._get_trace_series_by_index_range(start, end)
+        self._trace_series = self._get_trace_series_by_index_range2(start, end)
 
         self._trace_series.percent_range = [
             start / (self._trace_dataset.sample_count - 1) * 100,
             end / (self._trace_dataset.sample_count - 1) * 100,
         ]
+
+        self.show_range = (start, end)
+        self.selected_range = (start, end)
 
         if self._auto_sync:
             self._trace_series_send_state()
@@ -293,15 +290,14 @@ class TracePanelWidget(MsgHandlerPanelWidget):
 
         self._trace_cache_x_range_start = start
         self._trace_cache_x_range_end = end
-
-        self._trace_series = self._get_trace_series_by_index_range(start, end)
-
+        self._trace_series = self._get_trace_series_by_index_range2(start, end)
         self._trace_series.percent_range = [percent_start, percent_end]
-
         self._overview_trace_series.range = [
-            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_start / 100),
-            round((self._overview_trace_series.x_data.shape[0] - 1) * percent_end / 100),
+            round(self._overview_trace_series.series_data_list[0].data[-1][0] / 100 * percent_start),
+            round(self._overview_trace_series.series_data_list[0].data[-1][0] / 100 * percent_end),
         ]
+        self.show_range = (start, end)
+        self.selected_range = (start, end)
         if self._auto_sync:
             self._trace_series_send_state()
 
@@ -318,10 +314,11 @@ class TracePanelWidget(MsgHandlerPanelWidget):
             highlight_colors = None
             color_i = 0
 
-        x_idx = None
+        # x_idx = None
         for c, channel_index in enumerate(self._trace_cache_channel_indices):
             for t, trace_index in enumerate(self._trace_cache_trace_indices):
                 x_idx, y_data = self._get_by_range(self._trace_cache_traces[c, t, :], start, end)
+                data = np.column_stack([x_idx, y_data])
                 color, z_increase = self._get_highlight_color(
                     channel_index, trace_index, None if highlight_colors is None else highlight_colors[color_i]
                 )
@@ -330,7 +327,7 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 series_data_list.append(
                     _TraceSeriesData(
                         name=str(channel_index) + "-" + str(trace_index),
-                        data=y_data,
+                        data=data,
                         color=color,
                         trace_index=trace_index,
                         channel_index=channel_index,
@@ -340,9 +337,27 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                     )
                 )
 
-        self._trace_cache_x_indices = x_idx
+        # self._trace_cache_x_indices = x_idx
 
-        return _TraceSeries(series_data_list=series_data_list, x_data=x_idx)
+        return _TraceSeries(series_data_list=series_data_list)
+
+    def _get_trace_series_by_index_range2(self, start: int, end: int) -> _TraceSeries:
+        series_data_list = []
+        for i, f in enumerate(self._trace_index_filters):
+            for j, trace_index in enumerate(self._trace_cache_trace_indices[i]):
+                x_idx, y_data = self._get_by_range(self._trace_cache_traces[i][j, :], start, end)
+                data = np.column_stack([x_idx, y_data])
+                series_data_list.append(
+                    _TraceSeriesData(
+                        name=f"{f.group}/{f.channel}/{trace_index}",
+                        data=data,
+                        trace_index=trace_index,
+                        channel_index=f.channel_path,
+                        z=1,
+                        color=None,
+                    )
+                )
+        return _TraceSeries(series_data_list=series_data_list)
 
     def _get_highlight_color(
         self, channel_index: int, trace_index: int, highlight_color: str
@@ -377,6 +392,18 @@ class TracePanelWidget(MsgHandlerPanelWidget):
                 0,
                 trace_count if trace_count < self._DEFAULT_SHOW_INDEX_THRESHOLD else self._DEFAULT_SHOW_INDEX_THRESHOLD,
             ),
+        )
+
+    def show_default_trace2(self):
+        self._show_traces2(
+            [
+                TraceIndexFilter(
+                    group="origin",
+                    channel="0",
+                    index_filter=slice(0, self._trace_dataset.trace_count),
+                    count=self._trace_dataset.trace_count,
+                )
+            ]
         )
 
     def show_all_trace(self):
@@ -459,13 +486,16 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         self._trace_cache_trace_highlight_indices = None
         self._trace_cache_x_range_start = 0
         self._trace_cache_x_range_end = self._trace_dataset.sample_count - 1
-        self._trace_series = self._get_trace_series_by_index_range(
+        self._trace_series = self._get_trace_series_by_index_range2(
             self._trace_cache_x_range_start, self._trace_cache_x_range_end
         )
         self._trace_series.percent_range = [
             self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
             self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
         ]
+
+        self.show_range = (self._trace_cache_x_range_start, self._trace_cache_x_range_end)
+        self.selected_range = (self._trace_cache_x_range_start, self._trace_cache_x_range_end)
 
         if self._auto_sync:
             self._trace_series_send_state()
@@ -490,14 +520,39 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if not self._is_correlation_traces_setting:
             self._correlation_traces = None
         self._trace_dataset = trace_dataset
-
+        self._update_group_channel_info()
+        self.max_range = (0, self._trace_dataset.sample_count - 1)
         if self._auto_sync:
             if show_all_trace:
                 self.show_all_trace()
             elif channel_slice is not None and trace_slice is not None:
-                self._show_trace(channel_slice, trace_slice)
+                # self._show_trace(channel_slice, trace_slice)
+                self._show_traces2(
+                    [
+                        TraceIndexFilter(
+                            group="origin",
+                            channel=channel_slice.stop,
+                            index_filter=trace_slice,
+                            count=self._trace_dataset.trace_count,
+                        )
+                    ]
+                )
             else:
-                self.show_default_trace()
+                # self.show_default_trace()
+                self.show_default_trace2()
+
+    def _update_group_channel_info(self):
+        zd: zarr.hierarchy.Group = self._trace_dataset.get_origin_data()
+        self._f_dataset_info_groups = [{"name": "origin" if g == "0" else g, "path": g} for g in zd.group_keys()]
+        channels = []
+        for group in self._f_dataset_info_groups:
+            channel_info = {"name": group["name"], "path": group["path"], "children": []}
+            for channel in zd[group["path"]].group_keys():
+                channel_info["children"].append(
+                    {"name": f"{channel_info["name"]}/{channel}", "path": f"{channel_info["path"]}/{channel}"}
+                )
+            channels.append(channel_info)
+        self._f_dataset_info_channels = channels
 
     def open_numpy_file(self, path: str):
         if os.path.isdir(path):
@@ -650,6 +705,30 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if self._auto_sync:
             self._trace_series_send_state()
 
+    def shift2(self, group: str, channel: str, trace: int, shift: int):
+        origin_trace = self._trace_dataset.get_traces_by_filters([TraceIndexFilter(group, channel, str(trace))])[1][0][
+            0
+        ]
+
+        for i, f in enumerate(self._trace_index_filters):
+            if f.group == group and f.channel == channel:
+                for j, trace_index in enumerate(self._trace_cache_trace_indices[i]):
+                    if trace_index == trace:
+                        self._trace_cache_traces[i][j, :] = self._do_shift(origin_trace, shift)
+
+        self._trace_series = self._get_trace_series_by_index_range2(
+            self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        )
+        self._trace_series.percent_range = [
+            self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
+            self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
+
+        self._update_overview_trace()
+
+        if self._auto_sync:
+            self._trace_series_send_state()
+
     @staticmethod
     def _do_shift(trace, shift):
         result = np.full_like(trace, 0, dtype=np.int16)
@@ -678,6 +757,81 @@ class TracePanelWidget(MsgHandlerPanelWidget):
         if change.get("new") is not None:
             s, e = change.get("new")
             self.change_percent_range(s, e)
+
+    @traitlets.observe("_f_trace_index_filters")
+    def _f_trace_index_filters_changed(self, change) -> None:
+        if change.get("new") is not None:
+            filters_map = change.get("new")
+            filters = []
+            for f in filters_map:
+                trace_index_filter_map = {
+                    "group": f.get("group"),
+                    "channel": f.get("channel"),
+                    "index_filter": f.get("filter"),
+                    "count": self._trace_dataset.trace_count,
+                }
+                filters.append(TraceIndexFilter(**trace_index_filter_map))
+            self._show_traces2(filters)
+
+    @traitlets.observe("_f_trace_offset")
+    def _f_trace_offset_changed(self, change) -> None:
+        if change.get("new") is not None:
+            offset_map = change.get("new")
+            self.shift2(offset_map["group"], offset_map["channel"], offset_map["trace"], offset_map["offset"])
+
+    def _update_f_trace_index_filters(self, trace_index_filters: list[TraceIndexFilter]) -> None:
+        self._f_trace_index_filters = [f.to_dict() for f in trace_index_filters]
+
+    def show_trace2(self, filters: list[dict[str, str | int]] | list[TraceIndexFilter]):
+        if isinstance(filters[0], dict):
+            fs = []
+            for f in filters:
+                _f = TraceIndexFilter(**f)
+                _f.count = self._trace_dataset.trace_count
+                fs.append(_f)
+            self._show_traces2(fs)
+        else:
+            for f in filters:
+                f.count = self._trace_dataset.trace_count
+            self._show_traces2(filters)
+
+    def _show_traces2(self, trace_index_filters: list[TraceIndexFilter], display_range=None):
+        self._trace_cache_trace_indices, self._trace_cache_traces = self._trace_dataset.get_traces_by_filters(
+            trace_index_filters
+        )
+        self._trace_index_filters = trace_index_filters
+        if display_range is None:
+            if self._trace_cache_x_range_start is None:
+                self._trace_cache_x_range_start = 0
+            if self._trace_cache_x_range_end is None:
+                self._trace_cache_x_range_end = self._trace_dataset.sample_count - 1
+        else:
+            self._trace_cache_x_range_start = display_range[0]
+            self._trace_cache_x_range_end = display_range[1]
+
+        self.show_range = (self._trace_cache_x_range_start, self._trace_cache_x_range_end)
+        self.selected_range = (self._trace_cache_x_range_start, self._trace_cache_x_range_end)
+
+        self._trace_series = self._get_trace_series_by_index_range2(
+            self._trace_cache_x_range_start, self._trace_cache_x_range_end
+        )
+        self._trace_series.percent_range = [
+            self._trace_cache_x_range_start / (self._trace_dataset.sample_count - 1) * 100,
+            self._trace_cache_x_range_end / (self._trace_dataset.sample_count - 1) * 100,
+        ]
+        self._trace_series.range = [
+            self._trace_cache_x_range_start,
+            self._trace_cache_x_range_end,
+        ]
+
+        self._update_overview_trace()
+
+        if self._auto_sync:
+            self._trace_series_send_state()
+
+        self._update_f_trace_index_filters(trace_index_filters)
+
+    def on_group_selected_changed(self): ...
 
 
 class ShowTrace:
