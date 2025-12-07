@@ -24,7 +24,7 @@ class AcquisitionConfig:
     sample_length: int = 1024
     sample_offset: int = 0
     trigger_judge_timeout: float = 0.005
-    trigger_judge_wait_time: float = 0.05
+    trigger_judge_wait_time: float = 0.001
     do_error_max_count: int = 1
     file_path: str = ""
     file_format: str = "zarr"
@@ -64,7 +64,7 @@ class Acquisition(abc.ABC):
         data_ciphertext_length: int | None = None,
         data_key_length: int | None = None,
         data_extended_length: int | None = None,
-        trigger_judge_wait_time: float = 0.05,
+        trigger_judge_wait_time: float = 0.01,
         trigger_judge_timeout: float = 1.0,
         do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
         do_error_max_count: int = -1,
@@ -244,9 +244,9 @@ class Acquisition(abc.ABC):
 
     def run(
         self,
-        count: int = 1,
-        sample_length: int = 1024,
-        sample_offset: int = 0,
+        count: int = None,
+        sample_length: int = None,
+        sample_offset: int = None,
         data_plaintext_length: int | None = None,
         data_ciphertext_length: int | None = None,
         data_key_length: int | None = None,
@@ -255,8 +255,8 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = "zarr",
-        file_path: str | None = "auto",
+        file_format: str | None = None,
+        file_path: str | None = None,
     ):
         """
         Start run mode in the background.
@@ -284,6 +284,7 @@ class Acquisition(abc.ABC):
                           will be created in the current working directory to save the data.
         :type file_path: str
         """
+        print(f"get params: {count}, {sample_length}, {sample_offset}, {data_plaintext_length}, ")
         if self._status < 0:
             self.resume()
         else:
@@ -363,7 +364,7 @@ class Acquisition(abc.ABC):
 
     def test(
         self,
-        count=-1,
+        # count=-1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
         trigger_judge_wait_time: float | None = None,
@@ -399,7 +400,7 @@ class Acquisition(abc.ABC):
             self._run(
                 test=True,
                 persistent=False,
-                count=count,
+                # count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
                 trigger_judge_wait_time=trigger_judge_wait_time,
@@ -485,7 +486,7 @@ class Acquisition(abc.ABC):
         self,
         test: bool = True,
         persistent: bool = False,
-        count: int = 1,
+        count: int = None,
         sample_length: int | None = None,
         sample_offset: int | None = None,
         data_plaintext_length: int | None = None,
@@ -496,9 +497,9 @@ class Acquisition(abc.ABC):
         trigger_judge_timeout: float | None = None,
         do_error_max_count: int | None = None,
         do_error_handler_strategy: int | None = None,
-        file_format: str | None = "zarr",
-        file_path: str | None = "auto",
-        trace_fetch_interval: float = 0.1,
+        file_format: str | None = None,
+        file_path: str | None = None,
+        trace_fetch_interval: float = None,
         is_glitch: bool = False,
     ):
         self._run_thread_pause_event.set()
@@ -529,7 +530,7 @@ class Acquisition(abc.ABC):
         self,
         test: bool = True,
         persistent: bool = False,
-        count: int = 1,
+        count: int = None,
         sample_length: int | None = None,
         sample_offset: int | None = None,
         data_plaintext_length: int | None = None,
@@ -560,8 +561,8 @@ class Acquisition(abc.ABC):
         else:
             self._status = self.STATUS_TESTING
             self._status_changed()
-
-        self.trace_count = count
+        if count is not None:
+            self.trace_count = count
         if sample_length is not None:
             self.sample_length = sample_length
         if sample_offset is not None:
@@ -661,7 +662,7 @@ class Acquisition(abc.ABC):
         else:
             dataset = None
 
-        while self._status != 0 and self.trace_count - trace_index != 0:
+        while self._status != 0 and (True if test else self.trace_count - trace_index != 0):
             if self._status < 0:
                 self._status_changed()
                 self._run_thread_pause_event.wait()

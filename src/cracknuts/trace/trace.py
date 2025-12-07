@@ -615,7 +615,7 @@ class ZarrTraceDataset(TraceDataset):
         if channel_name not in self._channel_names:
             raise ValueError("channel index out range")
         if trace_index not in range(0, self._trace_count):
-            raise ValueError("trace, index out of range")
+            raise ValueError(f"trace, index out of range: trace count: {self._trace_count}, trace index: {trace_index}")
         if self._sample_count != trace.shape[0]:
             self._logger.error(
                 f"Trace sample count {trace.shape[0]} does not match the previously "

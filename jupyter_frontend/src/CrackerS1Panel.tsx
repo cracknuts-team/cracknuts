@@ -950,7 +950,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                               <InputNumber
                                 step="1"
                                 size={"small"}
-                                min={0}
+                                // min={0}
                                 defaultValue={oscSampleDelay}
                                 value={oscSampleDelay}
                                 onChange={(v: number | string | null) => {
