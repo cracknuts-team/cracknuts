@@ -1,4 +1,4 @@
-import React, {useCallback} from "React"
+import React, {useCallback} from "react"
 import {Button, Flex, Form, Input, InputNumber, Select, Space, Table, TableProps} from "antd";
 import {ChangeEvent, useEffect, useState} from "react";
 
