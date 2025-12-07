@@ -1,4 +1,4 @@
-import React from "React";
+import React from "react";
 import {Button, InputNumber, Table, TableProps} from "antd";
 
 interface TraceInfo {
