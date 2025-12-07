@@ -113,8 +113,8 @@ const AcquisitionPanel: React.FC = () => {
                 size={"small"}
                 value={triggerJudgeWaitTime}
                 addonAfter={intl.formatMessage({id: "cracker.config.unit.second"})}
-                min={0.05}
-                step={0.01}
+                min={0.001}
+                step={0.001}
                 onChange={(v) => {
                   setTriggerJudgeWaitTime(Number(v));
                 }}

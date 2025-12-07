@@ -24,10 +24,10 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
     trace_count = traitlets.Int(1000).tag(sync=True)
     sample_offset = traitlets.Int(0).tag(sync=True)
     sample_length = traitlets.Int(1024).tag(sync=True)
-    trigger_judge_wait_time = traitlets.Float(0.05).tag(sync=True)
+    trigger_judge_wait_time = traitlets.Float(0.001).tag(sync=True)
     trigger_judge_timeout = traitlets.Float(0.005).tag(sync=True)
     do_error_max_count = traitlets.Int(1).tag(sync=True)
-    file_format = traitlets.Unicode("scarr").tag(sync=True)
+    file_format = traitlets.Unicode("zarr").tag(sync=True)
     file_path = traitlets.Unicode("").tag(sync=True)
     trace_fetch_interval = traitlets.Float(2.0).tag(sync=True)
 
@@ -123,34 +123,34 @@ class AcquisitionPanelWidget(MsgHandlerPanelWidget):
         elif status == "test":
             self.before_test()
             self.acquisition.test(
-                sample_offset=self.sample_offset,
-                trigger_judge_wait_time=self.trigger_judge_wait_time,
-                trigger_judge_timeout=self.trigger_judge_timeout,
-                do_error_max_count=self.do_error_max_count,
-                trace_fetch_interval=self.trace_fetch_interval,
+                # sample_offset=self.sample_offset,
+                # trigger_judge_wait_time=self.trigger_judge_wait_time,
+                # trigger_judge_timeout=self.trigger_judge_timeout,
+                # do_error_max_count=self.do_error_max_count,
+                # trace_fetch_interval=self.trace_fetch_interval,
             )
         elif status == "run":
             self.before_run()
             self.acquisition.run(
-                count=self.trace_count,
-                sample_offset=self.sample_offset,
-                sample_length=self.sample_length,
-                trigger_judge_wait_time=self.trigger_judge_wait_time,
-                trigger_judge_timeout=self.trigger_judge_timeout,
-                do_error_max_count=self.do_error_max_count,
-                file_format=self.file_format,
-                file_path="auto" if self.file_path == "" or self.file_path is None else self.file_path,
+                # count=self.trace_count,
+                # sample_offset=self.sample_offset,
+                # sample_length=self.sample_length,
+                # trigger_judge_wait_time=self.trigger_judge_wait_time,
+                # trigger_judge_timeout=self.trigger_judge_timeout,
+                # do_error_max_count=self.do_error_max_count,
+                # file_format=self.file_format,
+                # file_path="auto" if self.file_path == "" or self.file_path is None else self.file_path,
             )
         elif status == "glitch_test":
             self.before_test()
             glitch_acq = typing.cast(GlitchAcquisition, self.acquisition)
             glitch_acq.glitch_run(
-                sample_length=self.sample_length,
-                sample_offset=self.sample_offset,
-                trigger_judge_wait_time=self.trigger_judge_wait_time,
-                trigger_judge_timeout=self.trigger_judge_timeout,
-                do_error_max_count=self.do_error_max_count,
-                trace_fetch_interval=self.trace_fetch_interval,
+                # sample_length=self.sample_length,
+                # sample_offset=self.sample_offset,
+                # trigger_judge_wait_time=self.trigger_judge_wait_time,
+                # trigger_judge_timeout=self.trigger_judge_timeout,
+                # do_error_max_count=self.do_error_max_count,
+                # trace_fetch_interval=self.trace_fetch_interval,
             )
         else:
             self.acquisition.stop()
