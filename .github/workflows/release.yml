@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+          lfs: true
       - name: Compare tag name with version string.
         run: |
           # Get the triggered tag name
@@ -31,11 +32,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: './jupyter_frontend/.node-version'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
       - name: Install jupyter frontend dependencies
         run: |
           cd jupyter_frontend
-          npx pnpm install
+          pnpm install
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -45,7 +51,7 @@ jobs:
       - name: Build jupyter frontend
         run: |
           cd jupyter_frontend
-          npm run clean-build
+          pnpm run clean-build
       - name: Build the package
         run: |
           python -m build
