@@ -1,6 +1,7 @@
 import {Button, Col, InputNumber, Radio, Row, Select, SelectProps, Table} from "antd"
 import React, {useState} from "react";
 import {CheckboxChangeEvent} from "antd/es/checkbox";
+import {useIntl} from "react-intl";
 
 type GlitchTestModelSelectProps = {
   value?: number;
@@ -8,16 +9,17 @@ type GlitchTestModelSelectProps = {
 };
 
 const GlitchTestModelSelect: React.FC<GlitchTestModelSelectProps> = ({value, onChange}) => {
+  const intl = useIntl();
   return (
     <Select size={"small"}
             value={value ?? 0}
             style={{minWidth: 100}}
             onChange={onChange}
             options={[
-              {value: 0, label: "Increase"},
-              {value: 1, label: "Decrease"},
-              {value: 2, label: "Random"},
-              {value: 3, label: "Fixed"},
+              {value: 0, label: intl.formatMessage({id: "cracker.config.glitchTest.mode.increase"})},
+              {value: 1, label: intl.formatMessage({id: "cracker.config.glitchTest.mode.decrease"})},
+              {value: 2, label: intl.formatMessage({id: "cracker.config.glitchTest.mode.random"})},
+              {value: 3, label: intl.formatMessage({id: "cracker.config.glitchTest.mode.fixed"})},
             ]}
     />
   );
@@ -46,6 +48,7 @@ interface GlitchTestPropPanelData {
 
 const GlitchTestPropPanel: React.FC<GlitchTestPropPanelData> = ({data, setData}) => {
 
+  const intl = useIntl();
   const updateField = (
     index: number,
     field: keyof GlitchGenerateParam,
@@ -78,23 +81,23 @@ const GlitchTestPropPanel: React.FC<GlitchTestPropPanelData> = ({data, setData})
     dataIndex: 'prop',
     key: 'prop',
   }, {
-    title: 'Mode',
+    title: intl.formatMessage({id: "cracker.config.glitchTest.mode"}),
     dataIndex: 'mode',
     key: 'mode',
   }, {
-    title: 'Start',
+    title: intl.formatMessage({id: "cracker.config.glitchTest.start"}),
     dataIndex: 'start',
     key: 'start',
   }, {
-    title: 'End',
+    title: intl.formatMessage({id: "cracker.config.glitchTest.end"}),
     dataIndex: 'end',
     key: 'end',
   }, {
-    title: 'Step',
+    title: intl.formatMessage({id: "cracker.config.glitchTest.step"}),
     dataIndex: 'step',
     key: 'step',
   }, {
-    title: 'Count',
+    title: intl.formatMessage({id: "cracker.config.glitchTest.count"}),
     dataIndex: 'count',
     key: 'count',
   }];
@@ -177,8 +180,8 @@ const GlitchTestPropPanel: React.FC<GlitchTestPropPanelData> = ({data, setData})
 };
 
 interface GlitchTestPanelOnApplyParam {
-    type: 'vcc' | 'gnd' | 'clock';
-    data: GlitchGenerateParamProps[];
+  type: 'vcc' | 'gnd' | 'clock';
+  data: GlitchGenerateParamProps[];
 }
 
 interface GlitchTestPanelProps {
@@ -372,7 +375,9 @@ const GlitchTestPanel: React.FC<GlitchTestPanelProps> = ({onApply}) => {
             </Radio.Group>
           </Col>
           <Col style={{marginLeft: 'auto'}}>
-            <Button size={"small"} onClick={() => {onApply({type: selected, data: dataMap[selected].data})}}>Apply</Button>
+            <Button size={"small"} onClick={() => {
+              onApply({type: selected, data: dataMap[selected].data})
+            }}>Apply</Button>
           </Col>
         </Row>
         <Row>
