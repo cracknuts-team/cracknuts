@@ -14,6 +14,8 @@ def _get_user_config():
 
 
 def save(user_config):
+    if not os.path.exists(os.path.dirname(_user_config_path)):
+        os.makedirs(os.path.dirname(_user_config_path))
     with open(_user_config_path, "w") as f:
         user_config.write(f)
 
