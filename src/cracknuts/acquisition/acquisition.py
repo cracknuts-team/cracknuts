@@ -14,6 +14,7 @@ import typing
 import numpy as np
 
 from cracknuts import logger
+from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.trace.trace import ZarrTraceDataset, NumpyTraceDataset
 
@@ -53,22 +54,22 @@ class Acquisition(abc.ABC):
     _DATASET_DEFAULT_PATH = "./dataset/"
 
     def __init__(
-        self,
-        cracker: CrackerBasic,
-        trace_count: int = 1000,
-        sample_length: int = -1,
-        sample_offset: int = 0,
-        data_plaintext_length: int | None = None,
-        data_ciphertext_length: int | None = None,
-        data_key_length: int | None = None,
-        data_extended_length: int | None = None,
-        trigger_judge_wait_time: float = 0.05,
-        trigger_judge_timeout: float = 1.0,
-        do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
-        do_error_max_count: int = -1,
-        file_format: str = "zarr",
-        file_path: str = "auto",
-        trace_fetch_interval: float = 0,
+            self,
+            cracker: CrackerBasic,
+            trace_count: int = 1000,
+            sample_length: int = -1,
+            sample_offset: int = 0,
+            data_plaintext_length: int | None = None,
+            data_ciphertext_length: int | None = None,
+            data_key_length: int | None = None,
+            data_extended_length: int | None = None,
+            trigger_judge_wait_time: float = 0.05,
+            trigger_judge_timeout: float = 1.0,
+            do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
+            do_error_max_count: int = -1,
+            file_format: str = "zarr",
+            file_path: str = "auto",
+            trace_fetch_interval: float = 0,
     ):
         """
         :param cracker: The controlled Cracker object.
@@ -241,20 +242,20 @@ class Acquisition(abc.ABC):
         self._on_wave_loaded_callback = callback
 
     def run(
-        self,
-        count: int = 1,
-        sample_length: int = 1024,
-        sample_offset: int = 0,
-        data_plaintext_length: int | None = None,
-        data_ciphertext_length: int | None = None,
-        data_key_length: int | None = None,
-        data_extended_length: int | None = None,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
-        file_format: str | None = "zarr",
-        file_path: str | None = "auto",
+            self,
+            count: int = 1,
+            sample_length: int = 1024,
+            sample_offset: int = 0,
+            data_plaintext_length: int | None = None,
+            data_ciphertext_length: int | None = None,
+            data_key_length: int | None = None,
+            data_extended_length: int | None = None,
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: float | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None,
+            file_format: str | None = "zarr",
+            file_path: str | None = "auto",
     ):
         """
         Start run mode in the background.
@@ -304,16 +305,16 @@ class Acquisition(abc.ABC):
             )
 
     def run_sync(
-        self,
-        count=1,
-        sample_length: int = 1024,
-        sample_offset: int = 0,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
-        file_format: str | None = "zarr",
-        file_path: str | None = "auto",
+            self,
+            count=1,
+            sample_length: int = 1024,
+            sample_offset: int = 0,
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: float | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None,
+            file_format: str | None = "zarr",
+            file_path: str | None = "auto",
     ):
         """
         Start run mode in the foreground, which will cause blocking.
@@ -360,15 +361,15 @@ class Acquisition(abc.ABC):
             self.stop()
 
     def test(
-        self,
-        count=-1,
-        sample_length: int | None = None,
-        sample_offset: int | None = None,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
-        trace_fetch_interval: float = 2.0,
+            self,
+            count=-1,
+            sample_length: int | None = None,
+            sample_offset: int | None = None,
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: float | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None,
+            trace_fetch_interval: float = 2.0,
     ):
         """
         Start test mode in background.
@@ -408,14 +409,14 @@ class Acquisition(abc.ABC):
             )
 
     def test_sync(
-        self,
-        count=-1,
-        sample_length: int | None = None,
-        sample_offset: int | None = None,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
+            self,
+            count=-1,
+            sample_length: int | None = None,
+            sample_offset: int | None = None,
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: float | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None,
     ):
         """
         Start test mode in foreground, which will cause blocking.
@@ -480,24 +481,24 @@ class Acquisition(abc.ABC):
         self._status = self.STATUS_STOPPED
 
     def _run(
-        self,
-        test: bool = True,
-        persistent: bool = False,
-        count: int = 1,
-        sample_length: int | None = None,
-        sample_offset: int | None = None,
-        data_plaintext_length: int | None = None,
-        data_ciphertext_length: int | None = None,
-        data_key_length: int | None = None,
-        data_extended_length: int | None = None,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
-        file_format: str | None = "zarr",
-        file_path: str | None = "auto",
-        trace_fetch_interval: float = 0.1,
-        is_glitch: bool = False,
+            self,
+            test: bool = True,
+            persistent: bool = False,
+            count: int = 1,
+            sample_length: int | None = None,
+            sample_offset: int | None = None,
+            data_plaintext_length: int | None = None,
+            data_ciphertext_length: int | None = None,
+            data_key_length: int | None = None,
+            data_extended_length: int | None = None,
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: float | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None,
+            file_format: str | None = "zarr",
+            file_path: str | None = "auto",
+            trace_fetch_interval: float = 0.1,
+            is_glitch: bool = False,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -524,24 +525,24 @@ class Acquisition(abc.ABC):
         ).start()
 
     def _do_run(
-        self,
-        test: bool = True,
-        persistent: bool = False,
-        count: int = 1,
-        sample_length: int | None = None,
-        sample_offset: int | None = None,
-        data_plaintext_length: int | None = None,
-        data_ciphertext_length: int | None = None,
-        data_key_length: int | None = None,
-        data_extended_length: int | None = None,
-        trigger_judge_wait_time: float | None = None,
-        trigger_judge_timeout: float | None = None,
-        do_error_max_count: int | None = None,
-        do_error_handler_strategy: int | None = None,
-        file_format: str | None = "zarr",
-        file_path: str | None = "auto",
-        trace_fetch_interval: float = 0.1,
-        is_glitch: bool = False,
+            self,
+            test: bool = True,
+            persistent: bool = False,
+            count: int = 1,
+            sample_length: int | None = None,
+            sample_offset: int | None = None,
+            data_plaintext_length: int | None = None,
+            data_ciphertext_length: int | None = None,
+            data_key_length: int | None = None,
+            data_extended_length: int | None = None,
+            trigger_judge_wait_time: float | None = None,
+            trigger_judge_timeout: float | None = None,
+            do_error_max_count: int | None = None,
+            do_error_handler_strategy: int | None = None,
+            file_format: str | None = "zarr",
+            file_path: str | None = "auto",
+            trace_fetch_interval: float = 0.1,
+            is_glitch: bool = False,
     ):
         if self._status > 0:
             self._logger.warning(
@@ -600,7 +601,7 @@ class Acquisition(abc.ABC):
             listener(self._status)
 
     def _loop(
-        self, test: bool = True, persistent: bool = False, file_path: str | None = None, file_format: str = "zarr"
+            self, test: bool = True, persistent: bool = False, file_path: str | None = None, file_format: str = "zarr"
     ):
         do_error_count = 0
         trace_index = 0
@@ -781,13 +782,17 @@ class Acquisition(abc.ABC):
         """
         self.cracker.connect()
 
-    def connect_net(self): ...
+    def connect_net(self):
+        ...
 
-    def config_scrat(self): ...
+    def config_scrat(self):
+        ...
 
-    def config_cracker(self): ...
+    def config_cracker(self):
+        ...
 
-    def pre_init(self): ...
+    def pre_init(self):
+        ...
 
     @abc.abstractmethod
     def init(self):
@@ -797,9 +802,11 @@ class Acquisition(abc.ABC):
         """
         ...
 
-    def _post_init(self): ...
+    def _post_init(self):
+        ...
 
-    def transfer(self): ...
+    def transfer(self):
+        ...
 
     def pre_do(self):
         self.cracker.osc_single()
@@ -834,14 +841,15 @@ class Acquisition(abc.ABC):
             self._logger.error("Do error: %s", e.args)
             return False
 
-    def _post_do(self, index, data): ...
+    def _post_do(self, index, data):
+        ...
 
     def _is_triggered(self):
         _, triggered = self.cracker.osc_is_triggered()
         return triggered
 
     def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
-        if sample_length == -1:
+        if sample_length == -1 or sample_length is None:
             sample_length = self.cracker.get_current_config().osc_sample_length
         config = self.cracker.get_current_config()
 
@@ -855,11 +863,14 @@ class Acquisition(abc.ABC):
             status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
         return wave_dict
 
-    def _pre_finish(self): ...
+    def _pre_finish(self):
+        ...
 
-    def _post_finish(self): ...
+    def _post_finish(self):
+        ...
 
-    def _save_dataset(self): ...
+    def _save_dataset(self):
+        ...
 
     def finish(self):
         pass
@@ -930,6 +941,85 @@ class Acquisition(abc.ABC):
 
     def is_running(self):
         return self._status != self.STATUS_STOPPED
+
+    @staticmethod
+    def simple(
+            cracker: CrackerS1,
+            init_func: typing.Callable[[CrackerS1], None] = lambda cracker: None,
+            do_func: typing.Callable[[CrackerS1, int], dict[str, bytes]] = lambda cracker, count: {},
+            finish_func: typing.Callable[[CrackerS1], None] = lambda cracker: None,
+            **kwargs,
+    ) -> 'Acquisition':
+        """
+        创建一个简单的Acquisition子类实例。
+
+        :param cracker: Cracker实例
+        :type cracker: CrackerS1
+        :param init_func:
+            初始化函数，该函数接受一个CrackerS1实例作为参数，用于在采集开始前进行初始化操作。
+            参数说明：
+                - cracker: (CrackerS1) Cracker实例
+                - 返回值：无
+            示例：
+                cracker.nut_voltage_enable()
+                cracker.nut_voltage(3.3)
+                cracker.nut_clock_enable()
+                cracker.nut_clock_freq('8M')
+                cracker.uart_io_enable()
+                status, ret = cracker.uart_transmit_receive(cmd_set_aes_enc_key + aes_key, timeout=1000, rx_count=6)
+        :type init_func: typing.Callable[[CrackerS1], None]
+        :param do_func:
+            执行函数，具体的采集逻辑实现，该函数接受一个CrackerS1实例和当前采集计数作为参数，返回一个包含采集数据的字典。
+            参数说明：
+                - cracker: (CrackerS1) Cracker实例
+                - count: (int) 当前采集计数，从0开始
+                - 返回值：dict[str, bytes]，包含采集数据的字典，格式如下：
+                  {
+                      "plaintext": 明文数据的字节串,
+                      "ciphertext": 密文数据的字节串,
+                      "key": 密钥数据的字节串（可选）,
+                      "extended": 扩展数据的字节串（可选）,
+                  }
+            示例：
+                def do_func(cracker: CrackerS1, count: int) -> dict[str, bytes]:
+                    plaintext = random.randbytes(aes_data_len)
+                    status, ciphertext = cracker.uart_transmit_receive(cmd_aes_enc + plaintext_data, rx_count= 12)
+                    return {
+                        "plaintext": plaintext,
+                        "ciphertext": ciphertext,
+                        "key": aes_key,
+                    }
+        :type do_func: typing.Callable[[CrackerS1, int], dict[str, bytes]]
+        :param finish_func:
+            结束后处理函数，该函数接受一个CrackerS1实例作为参数，用于在采集结束后进行清理操作。
+            参数说明：
+                - cracker: (CrackerS1) Cracker实例
+                - 返回值：无
+            示例：
+                def finish_func(cracker: CrackerS1) -> None:
+                    cracker.nut_voltage_disable()
+                    cracker.nut_clock_disable()
+                    cracker.uart_io_disable()
+        :type finish_func: typing.Callable[[CrackerS1], None]
+        :param kwargs: 其他Acquisition的关键字参数
+        :type kwargs: dict
+        :return: Acquisition实例
+        """
+        class AnonymousAcquisition(Acquisition):
+            def __init__(self, **_kwargs):
+                _kwargs['cracker'] = cracker
+                super().__init__(**_kwargs)
+
+            def init(self):
+                init_func(cracker)
+
+            def do(self, count: int):
+                return do_func(cracker, count)
+
+            def finish(self):
+                finish_func(cracker)
+
+        return AnonymousAcquisition(**kwargs)
 
     @staticmethod
     def builder():
