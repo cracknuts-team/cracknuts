@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 import importlib.util
 from cracknuts.cracker import protocol
-from cracknuts.cracker.cracker_basic import ConfigBasic
+from cracknuts.cracker.cracker_basic import ConfigBasic, connection_status_check
 from cracknuts.cracker.cracker_s1 import ConfigS1, CrackerS1
 from cracknuts.cracker.protocol import Command
 
@@ -79,15 +79,7 @@ class CrackerG1(CrackerS1):
         operator_port: int = None,
     ):
         super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
-        # self._glitch_test_params = None
-
-        # df = pd.read_csv(
-        #     os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "glitch", "voltage_map", "gnd_vnormal_voltage.csv")
-        # )
-        # codes = df["code"].map(lambda x: int(x, 16)).values
-        # voltages = df["voltage"].values
-        # self.interp_func_cv = interp1d(codes, voltages, kind="linear", fill_value="extrapolate")
-        # self.interp_func_vc = interp1d(voltages, codes, kind="linear", fill_value="extrapolate")
+        self._SYS_CLK_PERIOD_S = 6.25e-9
 
     @staticmethod
     def _get_dac_code_from_voltage(voltage: float, interp_func: interp1d) -> int:
@@ -284,10 +276,61 @@ class CrackerG1(CrackerS1):
             v = round(self._get_voltage_from_dac_code(v, _vcc_interp_func_vc), 1)
         return v
 
+    @connection_status_check
     def get_current_config(self) -> ConfigG1 | None:
         cur_cfg = typing.cast(ConfigG1, super().get_current_config())
-        cur_cfg.nut_voltage = cur_cfg.glitch_vcc_normal
+        cur_cfg.nut_voltage = round(self._get_cracker_nut_vcc_voltage(), 1)
+        cur_cfg.nut_clock = round(self._get_cracker_nut_clock())
+        cur_cfg.nut_clock_enable = self._get_cracker_nut_clock_enabled()
         return cur_cfg
+
+    def _get_cracker_nut_clock(self) -> float:
+        """
+        获取cracker当前nut时钟频率，单位kHz。
+        :return: nut时钟频率，单位kHz
+        :rtype: float
+        """
+        s, r = self.register_read(base_address=0x43c10000, offset=0x1D0)
+        if s != protocol.STATUS_OK:
+            return 0.0
+        try:
+            clock_len = struct.unpack('>I', r)[0]
+            return 1 / (clock_len * self._SYS_CLK_PERIOD_S) / 1000
+        except struct.error as e:
+            self._logger.error(f"Unpack nut clock failed: {e}")
+            return 0.0
+
+    def _get_cracker_nut_vcc_voltage(self) -> float:
+        """
+        获取cracker当前nut电压，单位V。
+        :return: nut电压，单位V
+        :rtype: float
+        """
+        s, r = self.register_read(base_address=0x43c10000, offset=0x150)
+        if s != protocol.STATUS_OK:
+            return 0.0
+        try:
+            dac_code = struct.unpack('>I', r)[0]
+            return self._get_voltage_from_dac_code(dac_code, _vcc_interp_func_cv)
+        except struct.error as e:
+            self._logger.error(f"Unpack nut voltage failed: {e}")
+            return 0.0
+
+    def _get_cracker_nut_clock_enabled(self) -> bool:
+        """
+        获取cracker当前nut时钟是否enabled。
+        :return: nut时钟是否enabled
+        :rtype: bool
+        """
+        s, r = self.register_read(base_address=0x43c10000, offset=0x1C4)
+        if s != protocol.STATUS_OK:
+            return False
+        try:
+            enabled = struct.unpack('>I', r)[0]
+            return enabled == 0
+        except struct.error as e:
+            self._logger.error(f"Unpack nut clock enabled failed: {e}")
+            return False
 
     def get_default_config(self) -> ConfigS1:
         return ConfigG1()
@@ -371,7 +414,6 @@ class CrackerG1(CrackerS1):
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        super().nut_clock_freq(clock) # 临时代码 兼容 server 端的 clock 判断逻辑
         wave_80m = [
             3.2,
             0

@@ -9,7 +9,9 @@ from enum import Enum
 
 from traitlets import traitlets
 
-from cracknuts import Acquisition, CrackerG1, logger
+from cracknuts import logger
+from cracknuts.acquisition.acquisition import Acquisition
+from cracknuts.cracker.cracker_g1 import CrackerG1
 from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition, GlitchDoData, GlitchAcquisitionBuilder
 from cracknuts.jupyter.cracker_s1_panel import CrackerPanelWidget
 from cracknuts.jupyter.acquisition_panel import GlitchAcquisitionPanelWidget

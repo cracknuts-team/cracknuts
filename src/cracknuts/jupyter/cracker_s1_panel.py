@@ -7,7 +7,7 @@ from typing import Any
 
 from traitlets import traitlets
 
-from cracknuts import logger, CrackerG1
+from cracknuts import logger
 from cracknuts.cracker.cracker_s1 import CrackerS1, ConfigS1
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.ui_sync import ConfigProxy, observe_interceptor
@@ -119,7 +119,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         super().__init__(*args, **kwargs)
         self._logger = logger.get_logger(self)
         self.observe: bool = True
-        self.cracker: CrackerS1 | CrackerG1 | None = None
+        self.cracker: CrackerS1 | None = None
         if "cracker" in kwargs:
             self.cracker = kwargs["cracker"]
         if self.cracker is None:

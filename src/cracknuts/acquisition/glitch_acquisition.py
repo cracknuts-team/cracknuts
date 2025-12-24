@@ -96,7 +96,7 @@ class VCCGlitchTestResult(GlitchTestResult):
 class GlitchAcquisition(Acquisition, ABC):
     def __init__(
         self,
-        cracker: CrackerBasic,
+        cracker: CrackerG1,
         trace_count: int = 1000,
         shadow_trace_count: int = 1000,
         sample_length: int = -1,
@@ -131,7 +131,7 @@ class GlitchAcquisition(Acquisition, ABC):
             trace_fetch_interval,
         )
         self._shadow_trace_count = shadow_trace_count
-        self._cracker_g1 = typing.cast(CrackerG1, self.cracker)
+        self.cracker: CrackerG1 = cracker
         self._glitch_result = None
         self._glitch_param_generator: AbstractGlitchParamGenerator | None = None
         self._current_glitch_param = None
