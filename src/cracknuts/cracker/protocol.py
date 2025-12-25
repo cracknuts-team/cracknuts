@@ -164,6 +164,10 @@ class Command:
 
     GET_BITSTREAM_VERSION = 0x0007
 
+    PL_IO_RESET = 0x0300
+    PL_IO_ENABLE = 0x0301
+    PL_IO_SEND_WAVE = 0x0302
+
 
 def _build_req_message(command: int, rfu: int = 0, payload: bytes | None = None):
     content = struct.pack(

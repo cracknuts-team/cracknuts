@@ -1878,3 +1878,45 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">B", enable)
         self._logger.debug(f"cracker_nut_reset_io_enable payload: {payload}")
         return self.send_with_command(protocol.Command.NUT_RESET_IO_ENABLE, payload=payload)
+
+    def pl_io_reset(self):
+        """
+        复位所有PL的IO口状态为输入高阻态。
+        """
+        payload = None
+        self._logger.debug(f"cracker_pl_io_reset payload: {payload}")
+        return self.send_with_command(protocol.Command.PL_IO_RESET, payload=payload)
+    
+    def pl_io_config(
+            self,
+            enable: list[bool],
+            direction: list[int],
+            output_wave: list[list[tuple[int, int]]|None],
+            input_enable: list[int],
+            input_mode: int
+        ):
+        """
+        pl_io_config 的 Docstring
+        
+        :param enable: 五个PL IO口使能配置， 1 启用 0 禁用
+        :type enable: list[int]
+        :param direction: 五个PL IO口方向配置，1 输入 0 输出
+        :type direction: list[int]
+        :param output_wave: 作为输出时，五个PL IO口的波形配置，每个PL IO口的波形配置为一个长度为4的列表，
+                            列表中每个元素为一个元组，表示高电平持续时间和低电平持续时间，单位为10纳秒。
+                            如果某个PL IO口未启用或配置为输入，则对应的波形配置为None。
+        :type output_wave: list[list[tuple[int, int]] | None]
+        :param input_enable: 五个PL IO口输入使能配置，1 使能 0 禁用
+        :type input_enable: list[int]
+        :param input_mode: 所有的输入模式的PL IO接口其判断触发的逻辑 1 与 0 或
+        :type input_mode: int
+        """
+        ...
+
+    def pl_io_send_wave(self):
+        """
+        启动PL IO口波形输出。
+        """
+        payload = None
+        self._logger.debug(f"cracker_pl_io_send_wave payload: {payload}")
+        return self.send_with_command(protocol.Command.PL_IO_SEND_WAVE, payload=payload)

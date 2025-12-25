@@ -52,6 +52,8 @@ class Acquisition(abc.ABC):
 
     _DATASET_DEFAULT_PATH = "./dataset/"
 
+    MAX_WAVE_LENGTH = 32_000_000
+
     def __init__(
         self,
         cracker: CrackerBasic,
@@ -851,8 +853,20 @@ class Acquisition(abc.ABC):
         if config.osc_channel_1_enable:
             enable_channels.append(1)
         wave_dict = {}
+        
         for c in enable_channels:
-            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
+            _count = sample_length // self.MAX_WAVE_LENGTH
+            _left = sample_length % self.MAX_WAVE_LENGTH
+            _offset = offset
+            waves = []
+            for _ in range(_count):
+                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, self.MAX_WAVE_LENGTH)
+                waves.append(_wave)
+                _offset += self.MAX_WAVE_LENGTH
+            if _left > 0:
+                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, _left)
+                waves.append(_wave)
+            wave_dict[c] = np.concatenate(waves)
         return wave_dict
 
     def _pre_finish(self): ...
@@ -959,7 +973,7 @@ class AcquisitionBuilder:
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[], None]):
+    def init(self, init_function: typing.Callable[[CrackerBasic], None]):
         """
         The init function of acquisition.
 
