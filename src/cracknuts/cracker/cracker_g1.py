@@ -25,6 +25,7 @@ class ConfigG1(ConfigS1):
         self.glitch_vcc_config_count = 1
         self.glitch_vcc_config_delay = 0
         self.glitch_vcc_config_repeat = 1
+
         self.glitch_gnd_arm = False
         self.glitch_gnd_normal = 0
         self.glitch_gnd_config_wait = 0
@@ -32,16 +33,23 @@ class ConfigG1(ConfigS1):
         self.glitch_gnd_config_count = 1
         self.glitch_gnd_config_delay = 0
         self.glitch_gnd_config_repeat = 1
-        self.glitch_clock_arm = False
-        self.glitch_clock_len_normal = 0
-        self.glitch_clock_wave_normal = 0
-        self.glitch_clock_config_len_glitch = 0
-        self.glitch_clock_config_wave_glitch = 0
-        self.glitch_clock_config_count = 0
-        self.glitch_clock_config_delay = 0
-        self.glitch_clock_config_repeat = 0
-        self.glitch_clock_normal = 0
 
+        self.glitch_clock_arm: bool = False
+        self.glitch_clock_len_normal: int = 20
+        self.glitch_clock_wave_normal: list[float] = [
+            3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ] # 默认时钟8mhz
+        self.glitch_clock_config_len_glitch: int = 40
+        self.glitch_clock_config_wave_glitch: list[float] = [
+            3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ] # 默认glitch示例时钟4mhz
+        self.glitch_clock_config_wait: int = 1
+        self.glitch_clock_config_count: int = 2
+        self.glitch_clock_config_delay: int = 2
+        self.glitch_clock_config_repeat: int = 1
+        self.glitch_clock_enable: bool = True
 
 class CommandG1(Command):
     GLITCH_VCC_ARM = 0x0310
@@ -336,7 +344,50 @@ class CrackerG1(CrackerS1):
         return ConfigG1()
 
     def write_config_to_cracker(self, config: ConfigG1):
-        super().write_config_to_cracker(config)
+        self._osc_set_analog_all_channel_enable({0: config.osc_channel_0_enable, 1: config.osc_channel_1_enable})
+        self.osc_analog_gain(0, config.osc_channel_0_gain)
+        self.osc_analog_gain(1, config.osc_channel_1_gain)
+        self.osc_sample_length(config.osc_sample_length)
+        self.osc_sample_delay(config.osc_sample_delay)
+        self.osc_sample_clock(config.osc_sample_clock)
+        self.osc_sample_clock_phase(config.osc_sample_phase)
+        self.osc_trigger_source(config.osc_trigger_source)
+        self.osc_trigger_mode(config.osc_trigger_mode)
+        self.osc_trigger_edge(config.osc_trigger_edge)
+        self.osc_trigger_level(config.osc_trigger_edge_level)
+
+        self.spi_config(
+            config.nut_spi_speed,
+            config.nut_spi_cpol,
+            config.nut_spi_cpha,
+            config.nut_spi_csn_auto,
+            config.nut_spi_csn_delay,
+        )
+        self._spi_enable(config.nut_spi_enable)
+
+        self.uart_config(
+            config.nut_uart_baudrate,
+            config.nut_uart_bytesize,
+            config.nut_uart_parity,
+            config.nut_uart_stopbits,
+        )
+        self._uart_io_enable(config.nut_uart_enable)
+
+        self.i2c_config(config.nut_i2c_dev_addr, config.nut_i2c_speed)
+        self._i2c_enable(config.nut_i2c_enable)
+
+        ## Clock glitching settings ...
+        # 要先设置时钟（或者说是 glitch clock normal ）
+        # 然后设置电压（或者说是 glitch vcc normal）因为nut需要先有时钟后上电才能正常工作
+        self.glitch_clock_normal(config.glitch_clock_wave_normal)
+        self.glitch_clock_config(
+            config.glitch_clock_config_wave_glitch,
+            config.glitch_clock_config_wait,
+            config.glitch_clock_config_repeat,
+            config.glitch_clock_config_delay
+        )
+        self._nut_set_clock_enable(config.nut_clock_enable)
+
         self.glitch_vcc_normal(config.glitch_vcc_normal)
         self.glitch_vcc_config(
             config.glitch_gnd_config_wait,
@@ -345,6 +396,8 @@ class CrackerG1(CrackerS1):
             config.glitch_vcc_config_delay,
             config.glitch_vcc_config_repeat,
         )
+        self._nut_set_enable(config.nut_enable)
+
         self.glitch_gnd_normal(config.glitch_gnd_normal)
         self.glitch_gnd_config(
             config.glitch_gnd_config_wait,
@@ -353,6 +406,7 @@ class CrackerG1(CrackerS1):
             config.glitch_gnd_config_delay,
             config.glitch_gnd_config_repeat,
         )
+
 
     # def set_glitch_test_params(self, param):
     #     self._glitch_test_params = param
