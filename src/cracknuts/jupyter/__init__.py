@@ -4,7 +4,7 @@ from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.acquisition import Acquisition
 
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
-from cracknuts.jupyter.cracker_s1_panel import CrackerS1PanelWidget
+from cracknuts.jupyter.cracker_s1_panel import CrackerPanelWidget
 from cracknuts.jupyter.cracknuts_panel import CracknutsPanelWidget
 from cracknuts.jupyter.trace_panel import TracePanelWidget
 from cracknuts.jupyter.scope_panel import ScopePanelWidget
@@ -39,7 +39,7 @@ def display_acquisition_panel(acq: "Acquisition"):
 
 
 def display_cracker_panel(cracker: "CrackerBasic"):
-    cpw = CrackerS1PanelWidget(cracker=cracker)
+    cpw = CrackerPanelWidget(cracker=cracker)
     cpw.read_config_from_cracker()
     cpw.listen_cracker_config()
     return cpw

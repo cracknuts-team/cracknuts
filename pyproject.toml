@@ -17,6 +17,8 @@ dependencies = [
     "zarr~=2.18.2",
     "packaging~=24.1",
     "anywidget~=0.9.13",
+    "pandas~=2.3.3",
+    "scipy~=1.16.2"
 ]
 
 [project.optional-dependencies]
@@ -35,12 +37,12 @@ cracknuts = "cracknuts.__main__:main"
 version = { attr = "cracknuts.__version__" }
 
 [tool.setuptools.package-data]
-"cracknuts" = ["firmware/*", "jupyter/static/*", "template/**/*", "tutorials/**/*"]
+"cracknuts" = ["firmware/*", "jupyter/static/*", "template/**/*", "tutorials/**/*", "gnd_vnormal_voltage.csv"]
 
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-exclude = ["demo", "tests", "docs"]
+exclude = ["demo", "tests", "docs", "**/*.csv"]
 
 [tool.ruff.lint]
 extend-select = [

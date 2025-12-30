@@ -98,7 +98,7 @@ class ScopeAcquisition:
             elif self._status == 2:
                 while self._status == 2:
                     self._cracker.osc_single()
-                    if self._cracker.osc_is_triggered():
+                    if self._is_triggered():
                         self._last_waves = self._get_waves()
                         self.stop()
                     time.sleep(self._trigger_judge_wait_time)
@@ -109,7 +109,7 @@ class ScopeAcquisition:
                     if time.time() - trigger_jude_start_time > self._repeat_interval:
                         self._cracker.osc_force()
                     else:
-                        if self._cracker.osc_is_triggered():
+                        if self._is_triggered():
                             self._last_waves = self._get_waves()
                             break
                         time.sleep(self._trigger_judge_wait_time)
@@ -139,3 +139,7 @@ class ScopeAcquisition:
 
     def get_last_wave(self) -> dict[int, np.ndarray]:
         return self._last_waves
+
+    def _is_triggered(self):
+        _, triggered = self._cracker.osc_is_triggered()
+        return triggered

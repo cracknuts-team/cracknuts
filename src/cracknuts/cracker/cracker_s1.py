@@ -103,16 +103,20 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 self._logger.warning(f"Parse config bytes error: {k} is not a valid config key.")
             else:
                 default_value = getattr(config, k)
-                if k == "nut_voltage":
-                    v = v / 1000
-                elif k == "nut_spi_speed":
-                    v = round(100e6 / 2 / v, 2)
-                elif default_value is not None and isinstance(default_value, Enum):
+                v = self._parse_config_special_case(k, v)
+                if default_value is not None and isinstance(default_value, Enum):
                     v = default_value.__class__(v)
 
                 setattr(config, k, v)
 
         return config
+
+    def _parse_config_special_case(self, k, v):
+        if k == "nut_voltage":
+            v = v / 1000
+        elif k == "nut_spi_speed":
+            v = round(100e6 / 2 / v, 2)
+        return v
 
     def _get_config_bytes_format(self) -> tuple[dict[str, str], ConfigS1]:
         return (
@@ -368,14 +372,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         Set trigger source.
 
-        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P') or ('Nut'、'ChA'、'ChB'、'Protocol')
-                       or a number in 0, 1, 2, 3, represent Nut, Channel A, Channel B, and Protocol, respectively.
+        :param source: Trigger source: It can be one of ('N', 'A', 'B', 'P', 'R', 'V')
+                       or ('Nut', 'ChA', 'ChB', 'Protocol', 'Reset', 'Voltage') or a number in 0 1 2 3 4 5 represent
+                       Nut, Channel A, Channel B, Protocol, Reset and Voltage respectively.
         :type source: int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
-        sources1 = ("N", "A", "B", "P")
-        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL")
+        sources1 = ("N", "A", "B", "P", "R", "V")
+        sources2 = ("NUT", "CHA", "CHB", "PROTOCOL", "RESET", "VOLTAGE")
         if isinstance(source, str):
             source = source.upper()
             if source in sources1:
@@ -389,8 +394,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 )
                 return self.NON_PROTOCOL_ERROR, None
         else:
-            if source > 3:
-                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3)")
+            if source > 5:
+                self._logger.error("Invalid trigger source, it must be one of (0, 1, 2, 3, 4, 5)")
                 return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">B", source)
         self._logger.debug(f"osc_trigger_source payload: {payload.hex()}")
@@ -556,6 +561,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             clock = clock.upper()
             if clock == "65M":
                 clock = 65000
+            elif clock == "64M":
+                clock = 64000
             elif clock == "48M":
                 clock = 48000
             elif clock == "40M":
@@ -570,10 +577,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 if re.match(r"^\d+$", clock):
                     clock = int(clock)
                 else:
-                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 40M or 24M or 12M or 8M")
+                    self._logger.error(
+                        "UnSupport osc sample rate, it should in " "65M or 64M or 48M or 40M or 24M or 12M or 8M"
+                    )
                     return self.NON_PROTOCOL_ERROR, None
-        if clock not in (65000, 48000, 40000, 24000, 12000, 8000, 4000):
-            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 40000, 24000, 12000, 8000)")
+        if clock not in (65000, 64000, 48000, 40000, 24000, 12000, 8000, 4000):
+            self._logger.error(
+                "UnSupport osc sample clock, it should in " "(65000, 64000, 48000, 40000, 24000, 12000, 8000, 4000)"
+            )
             return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">I", clock)
         self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
@@ -582,66 +593,6 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.osc_sample_clock = clock
 
         return status, None
-
-    @connection_status_check
-    def osc_sample_clock2(self, clock: int | str) -> tuple[int, None]:
-        """
-        Set osc sample rate
-
-        :param clock: The sample rate in kHz can be one of (65000, 48000, 24000, 12000, 8000)
-                      or a string in (65M, 48M, 24M, 12M, 8M).
-        :type clock: int | str
-        :return: The device response status
-        :rtype: tuple[int, None]
-        """
-        # const
-        # MD_OFFSET: u32 = 0x200;
-        # const
-        # D0_OFFSET: u32 = 0x208;
-
-        if isinstance(clock, str):
-            m = re.match(r"^(\d+)([mM])?$", clock)
-            if m:
-                clock = int(m.group(1)) * 1000
-            else:
-                self._logger.error("Input format error, it should be a number or a string ending with M.")
-                return self.NON_PROTOCOL_ERROR, None
-        if clock not in (65000, 48000, 40000, 24000, 12000, 8000, 4000):
-            self._logger.error(
-                "UnSupport osc sample clock, it should in (65000, 48000, 40000, 24000, 12000, 8000) "
-                "or a string in (65M, 48M, 40M, 24M, 12M, 8M)."
-            )
-            return self.NON_PROTOCOL_ERROR, None
-        if clock == 4000:
-            md, d0 = 12293, 120
-        elif clock == 8000:
-            md, d0 = 12293, 60
-        elif clock == 12000:
-            md, d0 = 12293, 40
-        elif clock == 24000:
-            md, d0 = 12293, 20
-        elif clock == 40000:
-            md, d0 = 12293, 12
-        elif clock == 48000:
-            md, d0 = 12293, 10
-        elif clock == 64000:
-            md, d0 = 8197, 5
-        elif clock == 65000:
-            md, d0 = 9989, 6
-        else:
-            md, d0 = 0, 0
-        s, r = self.register_write(base_address=0x43C00000, offset=0x200, data=md)
-        if s != protocol.STATUS_OK:
-            return s, r
-        s, r = self.register_write(base_address=0x43C00000, offset=0x208, data=d0)
-        if s != protocol.STATUS_OK:
-            return s, r
-        s, r = self.register_write(base_address=0x43C00000, offset=0x25C, data=0x3)
-        if s != protocol.STATUS_OK:
-            return s, r
-
-        self._config.osc_sample_clock = clock
-        return protocol.STATUS_OK, None
 
     @connection_status_check
     def osc_analog_gain(self, channel: int | str, gain: int) -> tuple[int, None]:
@@ -817,7 +768,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         """
         if isinstance(clock, str):
             clock = clock.upper()
-            if clock == "24M":
+            if clock == "64M":
+                clock = 64000
+            elif clock == "24M":
                 clock = 24000
             elif clock == "12M":
                 clock = 12000
@@ -826,9 +779,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             elif clock == "4M":
                 clock = 4000
             else:
-                self._logger.error(f"Unknown clock type: {clock}, 24M or 12M or 8M or 4M")
+                self._logger.error(f"Unknown clock type: {clock}, 64M or 24M or 12M or 8M or 4M")
                 return protocol.STATUS_ERROR, None
-
+        validate_nut_clock = (64000, 24000, 12000, 8000, 4000)
+        if clock not in validate_nut_clock:
+            self._logger.error(f"UnSupport osc clock, it should in {validate_nut_clock}")
         payload = struct.pack(">I", clock)
         self._logger.debug(f"nut_set_clock payload: {payload.hex()}")
         status, res = self.send_with_command(protocol.Command.NUT_CLOCK, payload=payload)

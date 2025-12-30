@@ -33,6 +33,8 @@ const AcquisitionPanel: React.FC = () => {
       model.send({source: "acqStatusButton", event: "onChange", args: {status: "test"}});
     } else if (status == 2) {
       model.send({source: "acqStatusButton", event: "onChange", args: {status: "run"}});
+    // } else if (status == 3) {
+    //   model.send({source: "acqStatusButton", event: "onChange", args: {status: "glitch_test"}});
     } else {
       // stop
       model.send({source: "acqStatusButton", event: "onChange", args: {status: "stop"}});
@@ -78,12 +80,15 @@ const AcquisitionPanel: React.FC = () => {
                 }}
                 size={"small"}
               >
-                <Radio.Button value={1} disabled={acqStatus == 2 || acqStatus == -2 || checkFrontBackStatusSync()}>
+                <Radio.Button value={1} disabled={acqStatus == 2 || acqStatus == -2 || acqStatus == -3 || checkFrontBackStatusSync()}>
                   <FormattedMessage id={"acquisition.test"}/>
                 </Radio.Button>
                 <Radio.Button value={2} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>
                   <FormattedMessage id={"acquisition.run"}/>
                 </Radio.Button>
+                {/*<Radio.Button value={3} disabled={acqStatus == 1 || acqStatus == -1 || checkFrontBackStatusSync()}>*/}
+                {/*  Glitch Test*/}
+                {/*</Radio.Button>*/}
                 <Radio.Button value={-1} disabled={acqStatus == 0 || checkFrontBackStatusSync()}>
                   <FormattedMessage id={"acquisition.pause"}/>
                 </Radio.Button>
@@ -108,8 +113,8 @@ const AcquisitionPanel: React.FC = () => {
                 size={"small"}
                 value={triggerJudgeWaitTime}
                 addonAfter={intl.formatMessage({id: "cracker.config.unit.second"})}
-                min={0.05}
-                step={0.01}
+                min={0.001}
+                step={0.001}
                 onChange={(v) => {
                   setTriggerJudgeWaitTime(Number(v));
                 }}
@@ -180,7 +185,7 @@ const AcquisitionPanel: React.FC = () => {
               {(acqStatus == 1 || acqStatus == -1) && (
                 <Progress percent={100} showInfo={false} steps={1} size={20} strokeColor={['#87d068']}/>
               )}
-              {(acqStatus == 2 || acqStatus == -2 || (acqStatus == 0 && acqRunProgress["total"] != -1)) && (
+              {(acqStatus == 2 || acqStatus == -2 || acqStatus == 3 || acqStatus == -3 || (acqStatus == 0 && acqRunProgress["total"] != -1)) && (
                 <Progress strokeColor={conicColors} steps={5} size={"default"}
                           percent={acqRunProgress["total"] > 0 ? (acqRunProgress["finished"] / acqRunProgress["total"]) * 100 : 100}
                           status={"active"}

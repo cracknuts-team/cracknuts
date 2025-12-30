@@ -157,7 +157,7 @@ class MockCracker:
 
     @_handler(protocol.Command.OSC_IS_TRIGGERED)
     def osc_is_trigger(self, payload: bytes) -> tuple[int, bytes | None]:
-        time.sleep(0.05)  # Simulate device I/O operations.
+        time.sleep(0.01)  # Simulate device I/O operations.
         return protocol.STATUS_OK, int.to_bytes(4, 4, "big")
 
     @_handler(protocol.Command.OSC_FORCE, has_payload=False)

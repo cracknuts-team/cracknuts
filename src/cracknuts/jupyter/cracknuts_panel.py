@@ -12,15 +12,15 @@ import traitlets
 from cracknuts.cracker.cracker_g1 import CrackerG1
 from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
-from cracknuts.jupyter.cracker_s1_panel import CrackerS1PanelWidget
+from cracknuts.jupyter.cracker_s1_panel import CrackerPanelWidget
 from cracknuts.jupyter.panel import MsgHandlerPanelWidget
 from cracknuts.jupyter.scope_panel import ScopePanelWidget
 from cracknuts.utils import user_config
 
 
-class CracknutsPanelWidget(CrackerS1PanelWidget, AcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
+class CracknutsPanelWidget(CrackerPanelWidget, AcquisitionPanelWidget, ScopePanelWidget, MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackNutsPanelWidget.js"
-    _css = ""
+    _css = pathlib.Path(__file__).parent / "static" / "ScopePanelWidget.css"
 
     cracker_model = traitlets.Unicode("s1").tag(sync=True)
     language = traitlets.Unicode("en").tag(sync=True)

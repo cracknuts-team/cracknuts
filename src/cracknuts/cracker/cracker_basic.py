@@ -512,11 +512,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     f"{magic}, {version}, {direction}, 0x{status:04X}, {length}"
                 )
             if length == 0:
-                return status, None
-            resp_payload = self._recv(length)
+                resp_payload = None
+            else:
+                resp_payload = self._recv(length)
             if status != protocol.STATUS_OK:
                 try:
-                    resp_payload_str = resp_payload.decode("utf-8")
+                    resp_payload_str = resp_payload.decode("utf-8") if resp_payload is not None else ''
                 except UnicodeDecodeError:
                     resp_payload_str = hex_util.get_hex(resp_payload, max_len=len(resp_payload))
                 req_command, req_payload = protocol.unpack_send_message(message)
@@ -526,7 +527,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     f"Command {f'0x{req_command:04X}' if req_command is not None else 'None'} "
                     f"with payload {hex_util.get_hex(req_payload, max_len=len(req_payload))} "
                     f"received a non-OK response with status code 0x{status:04X}, "
-                    f"and payload {resp_payload_str}."
+                    f"and payload [{resp_payload_str}]."
                 )
             else:
                 if self._logger.isEnabledFor(logging.DEBUG):
