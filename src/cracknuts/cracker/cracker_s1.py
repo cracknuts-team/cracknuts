@@ -565,6 +565,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 clock = 64000
             elif clock == "48M":
                 clock = 48000
+            elif clock == "40M":
+                clock = 40000
             elif clock == "24M":
                 clock = 24000
             elif clock == "12M":
@@ -575,10 +577,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 if re.match(r"^\d+$", clock):
                     clock = int(clock)
                 else:
-                    self._logger.error("UnSupport osc sample rate, it should in 65M or 64M or 48M or 24M or 12M or 8M")
+                    self._logger.error(
+                        "UnSupport osc sample rate, it should in " "65M or 64M or 48M or 40M or 24M or 12M or 8M"
+                    )
                     return self.NON_PROTOCOL_ERROR, None
-        if clock not in (65000, 64000, 48000, 24000, 12000, 8000, 4000):
-            self._logger.error("UnSupport osc sample clock, it should in (65000, 64000, 48000, 24000, 12000, 8000)")
+        if clock not in (65000, 64000, 48000, 40000, 24000, 12000, 8000, 4000):
+            self._logger.error(
+                "UnSupport osc sample clock, it should in " "(65000, 64000, 48000, 40000, 24000, 12000, 8000, 4000)"
+            )
             return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">I", clock)
         self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
