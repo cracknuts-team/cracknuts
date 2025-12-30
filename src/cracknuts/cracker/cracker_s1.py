@@ -558,6 +558,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 clock = 65000
             elif clock == "48M":
                 clock = 48000
+            elif clock == "40M":
+                clock = 40000
             elif clock == "24M":
                 clock = 24000
             elif clock == "12M":
@@ -568,10 +570,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 if re.match(r"^\d+$", clock):
                     clock = int(clock)
                 else:
-                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 24M or 12M or 8M")
+                    self._logger.error("UnSupport osc sample rate, it should in 65M or 48M or 40M or 24M or 12M or 8M")
                     return self.NON_PROTOCOL_ERROR, None
-        if clock not in (65000, 48000, 24000, 12000, 8000, 4000):
-            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 24000, 12000, 8000)")
+        if clock not in (65000, 48000, 40000, 24000, 12000, 8000, 4000):
+            self._logger.error("UnSupport osc sample clock, it should in (65000, 48000, 40000, 24000, 12000, 8000)")
             return self.NON_PROTOCOL_ERROR, None
         payload = struct.pack(">I", clock)
         self._logger.debug(f"osc_sample_clock_rate payload: {payload.hex()}")
@@ -580,6 +582,66 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             self._config.osc_sample_clock = clock
 
         return status, None
+
+    @connection_status_check
+    def osc_sample_clock2(self, clock: int | str) -> tuple[int, None]:
+        """
+        Set osc sample rate
+
+        :param clock: The sample rate in kHz can be one of (65000, 48000, 24000, 12000, 8000)
+                      or a string in (65M, 48M, 24M, 12M, 8M).
+        :type clock: int | str
+        :return: The device response status
+        :rtype: tuple[int, None]
+        """
+        # const
+        # MD_OFFSET: u32 = 0x200;
+        # const
+        # D0_OFFSET: u32 = 0x208;
+
+        if isinstance(clock, str):
+            m = re.match(r"^(\d+)([mM])?$", clock)
+            if m:
+                clock = int(m.group(1)) * 1000
+            else:
+                self._logger.error("Input format error, it should be a number or a string ending with M.")
+                return self.NON_PROTOCOL_ERROR, None
+        if clock not in (65000, 48000, 40000, 24000, 12000, 8000, 4000):
+            self._logger.error(
+                "UnSupport osc sample clock, it should in (65000, 48000, 40000, 24000, 12000, 8000) "
+                "or a string in (65M, 48M, 40M, 24M, 12M, 8M)."
+            )
+            return self.NON_PROTOCOL_ERROR, None
+        if clock == 4000:
+            md, d0 = 12293, 120
+        elif clock == 8000:
+            md, d0 = 12293, 60
+        elif clock == 12000:
+            md, d0 = 12293, 40
+        elif clock == 24000:
+            md, d0 = 12293, 20
+        elif clock == 40000:
+            md, d0 = 12293, 12
+        elif clock == 48000:
+            md, d0 = 12293, 10
+        elif clock == 64000:
+            md, d0 = 8197, 5
+        elif clock == 65000:
+            md, d0 = 9989, 6
+        else:
+            md, d0 = 0, 0
+        s, r = self.register_write(base_address=0x43C00000, offset=0x200, data=md)
+        if s != protocol.STATUS_OK:
+            return s, r
+        s, r = self.register_write(base_address=0x43C00000, offset=0x208, data=d0)
+        if s != protocol.STATUS_OK:
+            return s, r
+        s, r = self.register_write(base_address=0x43C00000, offset=0x25C, data=0x3)
+        if s != protocol.STATUS_OK:
+            return s, r
+
+        self._config.osc_sample_clock = clock
+        return protocol.STATUS_OK, None
 
     @connection_status_check
     def osc_analog_gain(self, channel: int | str, gain: int) -> tuple[int, None]:
