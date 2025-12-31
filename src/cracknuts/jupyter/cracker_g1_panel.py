@@ -84,6 +84,12 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
             return None # ignore, already processed by glitch_clock_wave_normal
         elif name == "glitch_clock_config_len_glitch":
             return None # ignore, already processed by glitch_clock_wave_glitch
+        elif name == "glitch_clock_config_wave_glitch":
+            self.glitch_clock_config_wave_glitch = typing.cast(list[int], value)
+            self.nut_clock = self.get_glitch_clock_normal_rate()
+            self.glitch_clock_rate = f"{round(self.nut_clock / 1000, 2)}M"
+        elif name in ("glitch_vcc_arm", "glitch_gnd_arm", "glitch_clock_arm"):
+            return None # ignore these arm settings in G1 panel
         else:
             value = super()._panel_config_item_process(name, value)
         return value

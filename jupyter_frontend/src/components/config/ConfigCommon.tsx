@@ -4,7 +4,7 @@ import React, {ChangeEvent} from "react";
 import {useModelState} from "@anywidget/react";
 
 
-const [NUT_VOLTAGE_MIN, NUT_VOLTAGE_MAX] = [2.0, 4.0]
+const [NUT_VOLTAGE_MIN, NUT_VOLTAGE_MAX] = [-10, 10]
 
 const ConfigCommon: React.FC = () => {
 
