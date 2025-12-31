@@ -215,10 +215,7 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def nut_voltage(self, voltage: float | str | int) -> tuple[int, None]:
-        status, res = self.glitch_vcc_normal(voltage)
-        if status == protocol.STATUS_OK:
-            self._config.nut_voltage = self._parse_voltage(voltage)
-        return status, res
+        return self.glitch_vcc_normal(voltage)
 
     def glitch_vcc_normal(self, voltage: float | str | int) -> tuple[int, None]:
         """
@@ -231,6 +228,7 @@ class CrackerG1(CrackerS1):
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_NORMAL, payload=payload)
         if status == protocol.STATUS_OK:
             self._config.glitch_vcc_normal = voltage
+            self._config.nut_voltage = voltage
         return status, res
 
     def _parse_voltage(self, voltage: float | str | int):

@@ -64,13 +64,11 @@ const ConfigGlitch: React.FC = () => {
         setDelay: setGlitchGNDDelay,
     }
 
-    const [glitchVCCNormalVoltageMin, glitchVCCNormalVoltageMax] = [1.2, 4.0];
     const [glitchVCCWaitMin, glitchVCCWaitMax] = [0, 0xFFFF_FFFF];
     const [glitchVCCGlitchVoltageMin, glitchVCCGlitchVoltageMax] = [0.0, 4.0];
     const [glitchVCCCountMin, glitchVCCCountMax] = [1, 255];
     const [glitchVCCRepeatMin, glitchVCCRepeatMax] = [1, 255];
 
-    const [glitchGNDNormalVoltageMin, glitchGNDNormalVoltageMax] = [0.0, 1.0];
     const [glitchGNDWaitMin, glitchGNDWaitMax] = [0, 0xFFFF_FFFF];
     const [glitchGNDGlitchVoltageMin, glitchGNDGlitchVoltageMax] = [0.0, 4.0];
     const [glitchGNDCountMin, glitchGNDCountMax] = [1, 255];
@@ -89,24 +87,24 @@ const ConfigGlitch: React.FC = () => {
                     <Col span={24}>
                         <Form layout={"inline"}>
                             <Form.Item label={"VCC"} style={{width: 35}}/>
-                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.normalVoltage"})}>
-                                <InputNumber style={{width: 90}}
-                                             addonAfter="V"
-                                             step="0.1"
-                                             stringMode
-                                             size={"small"}
-                                             min={glitchVCCNormalVoltageMin}
-                                             max={glitchVCCNormalVoltageMax}
-                                             value={vcc.normalVoltage}
-                                             parser={(v) => {
-                                                 return Number(v);
-                                             }}
-                                             onChange={(v) => {
-                                                 vcc.setNormalVoltage(Number(v));
-                                             }}
-                                             changeOnWheel
-                                />
-                            </Form.Item>
+                            {/*<Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.normalVoltage"})}>*/}
+                            {/*    <InputNumber style={{width: 90}}*/}
+                            {/*                 addonAfter="V"*/}
+                            {/*                 step="0.1"*/}
+                            {/*                 stringMode*/}
+                            {/*                 size={"small"}*/}
+                            {/*                 min={glitchVCCNormalVoltageMin}*/}
+                            {/*                 max={glitchVCCNormalVoltageMax}*/}
+                            {/*                 value={vcc.normalVoltage}*/}
+                            {/*                 parser={(v) => {*/}
+                            {/*                     return Number(v);*/}
+                            {/*                 }}*/}
+                            {/*                 onChange={(v) => {*/}
+                            {/*                     vcc.setNormalVoltage(Number(v));*/}
+                            {/*                 }}*/}
+                            {/*                 changeOnWheel*/}
+                            {/*    />*/}
+                            {/*</Form.Item>*/}
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.wait"})}>
                                 <InputNumber style={{width: 90}}
                                              addonAfter="10 ns"
@@ -203,24 +201,24 @@ const ConfigGlitch: React.FC = () => {
                     <Col span={24}>
                         <Form layout={"inline"}>
                             <Form.Item label={"GND"} style={{width: 35}}/>
-                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.normalVoltage"})}>
-                                <InputNumber style={{width: 90}}
-                                             addonAfter="V"
-                                             step="0.1"
-                                             stringMode
-                                             size={"small"}
-                                             min={glitchGNDNormalVoltageMin}
-                                             max={glitchGNDNormalVoltageMax}
-                                             value={gnd.normalVoltage}
-                                             parser={(v) => {
-                                                 return Number(v);
-                                             }}
-                                             onChange={(v) => {
-                                                 gnd.setNormalVoltage(Number(v));
-                                             }}
-                                             changeOnWheel
-                                />
-                            </Form.Item>
+                            {/*<Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.normalVoltage"})}>*/}
+                            {/*    <InputNumber style={{width: 90}}*/}
+                            {/*                 addonAfter="V"*/}
+                            {/*                 step="0.1"*/}
+                            {/*                 stringMode*/}
+                            {/*                 size={"small"}*/}
+                            {/*                 min={glitchGNDNormalVoltageMin}*/}
+                            {/*                 max={glitchGNDNormalVoltageMax}*/}
+                            {/*                 value={gnd.normalVoltage}*/}
+                            {/*                 parser={(v) => {*/}
+                            {/*                     return Number(v);*/}
+                            {/*                 }}*/}
+                            {/*                 onChange={(v) => {*/}
+                            {/*                     gnd.setNormalVoltage(Number(v));*/}
+                            {/*                 }}*/}
+                            {/*                 changeOnWheel*/}
+                            {/*    />*/}
+                            {/*</Form.Item>*/}
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>
                                 <InputNumber style={{width: 90}}
                                              addonAfter="10 ns"
