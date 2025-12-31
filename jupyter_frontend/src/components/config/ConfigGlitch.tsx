@@ -23,6 +23,8 @@ const ConfigGlitch: React.FC = () => {
     const [glitchGNDRepeat, setGlitchGNDRepeat] = useModelState<number>("glitch_gnd_config_repeat");
     const [glitchGNDDelay, setGlitchGNDDelay] = useModelState<number>("glitch_gnd_config_delay");
 
+    const [glitchCLKRate, setGlitchCLKRate] = useModelState<number>("glitch_clock_rate");
+
     const vcc = {
         normalVoltage: glitchVCCNormalVoltage,
         setNormalVoltage: setGlitchVCCNormalVoltage,
@@ -218,6 +220,102 @@ const ConfigGlitch: React.FC = () => {
                                              }}
                                              changeOnWheel
                                 />
+                            </Form.Item>
+                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>
+                                <InputNumber style={{width: 90}}
+                                             addonAfter="10 ns"
+                                             step="1"
+                                             stringMode
+                                             size={"small"}
+                                             min={glitchGNDWaitMin}
+                                             max={glitchGNDWaitMax}
+                                             value={gnd.wait}
+                                             parser={(v) => {
+                                                 return Number(v);
+                                             }}
+                                             onChange={(v) => {
+                                                 gnd.setWait(Number(v));
+                                             }}
+                                             changeOnWheel
+                                />
+                            </Form.Item>
+                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.glitchVoltage"})}>
+                                <InputNumber style={{width: 90}}
+                                             addonAfter="V"
+                                             step="0.1"
+                                             stringMode
+                                             size={"small"}
+                                             min={glitchGNDGlitchVoltageMin}
+                                             max={glitchGNDGlitchVoltageMax}
+                                             value={gnd.glitchVoltage}
+                                             parser={(v) => {
+                                                 return Number(v);
+                                             }}
+                                             onChange={(v) => {
+                                                 gnd.setGlitchVoltage(Number(v));
+                                             }}
+                                             changeOnWheel
+                                />
+                            </Form.Item>
+                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.count"})}>
+                                <InputNumber style={{width: 90}}
+                                             step="1"
+                                             stringMode
+                                             size={"small"}
+                                             min={glitchGNDCountMin}
+                                             max={glitchGNDCountMax}
+                                             value={gnd.count}
+                                             parser={(v) => {
+                                                 return Number(v);
+                                             }}
+                                             onChange={(v) => {
+                                                 gnd.setCount(Number(v));
+                                             }}
+                                             changeOnWheel
+                                />
+                            </Form.Item>
+                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.repeat"})}>
+                                <InputNumber style={{width: 90}}
+                                             step="1"
+                                             stringMode
+                                             size={"small"}
+                                             min={glitchGNDRepeatMin}
+                                             max={glitchGNDRepeatMax}
+                                             value={gnd.repeat}
+                                             parser={(v) => {
+                                                 return Number(v);
+                                             }}
+                                             onChange={(v) => {
+                                                 gnd.setRepeat(Number(v));
+                                             }}
+                                             changeOnWheel
+                                />
+                            </Form.Item>
+                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.delay"})}>
+                                <InputNumber style={{width: 90}}
+                                             step="1"
+                                             addonAfter="10 ns"
+                                             stringMode
+                                             size={"small"}
+                                             value={gnd.delay}
+                                             parser={(v) => {
+                                                 return Number(v);
+                                             }}
+                                             onChange={(v) => {
+                                                 gnd.setDelay(Number(v));
+                                             }}
+                                             changeOnWheel
+                                />
+                            </Form.Item>
+                        </Form>
+                    </Col>
+                </Row>
+              <Row>
+                    <Col span={24}>
+                        <Form layout={"inline"}>
+                            <Form.Item label={"CLK"} style={{width: 35}}/>
+                            <Form.Item label={"时钟"}>
+                              {glitchCLKRate}
                             </Form.Item>
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>
                                 <InputNumber style={{width: 90}}

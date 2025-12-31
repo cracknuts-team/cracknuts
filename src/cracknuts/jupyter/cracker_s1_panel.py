@@ -28,7 +28,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     nut_enable = traitlets.Bool(False).tag(sync=True)
     nut_voltage = traitlets.Float(3.3).tag(sync=True)
     nut_clock_enable = traitlets.Bool(False).tag(sync=True)
-    nut_clock = traitlets.Int(65000).tag(sync=True)
+    nut_clock = traitlets.Float(65000).tag(sync=True)
     nut_reset_io_enable = traitlets.Bool(False).tag(sync=True)
 
     nut_uart_enable = traitlets.Bool(False).tag(sync=True)
@@ -52,47 +52,6 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     nut_i2c_stretch_enable = traitlets.Bool(False).tag(sync=True)
 
     nut_timeout = traitlets.Int(0).tag(sync=True)
-
-    # # glitch
-    # glitch_vcc_normal_voltage = traitlets.Float(3.3).tag(sync=True)
-    # glitch_vcc_wait = traitlets.Int(0).tag(sync=True)
-    # glitch_vcc_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
-    # glitch_vcc_count = traitlets.Int(1).tag(sync=True)
-    # glitch_vcc_repeat = traitlets.Int(1).tag(sync=True)
-    # glitch_vcc_delay = traitlets.Int(0).tag(sync=True)
-    # glitch_gnd_normal_voltage = traitlets.Float(0.0).tag(sync=True)
-    # glitch_gnd_wait = traitlets.Int(0).tag(sync=True)
-    # glitch_gnd_glitch_voltage = traitlets.Float(0.0).tag(sync=True)
-    # glitch_gnd_count = traitlets.Int(1).tag(sync=True)
-    # glitch_gnd_repeat = traitlets.Int(1).tag(sync=True)
-    # glitch_gnd_delay = traitlets.Int(0).tag(sync=True)
-    #
-    # glitch_vcc_arm = False
-    # glitch_vcc_config_wait = 0
-    # glitch_vcc_config_level = 0
-    # glitch_vcc_config_count = 0
-    # glitch_vcc_config_delay = 0
-    # glitch_vcc_config_repeat = 0
-    # glitch_vcc_normal = 0
-    # glitch_gnd_arm = False
-    # glitch_gnd_config_wait = 0
-    # glitch_gnd_config_level = 0
-    # glitch_gnd_config_count = 0
-    # glitch_gnd_config_delay = 0
-    # glitch_gnd_config_repeat = 0
-    # glitch_gnd_normal = 0
-    # glitch_clock_arm = False
-    # glitch_clock_len_normal = 0
-    # glitch_clock_wave_normal = 0
-    # glitch_clock_config_len_glitch = 0
-    # glitch_clock_config_wave_glitch = 0
-    # glitch_clock_config_count = 0
-    # glitch_clock_config_delay = 0
-    # glitch_clock_config_repeat = 0
-    # glitch_clock_normal = 0
-    #
-    # # glitch test
-    # # glitch_test_params = traitlets.Dict({}).tag(sync=True)
 
     # osc
     osc_channel_0_enable = traitlets.Bool(False).tag(sync=True)
@@ -150,6 +109,9 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         self.listen_cracker_config()
 
     def get_cracker_panel_config(self) -> ConfigS1:
+        """
+        Get the current configuration from panel(Jupyter widget UI)
+        """
         panel_config = ConfigS1()
         for prop in panel_config.__dict__.keys():
             default_value = getattr(panel_config, prop)
@@ -182,17 +144,28 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
                 continue
             if name.startswith("_"):
                 continue
-            if hasattr(self, name):
-                if isinstance(value, Enum):
-                    value = value.value
-                if name == "nut_i2c_dev_addr":
-                    value = str(value)
-                setattr(self, name, value)
-            else:
-                self._logger.warning(
-                    f"Failed to sync configuration to widget: the widget has no attribute named '{name}'."
-                )
+            value = self._panel_config_item_process(name, value)
+            if value is not None:
+                if hasattr(self, name):
+                    setattr(self, name, value)
+                else:
+                    self._logger.warning(
+                        f"Failed to sync configuration to widget: the widget [{self.__class__.__name__}] "
+                        f"has no attribute named '{name}'."
+                    )
         self.observe = True
+
+    def _panel_config_item_process(self, name: str, value: object) -> object:
+        """
+        Handle an individual panel configuration item:
+        return its corresponding value if no extra processing is required,
+        or return None to indicate this item should not be processed.
+        """
+        if isinstance(value, Enum):
+            value = value.value
+        if name == "nut_i2c_dev_addr":
+            value = str(value)
+        return value
 
     def listen_cracker_config(self) -> None:
         """
