@@ -1,7 +1,8 @@
-import {Button, Col, Form, InputNumber, Row} from "antd";
+import { Button, Col, Form, InputNumber, Popover, Row, Tooltip } from "antd";
 import React from "react";
 import {useIntl} from "react-intl";
 import {useModel, useModelState} from "@anywidget/react";
+import { QuestionCircleOutlined } from "@ant-design/icons";
 
 
 const ConfigGlitch: React.FC = () => {
@@ -79,6 +80,9 @@ const ConfigGlitch: React.FC = () => {
     const vccForce = () => {
         model.send({source: "glitchVCCForceButton", event: "onClick", args: {}});
     };
+    const gndForce = () => {
+        model.send({source: "glitchGNDForceButton", event: "onClick", args: {}});
+    };
 
     return (
         <Row>
@@ -86,28 +90,27 @@ const ConfigGlitch: React.FC = () => {
                 <Row>
                     <Col span={24}>
                         <Form layout={"inline"}>
-                            <Form.Item label={"VCC"} style={{width: 35}}/>
-                            {/*<Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.normalVoltage"})}>*/}
-                            {/*    <InputNumber style={{width: 90}}*/}
-                            {/*                 addonAfter="V"*/}
-                            {/*                 step="0.1"*/}
-                            {/*                 stringMode*/}
-                            {/*                 size={"small"}*/}
-                            {/*                 min={glitchVCCNormalVoltageMin}*/}
-                            {/*                 max={glitchVCCNormalVoltageMax}*/}
-                            {/*                 value={vcc.normalVoltage}*/}
-                            {/*                 parser={(v) => {*/}
-                            {/*                     return Number(v);*/}
-                            {/*                 }}*/}
-                            {/*                 onChange={(v) => {*/}
-                            {/*                     vcc.setNormalVoltage(Number(v));*/}
-                            {/*                 }}*/}
-                            {/*                 changeOnWheel*/}
-                            {/*    />*/}
-                            {/*</Form.Item>*/}
+                          <Form.Item label={"VCC"} style={{width: 35}}/>
+                          <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.glitchVoltage"})}>
+                              <InputNumber style={{width: 90}}
+                                           addonAfter="V"
+                                           step="0.1"
+                                           stringMode
+                                           size={"small"}
+                                           min={glitchVCCGlitchVoltageMin}
+                                           max={glitchVCCGlitchVoltageMax}
+                                           value={vcc.glitchVoltage}
+                                           parser={(v) => {
+                                               return Number(v);
+                                           }}
+                                           onChange={(v) => {
+                                               vcc.setGlitchVoltage(Number(v));
+                                           }}
+                                           changeOnWheel
+                              />
+                          </Form.Item>
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.wait"})}>
                                 <InputNumber style={{width: 90}}
-                                             addonAfter="10 ns"
                                              step="1"
                                              stringMode
                                              size={"small"}
@@ -123,24 +126,7 @@ const ConfigGlitch: React.FC = () => {
                                              changeOnWheel
                                 />
                             </Form.Item>
-                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.glitchVoltage"})}>
-                                <InputNumber style={{width: 90}}
-                                             addonAfter="V"
-                                             step="0.1"
-                                             stringMode
-                                             size={"small"}
-                                             min={glitchVCCGlitchVoltageMin}
-                                             max={glitchVCCGlitchVoltageMax}
-                                             value={vcc.glitchVoltage}
-                                             parser={(v) => {
-                                                 return Number(v);
-                                             }}
-                                             onChange={(v) => {
-                                                 vcc.setGlitchVoltage(Number(v));
-                                             }}
-                                             changeOnWheel
-                                />
-                            </Form.Item>
+
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.count"})}>
                                 <InputNumber style={{width: 90}}
                                              step="1"
@@ -178,7 +164,6 @@ const ConfigGlitch: React.FC = () => {
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.vcc.delay"})}>
                                 <InputNumber style={{width: 90}}
                                              step="1"
-                                             addonAfter="10 ns"
                                              stringMode
                                              size={"small"}
                                              value={vcc.delay}
@@ -194,6 +179,15 @@ const ConfigGlitch: React.FC = () => {
                             <Form.Item>
                                 <Button size={"small"} onClick={vccForce}>Force</Button>
                             </Form.Item>
+                          <Form.Item>
+                              <Popover
+                                content={"除了电压配置，其他参数均为时间长度，单位为10纳秒。"}
+                                title="说明"
+                                trigger="hover"
+                              >
+                                <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer', color: 'black' }} />
+                              </Popover>
+                            </Form.Item>
                         </Form>
                     </Col>
                 </Row>
@@ -201,43 +195,7 @@ const ConfigGlitch: React.FC = () => {
                     <Col span={24}>
                         <Form layout={"inline"}>
                             <Form.Item label={"GND"} style={{width: 35}}/>
-                            {/*<Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.normalVoltage"})}>*/}
-                            {/*    <InputNumber style={{width: 90}}*/}
-                            {/*                 addonAfter="V"*/}
-                            {/*                 step="0.1"*/}
-                            {/*                 stringMode*/}
-                            {/*                 size={"small"}*/}
-                            {/*                 min={glitchGNDNormalVoltageMin}*/}
-                            {/*                 max={glitchGNDNormalVoltageMax}*/}
-                            {/*                 value={gnd.normalVoltage}*/}
-                            {/*                 parser={(v) => {*/}
-                            {/*                     return Number(v);*/}
-                            {/*                 }}*/}
-                            {/*                 onChange={(v) => {*/}
-                            {/*                     gnd.setNormalVoltage(Number(v));*/}
-                            {/*                 }}*/}
-                            {/*                 changeOnWheel*/}
-                            {/*    />*/}
-                            {/*</Form.Item>*/}
-                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>
-                                <InputNumber style={{width: 90}}
-                                             addonAfter="10 ns"
-                                             step="1"
-                                             stringMode
-                                             size={"small"}
-                                             min={glitchGNDWaitMin}
-                                             max={glitchGNDWaitMax}
-                                             value={gnd.wait}
-                                             parser={(v) => {
-                                                 return Number(v);
-                                             }}
-                                             onChange={(v) => {
-                                                 gnd.setWait(Number(v));
-                                             }}
-                                             changeOnWheel
-                                />
-                            </Form.Item>
-                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.glitchVoltage"})}>
+                           <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.glitchVoltage"})}>
                                 <InputNumber style={{width: 90}}
                                              addonAfter="V"
                                              step="0.1"
@@ -251,6 +209,23 @@ const ConfigGlitch: React.FC = () => {
                                              }}
                                              onChange={(v) => {
                                                  gnd.setGlitchVoltage(Number(v));
+                                             }}
+                                             changeOnWheel
+                                />
+                            </Form.Item>
+                            <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.wait"})}>
+                                <InputNumber style={{width: 90}}
+                                             step="1"
+                                             stringMode
+                                             size={"small"}
+                                             min={glitchGNDWaitMin}
+                                             max={glitchGNDWaitMax}
+                                             value={gnd.wait}
+                                             parser={(v) => {
+                                                 return Number(v);
+                                             }}
+                                             onChange={(v) => {
+                                                 gnd.setWait(Number(v));
                                              }}
                                              changeOnWheel
                                 />
@@ -292,7 +267,6 @@ const ConfigGlitch: React.FC = () => {
                             <Form.Item label={intl.formatMessage({id: "cracker.config.glitch.gnd.delay"})}>
                                 <InputNumber style={{width: 90}}
                                              step="1"
-                                             addonAfter="10 ns"
                                              stringMode
                                              size={"small"}
                                              value={gnd.delay}
@@ -304,6 +278,18 @@ const ConfigGlitch: React.FC = () => {
                                              }}
                                              changeOnWheel
                                 />
+                            </Form.Item>
+                           <Form.Item>
+                                <Button size={"small"} onClick={gndForce}>Force</Button>
+                            </Form.Item>
+                            <Form.Item>
+                              <Popover
+                                content={"除了电压配置，其他参数均为时间长度，单位为10纳秒。"}
+                                title="说明"
+                                trigger="hover"
+                              >
+                                <QuestionCircleOutlined style={{ marginLeft: 8, cursor: 'pointer', color: 'black' }} />
+                              </Popover>
                             </Form.Item>
                         </Form>
                     </Col>

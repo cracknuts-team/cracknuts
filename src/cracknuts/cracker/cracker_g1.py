@@ -183,14 +183,18 @@ class CrackerG1(CrackerS1):
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
-        level = self._get_dac_code_from_voltage(self._parse_voltage(level), _vcc_interp_func_vc)
-        payload = struct.pack(">IIIII", wait, level, length, delay, repeat)
+        level = self._parse_voltage(level)
+        level_code = self._get_dac_code_from_voltage(level, _vcc_interp_func_vc)
+        payload = struct.pack(">IIIII", wait, level_code, length, delay, repeat)
         self._logger.debug(f"glitch_vcc_config payload: {payload.hex()}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_CONFIG, payload=payload)
-        if status != protocol.STATUS_OK:
-            return status, None
-        else:
-            return status, res
+        if status == protocol.STATUS_OK:
+            self._config.glitch_vcc_config_wait = wait
+            self._config.glitch_vcc_config_level = level
+            self._config.glitch_vcc_config_count = length
+            self._config.glitch_vcc_config_delay = delay
+            self._config.glitch_vcc_config_repeat = repeat
+        return status, res
 
     def glitch_vcc_reset(self):
         """
@@ -266,14 +270,18 @@ class CrackerG1(CrackerS1):
             return status, res
 
     def glitch_gnd_config(self, wait: int, level: int, length: int, delay: int, repeat: int):
-        level = self._get_dac_code_from_voltage(level, _gnd_interp_func_vc)
-        payload = struct.pack(">IIIII", wait, level, length, delay, repeat)
+        level = self._parse_voltage(level)
+        level_code = self._get_dac_code_from_voltage(level, _gnd_interp_func_vc)
+        payload = struct.pack(">IIIII", wait, level_code, length, delay, repeat)
         self._logger.debug(f"glitch_gnd_config payload: {payload.hex()}")
         status, res = self.send_with_command(CommandG1.GLITCH_GND_CONFIG, payload=payload)
-        if status != protocol.STATUS_OK:
-            return status, None
-        else:
-            return status, res
+        if status == protocol.STATUS_OK:
+            self._config.glitch_gnd_config_wait = wait
+            self._config.glitch_gnd_config_level = level
+            self._config.glitch_gnd_config_count = length
+            self._config.glitch_gnd_config_delay = delay
+            self._config.glitch_gnd_config_repeat = repeat
+        return status, res
 
     def glitch_gnd_reset(self):
         self._logger.debug(f"glitch_vcc_reset payload: {None}")

@@ -55,9 +55,13 @@ class ConfigG1Glitch(MsgHandlerPanelWidget):
         super().__init__(*args, **kwargs)
         self.cracker: CrackerG1 = kwargs["cracker"]
         self.reg_msg_handler("glitchVCCForceButton", "onClick", self.glitch_vcc_force)
+        self.reg_msg_handler("glitchGNDForceButton", "onClick", self.glitch_gnd_force)
 
     def glitch_vcc_force(self, args: dict[str, typing.Any]):
         self.cracker.glitch_vcc_force()
+
+    def glitch_gnd_force(self, args: dict[str, typing.Any]):
+        self.cracker.glitch_gnd_force()
 
     def get_glitch_clock_normal_rate(self):
         return get_clock_from_wave_length(len(self.glitch_clock_wave_normal))
