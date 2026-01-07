@@ -50,7 +50,7 @@ class ConfigG1(ConfigS1):
         super().__init__()
         self.glitch_vcc_arm = False
         self.glitch_vcc_normal = 3.3
-        self.glitch_vcc_config_wait = 0
+        self.glitch_vcc_config_wait = 1
         self.glitch_vcc_config_level = self.glitch_vcc_normal
         self.glitch_vcc_config_count = 1
         self.glitch_vcc_config_delay = 0
@@ -58,7 +58,7 @@ class ConfigG1(ConfigS1):
 
         self.glitch_gnd_arm = False
         self.glitch_gnd_normal = 0
-        self.glitch_gnd_config_wait = 0
+        self.glitch_gnd_config_wait = 1
         self.glitch_gnd_config_level = self.glitch_gnd_normal
         self.glitch_gnd_config_count = 1
         self.glitch_gnd_config_delay = 0
@@ -70,7 +70,7 @@ class ConfigG1(ConfigS1):
         self.glitch_clock_config_len_glitch: int = len(wave_4m)
         self.glitch_clock_config_wave_glitch: list[float] = wave_4m # 默认glitch示例时钟4mhz
         self.glitch_clock_config_wait: int = 1
-        self.glitch_clock_config_delay: int = 2
+        self.glitch_clock_config_delay: int = 1
         self.glitch_clock_config_repeat: int = 1
         self.glitch_clock_enable: bool = True
 
@@ -336,9 +336,9 @@ class CrackerG1(CrackerS1):
 
     def _parse_config_special_case(self, k, v):
         if k in ("glitch_vcc_normal", "glitch_vcc_config_level"):
-            v = round(self._get_voltage_from_dac_code(v, _vcc_interp_func_vc), 1)
+            v = round(self._get_voltage_from_dac_code(v, _vcc_interp_func_cv), 1)
         elif k in ("glitch_gnd_normal", "glitch_gnd_config_level"):
-            v = round(self._get_voltage_from_dac_code(v, _gnd_interp_func_vc), 1)
+            v = round(self._get_voltage_from_dac_code(v, _gnd_interp_func_cv), 1)
         return v
 
     @connection_status_check
