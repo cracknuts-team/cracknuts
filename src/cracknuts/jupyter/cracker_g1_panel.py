@@ -44,7 +44,7 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
 
         # Use glitch_clock_normal_rate as nut_clock. This field is ignored in the Jupyter UI,
         # but in a pure Python environment, users can read the nut clock configuration from it.
-        panel_config.nut_clock = self.get_glitch_clock_normal_rate()
+        panel_config.nut_clock = self.get_glitch_clock_normal_freq()
         panel_config.glitch_clock_len_normal = len(self.glitch_clock_wave_normal)
         panel_config.glitch_clock_wave_normal = self.glitch_clock_wave_normal
         panel_config.glitch_clock_len_glitch = len(self.glitch_clock_config_wave_glitch)
@@ -75,7 +75,7 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
             return None
         elif name == "glitch_clock_wave_normal":
             self.glitch_clock_wave_normal = typing.cast(list[int], value)
-            self.nut_clock = self.get_glitch_clock_normal_rate()
+            self.nut_clock = self.get_glitch_clock_normal_freq()
             self.glitch_clock_rate = f"{round(self.nut_clock / 1000, 2)}M"
         elif name == "glitch_clock_enable":
             self.glitch_clock_enable = typing.cast(bool, value)
@@ -86,7 +86,7 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
             return None # ignore, already processed by glitch_clock_wave_glitch
         elif name == "glitch_clock_config_wave_glitch":
             self.glitch_clock_config_wave_glitch = typing.cast(list[int], value)
-            self.nut_clock = self.get_glitch_clock_normal_rate()
+            self.nut_clock = self.get_glitch_clock_normal_freq()
             self.glitch_clock_rate = f"{round(self.nut_clock / 1000, 2)}M"
         elif name in ("glitch_vcc_arm", "glitch_gnd_arm", "glitch_clock_arm"):
             return None # ignore these arm settings in G1 panel

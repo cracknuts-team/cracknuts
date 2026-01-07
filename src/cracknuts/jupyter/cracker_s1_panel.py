@@ -148,11 +148,11 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
             if value is not None:
                 if hasattr(self, name):
                     setattr(self, name, value)
-                else:
-                    self._logger.warning(
-                        f"Failed to sync configuration to widget: the widget [{self.__class__.__name__}] "
-                        f"has no attribute named '{name}'."
-                    )
+                # else:
+                #     self._logger.warning(
+                #         f"Failed to sync configuration to widget: the widget [{self.__class__.__name__}] "
+                #         f"has no attribute named '{name}'."
+                #     )
         self.observe = True
 
     def _panel_config_item_process(self, name: str, value: object) -> object:

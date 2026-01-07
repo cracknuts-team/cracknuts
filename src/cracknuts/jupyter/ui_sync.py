@@ -19,7 +19,6 @@ class ConfigProxy:
         widget = object.__getattribute__(self, "_widget")
 
         setattr(config, name, value)
-
         if name in dir(widget):
             if isinstance(value, Enum):
                 value = value.value
@@ -28,8 +27,6 @@ class ConfigProxy:
             widget.observe = False
             setattr(widget, name, value)
             widget.observe = True
-        else:
-            self._logger.warning(f"Failed to sync configuration to widget: the widget has no attribute named '{name}'.")
 
     def __getattribute__(self, name):
         if name.startswith("_"):

@@ -99,15 +99,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
         for i, k in enumerate(bytes_format.keys()):
             v = config_tuple[i]
-            if not hasattr(config, k):
-                self._logger.warning(f"Parse config bytes error: {k} is not a valid config key.")
-            else:
+            if hasattr(config, k):
                 default_value = getattr(config, k)
                 v = self._parse_config_special_case(k, v)
                 if default_value is not None and isinstance(default_value, Enum):
                     v = default_value.__class__(v)
 
                 setattr(config, k, v)
+            else:
+                self._logger.info(f"Parse config bytes error: {k} is not a valid config key.")
 
         return config
 
