@@ -670,6 +670,8 @@ class Acquisition(abc.ABC):
             start = time.time()
             try:
                 data = self.do(trace_index)
+                if not isinstance(data, dict):
+                    data = data.__dict__
                 self.current_data = data
             except Exception as e:
                 self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
