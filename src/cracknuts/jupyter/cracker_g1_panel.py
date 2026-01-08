@@ -47,10 +47,9 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
         panel_config.nut_clock = self.get_glitch_clock_normal_freq()
         panel_config.glitch_clock_len_normal = len(self.glitch_clock_wave_normal)
         panel_config.glitch_clock_wave_normal = self.glitch_clock_wave_normal
-        panel_config.glitch_clock_len_glitch = len(self.glitch_clock_config_wave_glitch)
-        panel_config.glitch_clock_wave_glitch = self.glitch_clock_config_wave_glitch
+        panel_config.glitch_clock_config_len_glitch = len(self.glitch_clock_config_wave_glitch)
+        panel_config.glitch_clock_config_wave_glitch = self.glitch_clock_config_wave_glitch
         panel_config.glitch_clock_config_wait = self.glitch_clock_config_wait
-        panel_config.glitch_clock_config_count = self.glitch_clock_config_count
         panel_config.glitch_clock_config_delay = self.glitch_clock_config_delay
         panel_config.glitch_clock_config_repeat = self.glitch_clock_config_repeat
         panel_config.glitch_clock_enable = self.nut_clock_enable # use nut_clock_enable as glitch_clock_enable
@@ -74,7 +73,7 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
             self.nut_voltage = value
             return None
         elif name == "glitch_clock_wave_normal":
-            self.glitch_clock_wave_normal = typing.cast(list[int], value)
+            self.glitch_clock_wave_normal = typing.cast(list[float], value)
             self.nut_clock = self.get_glitch_clock_normal_freq()
             self.glitch_clock_rate = f"{round(self.nut_clock / 1000, 2)}M"
         elif name == "glitch_clock_enable":
@@ -85,9 +84,8 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
         elif name == "glitch_clock_config_len_glitch":
             return None # ignore, already processed by glitch_clock_wave_glitch
         elif name == "glitch_clock_config_wave_glitch":
-            self.glitch_clock_config_wave_glitch = typing.cast(list[int], value)
-            self.nut_clock = self.get_glitch_clock_normal_freq()
-            self.glitch_clock_rate = f"{round(self.nut_clock / 1000, 2)}M"
+            # 忽略，因为这里的波形配置是通过长度计算来的失真数据
+            return None
         elif name in ("glitch_vcc_arm", "glitch_gnd_arm", "glitch_clock_arm"):
             return None # ignore these arm settings in G1 panel
         else:

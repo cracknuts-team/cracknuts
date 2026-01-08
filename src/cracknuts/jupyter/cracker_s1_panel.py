@@ -102,6 +102,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
             cracker_config = self.cracker.get_default_config().__dict__
         self.update_cracker_panel_config(cracker_config, connect_uri)
 
+
     def write_config_to_cracker(self) -> None:
         self.cracker.write_config_to_cracker(self.get_cracker_panel_config())
         self.panel_config_different_from_cracker_config = False

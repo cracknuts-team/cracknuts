@@ -71,6 +71,7 @@ class ConfigG1Glitch(MsgHandlerPanelWidget):
         for idx, item in enumerate(self.glitch_clock_glitch_freq_items):
             if value == item["wave"]:
                 self.glitch_clock_glitch_selected_freq_item_idx = idx
+                self._glitch_clock_config_wave_glitch = value
                 return
         self._glitch_clock_freq_add(value)
 
@@ -110,6 +111,7 @@ class ConfigG1Glitch(MsgHandlerPanelWidget):
         })
         self.glitch_clock_glitch_freq_items = glitch_clock_freq_items
         self.glitch_clock_glitch_selected_freq_item_idx = len(glitch_clock_freq_items) - 1
+        self._glitch_clock_config_wave_glitch = new_wave
 
     def glitch_clock_freq_selected(self, args: dict[str, typing.Any]):
         if "selected" in args.keys():
