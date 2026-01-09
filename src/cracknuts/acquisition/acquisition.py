@@ -25,7 +25,7 @@ class AcquisitionConfig:
     sample_length: int = 1024
     sample_offset: int = 0
     trigger_judge_timeout: float = 0.005
-    trigger_judge_wait_time: float = 0.05
+    trigger_judge_wait_time: float = 0.001
     do_error_max_count: int = 1
     file_path: str = ""
     file_format: str = "zarr"
@@ -53,6 +53,8 @@ class Acquisition(abc.ABC):
 
     _DATASET_DEFAULT_PATH = "./dataset/"
 
+    MAX_WAVE_LENGTH = 32_000_000
+
     def __init__(
             self,
             cracker: CrackerBasic,
@@ -63,7 +65,7 @@ class Acquisition(abc.ABC):
             data_ciphertext_length: int | None = None,
             data_key_length: int | None = None,
             data_extended_length: int | None = None,
-            trigger_judge_wait_time: float = 0.05,
+            trigger_judge_wait_time: float = 0.01,
             trigger_judge_timeout: float = 1.0,
             do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
             do_error_max_count: int = -1,
@@ -242,20 +244,20 @@ class Acquisition(abc.ABC):
         self._on_wave_loaded_callback = callback
 
     def run(
-            self,
-            count: int = 1,
-            sample_length: int = 1024,
-            sample_offset: int = 0,
-            data_plaintext_length: int | None = None,
-            data_ciphertext_length: int | None = None,
-            data_key_length: int | None = None,
-            data_extended_length: int | None = None,
-            trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: float | None = None,
-            do_error_max_count: int | None = None,
-            do_error_handler_strategy: int | None = None,
-            file_format: str | None = "zarr",
-            file_path: str | None = "auto",
+        self,
+        count: int = None,
+        sample_length: int = None,
+        sample_offset: int = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
+        file_format: str | None = None,
+        file_path: str | None = None,
     ):
         """
         Start run mode in the background.
@@ -305,16 +307,16 @@ class Acquisition(abc.ABC):
             )
 
     def run_sync(
-            self,
-            count=1,
-            sample_length: int = 1024,
-            sample_offset: int = 0,
-            trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: float | None = None,
-            do_error_max_count: int | None = None,
-            do_error_handler_strategy: int | None = None,
-            file_format: str | None = "zarr",
-            file_path: str | None = "auto",
+        self,
+        count=1,
+        sample_length: int = 1024,
+        sample_offset: int = 0,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
+        file_format: str | None = "zarr",
+        file_path: str | None = "auto",
     ):
         """
         Start run mode in the foreground, which will cause blocking.
@@ -361,15 +363,15 @@ class Acquisition(abc.ABC):
             self.stop()
 
     def test(
-            self,
-            count=-1,
-            sample_length: int | None = None,
-            sample_offset: int | None = None,
-            trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: float | None = None,
-            do_error_max_count: int | None = None,
-            do_error_handler_strategy: int | None = None,
-            trace_fetch_interval: float = 2.0,
+        self,
+        # count=-1,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
+        trace_fetch_interval: float = 2.0,
     ):
         """
         Start test mode in background.
@@ -398,7 +400,7 @@ class Acquisition(abc.ABC):
             self._run(
                 test=True,
                 persistent=False,
-                count=count,
+                # count=count,
                 sample_length=sample_length,
                 sample_offset=sample_offset,
                 trigger_judge_wait_time=trigger_judge_wait_time,
@@ -409,14 +411,14 @@ class Acquisition(abc.ABC):
             )
 
     def test_sync(
-            self,
-            count=-1,
-            sample_length: int | None = None,
-            sample_offset: int | None = None,
-            trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: float | None = None,
-            do_error_max_count: int | None = None,
-            do_error_handler_strategy: int | None = None,
+        self,
+        count=-1,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
     ):
         """
         Start test mode in foreground, which will cause blocking.
@@ -481,24 +483,24 @@ class Acquisition(abc.ABC):
         self._status = self.STATUS_STOPPED
 
     def _run(
-            self,
-            test: bool = True,
-            persistent: bool = False,
-            count: int = 1,
-            sample_length: int | None = None,
-            sample_offset: int | None = None,
-            data_plaintext_length: int | None = None,
-            data_ciphertext_length: int | None = None,
-            data_key_length: int | None = None,
-            data_extended_length: int | None = None,
-            trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: float | None = None,
-            do_error_max_count: int | None = None,
-            do_error_handler_strategy: int | None = None,
-            file_format: str | None = "zarr",
-            file_path: str | None = "auto",
-            trace_fetch_interval: float = 0.1,
-            is_glitch: bool = False,
+        self,
+        test: bool = True,
+        persistent: bool = False,
+        count: int = None,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
+        file_format: str | None = None,
+        file_path: str | None = None,
+        trace_fetch_interval: float = None,
+        is_glitch: bool = False,
     ):
         self._run_thread_pause_event.set()
         threading.Thread(
@@ -525,24 +527,24 @@ class Acquisition(abc.ABC):
         ).start()
 
     def _do_run(
-            self,
-            test: bool = True,
-            persistent: bool = False,
-            count: int = 1,
-            sample_length: int | None = None,
-            sample_offset: int | None = None,
-            data_plaintext_length: int | None = None,
-            data_ciphertext_length: int | None = None,
-            data_key_length: int | None = None,
-            data_extended_length: int | None = None,
-            trigger_judge_wait_time: float | None = None,
-            trigger_judge_timeout: float | None = None,
-            do_error_max_count: int | None = None,
-            do_error_handler_strategy: int | None = None,
-            file_format: str | None = "zarr",
-            file_path: str | None = "auto",
-            trace_fetch_interval: float = 0.1,
-            is_glitch: bool = False,
+        self,
+        test: bool = True,
+        persistent: bool = False,
+        count: int = None,
+        sample_length: int | None = None,
+        sample_offset: int | None = None,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
+        trigger_judge_wait_time: float | None = None,
+        trigger_judge_timeout: float | None = None,
+        do_error_max_count: int | None = None,
+        do_error_handler_strategy: int | None = None,
+        file_format: str | None = "zarr",
+        file_path: str | None = "auto",
+        trace_fetch_interval: float = 0.1,
+        is_glitch: bool = False,
     ):
         if self._status > 0:
             self._logger.warning(
@@ -559,8 +561,8 @@ class Acquisition(abc.ABC):
         else:
             self._status = self.STATUS_TESTING
             self._status_changed()
-
-        self.trace_count = count
+        if count is not None:
+            self.trace_count = count
         if sample_length is not None:
             self.sample_length = sample_length
         if sample_offset is not None:
@@ -601,7 +603,7 @@ class Acquisition(abc.ABC):
             listener(self._status)
 
     def _loop(
-            self, test: bool = True, persistent: bool = False, file_path: str | None = None, file_format: str = "zarr"
+        self, test: bool = True, persistent: bool = False, file_path: str | None = None, file_format: str = "zarr"
     ):
         do_error_count = 0
         trace_index = 0
@@ -660,7 +662,7 @@ class Acquisition(abc.ABC):
         else:
             dataset = None
 
-        while self._status != 0 and self.trace_count - trace_index != 0:
+        while self._status != 0 and (True if test else self.trace_count - trace_index != 0):
             if self._status < 0:
                 self._status_changed()
                 self._run_thread_pause_event.wait()
@@ -784,17 +786,13 @@ class Acquisition(abc.ABC):
         """
         self.cracker.connect()
 
-    def connect_net(self):
-        ...
+    def connect_net(self): ...
 
-    def config_scrat(self):
-        ...
+    def config_scrat(self): ...
 
-    def config_cracker(self):
-        ...
+    def config_cracker(self): ...
 
-    def pre_init(self):
-        ...
+    def pre_init(self): ...
 
     @abc.abstractmethod
     def init(self):
@@ -804,11 +802,9 @@ class Acquisition(abc.ABC):
         """
         ...
 
-    def _post_init(self):
-        ...
+    def _post_init(self): ...
 
-    def transfer(self):
-        ...
+    def transfer(self): ...
 
     def pre_do(self):
         self.cracker.osc_single()
@@ -843,8 +839,7 @@ class Acquisition(abc.ABC):
             self._logger.error("Do error: %s", e.args)
             return False
 
-    def _post_do(self, index, data):
-        ...
+    def _post_do(self, index, data): ...
 
     def _is_triggered(self):
         _, triggered = self.cracker.osc_is_triggered()
@@ -862,17 +857,25 @@ class Acquisition(abc.ABC):
             enable_channels.append(1)
         wave_dict = {}
         for c in enable_channels:
-            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
+            _count = sample_length // self.MAX_WAVE_LENGTH
+            _left = sample_length % self.MAX_WAVE_LENGTH
+            _offset = offset
+            waves = []
+            for _ in range(_count):
+                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, self.MAX_WAVE_LENGTH)
+                waves.append(_wave)
+                _offset += self.MAX_WAVE_LENGTH
+            if _left > 0:
+                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, _left)
+                waves.append(_wave)
+            wave_dict[c] = np.concatenate(waves)
         return wave_dict
 
-    def _pre_finish(self):
-        ...
+    def _pre_finish(self): ...
 
-    def _post_finish(self):
-        ...
+    def _post_finish(self): ...
 
-    def _save_dataset(self):
-        ...
+    def _save_dataset(self): ...
 
     def finish(self):
         pass
@@ -968,7 +971,7 @@ class AcquisitionBuilder:
         self._cracker = cracker
         return self
 
-    def init(self, init_function: typing.Callable[[], None]):
+    def init(self, init_function: typing.Callable[[CrackerBasic], None]):
         """
         The init function of acquisition.
 

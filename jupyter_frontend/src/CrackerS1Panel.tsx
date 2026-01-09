@@ -842,6 +842,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                                     {value: 65000, label: "65 M"},
                                     {value: 64000, label: "64 M"},
                                     {value: 48000, label: "48 M"},
+                                    {value: 40000, label: "40 M"},
                                     {value: 24000, label: "24 M"},
                                     {value: 12000, label: "12 M"},
                                     {value: 8000, label: "8  M"},
@@ -950,7 +951,7 @@ const CrackerS1Panel: React.FC<CrackS1PanelProps> = ({hasAcquisition = false, co
                               <InputNumber
                                 step="1"
                                 size={"small"}
-                                min={0}
+                                // min={0}
                                 defaultValue={oscSampleDelay}
                                 value={oscSampleDelay}
                                 onChange={(v: number | string | null) => {

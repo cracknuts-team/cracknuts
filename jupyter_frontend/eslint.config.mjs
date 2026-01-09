@@ -12,6 +12,7 @@ export default [
   pluginReact.configs.flat.recommended,
   {
     rules: {
+      "react/prop-types": "off",
       "@typescript-eslint/no-empty-object-type": ["error", { allowInterfaces: "always" }]
     },
     settings: {

@@ -105,7 +105,7 @@ class GlitchAcquisition(Acquisition, ABC):
         data_ciphertext_length: int | None = None,
         data_key_length: int | None = None,
         data_extended_length: int | None = None,
-        trigger_judge_wait_time: float = 0.05,
+        trigger_judge_wait_time: float = 0.001,
         trigger_judge_timeout: float = 1.0,
         do_error_handler_strategy: int = Acquisition.DO_ERROR_HANDLER_STRATEGY_EXIT,
         do_error_max_count: int = -1,
@@ -194,7 +194,7 @@ class GlitchAcquisition(Acquisition, ABC):
 
     def test(
         self,
-        count=-1,
+        # count=-1,
         sample_length: int | None = None,
         sample_offset: int | None = None,
         trigger_judge_wait_time: float | None = None,
@@ -205,7 +205,7 @@ class GlitchAcquisition(Acquisition, ABC):
     ):
         self._is_in_glitch_mode = False
         super().test(
-            count=count,
+            # count=count,
             sample_length=sample_length,
             sample_offset=sample_offset,
             trigger_judge_wait_time=trigger_judge_wait_time,
@@ -249,8 +249,8 @@ class GlitchAcquisition(Acquisition, ABC):
 
     def run(
         self,
-        count: int = 1,
-        sample_length: int = 1024,
+        count: int = None,
+        sample_length: int = None,
         sample_offset: int = 0,
         data_plaintext_length: int | None = None,
         data_ciphertext_length: int | None = None,

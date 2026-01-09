@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "workflows/*"
 jobs:
   build:
     if: "!startsWith(github.event.head_commit.message, 'release:')"
@@ -14,39 +15,35 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-          # get tag history for version number
           fetch-depth: 0
           submodules: true
+          lfs: true
     - name: Update version.
       run: |
-        incremented_version=`grep '__version__ = ' src/cracknuts/__init__.py | awk -F'"' '{print $2}' | awk -F'-' '
-        {
-            if (NF == 1) {
-                # 非 alpha 版本，例如 1.0.0
-                split($1, ver, ".")
-                printf "%d.%d.%d\n", ver[1], ver[2], ver[3] + 1
-            } else if (NF == 2) {
-                # alpha 版本，例如 1.0.0-alpha.1
-                split($1, ver, ".")
-                split($2, alpha, ".")
-                printf "%d.%d.%d-alpha.%d\n", ver[1], ver[2], ver[3], alpha[2] + 1
-            }
-        }'`
-        n_commits=`git rev-list $(git describe --tags --abbrev=0)..HEAD --count`
-        if [ "$n_commits" -eq 0 ]; then
-          echo "No new commits since the last tag. Terminating the action."
-          exit 0
+        current_version=$(grep '__version__ = ' src/cracknuts/__init__.py | awk -F'"' '{print $2}')
+        if [ -z "$current_version" ]; then
+            echo "Error: Could not extract __version__ from __init__.py"
+            exit 1
         fi
-        dev_version="${incremented_version}.dev${n_commits}"
+        commit_sha=$(git rev-parse --short HEAD)
+        dev_version="${current_version}+g${commit_sha}"
         sed -i "s/__version__ = \".*\"/__version__ = \"$dev_version\"/" src/cracknuts/__init__.py
+        echo Update version to: $dev_version
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version-file: './jupyter_frontend/.node-version'
+        cache: 'pnpm'
+        cache-dependency-path: './jupyter_frontend/pnpm-lock.yaml'
     - name: Install node dependencies
       run: |
         cd jupyter_frontend
-        npx pnpm install
+        pnpm install
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -58,13 +55,13 @@ jobs:
     - name: Build jupyter frontend
       run: |
         cd jupyter_frontend
-        npm run clean-build
+        pnpm run clean-build
     - name: Build the project
       run: |
         python -m build
-    - name: Upload to test pypi
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{secrets.TESTPYPI_TOKEN}}
-      run: |
-        python -m twine upload --repository testpypi dist/* --non-interactive
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cracknuts-dist-${{ github.sha }}
+        path: dist/
+        retention-days: 7

@@ -36,6 +36,116 @@ class TraceDatasetData:
             return self._get_trace_data(*index)
 
 
+class TraceIndexFilter:
+    def __init__(self, group: str, channel: str | int, index_filter: str | slice, count: int = None):
+        self.group: str = group
+        self.group_path: str = "0" if self.group is not None and self.group == "origin" else self.group
+        self.channel: str = channel if isinstance(channel, str) else str(channel)
+        self.channel_path: str = self.channel
+        self.filter: slice = self.parse_slice(index_filter) if isinstance(index_filter, str) else index_filter
+        self.index: str = f"{self.group_path}/{self.channel_path}"
+        self.name: str = f"{self.group}/{self.channel}"
+        self.count: int = count
+
+    def __str__(self):
+        return self.to_dict().__str__()
+
+    @staticmethod
+    def _slice_to_list(s: slice, count: int) -> list[int]:
+        return list(range(*s.indices(count)))
+
+    def to_dict(self):
+        return {
+            "index": self.index,
+            "name": self.name,
+            "group": self.group,
+            "groupPath": self.group_path,
+            "channel": self.channel,
+            "channelPath": self.channel_path,
+            "filter": self.slice_to_string(self.filter),
+            "indices": self._slice_to_list(self.filter, self.count) if self.count is not None else None,
+        }
+
+    @staticmethod
+    def slice_to_string(s: slice) -> str:
+        """
+        将 slice 对象转换为 Python 切片语法字符串。
+
+        示例:
+            slice(1, 5)          → "1:5"
+            slice(5, None)       → "5:"
+            slice(None, 10)      → ":10"
+            slice(None, None, 2) → "::2"
+            slice(None)          → ":"
+            slice(-3, None)      → "-3:"
+            slice(1, 10, -1)     → "1:10:-1"
+        """
+
+        def _format_part(x):
+            if x is None:
+                return ""
+            else:
+                return str(x)
+
+        start = _format_part(s.start)
+        stop = _format_part(s.stop)
+        step = _format_part(s.step)
+
+        if step == "":
+            # 无 step
+            if start == "" and stop == "":
+                return ":"
+            else:
+                return f"{start}:{stop}"
+        else:
+            # 有 step
+            return f"{start}:{stop}:{step}"
+
+    @staticmethod
+    def parse_slice(s: str) -> slice:
+        """
+        将一维切片字符串解析为 slice 对象。
+
+        行为：
+          - "5"     → slice(5, 6)
+          - "1:10"  → slice(1, 10)
+          - "5:"    → slice(5, None)
+          - ":10"   → slice(None, 10)
+          - "::2"   → slice(None, None, 2)
+          - "-3:"   → slice(-3, None)
+          - ":"     → slice(None, None)
+
+        注意：单个整数会被转为长度为1的区间（如 slice(5,6)），
+              这样可确保返回值总是 slice，便于统一处理。
+        """
+        s = s.strip()
+        if not s:
+            return slice(None)
+
+        # 如果不含冒号，视为单个位置索引
+        if ":" not in s:
+            try:
+                i = int(s)
+                return slice(i, i + 1)
+            except ValueError:
+                raise ValueError(f"Invalid integer index: {s}")
+
+        # 含冒号：按 slice 解析
+        parts = s.split(":")
+        if len(parts) > 3:
+            raise ValueError(f"Invalid slice syntax (too many ':'): {s}")
+
+        # 补全为 [start, stop, step]
+        while len(parts) < 3:
+            parts.append("")
+
+        def _to_int_or_none(x: str):
+            return int(x) if x != "" else None
+
+        start, stop, step = map(_to_int_or_none, parts)
+        return slice(start, stop, step)
+
+
 class TraceDataset(abc.ABC):
     _channel_names: list[str] | None
     _channel_count: int | None
@@ -127,6 +237,12 @@ class TraceDataset(abc.ABC):
 
     @abc.abstractmethod
     def _get_data(self, channel_slice, trace_slice) -> np.ndarray: ...
+
+    def get_traces_by_filters(self, trace_index_filters: list[TraceIndexFilter]):
+        """
+        根据执行的通道和曲线索引列表返回曲线数据，并包含坐标信息（通道-曲线索引）
+        """
+        ...
 
     @staticmethod
     def _parse_slice(origin_count, index_slice) -> list:
@@ -237,8 +353,42 @@ class _InfoRender:
 
 
 class ZarrTraceDataset(TraceDataset):
+    """
+    数组格式说明
+    MyData.zarr/                        <-- [根目录]
+    │
+    ├── origin/ (或者 "0")               <-- [一级分组] 数据集类型 (兼容旧名 "0")
+    │   │
+    │   ├── 0/                          <-- [二级分组] 通道 0
+    │   │   ├── trace                   [Array] (该通道的波形数据)
+    │   │   ├── plaintext               [Array]
+    │   │   ├── ciphertext              [Array]
+    │   │   ├── key                     [Array]
+    │   │   └── ...                     [Array]
+    │   │
+    │   ├── 1/                          <-- [二级分组] 通道 1 (如果有双通道采集)
+    │   │   ├── trace                   [Array]
+    │   │   ├── plaintext               [Array]
+    │   │   ├── ciphertext              [Array]
+    │   │   ├── key                     [Array]
+    │   │   └── ...
+    │
+    └── aligned/                        <-- [一级分组] 处理后的数据集
+        │
+        ├── 0/                          <-- [二级分组] 对应通道 0 的对齐数据
+        │   ├── trace                   [Array] (对齐后的波形)
+        │   └── ...
+        │
+        └── 1/
+            └── ...
+    ├── ...
+    └── attrs
+
+    """
+
     _ATTR_METADATA_KEY = "metadata"
     _GROUP_ROOT_PATH = "0"
+    _GROUP_ORIGIN_PATH = "origin"  # 采集到的原始波形，但实际分组是 "/0"
     _ARRAY_TRACES_PATH = "traces"
     _ARRAY_DATA_PLAINTEXT_PATH = "plaintext"
     _ARRAY_DATA_CIPHERTEXT_PATH = "ciphertext"
@@ -465,7 +615,7 @@ class ZarrTraceDataset(TraceDataset):
         if channel_name not in self._channel_names:
             raise ValueError("channel index out range")
         if trace_index not in range(0, self._trace_count):
-            raise ValueError("trace, index out of range")
+            raise ValueError(f"trace, index out of range: trace count: {self._trace_count}, trace index: {trace_index}")
         if self._sample_count != trace.shape[0]:
             self._logger.error(
                 f"Trace sample count {trace.shape[0]} does not match the previously "
@@ -666,6 +816,50 @@ class ZarrTraceDataset(TraceDataset):
             data.append([self._get_data_by_index(channel_index, trace_index) for trace_index in trace_indexes])
 
         return data
+
+    def get_traces_by_filters(self, trace_index_filters: list[TraceIndexFilter]):
+        groups = []
+        channels_indices = []
+        trace_indices_list = []
+        traces_list = []
+        for trace_index_filter in trace_index_filters:
+            group = trace_index_filter.group.strip()
+            if not group or group == self._GROUP_ORIGIN_PATH:  # 这里兼容原有格式，origin波形分组对应到 “/0”，
+                group = self._GROUP_ROOT_PATH
+            channel = trace_index_filter.channel
+            if isinstance(channel, str):
+                if channel.lower() == "a":
+                    channel = "0"
+                if channel.lower() == "b":
+                    channel = "1"
+            else:
+                channel = str(channel)
+            try:
+                traces = self._zarr_data[group][channel][self._ARRAY_TRACES_PATH][trace_index_filter.filter]
+            except Exception as e:
+                self._logger.error(f"Error getting traces for filter {trace_index_filter}: {e}")
+                continue
+
+            groups.append(group)
+            channels_indices.append(channel)
+            start, stop, step = trace_index_filter.filter.indices(self._trace_count)
+            trace_indices_list.append(list(range(start, stop, step)))
+            traces_list.append(traces)
+        shapes = set()
+        for traces in traces_list:
+            if len(traces.shape) != 2:
+                raise ValueError(f"The traces obtained by the filters must be 2-dimensional, but got {traces.shape}.")
+            shapes.add(traces.shape[1])
+        if len(shapes) > 1:
+            d2_max_len = max(shapes)
+            for i in range(len(traces_list)):
+                d1, d2 = traces_list[i].shape
+                if d2 < d2_max_len:
+                    padded_traces = np.zeros((d1, d2_max_len), dtype=traces_list[i].dtype)
+                    padded_traces[:, :d2] = traces_list[i]
+                    traces_list[i] = padded_traces
+
+        return trace_indices_list, traces_list
 
 
 class ScarrTraceDataset(ZarrTraceDataset):
@@ -1024,14 +1218,6 @@ class NumpyTraceDataset(TraceDataset):
         ciphertext = None if self._ciphertext_array is None else self._ciphertext_array[channel_slice, trace_slice]
         key = None if self._key_array is None else self._key_array[channel_slice, trace_slice]
         extended = None if self._extended_array is None else self._extended_array[channel_slice, trace_slice]
-
-        print(
-            "trace shape",
-            self._trace_array.shape,
-            self._trace_array[channel_slice, trace_slice].shape,
-            channel_slice,
-            trace_slice,
-        )
         return c, t, self._trace_array[channel_slice, trace_slice], [plaintext, ciphertext, key, extended]
 
     def _get_trace_data(self, channel_slice, trace_slice) -> tuple[np.ndarray, list[list[dict[str, bytes | None]]]]:
