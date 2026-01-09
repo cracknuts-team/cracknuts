@@ -14,6 +14,7 @@ import typing
 import numpy as np
 
 from cracknuts import logger
+from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.trace.trace import ZarrTraceDataset, NumpyTraceDataset
 
@@ -55,22 +56,22 @@ class Acquisition(abc.ABC):
     MAX_WAVE_LENGTH = 32_000_000
 
     def __init__(
-        self,
-        cracker: CrackerBasic,
-        trace_count: int = 1000,
-        sample_length: int = -1,
-        sample_offset: int = 0,
-        data_plaintext_length: int | None = None,
-        data_ciphertext_length: int | None = None,
-        data_key_length: int | None = None,
-        data_extended_length: int | None = None,
-        trigger_judge_wait_time: float = 0.01,
-        trigger_judge_timeout: float = 1.0,
-        do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
-        do_error_max_count: int = -1,
-        file_format: str = "zarr",
-        file_path: str = "auto",
-        trace_fetch_interval: float = 0,
+            self,
+            cracker: CrackerBasic,
+            trace_count: int = 1000,
+            sample_length: int = -1,
+            sample_offset: int = 0,
+            data_plaintext_length: int | None = None,
+            data_ciphertext_length: int | None = None,
+            data_key_length: int | None = None,
+            data_extended_length: int | None = None,
+            trigger_judge_wait_time: float = 0.01,
+            trigger_judge_timeout: float = 1.0,
+            do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
+            do_error_max_count: int = -1,
+            file_format: str = "zarr",
+            file_path: str = "auto",
+            trace_fetch_interval: float = 0,
     ):
         """
         :param cracker: The controlled Cracker object.
@@ -284,7 +285,6 @@ class Acquisition(abc.ABC):
                           will be created in the current working directory to save the data.
         :type file_path: str
         """
-        print(f"get params: {count}, {sample_length}, {sample_offset}, {data_plaintext_length}, ")
         if self._status < 0:
             self.resume()
         else:
@@ -672,6 +672,8 @@ class Acquisition(abc.ABC):
             start = time.time()
             try:
                 data = self.do(trace_index)
+                if not isinstance(data, dict):
+                    data = data.__dict__
                 self.current_data = data
             except Exception as e:
                 self._logger.error(f"Do error <{e}>:\n {traceback.format_exc()}")
@@ -844,7 +846,7 @@ class Acquisition(abc.ABC):
         return triggered
 
     def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
-        if sample_length == -1:
+        if sample_length == -1 or sample_length is None:
             sample_length = self.cracker.get_current_config().osc_sample_length
         config = self.cracker.get_current_config()
 
@@ -854,7 +856,6 @@ class Acquisition(abc.ABC):
         if config.osc_channel_1_enable:
             enable_channels.append(1)
         wave_dict = {}
-
         for c in enable_channels:
             _count = sample_length // self.MAX_WAVE_LENGTH
             _left = sample_length % self.MAX_WAVE_LENGTH
@@ -945,10 +946,6 @@ class Acquisition(abc.ABC):
 
     def is_running(self):
         return self._status != self.STATUS_STOPPED
-
-    @staticmethod
-    def builder():
-        return AcquisitionBuilder()
 
 
 class AcquisitionBuilder:

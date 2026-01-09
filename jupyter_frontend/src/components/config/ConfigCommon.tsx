@@ -4,7 +4,7 @@ import React, {ChangeEvent} from "react";
 import {useModelState} from "@anywidget/react";
 
 
-const [NUT_VOLTAGE_MIN, NUT_VOLTAGE_MAX] = [2.0, 4.0]
+const [NUT_VOLTAGE_MIN, NUT_VOLTAGE_MAX] = [-10, 10]
 
 const ConfigCommon: React.FC = () => {
 
@@ -128,8 +128,12 @@ const ConfigCommon: React.FC = () => {
                                 disabled={!clock.enable}
                                 size={"small"}
                                 options={[
-                                    {value: 24000, label: "24 M"},
+                                    {value: 80000, label: "80 M"},
+                                    {value: 40000, label: "40 M"},
+                                    {value: 20000, label: "20 M"},
+                                    {value: 16000, label: "16 M"},
                                     {value: 12000, label: "12 M"},
+                                    {value: 10000, label: "10 M"},
                                     {value: 8000, label: "8  M"},
                                     {value: 4000, label: "4  M"},
                                 ]}

@@ -1,14 +1,29 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
+from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.acquisition import Acquisition
 
+from cracknuts.jupyter.workbench_g1_panel import WorkbenchG1Panel
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
 from cracknuts.jupyter.cracker_s1_panel import CrackerPanelWidget
 from cracknuts.jupyter.cracknuts_panel import CracknutsPanelWidget
 from cracknuts.jupyter.trace_panel import TracePanelWidget
 from cracknuts.jupyter.scope_panel import ScopePanelWidget
 from cracknuts.trace.trace import TraceDataset
+from cracknuts import logger
+
+_logger = logger.get_logger("cracknuts.jupyter")
+
+
+def show_panel(acq: Acquisition|GlitchAcquisition):
+    if isinstance(acq, GlitchAcquisition):
+        return WorkbenchG1Panel(cracker=acq.cracker, acquisition=acq)
+    elif isinstance(acq, Acquisition):
+        return CracknutsPanelWidget(acquisition=acq)
+    else:
+        _logger.error(f"Unsupported acquisition type: {acq}")
+        return None
 
 
 def display_cracknuts_panel(acq: "Acquisition"):
@@ -46,9 +61,5 @@ def display_cracker_panel(cracker: "CrackerBasic"):
 
 
 __all__ = [
-    "display_cracknuts_panel",
-    "display_trace_panel",
-    "display_acquisition_panel",
-    "display_cracker_panel",
-    "display_scope_panel",
+    "show_panel"
 ]
