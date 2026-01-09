@@ -14,7 +14,6 @@ import typing
 import numpy as np
 
 from cracknuts import logger
-from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.trace.trace import ZarrTraceDataset, NumpyTraceDataset
 
@@ -25,7 +24,8 @@ class AcquisitionConfig:
     sample_length: int = 1024
     sample_offset: int = 0
     trigger_judge_timeout: float = 0.005
-    trigger_judge_wait_time: float = 0.001
+    trigger_judge_wait_time: float = 0.05
+    # trigger_judge_wait_time: float = 0.001
     do_error_max_count: int = 1
     file_path: str = ""
     file_format: str = "zarr"
@@ -56,22 +56,22 @@ class Acquisition(abc.ABC):
     MAX_WAVE_LENGTH = 32_000_000
 
     def __init__(
-            self,
-            cracker: CrackerBasic,
-            trace_count: int = 1000,
-            sample_length: int = -1,
-            sample_offset: int = 0,
-            data_plaintext_length: int | None = None,
-            data_ciphertext_length: int | None = None,
-            data_key_length: int | None = None,
-            data_extended_length: int | None = None,
-            trigger_judge_wait_time: float = 0.01,
-            trigger_judge_timeout: float = 1.0,
-            do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
-            do_error_max_count: int = -1,
-            file_format: str = "zarr",
-            file_path: str = "auto",
-            trace_fetch_interval: float = 0,
+        self,
+        cracker: CrackerBasic,
+        trace_count: int = 1000,
+        sample_length: int = -1,
+        sample_offset: int = 0,
+        data_plaintext_length: int | None = None,
+        data_ciphertext_length: int | None = None,
+        data_key_length: int | None = None,
+        data_extended_length: int | None = None,
+        trigger_judge_wait_time: float = 0.01,
+        trigger_judge_timeout: float = 1.0,
+        do_error_handler_strategy: int = DO_ERROR_HANDLER_STRATEGY_EXIT,
+        do_error_max_count: int = -1,
+        file_format: str = "zarr",
+        file_path: str = "auto",
+        trace_fetch_interval: float = 0,
     ):
         """
         :param cracker: The controlled Cracker object.
@@ -846,7 +846,7 @@ class Acquisition(abc.ABC):
         return triggered
 
     def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
-        if sample_length == -1 or sample_length is None:
+        if sample_length == -1:
             sample_length = self.cracker.get_current_config().osc_sample_length
         config = self.cracker.get_current_config()
 
@@ -857,19 +857,34 @@ class Acquisition(abc.ABC):
             enable_channels.append(1)
         wave_dict = {}
         for c in enable_channels:
-            _count = sample_length // self.MAX_WAVE_LENGTH
-            _left = sample_length % self.MAX_WAVE_LENGTH
-            _offset = offset
-            waves = []
-            for _ in range(_count):
-                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, self.MAX_WAVE_LENGTH)
-                waves.append(_wave)
-                _offset += self.MAX_WAVE_LENGTH
-            if _left > 0:
-                _, _wave = self.cracker.osc_get_analog_wave(c, _offset, _left)
-                waves.append(_wave)
-            wave_dict[c] = np.concatenate(waves)
+            status, wave_dict[c] = self.cracker.osc_get_analog_wave(c, offset, sample_length)
         return wave_dict
+
+    # def _get_waves(self, offset: int, sample_length: int) -> dict[int, np.ndarray]:
+    #     if sample_length == -1 or sample_length is None:
+    #         sample_length = self.cracker.get_current_config().osc_sample_length
+    #     config = self.cracker.get_current_config()
+    #
+    #     enable_channels = []
+    #     if config.osc_channel_0_enable:
+    #         enable_channels.append(0)
+    #     if config.osc_channel_1_enable:
+    #         enable_channels.append(1)
+    #     wave_dict = {}
+    #     for c in enable_channels:
+    #         _count = sample_length // self.MAX_WAVE_LENGTH
+    #         _left = sample_length % self.MAX_WAVE_LENGTH
+    #         _offset = offset
+    #         waves = []
+    #         for _ in range(_count):
+    #             _, _wave = self.cracker.osc_get_analog_wave(c, _offset, self.MAX_WAVE_LENGTH)
+    #             waves.append(_wave)
+    #             _offset += self.MAX_WAVE_LENGTH
+    #         if _left > 0:
+    #             _, _wave = self.cracker.osc_get_analog_wave(c, _offset, _left)
+    #             waves.append(_wave)
+    #         wave_dict[c] = np.concatenate(waves)
+    #     return wave_dict
 
     def _pre_finish(self): ...
 

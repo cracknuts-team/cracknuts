@@ -757,12 +757,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         return status, None
 
     @connection_status_check
-    def nut_clock_freq(self, clock: int | str) -> tuple[int, None]:
+    def nut_clock_freq(self, clock: float | int | str) -> tuple[int, None]:
         """
         Set nut clock.
 
         :param clock: The clock of the nut in kHz
-        :type clock: int | str
+        :type clock: float | int | str
         :return: The device response status
         :rtype: tuple[int, None]
         """
@@ -781,6 +781,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             else:
                 self._logger.error(f"Unknown clock type: {clock}, 64M or 24M or 12M or 8M or 4M")
                 return protocol.STATUS_ERROR, None
+        clock = round(clock)  # TODO 这里由于这些设置是在cracker中的server程序完成的，目前只支持这些整数值，后续优化
         validate_nut_clock = (64000, 24000, 12000, 8000, 4000)
         if clock not in validate_nut_clock:
             self._logger.error(f"UnSupport osc clock, it should in {validate_nut_clock}")
