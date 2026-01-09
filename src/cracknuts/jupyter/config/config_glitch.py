@@ -1,5 +1,5 @@
 # Copyright 2024 CrackNuts. All rights reserved.
-import traceback
+
 import typing
 
 from traitlets import traitlets
