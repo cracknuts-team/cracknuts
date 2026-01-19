@@ -1885,3 +1885,79 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         payload = struct.pack(">B", enable)
         self._logger.debug(f"cracker_nut_reset_io_enable payload: {payload}")
         return self.send_with_command(protocol.Command.NUT_RESET_IO_ENABLE, payload=payload)
+
+    @staticmethod
+    def _get_bit_stream_lsb(data: bytes, bit_index: int) -> int:
+        value = int.from_bytes(data, byteorder="big")
+        return (value >> bit_index) & 1
+
+    def digital_read(self, pin_num: int):
+        """
+        读取数字IO引脚电平状态
+
+        :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
+        :type pin_num: int
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None | int]
+        """
+        pin_num = pin_num - 5  # 从第五个引脚开始编号
+        s, r = self.register_read(base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DATA)
+        if s != protocol.STATUS_OK:
+            self._logger.error(f"Get GPIO data failed, status: {s}")
+            return s, r
+        else:
+            return s, self._get_bit_stream_lsb(r, pin_num)
+
+    def digital_write(self, pin_num: int, value: int):
+        """
+        设置数字IO引脚电平状态
+
+        :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
+        :type pin_num: int
+        :param value: 引脚电平状态，1：高电平，0：
+        :type value: int
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+        pin_num = pin_num - 5  # 从第五个引脚开始编号
+        s, r = self.register_read(base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DATA)
+        if s != protocol.STATUS_OK:
+            self._logger.error(f"Get old GPIO data failed, status: {s}")
+            return s, r
+        else:
+            gpio_data = int.from_bytes(r, byteorder="big")
+            if value:
+                gpio_data |= 1 << pin_num
+            else:
+                gpio_data &= ~(1 << pin_num)
+            gpio_data_bytes = gpio_data.to_bytes(len(r), byteorder="big")
+            return self.register_write(
+                base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DATA, data=gpio_data_bytes
+            )
+
+    def digital_pin_mode(self, pin_num: int, mode: int):
+        """
+        设置数字IO引脚工作模式
+
+        :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
+        :type pin_num: int
+        :param mode: 引脚工作模式，1：输入模式，0：输出模式
+        :type mode: int
+        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :rtype: tuple[int, bytes | None]
+        """
+        pin_num = pin_num - 5  # 从第五个引脚开始编号
+        s, r = self.register_read(base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DIR)
+        if s != protocol.STATUS_OK:
+            self._logger.error(f"Get old GPIO dir failed, status: {s}")
+            return s, r
+        else:
+            gpio_dir = int.from_bytes(r, byteorder="big")
+            if mode:
+                gpio_dir |= 1 << pin_num
+            else:
+                gpio_dir &= ~(1 << pin_num)
+            gpio_dir_bytes = gpio_dir.to_bytes(len(r), byteorder="big")
+            return self.register_write(
+                base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DIR, data=gpio_dir_bytes
+            )

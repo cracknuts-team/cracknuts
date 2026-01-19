@@ -107,6 +107,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
     NON_PROTOCOL_ERROR = -1
     DISCONNECTED = -2
 
+    _BASE_ADDRESS = 0x43C10000
+
+    _OFFSET_GPIO_DATA = 0x0C00
+    _OFFSET_GPIO_DIR = 0x0C04
+
     """
     The basic device class, provides support for the `CNP` protocol, configuration management, firmware maintenance,
     and other basic operations.
@@ -517,7 +522,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 resp_payload = self._recv(length)
             if status != protocol.STATUS_OK:
                 try:
-                    resp_payload_str = resp_payload.decode("utf-8") if resp_payload is not None else ''
+                    resp_payload_str = resp_payload.decode("utf-8") if resp_payload is not None else ""
                 except UnicodeDecodeError:
                     resp_payload_str = hex_util.get_hex(resp_payload, max_len=len(resp_payload))
                 req_command, req_payload = protocol.unpack_send_message(message)
