@@ -1,8 +1,10 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
+import warnings
+
 from cracknuts.acquisition.glitch_acquisition import GlitchAcquisition
 from cracknuts.cracker.cracker_basic import CrackerBasic
-from cracknuts.acquisition import Acquisition
+from cracknuts.acquisition.acquisition import Acquisition
 
 from cracknuts.jupyter.workbench_g1_panel import WorkbenchG1Panel
 from cracknuts.jupyter.acquisition_panel import AcquisitionPanelWidget
@@ -16,7 +18,22 @@ from cracknuts import logger
 _logger = logger.get_logger("cracknuts.jupyter")
 
 
-def show_panel(acq: Acquisition|GlitchAcquisition):
+def panel(acq: Acquisition):
+    """
+    Deprecated. Use show_panel() instead.
+    """
+    warnings.warn("This function is deprecated, Use show_panel() instead of panel()", DeprecationWarning, stacklevel=2)
+    return show_panel(acq)
+
+
+def show_panel(acq: Acquisition | GlitchAcquisition):
+    """
+    Show the cracknuts panel
+
+    :param acq: Acquisition or GlitchAcquisition instance
+    :type acq: Acquisition | GlitchAcquisition
+    :return: Corresponding panel widget
+    """
     if isinstance(acq, GlitchAcquisition):
         return WorkbenchG1Panel(cracker=acq.cracker, acquisition=acq)
     elif isinstance(acq, Acquisition):
@@ -60,6 +77,4 @@ def display_cracker_panel(cracker: "CrackerBasic"):
     return cpw
 
 
-__all__ = [
-    "show_panel"
-]
+__all__ = ["panel", "show_panel"]

@@ -1,6 +1,7 @@
 import React, {useCallback} from "react"
 import {Button, Flex, Form, Input, InputNumber, Select, Space, Table, TableProps} from "antd";
 import {ChangeEvent, useEffect, useState} from "react";
+import {FormattedMessage, useIntl} from "react-intl";
 
 interface TraceIndex {
     name: string;
@@ -67,6 +68,9 @@ const GeneralControl: React.FC<GeneralProp> = ({
                                                    zoomEnd,
                                                    zoomApply
                                                }: GeneralProp) => {
+
+    const intl = useIntl();
+
     const [filtersCache, setFiltersCache] = useState<TraceIndexFilter[]>(traceIndexFilters); // cache the filter from python
     const [filters, setFilters] = useState<TraceIndexFilter[]>(traceIndexFilters);
     const [channelSelectOptions, setChannelSelectOptions] = useState<{
@@ -151,7 +155,9 @@ const GeneralControl: React.FC<GeneralProp> = ({
         <div>
             <Flex vertical gap={"middle"} style={{width: '100%'}}>
                 <Flex gap={"small"} align={"start"}>
-                    <div style={{width: 60}}>Show</div>
+                    <div style={{width: 40}}>
+                        <FormattedMessage id={"trace.toolbar.general.show"}/>
+                    </div>
                     <Select
                         style={{minWidth: 120, fontSize: 12}}
                         size={"small"}
@@ -166,11 +172,11 @@ const GeneralControl: React.FC<GeneralProp> = ({
                         }}
                         size={"small"}
                     >
-                        Apply
+                        <FormattedMessage id={"trace.toolbar.general.show.apply"}/>
                     </Button>
                 </Flex>
                 <Flex gap={"small"} align={"start"} style={{width: '100%'}}>
-                    <div style={{width: 60}}></div>
+                    <div style={{width: 40}}></div>
                     <Table
                         size={"small"}
                         showHeader={false}
@@ -183,16 +189,18 @@ const GeneralControl: React.FC<GeneralProp> = ({
                 </Flex>
             </Flex>
             <Flex style={{marginTop: 30}}>
-                <div style={{width: 60}}>Zoom</div>
+                <div style={{width: 40}}>
+                    <FormattedMessage id={"trace.toolbar.general.zoom"}/>
+                </div>
                 <Form layout={"inline"} size={"small"}>
-                    <Form.Item label={"Start"}>
+                    <Form.Item label={intl.formatMessage({id: "trace.toolbar.general.zoom.start"})}>
                         <InputNumber
                             min={range[0]}
                             max={range[1]}
                             value={zoomStartInput}
                             onChange={(v) => setZoomStartInput(Number(v))}/>
                     </Form.Item>
-                    <Form.Item label={"End"}>
+                    <Form.Item label={intl.formatMessage({id: "trace.toolbar.general.zoom.end"})}>
                         <InputNumber
                             min={range[0]}
                             max={range[1]}
@@ -209,7 +217,7 @@ const GeneralControl: React.FC<GeneralProp> = ({
                             setZoomEndInput(newEnd);
                             console.log(`zoom out new start-end: ${newStart}, ${newEnd}`)
                             zoomApply(newStart, newEnd)
-                        }}>Zoom Out</Button>
+                        }}><FormattedMessage id={"trace.toolbar.general.zoom.out"}/></Button>
                         <Button onClick={() => {
                             console.log(`zoom in pre start-end: ${zoomStartInput}, ${zoomEndInput}`)
                             if (zoomEndInput - zoomStartInput >= 100) { // minimum zoom range is 100
@@ -221,8 +229,10 @@ const GeneralControl: React.FC<GeneralProp> = ({
                                 console.log(`zoom in new start-end: ${newStart}, ${newEnd}`)
                                 zoomApply(newStart, newEnd)
                             }
-                        }}>Zoom In</Button>
-                        <Button onClick={() => {zoomApply(zoomStartInput, zoomEndInput);}}>Apply</Button>
+                        }}><FormattedMessage id={"trace.toolbar.general.zoom.in"}/></Button>
+                        <Button onClick={() => {zoomApply(zoomStartInput, zoomEndInput);}}>
+                            <FormattedMessage id={"trace.toolbar.general.zoom.apply"}/>
+                        </Button>
                     </Space.Compact>
                 </Form>
             </Flex>

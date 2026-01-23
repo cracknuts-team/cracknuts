@@ -312,11 +312,12 @@ class TraceDataset(abc.ABC):
         return self._create_time
 
     def plot(self):
-        from cracknuts.trace.plot import TracePlot
+        from cracknuts.jupyter.trace_panel import TracePanelWidget
 
-        plot = TracePlot()
-        plot.set_trace_dataset(self)
-        return plot
+        tpw = TracePanelWidget()
+        tpw.set_trace_dataset(self)
+        tpw.show_trace2([TraceIndexFilter("origin", 0, slice(0, 1))])
+        return tpw
 
 
 class _InfoRender:
@@ -366,24 +367,23 @@ class ZarrTraceDataset(TraceDataset):
     │   │   ├── key                     [Array]
     │   │   └── ...                     [Array]
     │   │
-    │   ├── 1/                          <-- [二级分组] 通道 1 (如果有双通道采集)
-    │   │   ├── trace                   [Array]
-    │   │   ├── plaintext               [Array]
-    │   │   ├── ciphertext              [Array]
-    │   │   ├── key                     [Array]
-    │   │   └── ...
+    │   └── 1/                          <-- [二级分组] 通道 1 (如果有双通道采集)
+    │       ├── trace                   [Array]
+    │       ├── plaintext               [Array]
+    │       ├── ciphertext              [Array]
+    │       ├── key                     [Array]
+    │       └── ...
     │
-    └── aligned/                        <-- [一级分组] 处理后的数据集
-        │
-        ├── 0/                          <-- [二级分组] 对应通道 0 的对齐数据
-        │   ├── trace                   [Array] (对齐后的波形)
-        │   └── ...
-        │
-        └── 1/
-            └── ...
+    ├── aligned/                        <-- [一级分组] 处理后的数据集
+    │   │
+    │   ├── 0/                          <-- [二级分组] 对应通道 0 的对齐数据
+    │   │   ├── trace                   [Array] (对齐后的波形)
+    │   │   └── ...
+    │   │
+    │   └── 1/
+    │      └── ...
     ├── ...
     └── attrs
-
     """
 
     _ATTR_METADATA_KEY = "metadata"
