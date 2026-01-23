@@ -3,7 +3,7 @@ import {useModel, useModelState} from "@anywidget/react";
 import ReactEcharts from "echarts-for-react";
 import Slider from "@/Slider.tsx";
 import {ECharts, EChartsOption} from "echarts";
-import {useIntl} from "react-intl";
+import {useIntl, FormattedMessage} from "react-intl";
 import {Tabs} from "antd";
 import {CompatibilityProps} from "antd/es/tabs";
 import type {Tab} from 'rc-tabs/lib/interface';
@@ -529,7 +529,7 @@ const TracePanel: React.FC = () => {
 
     const tabsItems: (Omit<Tab, "destroyInactiveTabPane"> & CompatibilityProps)[] = [{
         key: "1",
-        label: 'General',
+        label: <FormattedMessage id="trace.toolbar.general"/>,
         children: <GeneralControl
             groupChannels={_bInfoChannels}
             selectedChannelPaths={selectTraceChannelPaths}
@@ -546,7 +546,7 @@ const TracePanel: React.FC = () => {
         />
     }, {
         key: "2",
-        label: "Shift",
+        label: <FormattedMessage id="trace.toolbar.shift"/>,
         children: <ShiftControl
             onOffsetChanged={handleOffsetChanged}
             onOffsetApply={handleOffsetApply}

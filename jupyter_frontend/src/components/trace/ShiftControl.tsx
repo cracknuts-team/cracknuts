@@ -1,5 +1,6 @@
 import React from "react";
 import {Button, InputNumber, Table, TableProps} from "antd";
+import {FormattedMessage} from "react-intl";
 
 interface TraceInfo {
     index: string,
@@ -17,23 +18,23 @@ interface _TraceInfo extends Omit<TraceInfo, "offset"> {
 const columns: TableProps<_TraceInfo>['columns'] = [{
     key: 'group',
     dataIndex: 'group',
-    title: 'Group'
+    title: <FormattedMessage id={"trace.toolbar.shift.group"}/>
 }, {
     key: 'channel',
     dataIndex: 'channel',
-    title: 'Channel'
+    title: <FormattedMessage id={"trace.toolbar.shift.channel"}/>
 }, {
     key: 'trace',
     dataIndex: 'trace',
-    title: 'Trace'
+    title: <FormattedMessage id={"trace.toolbar.shift.trace"}/>
 }, {
     key: 'offset',
     dataIndex: 'offset',
-    title: 'Offset'
+    title: <FormattedMessage id={"trace.toolbar.shift.offset"}/>
 }, {
     key: 'operation',
     dataIndex: 'operation',
-    title: 'Operation'
+    title: <FormattedMessage id={"trace.toolbar.shift.operation"}/>
 }];
 
 interface ShiftControlProp {
@@ -56,7 +57,7 @@ const ShiftControl: React.FC<ShiftControlProp> = ({traces, onOffsetChanged, onOf
                 onClick={() => {onOffsetApply(t.group, t.channel, t.trace)}}
                 size={"small"}
                 key={`apply-${t.index}`}
-            >Apply</Button>
+            ><FormattedMessage id={"trace.toolbar.shift.operation.apply"}/></Button>
         }
     })
     return (

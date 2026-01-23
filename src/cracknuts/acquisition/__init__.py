@@ -8,13 +8,32 @@ from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.cracker.cracker_g1 import CrackerG1
 
 
+def new_acquisition(
+    cracker,
+    init,
+    do,
+    finish,
+    sample_length: int | None = None,
+    data_plaintext_length: int | None = None,
+    data_ciphertext_length: int | None = None,
+    data_key_length: int | None = None,
+    data_extended_length: int | None = None,
+    **acq_kwargs,
+):
+    """
+    Deprecated.
+    Use simple_acq() or simple_glitch_acq() instead.
+    """
+    raise DeprecationWarning("new_acquisition() is deprecated. " "Use simple_acq() or simple_glitch_acq() instead.")
+
+
 def simple_acq(
-        cracker: CrackerS1,
-        init_func: typing.Callable[[CrackerS1], None] = lambda cracker: None,
-        do_func: typing.Callable[[CrackerS1, int], dict[str, bytes]] = lambda cracker, count: {},
-        finish_func: typing.Callable[[CrackerS1], None] = lambda cracker: None,
-        **kwargs,
-) -> 'Acquisition':
+    cracker: CrackerS1,
+    init_func: typing.Callable[[CrackerS1], None] = lambda cracker: None,
+    do_func: typing.Callable[[CrackerS1, int], dict[str, bytes]] = lambda cracker, count: {},
+    finish_func: typing.Callable[[CrackerS1], None] = lambda cracker: None,
+    **kwargs,
+) -> "Acquisition":
     """
     创建一个简单的Acquisition子类实例。
 
@@ -73,7 +92,7 @@ def simple_acq(
 
     class AnonymousAcquisition(Acquisition):
         def __init__(self, **_kwargs):
-            _kwargs['cracker'] = cracker
+            _kwargs["cracker"] = cracker
             super().__init__(**_kwargs)
 
         def init(self):
@@ -89,10 +108,12 @@ def simple_acq(
 
 
 def simple_glitch_acq(
-        cracker: CrackerG1,
-        init_func: typing.Callable[[CrackerG1], None] = lambda cracker: None,
-        do_func: typing.Callable[[CrackerG1, int], dict[str, bytes]] = lambda cracker, count: {},
-        finish_func: typing.Callable[[CrackerG1], None] = lambda cracker: None, **kwargs) -> GlitchAcquisition:
+    cracker: CrackerG1,
+    init_func: typing.Callable[[CrackerG1], None] = lambda cracker: None,
+    do_func: typing.Callable[[CrackerG1, int], dict[str, bytes]] = lambda cracker, count: {},
+    finish_func: typing.Callable[[CrackerG1], None] = lambda cracker: None,
+    **kwargs,
+) -> GlitchAcquisition:
     """
     创建一个简单的GlitchAcquisition子类实例。
 
@@ -148,9 +169,10 @@ def simple_glitch_acq(
     :type kwargs: dict
     :return: Acquisition实例
     """
+
     class AnonymousAcquisition(GlitchAcquisition):
         def __init__(self, **_kwargs):
-            _kwargs['cracker'] = cracker
+            _kwargs["cracker"] = cracker
             super().__init__(**_kwargs)
 
         def init(self):

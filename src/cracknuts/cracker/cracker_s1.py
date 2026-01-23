@@ -1935,17 +1935,24 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DATA, data=gpio_data_bytes
             )
 
-    def digital_pin_mode(self, pin_num: int, mode: int):
+    def digital_pin_mode(self, pin_num: int, mode: int | str):
         """
         设置数字IO引脚工作模式
 
         :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
         :type pin_num: int
-        :param mode: 引脚工作模式，1：输入模式，0：输出模式
-        :type mode: int
+        :param mode: 引脚工作模式，1：输入模式，0：输出模式，或者 "INPUT"、"OUTPUT"
+        :type mode: int | str
         :return: Cracker设备响应状态和接收到的数据：(status, response)。
         :rtype: tuple[int, bytes | None]
         """
+        if isinstance(mode, str):
+            if mode.upper() == "INPUT":
+                mode = 1
+            elif mode.upper() == "OUTPUT":
+                mode = 0
+            else:
+                raise ValueError("Invalid mode string, must be 'INPUT' or 'OUTPUT'")
         pin_num = pin_num - 5  # 从第五个引脚开始编号
         s, r = self.register_read(base_address=self._BASE_ADDRESS, offset=self._OFFSET_GPIO_DIR)
         if s != protocol.STATUS_OK:
