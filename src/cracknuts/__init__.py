@@ -6,7 +6,7 @@ import sys
 
 from cracknuts import logger
 from cracknuts.jupyter import show_panel
-from cracknuts.cracker import new_cracker, cracker_s1, cracker_g1
+from cracknuts.cracker import new_cracker, cracker_s1, cracker_g1, cracker_f1
 from cracknuts.acquisition import simple_acq, simple_glitch_acq
 from cracknuts.trace import load_trace_dataset
 
@@ -31,6 +31,7 @@ __all__ = [
     "new_cracker",
     "cracker_s1",
     "cracker_g1",
+    "cracker_f1",
     "simple_acq",
     "simple_glitch_acq",
     "show_panel",

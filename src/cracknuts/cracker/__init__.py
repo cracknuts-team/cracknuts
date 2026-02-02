@@ -2,6 +2,7 @@
 
 from cracknuts.cracker.cracker_s1 import CrackerS1
 from cracknuts.cracker.cracker_g1 import CrackerG1
+from cracknuts.cracker.cracker_f1 import CrackerF1
 
 
 import warnings
@@ -97,7 +98,7 @@ def cracker_g1(
     address: tuple | str, bin_server_path: str | None = None, bin_bitstream_path: str | None = None
 ) -> CrackerG1:
     """
-    Creates and returns a :class:`CrackerS1` instance.
+    Creates and returns a :class:`CrackerG1` instance.
 
     :param address: Cracker device address. Supported formats include:
                        - A tuple ``(ip, port)``
@@ -119,4 +120,29 @@ def cracker_g1(
     return CrackerG1(address, bin_server_path, bin_bitstream_path)
 
 
-__all__ = ["new_cracker", "cracker_s1", "cracker_g1"]
+def cracker_f1(
+    address: tuple | str, bin_server_path: str | None = None, bin_bitstream_path: str | None = None
+) -> CrackerF1:
+    """
+    Creates and returns a :class:`CrackerG1` instance.
+
+    :param address: Cracker device address. Supported formats include:
+                       - A tuple ``(ip, port)``
+                       - A string in the form ``"[cnp://]<ip>[:port]"``
+
+                   Examples:
+                       - ``"192.168.0.10"``
+                       - ``"cnp://192.168.0.10:9761"``
+                       - ``("192.168.0.10", 9761)``
+    :type address: str | tuple | None
+    :param bin_server_path: Path to the ``bin_server`` firmware image used for device update.
+                            In most cases, users do not need to specify this parameter.
+    :type bin_server_path: str | None
+    :param bin_bitstream_path: Path to the ``bin_bitstream`` firmware image used for device update.
+                               In most cases, users do not need to specify this parameter.
+    :type bin_bitstream_path: str | None
+    """
+    return CrackerF1(address, bin_server_path, bin_bitstream_path)
+
+
+__all__ = ["new_cracker", "cracker_s1", "cracker_g1", "cracker_f1"]
