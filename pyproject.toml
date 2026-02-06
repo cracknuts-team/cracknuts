@@ -12,13 +12,14 @@ license = { file = "LICENSE" }
 authors = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 maintainers = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 dependencies = [
-    "numpy~=1.26.4",
+    "numpy~=2.3.5",
     "click~=8.1.7",
     "zarr~=2.18.2",
     "packaging~=24.1",
     "anywidget~=0.9.13",
     "pandas~=2.3.3",
-    "scipy~=1.16.2"
+    "scipy~=1.16.2",
+    "numba~=0.63.1"
 ]
 
 [project.optional-dependencies]
