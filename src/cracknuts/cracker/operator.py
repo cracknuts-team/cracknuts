@@ -198,8 +198,8 @@ class Operator:
             return False
         return True
 
-    def set_led(self, header: str, content: str):
-        payload = struct.pack(">I", len(header)) + header.encode() + content.encode()
+    def update_led_content(self, title: str, content: str):
+        payload = struct.pack(">B", len(title)) + title.encode() + content.encode()
         status, res = self.send_and_receive(protocol.build_send_message(Command.SET_LED, payload=payload))
         if status != protocol.STATUS_OK:
             self._logger.error(f"Failed to set led: {res}")
