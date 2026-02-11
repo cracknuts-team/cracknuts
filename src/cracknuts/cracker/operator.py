@@ -22,6 +22,7 @@ class Command:
 
     GET_VERSION = 0x000B
     GET_SERVER_VERSION = 0x000C
+    SET_LED = 0x000D
 
     GET_IP = 0x0007
     SET_IP = 0x0006
@@ -194,6 +195,14 @@ class Operator:
         status, res = self.send_and_receive(protocol.build_send_message(Command.UPDATE_BITSTREAM, payload=file_bytes))
         if status != protocol.STATUS_OK:
             self._logger.error(f"Failed to update bitstream: {res}")
+            return False
+        return True
+
+    def set_led(self, header: str, content: str):
+        payload = struct.pack(">I", len(header)) + header.encode() + content.encode()
+        status, res = self.send_and_receive(protocol.build_send_message(Command.SET_LED, payload=payload))
+        if status != protocol.STATUS_OK:
+            self._logger.error(f"Failed to set led: {res}")
             return False
         return True
 
