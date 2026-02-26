@@ -63,3 +63,20 @@ class CrackerO1(CrackerG1):
         self._config.glitch_clock_config_delay = delay
 
         return protocol.STATUS_OK, None
+
+    def write_config_to_cracker(self, config: ConfigG1): ...
+
+    def get_current_config(self) -> ConfigG1 | None:
+        return ConfigO1()
+
+    def get_voltage_a0(self):
+        """
+        获取测量点a0电压
+        """
+        return self.register_read(base_address=0x43C10000, offset=0x1890)
+
+    def get_voltage_a1(self):
+        """
+        获取测量点a1电压
+        """
+        return self.register_read(base_address=0x43C10000, offset=0x189C)

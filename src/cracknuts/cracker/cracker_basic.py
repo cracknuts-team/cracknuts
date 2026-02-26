@@ -510,7 +510,17 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     self._server_address,
                     hex_util.get_bytes_matrix(resp_header),
                 )
-            magic, version, direction, status, length = struct.unpack(protocol.RES_HEADER_FORMAT, resp_header)
+            try:
+                magic, version, direction, status, length = struct.unpack(protocol.RES_HEADER_FORMAT, resp_header)
+            except Exception as e:
+                self._logger.error("Get response header failed: %s", e)
+                self._logger.error(f"The request is {hex_util.get_bytes_matrix(message)}")
+                self._logger.error(f"The header is [{hex_util.get_hex(resp_header)}]")
+                # import traceback
+                #
+                # traceback.print_stack()
+                return protocol.STATUS_ERROR, None
+
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
                     f"Receive header from {self._server_address}: "
