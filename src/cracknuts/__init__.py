@@ -1,6 +1,6 @@
 # Copyright 2024 CrackNuts. All rights reserved.
 
-__version__ = "0.21.0-alpha.0"
+__version__ = "0.21.0-alpha.2"
 
 import sys
 
