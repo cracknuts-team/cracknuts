@@ -38,7 +38,7 @@ cracknuts = "cracknuts.__main__:main"
 version = { attr = "cracknuts.__version__" }
 
 [tool.setuptools.package-data]
-"cracknuts" = ["firmware/*", "jupyter/static/*", "template/**/*", "tutorials/**/*", "glitch/voltage_map/*.csv"]
+"cracknuts" = ["firmware/*", "jupyter/static/*", "template/**/*", "tutorials/**/*", "glitch/voltage_map/*.csv", "cracker/*.csv"]
 
 [tool.ruff]
 line-length = 120
