@@ -1,10 +1,19 @@
+import os
 import struct
 
 from PIL import Image
 
-from cracknuts.cracker import CrackerG1, protocol
-from cracknuts.cracker.cracker_g1 import ConfigG1, wave_8m, wave_4m
+from cracknuts.cracker import protocol
+from cracknuts.cracker.cracker_g1 import ConfigG1, CrackerG1, wave_8m, wave_4m, _build_interp_func
 import numpy as np
+import importlib.util
+
+_wave_interp_func_cv, _wave_interp_func_vc = _build_interp_func(
+    os.path.join(
+        os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "cracker"),
+        "o1_wave_voltage_map.csv",
+    )
+)
 
 
 class ConfigO1(ConfigG1):
@@ -87,7 +96,7 @@ class CrackerO1(CrackerG1):
             status, res = self.register_write(
                 base_address=0x43C10000,
                 offset=0x1814,
-                data=round(voltage * 1000 / 0.244),
+                data=self._get_dac_code_from_voltage(voltage, _wave_interp_func_vc),
             )
             if status != protocol.STATUS_OK:
                 return status, res
@@ -332,7 +341,7 @@ class CrackerO1(CrackerG1):
 
     def digital_read(self, pin_id: str):
         """
-        读取数字IO引脚电平状态
+        读取数字IO引脚电平状态，高电平需要大于 1.4v
 
         :param pin_id: 引脚ID, 支持 GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9
         :type pin_id: str
@@ -349,8 +358,7 @@ class CrackerO1(CrackerG1):
             self._logger.error(f"Get GPIO data failed, status: {s}")
             return s, r
         else:
-            v = self._get_bit_stream_lsb(r, pin_index)
-            return s, 1 if v == 0 else 0
+            return s, self._get_bit_stream_lsb(r, pin_index)
 
     def digital_write(self, pin_id: str, value: int):
         """
