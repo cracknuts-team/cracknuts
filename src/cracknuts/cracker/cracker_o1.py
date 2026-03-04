@@ -1,4 +1,5 @@
 import os
+import re
 import struct
 
 from PIL import Image
@@ -38,6 +39,9 @@ class CrackerO1(CrackerG1):
         bin_bitstream_path: str | None = None,
         operator_port: int = None,
     ):
+        """
+        Cracker O1 设备接口类。
+        """
         super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
         self._config: ConfigG1 = self._config
         self._gpio_map = {
@@ -84,10 +88,22 @@ class CrackerO1(CrackerG1):
                 },
             },
         }
+        self._wave_fs = 160_000_000  # DAC采样率
+        self._buffer_depth = 160  # 160
 
-    def set_waveform(self, wave: list[float]) -> tuple[int, None | bytes]:
+    def set_waveform_arbitrary(self, wave: list[float]) -> tuple[int, None | bytes]:
         """
-        param wave: 单组波形的电压值，每个值的周期是 6.25 ns
+        设置波形发生器输出波形。
+
+        :param wave: 单组波形的电压采样点序列（单位：伏特 V）。列表中每个元素表示一个离散采样点的输出电压值。
+                     - 单个采样点时间间隔：6.25 ns
+                     - 等效采样率：160 MSa/s (160 MHz)
+                     - 波形按照数组顺序依次输出
+                     - 一个数组表示一个完整周期的波形
+        :type wave: list[float]
+
+        :return: 执行状态码与设备返回数据。
+        :rtype: tuple[int, None | bytes]
         """
         status, res = self.register_write(base_address=0x43C10000, offset=0x1810, data=len(wave))
         if status != protocol.STATUS_OK:
@@ -102,6 +118,382 @@ class CrackerO1(CrackerG1):
                 return status, res
 
         return protocol.STATUS_OK, None
+
+    @staticmethod
+    def _parse_frequency(frequency) -> float:
+        """
+        将 frequency 转为 Hz
+
+        支持：
+            1e6
+            1000000
+            "1M"
+            "1MHz"
+            "500k"
+            "500kHz"
+            "2.5G"
+            "10"        -> 默认 MHz
+        """
+
+        if isinstance(frequency, int | float):
+            return float(frequency)
+
+        if not isinstance(frequency, str):
+            raise TypeError("frequency must be float | int | str")
+
+        s = frequency.strip().lower()
+
+        units = {
+            "hz": 1,
+            "k": 1e3,
+            "khz": 1e3,
+            "m": 1e6,
+            "mhz": 1e6,
+            "g": 1e9,
+            "ghz": 1e9,
+        }
+
+        m = re.fullmatch(r"([0-9]*\.?[0-9]+)\s*([a-z]*)", s)
+        if not m:
+            raise ValueError(f"Invalid frequency format: {frequency}")
+
+        value = float(m.group(1))
+        unit = m.group(2)
+
+        if unit == "":
+            multiplier = 1e6
+        else:
+            if unit not in units:
+                raise ValueError(f"Unknown frequency unit: {unit}")
+            multiplier = units[unit]
+
+        return value * multiplier
+
+    def set_waveform_standard(
+        self,
+        waveform: str,
+        vpp,
+        *,
+        frequency: str | float | None = None,
+        offset: float | None = None,
+        duty: float = 0.5,
+        phase: float = 0.0,
+    ) -> tuple[int, None | bytes]:
+        """
+        设置标准波形输出。
+
+        本函数根据指定参数在软件中生成 **单周期波形数据**，并写入设备任意波形缓冲区，由 DAC 循环播放该波形。
+
+        支持波形类型：
+
+        - ``"dc"``       ：直流电压
+        - ``"sine"``     ：正弦波
+        - ``"square"``   ：方波
+        - ``"triangle"`` ：三角波
+        - ``"sawtooth"`` ：锯齿波（可调坡度）
+
+        :param waveform: 波形类型名称（大小写不敏感）。
+        :type waveform: str
+        :param vpp: 峰峰值电压（Volt）。对于非 DC 波形，振幅 `amplitude = vpp / 2`。
+        :type vpp: float
+        :param frequency: 输出频率（Hz）。对 ``"dc"`` 可省略，其他波形必须指定。
+                          支持数值或带单位字符串（例如 `1e6`、`"1MHz"`、`"100kHz"`）。
+        :type frequency: float, str, or None, optional
+        :param offset: 直流偏置电压（Volt）。若为 `None`，默认 `offset = vpp / 2`，保证波形非负。
+        :type offset: float or None, optional
+
+        :param duty: 波形占空比 / 坡度参数（0~1）。
+                     - ``square``：高电平占周期比例
+                     - ``sawtooth``：上升段占周期比例
+                       - 接近 1 → 慢上升 + 快下降（标准锯齿波）
+                       - 0.5 → 对称三角波
+                       - 接近 0 → 快速上升 + 慢下降
+                     - 对 ``sine`` 与 ``triangle`` 无作用
+        :type duty: float, optional
+        :default duty: 0.5
+        :param phase: 初始相位（弧度 rad）。数学定义：`2π rad = 1 个周期`
+        :type phase: float, optional
+        :default phase: 0.0
+        :return: 执行状态码与设备返回数据。
+        :rtype: tuple[int, None | bytes]
+        """
+
+        waveform = waveform.lower()
+
+        if waveform == "dc":
+            wave = np.full(1, vpp, dtype=float)
+            return self.set_waveform_arbitrary(wave.tolist())
+
+        if frequency is None:
+            self._logger.error("frequency must be specified for non-DC waveform")
+            return self.NON_PROTOCOL_ERROR, None
+        frequency = self._parse_frequency(frequency)
+        if frequency < self._wave_fs / self._buffer_depth:
+            self._logger.error("The minimum frequency is 1 MHz due to the hardware limitation of the DAC buffer depth.")
+            return self.NON_PROTOCOL_ERROR, None
+
+        amplitude = vpp / 2
+
+        if offset is None:
+            offset = amplitude
+
+        n_samples = max(1, int(self._wave_fs * 1.0 / frequency))
+        t = np.arange(n_samples) / self._wave_fs
+
+        if waveform == "sine":
+            wave = amplitude * np.sin(2 * np.pi * frequency * t + phase)
+
+        elif waveform == "square":
+            phase_t = (frequency * t + phase / (2 * np.pi)) % 1.0
+            wave = np.where(phase_t < duty, amplitude, -amplitude)
+
+        elif waveform == "triangle":
+            phase_t = (frequency * t + phase / (2 * np.pi)) % 1.0
+            wave = 4 * amplitude * np.abs(phase_t - 0.5) - amplitude
+
+        elif waveform == "sawtooth":
+            slope = np.clip(duty, 1e-6, 1 - 1e-6)
+
+            phase_t = (frequency * t + phase / (2 * np.pi)) % 1.0
+
+            wave = np.where(
+                phase_t < slope,
+                -amplitude + (2 * amplitude / slope) * phase_t,
+                amplitude - (2 * amplitude / (1 - slope)) * (phase_t - slope),
+            )
+
+        else:
+            raise ValueError(f"Unsupported waveform: {waveform}")
+
+        wave = wave + offset
+
+        v_min = float(np.min(wave))
+        if v_min < 0:
+            raise ValueError("Generated waveform contains negative voltage. " "Increase offset or reduce amplitude.")
+
+        return self.set_waveform_arbitrary(wave.tolist())
+
+    def set_waveform_sine(
+        self,
+        frequency: float | str,
+        *,
+        vpp: float = 1.0,
+        phase: float = 0.0,
+        offset: float | None = None,
+    ):
+        """
+        设置正弦波输出。
+
+        :param frequency: 输出频率（Hz）。支持数值或带单位的字符串形式，例如 `1e6`、`1m`、`"1MHz"`、`"10kHz"`。
+        :type frequency: float or str
+        :param vpp: 峰峰值电压（Volt）。
+        :type vpp: float, optional
+        :default vpp: 1.0
+        :param phase: 初始相位（弧度 rad）。
+        :type phase: float, optional
+        :default phase: 0.0
+        :param offset: 直流偏置电压（Volt）。若为 `None`，默认自动设置为 `vpp / 2` 以避免负电压。
+        :type offset: float or None, optional
+        :return: 设备返回状态与响应数据。
+        :rtype: tuple[int, None | bytes]
+        """
+        return self.set_waveform_standard(
+            "sine",
+            vpp=vpp,
+            frequency=frequency,
+            phase=phase,
+            offset=offset,
+        )
+
+    def set_waveform_square(
+        self,
+        frequency: float,
+        *,
+        duty: float = 0.5,
+        vpp: float = 1.0,
+        phase: float = 0.0,
+        offset: float | None = None,
+    ):
+        """
+        设置方波输出。
+
+        :param frequency: 输出频率（Hz）。
+        :type frequency: float
+        :param duty: 占空比（0~1）。
+                     - 0.5 表示标准 50% 方波
+                     - 0.2 表示高电平占 20% 周期
+        :type duty: float, optional
+        :default duty: 0.5
+        :param vpp: 峰峰值电压（Volt）。
+        :type vpp: float, optional
+        :default vpp: 1.0
+        :param phase: 初始相位（弧度 rad）。
+        :type phase: float, optional
+        :default phase: 0.0
+        :param offset: 直流偏置电压（Volt）。
+        :type offset: float or None, optional
+        :return: 设备返回状态与响应数据。
+        :rtype: tuple[int, None | bytes]
+        """
+        return self.set_waveform_standard(
+            "square",
+            frequency=frequency,
+            vpp=vpp,
+            duty=duty,
+            phase=phase,
+            offset=offset,
+        )
+
+    def set_waveform_triangle(
+        self,
+        frequency: float,
+        *,
+        vpp: float = 1.0,
+        phase: float = 0.0,
+        offset: float | None = None,
+    ):
+        """
+        设置三角波输出。
+
+        :param frequency: 输出频率（Hz）。
+        :type frequency: float
+        :param vpp: 峰峰值电压（Volt）。
+        :type vpp: float, optional
+        :default vpp: 1.0
+        :param phase: 初始相位（弧度 rad）。
+        :type phase: float, optional
+        :default phase: 0.0
+        :param offset: 直流偏置电压（Volt）。
+        :type offset: float or None, optional
+        :return: 设备返回状态与响应数据。
+        :rtype: tuple[int, None | bytes]
+        """
+        return self.set_waveform_standard(
+            "triangle",
+            frequency=frequency,
+            vpp=vpp,
+            phase=phase,
+            offset=offset,
+        )
+
+    def set_waveform_sawtooth(
+        self,
+        frequency: float,
+        *,
+        vpp: float = 1.0,
+        slope: float = 1.0,
+        phase: float = 0.0,
+        offset: float | None = None,
+    ):
+        """
+        设置锯齿波输出。
+
+        :param frequency: 输出频率（Hz）。
+        :type frequency: float
+        :param vpp: 峰峰值电压（Volt）。
+        :type vpp: float, optional
+        :default vpp: 1.0
+        :param slope: 上升段占整个周期的比例（0~1）。
+                      - 1.0 → 标准锯齿波（慢上升，快下降）
+                      - 0.5 → 对称三角波
+                      - 接近 0 → 快速上升，慢下降
+        :type slope: float, optional
+        :default slope: 1.0
+        :param phase: 初始相位（弧度 rad）。
+        :type phase: float, optional
+        :default phase: 0.0
+        :param offset: 直流偏置电压（Volt）。
+        :type offset: float or None, optional
+        :return: 设备返回状态与响应数据。
+        :rtype: tuple[int, None | bytes]
+        """
+        return self.set_waveform_standard(
+            "sawtooth",
+            frequency=frequency,
+            vpp=vpp,
+            duty=slope,
+            phase=phase,
+            offset=offset,
+        )
+
+    def set_waveform_dc(self, voltage: float):
+        """
+        设置直流电压输出。
+
+        :param voltage: 输出直流电压（Volt）。电压值必须在设备允许的输出范围内，且不得为负值。
+        :type voltage: float
+        :return: 设备返回状态与响应数据。
+        :rtype: tuple[int, None | bytes]
+        """
+        return self.set_waveform_standard(
+            "dc",
+            frequency=1.0,
+            vpp=voltage,
+            offset=voltage,
+        )
+
+    def set_waveform_from_file(self, file_path: str) -> tuple[int, None | bytes]:
+        """
+        从文件加载波形数据并设置输出波形。
+
+        文件内容应为电压采样点序列（单位：伏特 V），
+        支持逗号分隔或逐行排列的数值格式。
+        采样点数量最大不得超过 160 个。
+
+        :param file_path: 包含波形数据的文本文件路径。
+                          文件中每个数值表示一个电压采样点（单位 V）。
+        :type file_path: str
+        :return: 设备返回状态与响应数据。
+        :rtype: tuple[int, None | bytes]
+        """
+
+        import os
+        import numpy as np
+
+        # ---------- 文件检查 ----------
+        if not os.path.exists(file_path):
+            self._logger.error(f"Waveform file not found: {file_path}")
+            return self.NON_PROTOCOL_ERROR, None
+
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            self._logger.error(f"Failed to read waveform file: {e}")
+            return self.NON_PROTOCOL_ERROR, None
+
+        # ---------- 解析数据 ----------
+        # 支持：
+        # 1,2,3
+        # 1 2 3
+        # 1\n2\n3
+        tokens = content.replace(",", " ").split()
+
+        if not tokens:
+            self._logger.error("Waveform file is empty.")
+            return self.NON_PROTOCOL_ERROR, None
+
+        try:
+            wave = np.array([float(v) for v in tokens], dtype=float)
+        except ValueError:
+            self._logger.error("Waveform file contains non-numeric values.")
+            return self.NON_PROTOCOL_ERROR, None
+
+        max_points = 160
+        if len(wave) > max_points:
+            self._logger.error(f"Waveform exceeds maximum length ({max_points} samples).")
+            return self.NON_PROTOCOL_ERROR, None
+
+        if not np.all(np.isfinite(wave)):
+            self._logger.error("Waveform contains NaN or Inf.")
+            return self.NON_PROTOCOL_ERROR, None
+
+        v_min = float(np.min(wave))
+        if v_min < 0:
+            self._logger.error("Waveform contains negative voltage. " "All samples must be >= 0 V.")
+            return self.NON_PROTOCOL_ERROR, None
+
+        return self.set_waveform_arbitrary(wave.tolist())
 
     def get_voltage_a0(self):
         """
@@ -214,17 +606,14 @@ class CrackerO1(CrackerG1):
         """
         读取图片并转换为 RGB888 数组。
 
-        参数:
-            image_path (str): 图片路径。
-            should_resize (bool):
-                - True: 强制将图片缩放至 64x64 (无论原图大小，大则缩小，小则放大)。
-                - False: 保持图片原始尺寸，不进行任何缩放。
+        :param image_path: 图片路径。
+        :type image_path: str
 
-        返回:
-            np.ndarray:
-                - 若 should_resize=True: 形状严格为 (64, 64, 3)。
-                - 若 should_resize=False: 形状为 (H, W, 3)，取决于原图。
-                - 出错时返回 None。
+        :return: 转换后的 RGB888 数组。
+                 - 若 `should_resize=True`：形状为 (64, 64, 3)
+                 - 若 `should_resize=False`：形状为 (H, W, 3)，取决于原图
+                 - 出错时返回 None
+        :rtype: np.ndarray or None
         """
         target_size = 64
 
