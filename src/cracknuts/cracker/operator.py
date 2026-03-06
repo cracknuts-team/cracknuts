@@ -9,6 +9,8 @@ from cracknuts import logger
 from cracknuts.cracker import protocol
 from cracknuts.utils import hex_util
 
+from collections import OrderedDict
+
 
 class Command:
     START_SERVER = 0x0001
@@ -28,6 +30,175 @@ class Command:
     SET_IP = 0x0006
 
 
+class LedServer(threading.Thread):
+    def __init__(self, operator, width=19, height=4, delay=2, gap=2):
+        super().__init__(daemon=True)
+
+        self.operator = operator
+        self.width = width
+        self.height = height
+        self.delay = delay
+        self.gap = gap
+
+        # key -> {title:str, items:OrderedDict[item_key,str]}
+        self._groups = OrderedDict()
+
+        self._lock = threading.Lock()
+        self._running = True
+
+        self._update_event = threading.Event()
+
+    def set_groups(self, items):
+        """
+        items = [(key, title, content)]
+        content 可以是 str 或 list[str]
+        """
+        with self._lock:
+            self._groups.clear()
+
+            for key, title, content in items:
+                if isinstance(content, str):
+                    content = content.splitlines()
+
+                item_dict = OrderedDict()
+                for i, line in enumerate(content):
+                    item_dict[str(i)] = line
+
+                self._groups[key] = {"title": title, "items": item_dict}
+
+        self._update_event.set()
+
+    def update_group(self, title, content, key=None):
+        if key is None:
+            key = title.strip().lower()
+
+        if isinstance(content, str):
+            content = content.splitlines()
+
+        item_dict = OrderedDict()
+        for i, line in enumerate(content):
+            item_dict[str(i)] = line
+
+        with self._lock:
+            self._groups[key] = {"title": title, "items": item_dict}
+
+        self._update_event.set()
+
+    def update_item(self, title: str, item, key=None, item_key=None):
+        if key is None:
+            key = title.strip().lower()
+
+        if isinstance(item, list):
+            item = " ".join(item)
+
+        if item_key is None:
+            item_key = title.strip().lower()
+
+        with self._lock:
+            if key not in self._groups:
+                self._groups[key] = {"title": title, "items": OrderedDict()}
+
+            group = self._groups[key]
+            group["title"] = title
+            group["items"][item_key] = item
+
+        self._update_event.set()
+
+    def remove_group(self, key):
+        with self._lock:
+            if key in self._groups:
+                del self._groups[key]
+
+        self._update_event.set()
+
+    def stop(self):
+        self._running = False
+        self._update_event.set()
+
+    def _wrap_lines(self, content):
+        lines = []
+
+        for line in content.splitlines():
+            if not line:
+                lines.append("")
+                continue
+
+            for i in range(0, len(line), self.width):
+                lines.append(line[i : i + self.width])
+
+        return lines
+
+    def _build_buffer(self):
+        buffer = []
+
+        for group in self._groups.values():
+            title = group["title"]
+            items = group["items"]
+
+            for text in items.values():
+                lines = self._wrap_lines(text)
+                lines = [line.ljust(self.width) for line in lines]
+
+                for line in lines:
+                    buffer.append((title, line))
+
+            for _ in range(self.gap):
+                buffer.append((None, " " * self.width))
+
+        return buffer
+
+    def run(self):
+        offset = 0
+
+        while self._running:
+            with self._lock:
+                buffer = self._build_buffer()
+
+            if not buffer:
+                self._update_event.wait(self.delay)
+                self._update_event.clear()
+                continue
+
+            total = len(buffer)
+
+            # 修改后的滚动判断逻辑
+            need_scroll = total - 2 > self.height
+
+            frame_lines = []
+            current_title = None
+
+            for i in range(self.height):
+                if need_scroll:
+                    idx = (offset + i) % total
+                else:
+                    idx = i if i < total else None
+
+                if idx is None:
+                    title, line = None, " " * self.width
+                else:
+                    title, line = buffer[idx]
+
+                if current_title is None and title is not None:
+                    current_title = title
+
+                frame_lines.append(line)
+
+            if current_title is None:
+                current_title = ""
+
+            self.operator.update_led_content(title=" " + current_title + " ", content="\n".join(frame_lines))
+
+            triggered = self._update_event.wait(self.delay)
+            self._update_event.clear()
+
+            if triggered:
+                offset = 0
+                continue
+
+            if need_scroll:
+                offset = (offset + 1) % total
+
+
 class Operator:
     """
     Config `Cracker` device daemo process
@@ -43,6 +214,7 @@ class Operator:
         self._command_lock = threading.Lock()
         self._connection_status = False
         self._ignore_socket_timeout_error = False  # This is used to ignore connection errors after changing the IP.
+        self._led_server = LedServer(self)
 
     def connect(self, connect_timeout: float = 5.0) -> bool:
         """
@@ -59,6 +231,8 @@ class Operator:
                 self._socket.connect(self._server_address)
                 self._logger.info(f"Connected to cracker operator server: {self._server_address}")
                 self._connection_status = True
+                self._led_server.start()
+                self._led_server.update_group("IP", content=self._server_address[0])
                 return True
             except OSError as e:
                 if not (type(e) is TimeoutError and self._ignore_socket_timeout_error):
@@ -69,6 +243,7 @@ class Operator:
 
     def disconnect(self):
         try:
+            self._led_server.stop()
             if self._socket:
                 self._socket.shutdown(socket.SHUT_RDWR)
             self._logger.info(f"Disconnect from {self._server_address}")
@@ -274,3 +449,6 @@ class Operator:
         if isinstance(payload, str):
             payload = bytes.fromhex(payload)
         return self.send_and_receive(protocol.build_send_message(command, rfu, payload))
+
+    def get_led_server(self):
+        return self._led_server

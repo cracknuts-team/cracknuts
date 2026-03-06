@@ -151,6 +151,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._operator = Operator(self._server_address[0], self._operator_port)
         self._config = self.get_default_config()
         self._hardware_model = None
+        self._led_server = self._operator.get_led_server()
         self._installed_bin_server_path = None
         self._installed_bin_bitstream_path = None
         # === Since the device does not support the channel enable function,

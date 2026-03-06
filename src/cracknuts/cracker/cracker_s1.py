@@ -308,6 +308,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self._config.osc_channel_0_enable = final_enable[0]
         self._config.osc_channel_1_enable = final_enable[1]
         # === end ===
+        self._led_server.update_item(
+            " OSC ", [f"CHA: {'ON' if final_enable[0] else 'OFF'}", f"CHB: {'ON' if final_enable[1] else 'OFF'}"]
+        )
+        return protocol.STATUS_OK, None
 
     @connection_status_check
     def _osc_set_analog_all_channel_enable(self, final_enable: dict[int, bool]):
@@ -331,7 +335,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         if final_enable.get(8):
             mask |= 1 << 8
         payload = struct.pack(">B", mask)
-        return self.send_with_command(protocol.Command.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
+        status, res = self.send_with_command(protocol.Command.OSC_ANALOG_CHANNEL_ENABLE, payload=payload)
+        if status == protocol.STATUS_OK:
+            self._config.osc_channel_0_enable = final_enable.get(0, self._config.osc_channel_0_enable)
+            self._config.osc_channel_1_enable = final_enable.get(1, self._config.osc_channel_1_enable)
+            self._led_server.update_item(
+                "OSC", [f"CHA: {'ON' if final_enable[0] else 'OFF'}", f"CHB: {'ON' if final_enable[1] else 'OFF'}"]
+            )
 
     @connection_status_check
     def osc_trigger_mode(self, mode: int | str) -> tuple[int, None]:
