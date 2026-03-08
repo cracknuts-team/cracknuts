@@ -88,7 +88,7 @@ class CrackerO1(CrackerG1):
                 },
             },
         }
-        self._wave_fs = 160_000_000  # DAC采样率
+        self._wave_fs = 10_000_000  # DAC采样率
         self._buffer_depth = 160  # 160
 
     def set_waveform_arbitrary(self, wave: list[float]) -> tuple[int, None | bytes]:
@@ -96,8 +96,7 @@ class CrackerO1(CrackerG1):
         设置波形发生器输出波形。
 
         :param wave: 单组波形的电压采样点序列（单位：伏特 V）。列表中每个元素表示一个离散采样点的输出电压值。
-                     - 单个采样点时间间隔：6.25 ns
-                     - 等效采样率：160 MSa/s (160 MHz)
+                     - 单个采样点时间间隔： 100 ns（对应 10 MHz 的采样率）
                      - 波形按照数组顺序依次输出
                      - 一个数组表示一个完整周期的波形
         :type wave: list[float]
@@ -229,7 +228,15 @@ class CrackerO1(CrackerG1):
             return self.NON_PROTOCOL_ERROR, None
         frequency = self._parse_frequency(frequency)
         if frequency < self._wave_fs / self._buffer_depth:
-            self._logger.error("The minimum frequency is 1 MHz due to the hardware limitation of the DAC buffer depth.")
+            self._logger.error(
+                "The frequency is too low to generate a valid waveform. "
+                f"Minimum frequency is {self._wave_fs / self._buffer_depth} Hz."
+            )
+            return self.NON_PROTOCOL_ERROR, None
+        elif frequency > self._wave_fs:
+            self._logger.error(
+                "The frequency is too high to generate a valid waveform. " f"Maximum frequency is {self._wave_fs} Hz."
+            )
             return self.NON_PROTOCOL_ERROR, None
 
         amplitude = vpp / 2
