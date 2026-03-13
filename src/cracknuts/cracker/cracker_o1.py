@@ -65,6 +65,7 @@ class CrackerO1(CrackerG1):
                     "GP24": 24,
                     "GP27": 27,
                     "GP25": 25,
+                    "GP28": 28,
                 },
             },
             "a": {
@@ -520,10 +521,9 @@ class CrackerO1(CrackerG1):
             return None
         return status, round(int.from_bytes(res, byteorder="big") / 16 / 4096 * 3.33, 2)
 
-    def set_pwm(self, pin, freq, duty_cycle):
+    def set_pwm(self, freq, duty_cycle):
         """
-        设置PWM输出
-        :param pin: PWM输出引脚，GP28或GP29
+        设置PWM输出, GP29引脚
         :param freq: PWM频率，单位Hz
         :param duty_cycle: PWM占空比，0-1之间的小数
         """
@@ -531,43 +531,14 @@ class CrackerO1(CrackerG1):
         period = struct.pack(">I", round((freq * 2**32) / 100_000_000))
         duty = struct.pack(">I", round((1 - duty_cycle) * (2**32) - 1))
 
-        pin = pin.upper()
-
-        if pin == "GP29":
-            status, res = self.register_write(base_address=0x43C10000, offset=0x1838, data=period)
-            if status != protocol.STATUS_OK:
-                return status, res
-            status, res = self.register_write(base_address=0x43C10000, offset=0x183C, data=duty)
-            if status != protocol.STATUS_OK:
-                return status, res
-        elif pin == "GP28":
-            status, res = self.register_write(base_address=0x43C10000, offset=0x1830, data=period)
-            if status != protocol.STATUS_OK:
-                return status, res
-            status, res = self.register_write(base_address=0x43C10000, offset=0x1834, data=duty)
-            if status != protocol.STATUS_OK:
-                return status, res
-        else:
-            self._logger.error(f"pin {pin} not supported")
-            return self.NON_PROTOCOL_ERROR, None
+        status, res = self.register_write(base_address=0x43C10000, offset=0x1838, data=period)
+        if status != protocol.STATUS_OK:
+            return status, res
+        status, res = self.register_write(base_address=0x43C10000, offset=0x183C, data=duty)
+        if status != protocol.STATUS_OK:
+            return status, res
 
         return protocol.STATUS_OK, None
-
-    def set_pwm_gp28(self, freq, duty_cycle):
-        """
-        设置GP28的PWM输出
-        :param freq: PWM频率，单位Hz
-        :param duty_cycle: PWM占空比，0-1之间的小数
-        """
-        return self.set_pwm("GP28", freq, duty_cycle)
-
-    def set_pwm_gp29(self, freq, duty_cycle):
-        """
-        设置GP29的PWM输出
-        :param freq: PWM频率，单位Hz
-        :param duty_cycle: PWM占空比，0-1之间的小数
-        """
-        return self.set_pwm("GP29", freq, duty_cycle)
 
     def get_switch_status(self, switch_id: str) -> tuple[int, None | tuple[int, int]]:
         """
