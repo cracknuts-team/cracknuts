@@ -1,3 +1,4 @@
+from cracknuts.cracker import CrackerO1
 from pico_get_avg import PicoScopeAverager
 from cracknuts.cracker.cracker_g1 import CrackerG1
 import time
@@ -6,34 +7,36 @@ import matplotlib.pyplot as plt
 
 pico = PicoScopeAverager(sample_count=10000, voltage_range_v=10)
 
-g1 = CrackerG1('192.168.0.10')
+cracker = CrackerO1('192.168.0.23')
 
-g1.connect(force_update_bin=True, force_write_default_config=True)
+cracker.connect(force_update_bin=True, force_write_default_config=True)
 
-print(g1.get_firmware_version())
+print(cracker.get_firmware_info())
 
 code_voltage_dict = {}
 # code_voltage_csv_path = "test_g_vcc.csv"
 # code_voltage_csv_path = "test_g_vcc2.csv"
 # code_voltage_csv_path = "test_g_gnd.csv"
 # code_voltage_csv_path = "test_g_gnd2.csv"
-code_voltage_csv_path = "test_g_clock.csv"
+# code_voltage_csv_path = "test_g_clock.csv"
+code_voltage_csv_path = "test_o_wave.csv"
 
 code_voltage_csv = open(code_voltage_csv_path, 'w+', encoding='utf-8')
 code_voltage_csv.write('code,voltage\n')
 
-g1.nut_voltage_disable()
-g1.register_write(base_address=0x43c10000, offset=0x1C4, data=1) # 禁止 clock
+# cracker.nut_voltage_disable()
+# cracker.register_write(base_address=0x43c10000, offset=0x1C4, data=1) # 禁止 clock
 time.sleep(1)
-g1.nut_voltage_enable()
-g1.register_write(base_address=0x43c10000, offset=0x1D0, data=25) # 配置clock的长度
-g1.register_write(base_address=0x43c10000, offset=0x1C4, data=0) # 使能 clock
+# cracker.nut_voltage_enable()
+cracker.register_write(base_address=0x43c10000, offset=0x1810, data=1) # 配置clock的长度
+# cracker.register_write(base_address=0x43c10000, offset=0x1C4, data=0) # 使能 clock
 
 
 for i in range(0x0000, 0x03ff+1):
     # g1.register_write(0x43c10000,0x150, i) # vcc vnormal
     # g1.register_write(0x43c10000,0x190, i) # gnd vnormal
-    g1.register_write(base_address=0x43c10000, offset=0x1D4, data=i) # clock  配置时钟所有的值都是一样的便于测量电压
+    # g1.register_write(base_address=0x43c10000, offset=0x1D4, data=i) # clock  配置时钟所有的值都是一样的便于测量电压
+    cracker.register_write(base_address=0x43c10000, offset=0x1814, data=i) # o1 clock (gen wave)  配置时钟所有的值都是一样的便于测量电压
     time.sleep(0.5)
     voltage_mv = pico.read_avg_voltage_mv()
     print(f"0x{i:04x}:\t{voltage_mv/1000:.2f}")
