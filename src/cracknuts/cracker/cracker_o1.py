@@ -3,6 +3,7 @@
 import os
 import re
 import struct
+import math
 
 from PIL import Image
 
@@ -92,9 +93,10 @@ class CrackerO1(CrackerG1):
             },
         }
         self._wave_fs = 10_000_000  # DAC采样率
-        self._buffer_depth = 160  # 160
+        self._buffer_depth = 2048  # 任意波形缓冲区深度（采样点数量）
+        self._wave_clk_div_max = 256
 
-    def set_waveform_arbitrary(self, wave: list[float]) -> tuple[int, None | bytes]:
+    def set_waveform_arbitrary(self, wave: list[float], wave_clk_div: int = 1) -> tuple[int, None | bytes]:
         """
         设置波形发生器输出波形。
 
@@ -103,13 +105,25 @@ class CrackerO1(CrackerG1):
                      - 波形按照数组顺序依次输出
                      - 一个数组表示一个完整周期的波形
         :type wave: list[float]
-
+        :param wave_clk_div: 波形时钟分频系数，整数，默认为1。实际输出频率 = DAC采样率 / (len(wave) * wave_clk_div)。
         :return: 执行状态码与设备返回数据。
         :rtype: tuple[int, None | bytes]
         """
+
+        if wave_clk_div < 1 or wave_clk_div > self._wave_clk_div_max:
+            self._logger.error(f"wave_clk_div must be between 1 and {self._wave_clk_div_max}")
+            return self.NON_PROTOCOL_ERROR, None
+
+        status, res = self.register_write(
+            base_address=0x43C10000, offset=0x182C, data=wave_clk_div - 1
+        )  # 寄存器值为分频系数减1
+        if status != protocol.STATUS_OK:
+            return status, res
+
         status, res = self.register_write(base_address=0x43C10000, offset=0x1810, data=len(wave))
         if status != protocol.STATUS_OK:
             return status, res
+
         for voltage in wave:
             status, res = self.register_write(
                 base_address=0x43C10000,
@@ -134,7 +148,7 @@ class CrackerO1(CrackerG1):
             "500k"
             "500kHz"
             "2.5G"
-            "10"        -> 默认 MHz
+            "10"        -> 默认 Hz
         """
 
         if isinstance(frequency, int | float):
@@ -163,7 +177,7 @@ class CrackerO1(CrackerG1):
         unit = m.group(2)
 
         if unit == "":
-            multiplier = 1e6
+            multiplier = 1
         else:
             if unit not in units:
                 raise ValueError(f"Unknown frequency unit: {unit}")
@@ -230,15 +244,29 @@ class CrackerO1(CrackerG1):
             self._logger.error("frequency must be specified for non-DC waveform")
             return self.NON_PROTOCOL_ERROR, None
         frequency = self._parse_frequency(frequency)
-        if frequency < self._wave_fs / self._buffer_depth:
-            self._logger.error(
-                "The frequency is too low to generate a valid waveform. "
-                f"Minimum frequency is {self._wave_fs / self._buffer_depth} Hz."
-            )
-            return self.NON_PROTOCOL_ERROR, None
-        elif frequency > self._wave_fs:
+        if frequency > self._wave_fs:
             self._logger.error(
                 "The frequency is too high to generate a valid waveform. " f"Maximum frequency is {self._wave_fs} Hz."
+            )
+            return self.NON_PROTOCOL_ERROR, None
+
+        wave_clk_div = 1
+        base_n_samples = max(1, int(self._wave_fs * 1.0 / frequency))
+        if base_n_samples > self._buffer_depth:
+            wave_clk_div = int(math.ceil(base_n_samples / self._buffer_depth))
+            if wave_clk_div > self._wave_clk_div_max:
+                min_freq = self._wave_fs / (self._buffer_depth * self._wave_clk_div_max)
+                self._logger.error(
+                    "The frequency is too low to generate a valid waveform. " f"Minimum frequency is {min_freq} Hz."
+                )
+                return self.NON_PROTOCOL_ERROR, None
+
+        effective_fs = self._wave_fs / wave_clk_div
+        n_samples = max(1, int(effective_fs * 1.0 / frequency))
+        if n_samples > self._buffer_depth:
+            self._logger.error(
+                "The waveform is too long to fit in the buffer after applying wave_clk_div. "
+                f"Length is {n_samples}, max is {self._buffer_depth}."
             )
             return self.NON_PROTOCOL_ERROR, None
 
@@ -247,24 +275,26 @@ class CrackerO1(CrackerG1):
         if offset is None:
             offset = amplitude
 
-        n_samples = max(1, int(self._wave_fs * 1.0 / frequency))
-        t = np.arange(n_samples) / self._wave_fs
+        t = np.arange(n_samples) / effective_fs
+
+        # Use sample-center time for phase-based waveforms to avoid low-sample aliasing.
+        t_center = t + (0.5 / effective_fs)
 
         if waveform == "sine":
             wave = amplitude * np.sin(2 * np.pi * frequency * t + phase)
 
         elif waveform == "square":
-            phase_t = (frequency * t + phase / (2 * np.pi)) % 1.0
+            phase_t = (frequency * t_center + phase / (2 * np.pi)) % 1.0
             wave = np.where(phase_t < duty, amplitude, -amplitude)
 
         elif waveform == "triangle":
-            phase_t = (frequency * t + phase / (2 * np.pi)) % 1.0
+            phase_t = (frequency * t_center + phase / (2 * np.pi)) % 1.0
             wave = 4 * amplitude * np.abs(phase_t - 0.5) - amplitude
 
         elif waveform == "sawtooth":
             slope = np.clip(duty, 1e-6, 1 - 1e-6)
 
-            phase_t = (frequency * t + phase / (2 * np.pi)) % 1.0
+            phase_t = (frequency * t_center + phase / (2 * np.pi)) % 1.0
 
             wave = np.where(
                 phase_t < slope,
@@ -281,7 +311,7 @@ class CrackerO1(CrackerG1):
         if v_min < 0:
             raise ValueError("Generated waveform contains negative voltage. " "Increase offset or reduce amplitude.")
 
-        return self.set_waveform_arbitrary(wave.tolist())
+        return self.set_waveform_arbitrary(wave.tolist(), wave_clk_div=wave_clk_div)
 
     def set_waveform_sine(
         self,
@@ -448,7 +478,7 @@ class CrackerO1(CrackerG1):
 
         文件内容应为电压采样点序列（单位：伏特 V），
         支持逗号分隔或逐行排列的数值格式。
-        采样点数量最大不得超过 160 个。
+        采样点数量最大不得超过 2048 个。
 
         :param file_path: 包含波形数据的文本文件路径。
                           文件中每个数值表示一个电压采样点（单位 V）。
@@ -457,10 +487,6 @@ class CrackerO1(CrackerG1):
         :rtype: tuple[int, None | bytes]
         """
 
-        import os
-        import numpy as np
-
-        # ---------- 文件检查 ----------
         if not os.path.exists(file_path):
             self._logger.error(f"Waveform file not found: {file_path}")
             return self.NON_PROTOCOL_ERROR, None
@@ -489,9 +515,8 @@ class CrackerO1(CrackerG1):
             self._logger.error("Waveform file contains non-numeric values.")
             return self.NON_PROTOCOL_ERROR, None
 
-        max_points = 160
-        if len(wave) > max_points:
-            self._logger.error(f"Waveform exceeds maximum length ({max_points} samples).")
+        if len(wave) > self._buffer_depth:
+            self._logger.error(f"Waveform exceeds maximum length ({self._buffer_depth} samples).")
             return self.NON_PROTOCOL_ERROR, None
 
         if not np.all(np.isfinite(wave)):
