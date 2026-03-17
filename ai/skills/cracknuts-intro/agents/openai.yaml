@@ -1,0 +1,3 @@
+display_name: CrackNuts Intro
+short_description: 项目简介与上位机安装指引
+default_prompt: 提供 CrackNuts 项目简介，并从官方文档提炼上位机 Host SDK 安装与快速启动步骤。

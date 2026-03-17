@@ -9,7 +9,7 @@ repos:
     rev: v0.41.0
     hooks:
       - id: markdownlint-fix
-        args: [ -c, .markdownlint.yaml, --fix ]
+        args: [ -c, .markdownlint.yaml, --fix, --ignore, ai]
 
   - repo: git@github.com:crate-ci/typos.git
     rev: typos-dict-v0.11.27

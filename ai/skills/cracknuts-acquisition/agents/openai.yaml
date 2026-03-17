@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "CrackNuts Acquisition"
+  short_description: "CrackNuts 功耗波形采集流程、设备连接与示例说明指南"
+  default_prompt: "提供 CrackNuts 功耗/侧信道波形采集流程，并引用 examples 中的示例。"
