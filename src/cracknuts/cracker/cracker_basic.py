@@ -20,6 +20,7 @@ import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
 from cracknuts.cracker.operator import Operator
+from cracknuts.cracker.ssh_client import SSHCracker
 
 
 class ConfigBasic:
@@ -38,7 +39,7 @@ class ConfigBasic:
         self.osc_trigger_edge_level = 1
 
     def __str__(self):
-        return f"Config({", ".join([f"{k}: {v}" for k, v in self.__dict__.items() if not k.startswith("_")])})"
+        return f"Config({', '.join([f'{k}: {v}' for k, v in self.__dict__.items() if not k.startswith('_')])})"
 
     def __repr__(self):
         return self.__str__()
@@ -160,6 +161,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         # Cracker only supports sampling length in multiples of 1024,
         # record actual length to truncate waveform data later.
         self._osc_sample_length: int | None = None
+        if self._server_address is not None:
+            self.shell = SSHCracker(ip=self._server_address[0])
 
     @connection_status_check
     def change_ip(self, new_ip: str, new_mask: str, new_gateway: str) -> bool:
@@ -196,6 +199,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         if isinstance(address, tuple):
             self._server_address = address
+            if address is not None:
+                self.shell = SSHCracker(ip=address[0])
+            else:
+                self.shell = None
         elif isinstance(address, str):
             self.set_uri(address)
 
@@ -219,6 +226,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: None
         """
         self._server_address = ip, port
+        self.shell = SSHCracker(ip=ip)
 
     def set_uri(self, uri: str) -> None:
         """
@@ -238,6 +246,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             host, port = uri, protocol.DEFAULT_PORT  # type: ignore
 
         self._server_address = host, int(port)
+        self.shell = SSHCracker(ip=host)
 
     @connection_status_check
     def set_logging_level(self, level: str) -> None:
@@ -276,7 +285,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             port = self._server_address[1]
             if port == protocol.DEFAULT_PORT:
                 port = None
-            return f"cnp://{self._server_address[0]}{"" if port is None else f":{port}"}"
+            return f"cnp://{self._server_address[0]}{'' if port is None else f':{port}'}"
 
     def connect(
         self,
@@ -339,6 +348,15 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 self._logger.info("Write default configuration to Cracker.")
             self._config = self.get_current_config()
             self._logger.info("Synchronize the configuration from Cracker.")
+            if self.shell is None and self._server_address is not None:
+                self.shell = SSHCracker(ip=self._server_address[0])
+            if self.shell is not None:
+                try:
+                    if not self.shell.is_connected():
+                        self.shell.connect()
+                        self._logger.info(f"Connected to SSH cracker: {self.shell.ip}")
+                except Exception as e:
+                    self._logger.warning(f"Failed to connect SSH cracker: {e}")
         except OSError as e:
             self._logger.error("Connection failed: %s", e)
             self._socket = None
@@ -498,9 +516,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 return protocol.STATUS_ERROR, None
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
-                    f"Send message to {self._server_address}: \n{hex_util.get_bytes_matrix(
-                        message, max_bytes_count=self._logger_debug_payload_max_length
-                    )}"
+                    f"Send message to {self._server_address}: \n{
+                        hex_util.get_bytes_matrix(message, max_bytes_count=self._logger_debug_payload_max_length)
+                    }"
                 )
             self._socket.sendall(message)
             resp_header = self._socket.recv(protocol.RES_HEADER_SIZE)
@@ -548,8 +566,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 if self._logger.isEnabledFor(logging.DEBUG):
                     self._logger.debug(
                         f"Receive payload from {self._server_address}: \n"
-                        f"{hex_util.get_bytes_matrix(resp_payload,
-                                                     max_bytes_count=self._logger_debug_payload_max_length)}"
+                        f"{
+                            hex_util.get_bytes_matrix(
+                                resp_payload, max_bytes_count=self._logger_debug_payload_max_length
+                            )
+                        }"
                     )
             return status, resp_payload
         except OSError as e:
@@ -577,8 +598,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         if self._logger.isEnabledFor(logging.INFO):
             self._logger.info(
                 f"Send command [0x{command:04x}] with payload: "
-                f"{None if payload is None else hex_util.get_hex(
-                                  payload, self._logger_info_payload_max_length)}] "
+                f"{None if payload is None else hex_util.get_hex(payload, self._logger_info_payload_max_length)}] "
                 f"to {self._server_address}"
             )
         status, payload = self.send_and_receive(protocol.build_send_message(command, rfu, payload))
@@ -586,8 +606,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._logger.info(
                 f"Receive response for command: [0x{command:04x}] from {self._server_address}, "
                 f"status: 0x{status:04X}, payload: length: {0 if payload is None else len(payload)}, content: "
-                f"{None if payload is None else hex_util.get_hex(
-                                  payload, self._logger_info_payload_max_length)}"
+                f"{None if payload is None else hex_util.get_hex(payload, self._logger_info_payload_max_length)}"
             )
         return status, payload
 
@@ -793,14 +812,13 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 expect_wbl = sample_count * 2
                 if wbl != expect_wbl:
                     self._logger.error(
-                        f"Wave bytes length error: require {expect_wbl} but get {wbl}:"
-                        f"\n{hex_util.get_hex(wave_bytes)}"
+                        f"Wave bytes length error: require {expect_wbl} but get {wbl}:\n{hex_util.get_hex(wave_bytes)}"
                     )
                     if wbl != 0:
                         self._logger.error("Wave bytes length is not expected, will get actually length wave.")
                         if wbl % 2 != 0:
                             self._logger.error("Wave bytes length is a odd number, will get a even length wave.")
-                        wave = struct.unpack(f"{wbl//2}h", wave_bytes)
+                        wave = struct.unpack(f"{wbl // 2}h", wave_bytes)
                         return status, np.array(wave, dtype=np.int16)
                     else:
                         return status, np.array([])
