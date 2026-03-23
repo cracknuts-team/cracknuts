@@ -15,6 +15,7 @@ import click
 import urllib.request
 import cracknuts
 import cracknuts.mock as mock
+from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.cracker import protocol
 from cracknuts.utils import user_config
 
@@ -131,6 +132,77 @@ def start_mock_cracker(
 ):
     _update_check()
     mock.start(host, port, operator_port, logging_level)
+
+
+@main.command(name="discover", help="Discover cracknuts devices on the local network.")
+@click.option("--broadcast", default="255.255.255.255", show_default=True, help="Broadcast address.")
+@click.option("--scan-interval", default=3.0, show_default=True, type=float, help="Scan interval in seconds.")
+@click.option(
+    "--offline-grace",
+    default=15.0,
+    show_default=True,
+    type=float,
+    help="Offline grace period in seconds.",
+)
+@click.option("--timeout", "device_timeout", default=60.0, show_default=True, type=float, help="Device timeout.")
+@click.option("--json-output", is_flag=True, help="Print discovered devices as JSON.")
+def discover_devices(
+    broadcast: str,
+    scan_interval: float,
+    offline_grace: float,
+    device_timeout: float,
+    json_output: bool,
+):
+    _update_check()
+    devices = cracknuts.discover_devices(
+        broadcast=broadcast,
+        scan_interval=scan_interval,
+        offline_grace=offline_grace,
+        device_timeout=device_timeout,
+    )
+    if json_output:
+        print(json.dumps(devices, indent=2, ensure_ascii=False))
+        return
+
+    print(f"{'MAC':17}  {'IP':15}  {'HOSTNAME':20}  STATUS")
+    print("-" * 72)
+    for device in devices:
+        print(
+            f"{device.get('mac', ''):17}  {device.get('ip', ''):15}  "
+            f"{device.get('hostname', ''):20}  {device.get('status', '')}"
+        )
+
+
+@main.command(name="set-ip", help="Set the IP address of a cracknuts device.")
+@click.argument("target_ip")
+@click.argument("new_ip")
+@click.option("--mask", default=None, help="Subnet mask or prefix length. Defaults to current device setting.")
+@click.option("--gateway", default=None, help="Default gateway. Defaults to current device setting.")
+@click.option("--delay", "delay_ms", default=200, show_default=True, type=int, help="Apply delay in ms.")
+@click.option("--broadcast", default="255.255.255.255", show_default=True, help="Broadcast address.")
+@click.option("--json-output", is_flag=True, help="Print ACK as JSON.")
+def set_device_ip(
+    target_ip: str,
+    new_ip: str,
+    mask: str | None,
+    gateway: str | None,
+    delay_ms: int,
+    broadcast: str,
+    json_output: bool,
+):
+    _update_check()
+    ack = CrackerBasic.set_device_ip(
+        target_ip=target_ip,
+        new_ip=new_ip,
+        mask=mask,
+        gateway=gateway,
+        delay_ms=delay_ms,
+        broadcast=broadcast,
+    )
+    if json_output:
+        print(json.dumps(ack, indent=2, ensure_ascii=False))
+    else:
+        print(ack)
 
 
 @main.command(name="welcome", help="Welcome to cracknuts.")
