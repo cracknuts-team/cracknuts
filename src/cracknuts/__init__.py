@@ -6,6 +6,7 @@ import sys
 
 from cracknuts import logger
 from cracknuts.jupyter import show_panel
+from cracknuts.cracker.cracker_manager import discover_devices
 from cracknuts.cracker import new_cracker, cracker_s1, cracker_g1, cracker_o1
 from cracknuts.acquisition import simple_acq, simple_glitch_acq
 from cracknuts.trace import load_trace_dataset
@@ -36,5 +37,6 @@ __all__ = [
     "simple_glitch_acq",
     "show_panel",
     "load_trace_dataset",
+    "discover_devices",
     "version",
 ]

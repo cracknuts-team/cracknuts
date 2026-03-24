@@ -19,6 +19,7 @@ import numpy as np
 import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
+from cracknuts.cracker.cracker_manager import CrackerManager
 from cracknuts.cracker.operator import Operator
 from cracknuts.cracker.ssh_client import SSHCracker
 
@@ -107,6 +108,7 @@ def connection_status_check(func):
 class CrackerBasic(ABC, typing.Generic[T]):
     NON_PROTOCOL_ERROR = -1
     DISCONNECTED = -2
+    _cracker_manager: CrackerManager | None = None
 
     _BASE_ADDRESS = 0x43C10000
 
@@ -148,8 +150,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._bin_bitstream_path = bin_bitstream_path
         self._operator_port = protocol.DEFAULT_OPERATOR_PORT if operator_port is None else operator_port
         self._server_address: tuple[str, int] | None = None
+        self._operator: Operator | None = None
+        self.shell: SSHCracker | None = None
         self.set_address(address)
-        self._operator = Operator(self._server_address[0], self._operator_port)
         self._config = self.get_default_config()
         self._hardware_model = None
         self._installed_bin_server_path = None
@@ -161,52 +164,259 @@ class CrackerBasic(ABC, typing.Generic[T]):
         # Cracker only supports sampling length in multiples of 1024,
         # record actual length to truncate waveform data later.
         self._osc_sample_length: int | None = None
-        if self._server_address is not None:
-            self.shell = SSHCracker(ip=self._server_address[0])
 
-    @connection_status_check
-    def change_ip(self, new_ip: str, new_mask: str, new_gateway: str) -> bool:
+    def change_ip(self, new_ip: str, new_mask: str = None, new_gateway: str = None) -> bool:
         """
-        Change the IP address of the device.
+        Change the network address of the current target device.
 
-        :param new_ip: The new IP address of the device.
+        This instance method uses the IP currently configured on this object as
+        the target device IP, then delegates the network change to the shared
+        ``CrackerManager`` instance. If the device is currently connected and the
+        IP change succeeds, the object updates its own target address and
+        reconnects when possible.
+
+        :param new_ip: New device IP address, or ``"dhcp"`` to enable DHCP.
         :type new_ip: str
-        :param new_mask: The new IP address of the device.
-        :type new_mask: str
-        :param new_gateway: The new IP address of the device.
-        :type new_gateway: str
-        :return: True if the IP address is changed, False otherwise.
+        :param new_mask: Subnet mask or prefix length for a static IP change. If
+                         omitted, the device's current mask is reused.
+        :type new_mask: str | None
+        :param new_gateway: Default gateway for a static IP change. If omitted,
+                            the device's current gateway is reused.
+        :type new_gateway: str | None
+        :return: ``True`` if the device accepted the change request, otherwise ``False``.
+        :rtype: bool
         """
-        op = self.get_operator()
-        if op.connect():
-            if op.set_ip(new_ip, new_mask, new_gateway):
-                self.set_address(new_ip)
-                if self._connection_status:
-                    self.connect()
-                return True
-            else:
-                return False
-        else:
+        if self._server_address is None:
+            self._logger.error("Change ip failed: cracker address is not configured.")
             return False
 
-    def set_address(self, address: tuple[str, int] | str) -> None:
-        """
-        Set the device address in tuple format.
+        target_ip = self._server_address[0]
+        was_connected = self._connection_status
+        if was_connected:
+            self.disconnect()
 
-        :param address: address in tuple format: (ip, port).
-        :type address: tuple[str, int]
+        ack = type(self).set_device_ip(
+            target_ip=target_ip,
+            new_ip=new_ip,
+            mask=new_mask,
+            gateway=new_gateway,
+        )
+        if ack is None or ack.get("status") != 0:
+            if was_connected:
+                self.connect()
+            return False
+
+        if new_ip != "dhcp":
+            self.set_ip_port(new_ip, self._server_address[1])
+            if was_connected:
+                self.connect()
+        else:
+            self._logger.info("Device switched to DHCP. Re-discover the device before reconnecting.")
+
+        return True
+
+    @classmethod
+    def _resolve_network_settings(
+        cls,
+        target_ip: str,
+        mask: str | None,
+        gateway: str | None,
+    ) -> tuple[str, str | None]:
+        if mask and gateway:
+            return mask, gateway
+
+        operator = Operator(target_ip, protocol.DEFAULT_OPERATOR_PORT)
+        if not operator.connect():
+            raise RuntimeError(f"Cannot connect to operator service on {target_ip} to read current network settings.")
+
+        try:
+            current_config = operator.get_ip()
+        finally:
+            operator.disconnect()
+
+        if current_config is None:
+            raise RuntimeError(f"Cannot read current network settings from {target_ip}.")
+
+        _, current_mask, current_gateway = current_config
+        return mask or current_mask, gateway or current_gateway
+
+    @classmethod
+    def _create_device_manager(
+        cls,
+        broadcast: str = "255.255.255.255",
+        scan_interval: float = 3.0,
+        offline_grace: float = 15.0,
+        device_timeout: float = 60.0,
+        continuous: bool = False,
+    ) -> CrackerManager:
+        """
+        Return the shared ``CrackerManager`` instance for this class.
+
+        The manager is created lazily on first use and reused by subsequent
+        class-level device discovery and IP update calls. Each call refreshes
+        the cached manager configuration to match the provided arguments.
+
+        :param broadcast: Broadcast address for discovery.
+        :type broadcast: str
+        :param scan_interval: Seconds between discovery scans.
+        :type scan_interval: float
+        :param offline_grace: Seconds without response before marking offline.
+        :type offline_grace: float
+        :param device_timeout: Seconds without response before removing a device.
+        :type device_timeout: float
+        :param continuous: Whether the shared manager should keep background scanning enabled.
+        :type continuous: bool
+        :return: Shared manager instance.
+        :rtype: CrackerManager
+        """
+        if cls._cracker_manager is None:
+            cls._cracker_manager = CrackerManager(
+                broadcast=broadcast,
+                scan_interval=scan_interval,
+                offline_grace=offline_grace,
+                device_timeout=device_timeout,
+                continuous=continuous,
+            )
+        else:
+            cls._cracker_manager._broadcast = broadcast
+            cls._cracker_manager._scan_interval = scan_interval
+            cls._cracker_manager._offline_grace = offline_grace
+            cls._cracker_manager._device_timeout = device_timeout
+
+            if continuous and not cls._cracker_manager._running:
+                cls._cracker_manager.start_discovery()
+            elif not continuous and cls._cracker_manager._running:
+                cls._cracker_manager.stop_discovery()
+
+            cls._cracker_manager._continuous = continuous
+
+        return cls._cracker_manager
+
+    @classmethod
+    def discover_devices(
+        cls,
+        broadcast: str = "255.255.255.255",
+        scan_interval: float = 3.0,
+        offline_grace: float = 15.0,
+        device_timeout: float = 60.0,
+    ) -> list[dict]:
+        """
+        Discover devices on the local network once.
+
+        This class method reuses the shared ``CrackerManager`` instance and
+        performs a single discovery scan without starting continuous background
+        monitoring.
+
+        :param broadcast: Broadcast address for discovery.
+        :type broadcast: str
+        :param scan_interval: Cached scan interval for the shared manager.
+        :type scan_interval: float
+        :param offline_grace: Cached offline grace period for the shared manager.
+        :type offline_grace: float
+        :param device_timeout: Cached device timeout for the shared manager.
+        :type device_timeout: float
+        :return: List of discovered device information dictionaries.
+        :rtype: list[dict]
+        """
+        manager = cls._create_device_manager(
+            broadcast=broadcast,
+            scan_interval=scan_interval,
+            offline_grace=offline_grace,
+            device_timeout=device_timeout,
+            continuous=False,
+        )
+        return manager.discover_once()
+
+    @classmethod
+    def set_device_ip(
+        cls,
+        target_ip: str,
+        new_ip: str,
+        mask: str = "",
+        gateway: str | None = None,
+        delay_ms: int = 200,
+        broadcast: str = "255.255.255.255",
+    ) -> dict | None:
+        """
+        Change the network address of a device identified by its current IP.
+
+        This class method reuses the shared ``CrackerManager`` instance and
+        sends a single IP change request to the target device.
+
+        :param target_ip: Current IP address of the target device.
+        :type target_ip: str
+        :param new_ip: New device IP address, or ``"dhcp"`` to enable DHCP.
+        :type new_ip: str
+        :param mask: Subnet mask or prefix length for a static IP change. If
+                     omitted, the device's current mask is reused.
+        :type mask: str
+        :param gateway: Default gateway for a static IP change. If omitted, the
+                        device's current gateway is reused.
+        :type gateway: str | None
+        :param delay_ms: Delay before the device applies the change.
+        :type delay_ms: int
+        :param broadcast: Broadcast address cached on the shared manager.
+        :type broadcast: str
+        :return: ACK information from the device, or ``None`` on timeout.
+        :rtype: dict | None
+        """
+        if new_ip != "dhcp":
+            mask, gateway = cls._resolve_network_settings(target_ip, mask, gateway)
+
+        manager = cls._create_device_manager(
+            broadcast=broadcast,
+            continuous=False,
+        )
+        return manager.set_ip(
+            target_ip=target_ip,
+            new_ip=new_ip,
+            mask=mask,
+            gateway=gateway,
+            delay_ms=delay_ms,
+        )
+
+    def _sync_inner_obj_ip(self) -> None:
+        """
+        Synchronize inner helper objects to the current target IP.
+
+        This updates the cached ``Operator`` and ``SSHCracker`` instances so
+        they point at the address currently stored in ``self._server_address``.
+        """
+        if self._server_address is None:
+            self._operator = None
+            self.shell = None
+            return
+
+        operator_address = (self._server_address[0], self._operator_port)
+        if self._operator is None or self._operator._server_address != operator_address:
+            self._operator = Operator(self._server_address[0], self._operator_port)
+        if self.shell is None or self.shell.ip != self._server_address[0]:
+            self.shell = SSHCracker(ip=self._server_address[0])
+
+    def set_address(self, address: tuple[str, int] | str | None) -> None:
+        """
+        Update the target cracker address stored in this instance.
+
+        This method updates the local target address metadata used by this
+        object and synchronizes the inner ``Operator`` and ``SSHCracker`` target
+        IP settings. It does not communicate with the device, so it does not
+        modify the real device network configuration.
+
+        :param address: Device address as ``(ip, port)``, URI-like string, or
+                        ``None`` to clear the current target.
+        :type address: tuple[str, int] | str | None
         :return: None
         """
         if isinstance(address, tuple):
             self._server_address = address
-            if address is not None:
-                self.shell = SSHCracker(ip=address[0])
-            else:
-                self.shell = None
+            self._sync_inner_obj_ip()
+        elif address is None:
+            self._server_address = None
+            self._sync_inner_obj_ip()
         elif isinstance(address, str):
             self.set_uri(address)
 
-    def get_address(self) -> tuple[str, int]:
+    def get_address(self) -> tuple[str, int] | None:
         """
         Get the device address in tuple format.
 
@@ -217,7 +427,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
 
     def set_ip_port(self, ip, port) -> None:
         """
-        Set the device IP address.
+        Update the target cracker IP and port stored in this instance.
+
+        This method updates the local target address used by subsequent
+        operations and synchronizes the inner ``Operator`` and ``SSHCracker``
+        objects to the same target. It does not modify the real device network
+        configuration.
 
         :param ip: IP address.
         :type ip: str
@@ -226,13 +441,17 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: None
         """
         self._server_address = ip, port
-        self.shell = SSHCracker(ip=ip)
+        self._sync_inner_obj_ip()
 
     def set_uri(self, uri: str) -> None:
         """
-        Set the device address in URI format.
+        Update the target cracker address stored in this instance from a URI.
 
-        :param uri: URI.
+        This method parses and stores the local target address, then synchronizes
+        the inner ``Operator`` and ``SSHCracker`` objects to that target. It
+        does not communicate with the device and does not modify the device IP.
+
+        :param uri: Device URI in the form ``cnp://<ip>[:port]`` or ``<ip>[:port]``.
         :type uri: str
         :return: None
         """
@@ -246,7 +465,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
             host, port = uri, protocol.DEFAULT_PORT  # type: ignore
 
         self._server_address = host, int(port)
-        self.shell = SSHCracker(ip=host)
+        self._sync_inner_obj_ip()
 
     @connection_status_check
     def set_logging_level(self, level: str) -> None:
@@ -270,6 +489,9 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: Operator object.
         :rtype: Operator
         """
+        self._sync_inner_obj_ip()
+        if self._operator is None:
+            raise RuntimeError("Cracker address is not configured.")
         return self._operator
 
     def get_uri(self) -> str | None:
@@ -313,6 +535,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :type force_write_default_config: bool
         :return: None
         """
+        self._sync_inner_obj_ip()
         if bin_server_path is None:
             bin_server_path = self._bin_server_path
         if bin_bitstream_path is None:
@@ -348,8 +571,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 self._logger.info("Write default configuration to Cracker.")
             self._config = self.get_current_config()
             self._logger.info("Synchronize the configuration from Cracker.")
-            if self.shell is None and self._server_address is not None:
-                self.shell = SSHCracker(ip=self._server_address[0])
+            self._sync_inner_obj_ip()
             if self.shell is not None:
                 try:
                     if not self.shell.is_connected():
@@ -465,7 +687,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         if not self._connection_status:
             return
-        self._operator.disconnect()
+        if self._operator is not None:
+            self._operator.disconnect()
         try:
             if self._socket:
                 self._socket.close()

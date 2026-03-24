@@ -16,7 +16,7 @@
     "bitstream": "bs-cracker_s1_v0.1-0.1.0-alpha.17_tmp5.bit.bin"
   },
   "cracker_s1d_v1.0": {
-    "server": "server-sd-0.6.0.bin",
+    "server": "server-sd-0.6.3.bin",
     "bitstream": "bs-cracker_s1_v0.1-0.1.0-alpha.17_tmp5.bit.bin"
   },
   "cracker_g1_v1.0": {
@@ -28,7 +28,7 @@
     "bitstream": "bs-cracker_g1_v0.1-0.0.0-alpha.9.bit.bin"
   },
   "cracker_o1_v1_1": {
-    "server": "server-sd-0.6.2.bin",
+    "server": "server-sd-0.6.3.bin",
     "bitstream": "bs-cracker_o1_v0.1-0.1.0-alpha.4.bit.bin"
   }
 }

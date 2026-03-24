@@ -770,6 +770,8 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             clock = clock.upper()
             if clock == "64M":
                 clock = 64000
+            if clock == "40M":
+                clock = 40000
             elif clock == "24M":
                 clock = 24000
             elif clock == "12M":
@@ -779,10 +781,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
             elif clock == "4M":
                 clock = 4000
             else:
-                self._logger.error(f"Unknown clock type: {clock}, 64M or 24M or 12M or 8M or 4M")
+                self._logger.error(f"Unknown clock type: {clock}, 64M or 40M or 24M or 12M or 8M or 4M")
                 return protocol.STATUS_ERROR, None
         clock = round(clock)  # TODO 这里由于这些设置是在cracker中的server程序完成的，目前只支持这些整数值，后续优化
-        validate_nut_clock = (64000, 24000, 12000, 8000, 4000)
+        validate_nut_clock = (64000, 40000, 24000, 12000, 8000, 4000)
         if clock not in validate_nut_clock:
             self._logger.error(f"UnSupport osc clock, it should in {validate_nut_clock}")
         payload = struct.pack(">I", clock)
