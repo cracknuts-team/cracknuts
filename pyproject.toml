@@ -12,15 +12,16 @@ license = { file = "LICENSE" }
 authors = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 maintainers = [{ name = "Dingzb", email = "dingzibiao@gmail.com" }]
 dependencies = [
-    "numpy~=2.3.5",
-    "click~=8.1.7",
-    "zarr~=2.18.2",
-    "packaging~=24.1",
-    "anywidget~=0.9.13",
-    "pandas~=2.3.3",
-    "scipy~=1.16.2",
-    "numba~=0.63.1",
-    "pillow~=12.0.0"
+    "numpy>=2.0.0,<3.0.0",
+    "click>=8.0.0,<9.0.0",
+    "zarr>=2.18.0,<3.0.0",
+    "packaging>=24.0",
+    "anywidget>=0.9.0,<1.0.0",
+    "pandas>=2.0.0,<3.0.0",
+    "scipy>=1.16.0,<2.0.0",
+    "numba>=0.63.0,<1.0.0",
+    "pillow>=12.0.0,<13.0.0",
+    "paramiko>=4.0.0",
 ]
 
 [project.optional-dependencies]
