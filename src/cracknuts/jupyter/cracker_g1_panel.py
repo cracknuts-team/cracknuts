@@ -12,7 +12,6 @@ from cracknuts.jupyter.ui_sync import observe_interceptor
 
 
 class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
-
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.cracker: CrackerG1 = self.cracker
@@ -53,7 +52,7 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
         panel_config.glitch_clock_config_wait = self.glitch_clock_config_wait
         panel_config.glitch_clock_config_delay = self.glitch_clock_config_delay
         panel_config.glitch_clock_config_repeat = self.glitch_clock_config_repeat
-        panel_config.glitch_clock_enable = self.nut_clock_enable # use nut_clock_enable as glitch_clock_enable
+        panel_config.glitch_clock_enable = self.nut_clock_enable  # use nut_clock_enable as glitch_clock_enable
 
         return panel_config
 
@@ -64,11 +63,11 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
         or return None to indicate that the item is skipped or already processed by this function.
         """
         if name == "nut_voltage":
-            return None # ignore, and use glitch_vcc_normal instead
+            return None  # ignore, and use glitch_vcc_normal instead
         elif name == "nut_clock":
-            return None # ignore, and use glitch_clock_normal_rate instead
+            return None  # ignore, and use glitch_clock_normal_rate instead
         elif name == "nut_clock_enable":
-            return None # ignore, and use glitch_clock_enable instead
+            return None  # ignore, and use glitch_clock_enable instead
         elif name == "glitch_vcc_normal":
             self.glitch_vcc_normal = value
             self.nut_voltage = value
@@ -81,14 +80,14 @@ class CrackerG1Panel(CrackerPanelWidget, ConfigG1Glitch):
             self.glitch_clock_enable = typing.cast(bool, value)
             self.nut_clock_enable = self.glitch_clock_enable
         elif name == "glitch_clock_len_normal":
-            return None # ignore, already processed by glitch_clock_wave_normal
+            return None  # ignore, already processed by glitch_clock_wave_normal
         elif name == "glitch_clock_config_len_glitch":
-            return None # ignore, already processed by glitch_clock_wave_glitch
+            return None  # ignore, already processed by glitch_clock_wave_glitch
         elif name == "glitch_clock_config_wave_glitch":
             # 忽略，因为这里的波形配置是通过长度计算来的失真数据
             return None
         elif name in ("glitch_vcc_arm", "glitch_gnd_arm", "glitch_clock_arm"):
-            return None # ignore these arm settings in G1 panel
+            return None  # ignore these arm settings in G1 panel
         else:
             value = super()._panel_config_item_process(name, value)
         return value

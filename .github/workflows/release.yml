@@ -42,19 +42,16 @@ jobs:
         run: |
           cd jupyter_frontend
           pnpm install
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.12'
-      - name: Install build tools
-        run: |
-          pip install build
       - name: Build jupyter frontend
         run: |
           cd jupyter_frontend
           pnpm run clean-build
       - name: Build the package
         run: |
-          python -m build
+          uv build
       - uses: actions/upload-artifact@v4
         with:
           name: dist-files
@@ -84,15 +81,9 @@ jobs:
         with:
           name: dist-files
           path: dist
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install twine
-        run: |
-          pip install twine
+      - uses: astral-sh/setup-uv@v5
       - name: Upload to pypi
         env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{secrets.PYPI_TOKEN}}
+          UV_PUBLISH_TOKEN: ${{secrets.PYPI_TOKEN}}
         run: |
-          python -m twine upload dist/* --non-interactive
+          uv publish

@@ -9,7 +9,6 @@ import os
 import socket
 import struct
 import threading
-import typing
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
@@ -71,9 +70,6 @@ class ConfigBasic:
         return self
 
 
-T = typing.TypeVar("T", bound=ConfigBasic)
-
-
 # === Since the device does not support the channel enable function,
 # the information is temporarily saved to the host software. ===
 @dataclass
@@ -104,7 +100,7 @@ def connection_status_check(func):
     return wrapper
 
 
-class CrackerBasic(ABC, typing.Generic[T]):
+class CrackerBasic[T: ConfigBasic](ABC):
     NON_PROTOCOL_ERROR = -1
     DISCONNECTED = -2
     _cracker_manager: CrackerManager | None = None
@@ -361,7 +357,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         Update the target cracker address stored in this instance.
 
         This method updates the local target address metadata used by this
-        object and synchronizes the inner ``SSHCracker`` target IP settings. It does not communicate with the device, so it does not
+        object and synchronizes the inner ``SSHCracker`` target IP settings. It does not communicate with the device,
+        so it does not
         modify the real device network configuration.
 
         :param address: Device address as ``(ip, port)``, URI-like string, or

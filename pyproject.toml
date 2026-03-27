@@ -58,5 +58,24 @@ extend-select = [
 [tool.typos.files]
 extend-exclude = [
     "demo",
-    "tests"
+    "tests",
+    "**/*.csv"
+]
+
+[dependency-groups]
+lint = [
+    "ruff>=0.7",
+    "typos>=1.24",
+    "mypy>=1.13",
+]
+test = [
+    "pytest>=8.3",
+    "pytest-html>=4.1",
+]
+dev = [
+    "pre-commit>=3.8",
+    "watchfiles>=1.0",
+    "nbstripout>=0.8",
+    { include-group = "lint" },
+    { include-group = "test" },
 ]
