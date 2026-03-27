@@ -20,7 +20,6 @@ import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
 from cracknuts.cracker.cracker_manager import CrackerManager
-from cracknuts.cracker.operator import Operator
 from cracknuts.cracker.ssh_client import SSHCracker
 
 
@@ -126,7 +125,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         address: tuple | str | None = None,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        operator_port: int = None,
     ):
         """
         :param address: Cracker device address (ip, port) or "[cnp://]<ip>[:port]",
@@ -138,7 +136,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :param bin_bitstream_path: The bin_bitstream (firmware) file for updates; normally,
                                    the user should not specify this.
         :type bin_bitstream_path: str | None
-        :param operator_port: The operator port to connect to.
         """
         self._logger_debug_payload_max_length = 512
         self._logger_info_payload_max_length = 16
@@ -148,9 +145,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self._connection_status = False
         self._bin_server_path = bin_server_path
         self._bin_bitstream_path = bin_bitstream_path
-        self._operator_port = protocol.DEFAULT_OPERATOR_PORT if operator_port is None else operator_port
         self._server_address: tuple[str, int] | None = None
-        self._operator: Operator | None = None
         self.shell: SSHCracker | None = None
         self.set_address(address)
         self._config = self.get_default_config()
@@ -214,31 +209,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
             self._logger.info("Device switched to DHCP. Re-discover the device before reconnecting.")
 
         return True
-
-    @classmethod
-    def _resolve_network_settings(
-        cls,
-        target_ip: str,
-        mask: str | None,
-        gateway: str | None,
-    ) -> tuple[str, str | None]:
-        if mask and gateway:
-            return mask, gateway
-
-        operator = Operator(target_ip, protocol.DEFAULT_OPERATOR_PORT)
-        if not operator.connect():
-            raise RuntimeError(f"Cannot connect to operator service on {target_ip} to read current network settings.")
-
-        try:
-            current_config = operator.get_ip()
-        finally:
-            operator.disconnect()
-
-        if current_config is None:
-            raise RuntimeError(f"Cannot read current network settings from {target_ip}.")
-
-        _, current_mask, current_gateway = current_config
-        return mask or current_mask, gateway or current_gateway
 
     @classmethod
     def _create_device_manager(
@@ -333,7 +303,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         target_ip: str,
         new_ip: str,
         mask: str = "",
-        gateway: str | None = None,
+        gateway: str = "",
         delay_ms: int = 200,
         broadcast: str = "255.255.255.255",
     ) -> dict | None:
@@ -341,18 +311,18 @@ class CrackerBasic(ABC, typing.Generic[T]):
         Change the network address of a device identified by its current IP.
 
         This class method reuses the shared ``CrackerManager`` instance and
-        sends a single IP change request to the target device.
+        sends a single IP change request to the target device. When ``mask``
+        and ``gateway`` are omitted the device-side manager will apply its own
+        defaults.
 
         :param target_ip: Current IP address of the target device.
         :type target_ip: str
         :param new_ip: New device IP address, or ``"dhcp"`` to enable DHCP.
         :type new_ip: str
-        :param mask: Subnet mask or prefix length for a static IP change. If
-                     omitted, the device's current mask is reused.
+        :param mask: Subnet mask. If omitted, the device-side manager handles it.
         :type mask: str
-        :param gateway: Default gateway for a static IP change. If omitted, the
-                        device's current gateway is reused.
-        :type gateway: str | None
+        :param gateway: Default gateway. If omitted, the device-side manager handles it.
+        :type gateway: str
         :param delay_ms: Delay before the device applies the change.
         :type delay_ms: int
         :param broadcast: Broadcast address cached on the shared manager.
@@ -360,9 +330,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: ACK information from the device, or ``None`` on timeout.
         :rtype: dict | None
         """
-        if new_ip != "dhcp":
-            mask, gateway = cls._resolve_network_settings(target_ip, mask, gateway)
-
         manager = cls._create_device_manager(
             broadcast=broadcast,
             continuous=False,
@@ -379,17 +346,13 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         Synchronize inner helper objects to the current target IP.
 
-        This updates the cached ``Operator`` and ``SSHCracker`` instances so
-        they point at the address currently stored in ``self._server_address``.
+        This updates the cached ``SSHCracker`` instance so it points at the
+        address currently stored in ``self._server_address``.
         """
         if self._server_address is None:
-            self._operator = None
             self.shell = None
             return
 
-        operator_address = (self._server_address[0], self._operator_port)
-        if self._operator is None or self._operator._server_address != operator_address:
-            self._operator = Operator(self._server_address[0], self._operator_port)
         if self.shell is None or self.shell.ip != self._server_address[0]:
             self.shell = SSHCracker(ip=self._server_address[0])
 
@@ -398,8 +361,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         Update the target cracker address stored in this instance.
 
         This method updates the local target address metadata used by this
-        object and synchronizes the inner ``Operator`` and ``SSHCracker`` target
-        IP settings. It does not communicate with the device, so it does not
+        object and synchronizes the inner ``SSHCracker`` target IP settings. It does not communicate with the device, so it does not
         modify the real device network configuration.
 
         :param address: Device address as ``(ip, port)``, URI-like string, or
@@ -430,8 +392,8 @@ class CrackerBasic(ABC, typing.Generic[T]):
         Update the target cracker IP and port stored in this instance.
 
         This method updates the local target address used by subsequent
-        operations and synchronizes the inner ``Operator`` and ``SSHCracker``
-        objects to the same target. It does not modify the real device network
+        operations and synchronizes the inner ``SSHCracker`` object to the same
+        target. It does not modify the real device network
         configuration.
 
         :param ip: IP address.
@@ -448,7 +410,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         Update the target cracker address stored in this instance from a URI.
 
         This method parses and stores the local target address, then synchronizes
-        the inner ``Operator`` and ``SSHCracker`` objects to that target. It
+        the inner ``SSHCracker`` object to that target. It
         does not communicate with the device and does not modify the device IP.
 
         :param uri: Device URI in the form ``cnp://<ip>[:port]`` or ``<ip>[:port]``.
@@ -481,18 +443,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         self.send_and_receive(
             protocol.build_send_message(protocol.Command.SET_LOGGING_LEVEL, payload=level.encode("ascii"))
         )
-
-    def get_operator(self) -> Operator:
-        """
-        Get the operator object for this Cracker instance.
-
-        :return: Operator object.
-        :rtype: Operator
-        """
-        self._sync_inner_obj_ip()
-        if self._operator is None:
-            raise RuntimeError("Cracker address is not configured.")
-        return self._operator
 
     def get_uri(self) -> str | None:
         """
@@ -545,6 +495,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         if update_bin:
             success, bin_updated = self._update_cracker_bin(force_update_bin, bin_server_path, bin_bitstream_path)
             if not success:
+                self._logger.error("Failed to update cracker firmware.")
                 return
 
         if force_update_bin and self._socket and self._connection_status:
@@ -601,13 +552,19 @@ class CrackerBasic(ABC, typing.Generic[T]):
                                    will use the embedded firmware if not specified.
         :type bin_bitstream_path: str | None
         """
-        if not self._operator.connect():
+        if self.shell is None:
+            self._logger.error("Update cracker bin failed: SSH client is not initialized.")
+            return False, False
+        try:
+            self.shell._ensure_connected()
+        except Exception as e:
+            self._logger.error(f"Update cracker bin failed: SSH connection error: {e}")
             return False, False
 
-        if not force_update and self._operator.get_status():
+        if not force_update and self.shell.get_server_status():
             return True, False
 
-        self._hardware_model = self._operator.get_hardware_model()
+        self._hardware_model = self.shell.get_hardware_model()
 
         if bin_server_path is None or bin_bitstream_path is None:
             if self._hardware_model is None or self._hardware_model == "unknown":
@@ -632,12 +589,10 @@ class CrackerBasic(ABC, typing.Generic[T]):
                 return False, False
 
         try:
-            bin_server = open(bin_server_path, "rb").read()
-            bin_bitstream = open(bin_bitstream_path, "rb").read()
             success = (
-                self._operator.update_server(bin_server)
-                and self._operator.update_bitstream(bin_bitstream)
-                and self._operator.get_status()
+                self.shell.update_server(bin_server_path)
+                and self.shell.update_bitstream(bin_bitstream_path)
+                and self.shell.get_server_status()
             )
             if success:
                 self._installed_bin_server_path = bin_server_path
@@ -687,8 +642,6 @@ class CrackerBasic(ABC, typing.Generic[T]):
         """
         if not self._connection_status:
             return
-        if self._operator is not None:
-            self._operator.disconnect()
         try:
             if self._socket:
                 self._socket.close()
@@ -929,7 +882,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: The equipment response status code and the ID of the equipment.
         :rtype: tuple[int, str | None]
         """
-        return protocol.STATUS_OK, self._operator.get_sn()
+        return protocol.STATUS_OK, self.shell.get_sn() if self.shell else None
 
     @connection_status_check
     def get_hardware_model(self) -> tuple[int, str | None]:
@@ -939,7 +892,7 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :return: The equipment response status code and the name of the equipment.
         :rtype: tuple[int, str | None]
         """
-        return protocol.STATUS_OK, self._operator.get_hardware_model()
+        return protocol.STATUS_OK, self.shell.get_hardware_model() if self.shell else None
 
     @connection_status_check
     def get_bitstream_version(self):
@@ -954,14 +907,11 @@ class CrackerBasic(ABC, typing.Generic[T]):
         :rtype: tuple[int, str | None]
         """
         bitstream_status, bitstream_version = self.get_bitstream_version()
-        server_version = self._operator.get_server_version()
-        operator_version = self._operator.get_version()
+        server_version = self.shell.get_server_version() if self.shell else None
 
         return (
             protocol.STATUS_OK,
-            f"operator_version: {operator_version}, "
-            f"server_version: {server_version}, "
-            f"bitstream_version: {bitstream_version}",
+            f"server_version: {server_version}, bitstream_version: {bitstream_version}",
         )
 
     @connection_status_check
