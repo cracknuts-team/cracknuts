@@ -44,21 +44,17 @@ jobs:
       run: |
         cd jupyter_frontend
         pnpm install
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        pip install build
-        pip install twine
     - name: Build jupyter frontend
       run: |
         cd jupyter_frontend
         pnpm run clean-build
     - name: Build the project
       run: |
-        python -m build
+        uv build
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
