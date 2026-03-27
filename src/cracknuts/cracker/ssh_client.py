@@ -453,6 +453,7 @@ WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
         :rtype: bool
         """
         import time
+
         self._ensure_connected()
         result = self.exec(
             f"setsid {self._SERVER_REMOTE_PATH} > /tmp/server.log 2>&1 &",
@@ -474,8 +475,6 @@ WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
         :rtype: bool
         """
         self._ensure_connected()
-        import time
-        s = time.time()
         result = self.exec(
             "killall -w -t 5 server 2>/dev/null; killall -9 server 2>/dev/null; sleep 0.5; ! pgrep -x server",
             print_output=False,
@@ -513,8 +512,6 @@ WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
         :rtype: bool
         """
         self._ensure_connected()
-        import time
-        s = time.time()
         self.upload(local_path, self._BITSTREAM_REMOTE_PATH)
         result = self.exec(
             f"fpgautil -b {self._BITSTREAM_REMOTE_PATH}",

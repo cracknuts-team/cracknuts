@@ -58,7 +58,8 @@ extend-select = [
 [tool.typos.files]
 extend-exclude = [
     "demo",
-    "tests"
+    "tests",
+    "**/*.csv"
 ]
 
 [dependency-groups]
