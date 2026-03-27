@@ -62,6 +62,8 @@ def check_copyright(files: list[str]):
             skip = any(skip_dir in file for skip_dir in skip_dirs)
             if skip:
                 continue
+            if not os.path.exists(file):
+                continue
             print(f"Checking {file}.")
             with open(file, encoding="utf-8") as f:
                 content = f.readlines()
