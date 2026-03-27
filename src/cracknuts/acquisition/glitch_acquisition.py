@@ -8,7 +8,6 @@ from abc import ABC
 
 from cracknuts.acquisition.acquisition import Acquisition
 from cracknuts.acquisition.acquisition import AcquisitionBuilder
-from cracknuts.cracker.cracker_basic import CrackerBasic
 from cracknuts.cracker.cracker_g1 import CrackerG1
 from cracknuts.glitch.param_generator import (
     AbstractGlitchParamGenerator,
@@ -496,10 +495,12 @@ class GlitchAcquisition(Acquisition, ABC):
 
     @staticmethod
     def simple(
-            cracker: CrackerG1,
-            init_func: typing.Callable[[CrackerG1], None] = lambda cracker: None,
-            do_func: typing.Callable[[CrackerG1, int], dict[str, bytes]] = lambda cracker, count: {},
-            finish_func: typing.Callable[[CrackerG1], None] = lambda cracker: None, **kwargs) -> 'Acquisition':
+        cracker: CrackerG1,
+        init_func: typing.Callable[[CrackerG1], None] = lambda cracker: None,
+        do_func: typing.Callable[[CrackerG1, int], dict[str, bytes]] = lambda cracker, count: {},
+        finish_func: typing.Callable[[CrackerG1], None] = lambda cracker: None,
+        **kwargs,
+    ) -> "Acquisition":
         """
         创建一个简单的Acquisition子类实例。
 
@@ -555,9 +556,10 @@ class GlitchAcquisition(Acquisition, ABC):
         :type kwargs: dict
         :return: Acquisition实例
         """
+
         class AnonymousAcquisition(GlitchAcquisition):
             def __init__(self, **_kwargs):
-                _kwargs['cracker'] = cracker
+                _kwargs["cracker"] = cracker
                 super().__init__(**_kwargs)
 
             def init(self):
