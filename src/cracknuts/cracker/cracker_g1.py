@@ -121,9 +121,8 @@ class CrackerG1(CrackerS1):
         address: tuple | str | None = None,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        operator_port: int = None,
     ):
-        super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
+        super().__init__(address, bin_server_path, bin_bitstream_path)
         self._config: ConfigG1 = self._config
 
     @staticmethod

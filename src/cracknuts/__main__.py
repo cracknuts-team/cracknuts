@@ -111,13 +111,6 @@ def create_jupyter_notebook(template: str, new_ipynb_name: str):
 @click.option("--host", default="127.0.0.1", show_default=True, help="The host to attach to.")
 @click.option("--port", default=protocol.DEFAULT_PORT, show_default=True, help="The port to attach to.", type=int)
 @click.option(
-    "--operator_port",
-    default=protocol.DEFAULT_OPERATOR_PORT,
-    show_default=True,
-    help="The operator port to attach to.",
-    type=int,
-)
-@click.option(
     "--logging-level",
     default="INFO",
     show_default=True,
@@ -127,11 +120,10 @@ def create_jupyter_notebook(template: str, new_ipynb_name: str):
 def start_mock_cracker(
     host: str = "127.0.0.1",
     port: int = protocol.DEFAULT_PORT,
-    operator_port: int = protocol.DEFAULT_OPERATOR_PORT,
     logging_level: str | int = logging.INFO,
 ):
     _update_check()
-    mock.start(host, port, operator_port, logging_level)
+    mock.start(host, port, logging_level)
 
 
 @main.command(name="discover", help="Discover cracknuts devices on the local network.")
