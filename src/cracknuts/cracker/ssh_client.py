@@ -348,10 +348,13 @@ class SSHClient:
         )
 
 
-class SSHCracker(SSHClient):
+class _SSHCracker(SSHClient):
     """
-    SSHCracker 是 SSHClient 的子类，专门用于 CrackNuts 设备的 SSH 连接和命令执行。
-    他默认配置了用户名和私钥，简化了连接过程。
+    Internal SSH client specialised for CrackNuts devices.
+
+    Subclasses :class:`SSHClient` with a pre-configured username and embedded
+    private key, removing the need for callers to supply credentials.
+    Not part of the public API.
     """
 
     _PRIVATE_KEY = """-----BEGIN OPENSSH PRIVATE KEY-----
@@ -374,12 +377,12 @@ WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
         encoding: str = "utf-8",
     ):
         """
-        初始化 SSHCracker（不立即连接）
+        Initialise the client without connecting.
 
-        :param ip:          目标主机 IP 或主机名
-        :param port:        SSH 端口，默认 22
-        :param timeout:     连接超时时间（秒），默认 10
-        :param encoding:    命令输出编码，默认 utf-8
+        :param ip:       Target host IP address or hostname.
+        :param port:     SSH port. Defaults to 22.
+        :param timeout:  Connection timeout in seconds. Defaults to 10.
+        :param encoding: Command output encoding. Defaults to ``"utf-8"``.
         """
         super().__init__(
             ip=ip,

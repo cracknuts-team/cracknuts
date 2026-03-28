@@ -19,7 +19,7 @@ import cracknuts.utils.hex_util as hex_util
 from cracknuts import logger
 from cracknuts.cracker import protocol
 from cracknuts.cracker.cracker_manager import CrackerManager
-from cracknuts.cracker.ssh_client import SSHCracker
+from cracknuts.cracker.ssh_client import SSHClient, _SSHCracker
 
 
 class ConfigBasic:
@@ -142,7 +142,7 @@ class CrackerBasic[T: ConfigBasic](ABC):
         self._bin_server_path = bin_server_path
         self._bin_bitstream_path = bin_bitstream_path
         self._server_address: tuple[str, int] | None = None
-        self.shell: SSHCracker | None = None
+        self._ssh_cracker: _SSHCracker | None = None
         self.set_address(address)
         self._config = self.get_default_config()
         self._hardware_model = None
@@ -155,6 +155,17 @@ class CrackerBasic[T: ConfigBasic](ABC):
         # Cracker only supports sampling length in multiples of 1024,
         # record actual length to truncate waveform data later.
         self._osc_sample_length: int | None = None
+
+    @property
+    def shell(self) -> SSHClient | None:
+        """
+        SSH connection to the device.
+
+        Use this to run commands or upload files on the device without configuring
+        credentials yourself. Only generic SSH operations (``exec``, ``upload``, etc.)
+        are exposed through this interface.
+        """
+        return self._ssh_cracker
 
     def change_ip(self, new_ip: str, new_mask: str = None, new_gateway: str = None) -> bool:
         """
@@ -346,11 +357,11 @@ class CrackerBasic[T: ConfigBasic](ABC):
         address currently stored in ``self._server_address``.
         """
         if self._server_address is None:
-            self.shell = None
+            self._ssh_cracker = None
             return
 
-        if self.shell is None or self.shell.ip != self._server_address[0]:
-            self.shell = SSHCracker(ip=self._server_address[0])
+        if self._ssh_cracker is None or self._ssh_cracker.ip != self._server_address[0]:
+            self._ssh_cracker = _SSHCracker(ip=self._server_address[0])
 
     def set_address(self, address: tuple[str, int] | str | None) -> None:
         """
@@ -520,11 +531,11 @@ class CrackerBasic[T: ConfigBasic](ABC):
             self._config = self.get_current_config()
             self._logger.info("Synchronize the configuration from Cracker.")
             self._sync_inner_obj_ip()
-            if self.shell is not None:
+            if self._ssh_cracker is not None:
                 try:
-                    if not self.shell.is_connected():
-                        self.shell.connect()
-                        self._logger.info(f"Connected to SSH cracker: {self.shell.ip}")
+                    if not self._ssh_cracker.is_connected():
+                        self._ssh_cracker.connect()
+                        self._logger.info(f"Connected to SSH cracker: {self._ssh_cracker.ip}")
                 except Exception as e:
                     self._logger.warning(f"Failed to connect SSH cracker: {e}")
         except OSError as e:
@@ -549,19 +560,19 @@ class CrackerBasic[T: ConfigBasic](ABC):
                                    will use the embedded firmware if not specified.
         :type bin_bitstream_path: str | None
         """
-        if self.shell is None:
+        if self._ssh_cracker is None:
             self._logger.error("Update cracker bin failed: SSH client is not initialized.")
             return False, False
         try:
-            self.shell._ensure_connected()
+            self._ssh_cracker._ensure_connected()
         except Exception as e:
             self._logger.error(f"Update cracker bin failed: SSH connection error: {e}")
             return False, False
 
-        if not force_update and self.shell.get_server_status():
+        if not force_update and self._ssh_cracker.get_server_status():
             return True, False
 
-        self._hardware_model = self.shell.get_hardware_model()
+        self._hardware_model = self._ssh_cracker.get_hardware_model()
 
         if bin_server_path is None or bin_bitstream_path is None:
             if self._hardware_model is None or self._hardware_model == "unknown":
@@ -587,9 +598,9 @@ class CrackerBasic[T: ConfigBasic](ABC):
 
         try:
             success = (
-                self.shell.update_server(bin_server_path)
-                and self.shell.update_bitstream(bin_bitstream_path)
-                and self.shell.get_server_status()
+                self._ssh_cracker.update_server(bin_server_path)
+                and self._ssh_cracker.update_bitstream(bin_bitstream_path)
+                and self._ssh_cracker.get_server_status()
             )
             if success:
                 self._installed_bin_server_path = bin_server_path
@@ -879,7 +890,7 @@ class CrackerBasic[T: ConfigBasic](ABC):
         :return: The equipment response status code and the ID of the equipment.
         :rtype: tuple[int, str | None]
         """
-        return protocol.STATUS_OK, self.shell.get_sn() if self.shell else None
+        return protocol.STATUS_OK, self._ssh_cracker.get_sn() if self._ssh_cracker else None
 
     @connection_status_check
     def get_hardware_model(self) -> tuple[int, str | None]:
@@ -889,7 +900,7 @@ class CrackerBasic[T: ConfigBasic](ABC):
         :return: The equipment response status code and the name of the equipment.
         :rtype: tuple[int, str | None]
         """
-        return protocol.STATUS_OK, self.shell.get_hardware_model() if self.shell else None
+        return protocol.STATUS_OK, self._ssh_cracker.get_hardware_model() if self._ssh_cracker else None
 
     @connection_status_check
     def get_bitstream_version(self):
@@ -904,7 +915,7 @@ class CrackerBasic[T: ConfigBasic](ABC):
         :rtype: tuple[int, str | None]
         """
         bitstream_status, bitstream_version = self.get_bitstream_version()
-        server_version = self.shell.get_server_version() if self.shell else None
+        server_version = self._ssh_cracker.get_server_version() if self._ssh_cracker else None
 
         return (
             protocol.STATUS_OK,
