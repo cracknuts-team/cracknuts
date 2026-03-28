@@ -15,33 +15,79 @@ from cracknuts.cracker.cracker_s1 import ConfigS1, CrackerS1
 from cracknuts.cracker.protocol import Command
 
 
-wave_80m = [
-    3.2,
-    0.0
-]
-wave_40m = [
-    3.2, 3.2,
-    0.0, 0.0
-]
+wave_80m = [3.2, 0.0]
+wave_40m = [3.2, 3.2, 0.0, 0.0]
 wave_20m = [
-    3.2, 3.2, 3.2, 3.2,
-    0.0, 0.0, 0.0, 0.0,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
 ]
-wave_16m = [
-    3.2, 3.2, 3.2, 3.2, 3.2,
-    0.0, 0.0, 0.0, 0.0, 0.0
-]
+wave_16m = [3.2, 3.2, 3.2, 3.2, 3.2, 0.0, 0.0, 0.0, 0.0, 0.0]
 wave_10m = [
-    3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
 ]
-wave_8m = [
-    3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-]
+wave_8m = [3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 wave_4m = [
-    3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    3.2,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
 ]
 
 
@@ -66,13 +112,14 @@ class ConfigG1(ConfigS1):
 
         self.glitch_clock_arm: bool = False
         self.glitch_clock_len_normal: int = len(wave_8m)
-        self.glitch_clock_wave_normal: list[float] = wave_8m # 默认时钟8mhz
+        self.glitch_clock_wave_normal: list[float] = wave_8m  # 默认时钟8mhz
         self.glitch_clock_config_len_glitch: int = len(wave_4m)
-        self.glitch_clock_config_wave_glitch: list[float] = wave_4m # 默认glitch示例时钟4mhz
+        self.glitch_clock_config_wave_glitch: list[float] = wave_4m  # 默认glitch示例时钟4mhz
         self.glitch_clock_config_wait: int = 1
         self.glitch_clock_config_delay: int = 1
         self.glitch_clock_config_repeat: int = 1
         self.glitch_clock_enable: bool = True
+
 
 class CommandG1(Command):
     GLITCH_VCC_ARM = 0x0310
@@ -97,11 +144,14 @@ class CommandG1(Command):
     GLITCH_CLK_WAVE_GLITCH = 0x0337
 
 
-def _build_interp_func(map_path) -> typing.Tuple[interp1d, interp1d]:
+def _build_interp_func(map_path) -> tuple[interp1d, interp1d]:
     df = pd.read_csv(map_path)
     x = df["code"].map(lambda v: int(v, 16)).values
     y = df["voltage"].values
-    return interp1d(x, y, kind="linear", fill_value="extrapolate"), interp1d(y, x, kind="linear", fill_value="extrapolate")
+    return (
+        interp1d(x, y, kind="linear", fill_value="extrapolate"),
+        interp1d(y, x, kind="linear", fill_value="extrapolate"),
+    )
 
 
 _voltage_map_dir = os.path.join(os.path.dirname(importlib.util.find_spec("cracknuts").origin), "glitch", "voltage_map")
@@ -110,6 +160,7 @@ _gnd_interp_func_cv, _gnd_interp_func_vc = _build_interp_func(os.path.join(_volt
 _clk_interp_func_cv, _clk_interp_func_vc = _build_interp_func(os.path.join(_voltage_map_dir, "clk.csv"))
 
 SYS_CLK_PERIOD_S = 6.25e-9  # g1 sys clock period in seconds
+
 
 def get_clock_from_wave_length(wave_len: int) -> float:
     return 1 / (wave_len * SYS_CLK_PERIOD_S) / 1000
@@ -121,9 +172,8 @@ class CrackerG1(CrackerS1):
         address: tuple | str | None = None,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        operator_port: int = None,
     ):
-        super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
+        super().__init__(address, bin_server_path, bin_bitstream_path)
         self._config: ConfigG1 = self._config
 
     @staticmethod
@@ -325,7 +375,7 @@ class CrackerG1(CrackerS1):
                 "glitch_clock_wave_normal_fake": "I",  # todo 这里无效，后续在server端删除
                 "glitch_clock_config_len_glitch": "I",
                 "glitch_clock_config_wave_glitch_fake": "I",  # todo 这里无效，后续在server端删除
-                "glitch_clock_config_wait": "I", # todo 这里临时注释，后续在server端添加
+                "glitch_clock_config_wait": "I",  # todo 这里临时注释，后续在server端添加
                 "glitch_clock_config_delay": "I",
                 "glitch_clock_config_repeat": "I",
                 # "glitch_clock_enable": "?",  # todo 这里临时注释，后续在server端添加
@@ -398,11 +448,11 @@ class CrackerG1(CrackerS1):
         :return: nut电压，单位V
         :rtype: float
         """
-        s, r = self.register_read(base_address=0x43c10000, offset=0x150)
+        s, r = self.register_read(base_address=0x43C10000, offset=0x150)
         if s != protocol.STATUS_OK:
             return 0.0
         try:
-            dac_code = struct.unpack('>I', r)[0]
+            dac_code = struct.unpack(">I", r)[0]
             return self._get_voltage_from_dac_code(dac_code, _vcc_interp_func_cv)
         except struct.error as e:
             self._logger.error(f"Unpack nut voltage failed: {e}")
@@ -414,11 +464,11 @@ class CrackerG1(CrackerS1):
         :return: nut电压，单位V
         :rtype: float
         """
-        s, r = self.register_read(base_address=0x43c10000, offset=0x190)
+        s, r = self.register_read(base_address=0x43C10000, offset=0x190)
         if s != protocol.STATUS_OK:
             return 0.0
         try:
-            dac_code = struct.unpack('>I', r)[0]
+            dac_code = struct.unpack(">I", r)[0]
             return self._get_voltage_from_dac_code(dac_code, _vcc_interp_func_cv)
         except struct.error as e:
             self._logger.error(f"Unpack nut voltage failed: {e}")
@@ -430,11 +480,11 @@ class CrackerG1(CrackerS1):
         :return: nut时钟是否enabled
         :rtype: bool
         """
-        s, r = self.register_read(base_address=0x43c10000, offset=0x1C4)
+        s, r = self.register_read(base_address=0x43C10000, offset=0x1C4)
         if s != protocol.STATUS_OK:
             return False
         try:
-            enabled = struct.unpack('>I', r)[0]
+            enabled = struct.unpack(">I", r)[0]
             return enabled == 0
         except struct.error as e:
             self._logger.error(f"Unpack nut clock enabled failed: {e}")
@@ -484,7 +534,7 @@ class CrackerG1(CrackerS1):
             config.glitch_clock_config_wave_glitch,
             config.glitch_clock_config_wait,
             config.glitch_clock_config_repeat,
-            config.glitch_clock_config_delay
+            config.glitch_clock_config_delay,
         )
         self._nut_set_clock_enable(config.nut_clock_enable)
 
@@ -508,26 +558,26 @@ class CrackerG1(CrackerS1):
 
         self._nut_set_enable(config.nut_enable)
 
-
     # def set_glitch_test_params(self, param):
     #     self._glitch_test_params = param
     #
     # def get_glitch_test_params(self):
     #     return self._glitch_test_params
 
-    def glitch_clock_normal(self, wave: list[float]) -> tuple[int, None|bytes]:
-        status, res = self.register_write(base_address=0x43c10000, offset=0x1D0, data=len(wave))
+    def glitch_clock_normal(self, wave: list[float]) -> tuple[int, None | bytes]:
+        status, res = self.register_write(base_address=0x43C10000, offset=0x1D0, data=len(wave))
         if status != protocol.STATUS_OK:
             return status, res
         for voltage in wave:
-            status, res = self.register_write(base_address=0x43c10000, offset=0x1D4, data=self._get_dac_code_from_voltage(voltage, _clk_interp_func_vc))
+            dac = self._get_dac_code_from_voltage(voltage, _clk_interp_func_vc)
+            status, res = self.register_write(base_address=0x43C10000, offset=0x1D4, data=dac)
             if status != protocol.STATUS_OK:
                 return status, res
         self._config.glitch_clock_wave_normal = wave
         return protocol.STATUS_OK, None
 
     def _glitch_clock_normal_enable(self, enable: bool):
-        return self.register_write(base_address=0x43c10000, offset=0x1C4, data=0 if enable else 1)
+        return self.register_write(base_address=0x43C10000, offset=0x1C4, data=0 if enable else 1)
 
     def glitch_clock_normal_enable(self):
         return self._glitch_clock_normal_enable(True)
@@ -535,21 +585,22 @@ class CrackerG1(CrackerS1):
     def glitch_clock_normal_disable(self):
         return self._glitch_clock_normal_enable(False)
 
-    def glitch_clock_config(self, wave: list[float], wait: int, delay: int, repeat: int) -> tuple[int, None|bytes]:
-        status, res = self.register_write(base_address=0x43c10000, offset=0x1DC, data=len(wave))
+    def glitch_clock_config(self, wave: list[float], wait: int, delay: int, repeat: int) -> tuple[int, None | bytes]:
+        status, res = self.register_write(base_address=0x43C10000, offset=0x1DC, data=len(wave))
         if status != protocol.STATUS_OK:
             return status, res
         for voltage in wave:
-            status, res = self.register_write(base_address=0x43c10000, offset=0x1E0, data=self._get_dac_code_from_voltage(voltage, _clk_interp_func_vc))
+            dac = self._get_dac_code_from_voltage(voltage, _clk_interp_func_vc)
+            status, res = self.register_write(base_address=0x43C10000, offset=0x1E0, data=dac)
             if status != protocol.STATUS_OK:
                 return status, res
-        status, res = self.register_write(base_address=0x43c10000, offset=0x1D8, data=wait)
+        status, res = self.register_write(base_address=0x43C10000, offset=0x1D8, data=wait)
         if status != protocol.STATUS_OK:
             return status, res
-        self.register_write(base_address=0x43c10000, offset=0x1E4, data=delay)
+        self.register_write(base_address=0x43C10000, offset=0x1E4, data=delay)
         if status != protocol.STATUS_OK:
             return status, res
-        self.register_write(base_address=0x43c10000, offset=0x1E8, data=repeat)
+        self.register_write(base_address=0x43C10000, offset=0x1E8, data=repeat)
         if status != protocol.STATUS_OK:
             return status, res
 
@@ -562,13 +613,13 @@ class CrackerG1(CrackerS1):
         return protocol.STATUS_OK, None
 
     def glitch_clock_arm(self):
-        return self.register_write(base_address=0x43c10000, offset=0X1C8, data=1)
+        return self.register_write(base_address=0x43C10000, offset=0x1C8, data=1)
 
     def glitch_clock_reset(self):
         return self._glitch_clock_normal_enable(False)
 
     def glitch_clock_force(self):
-        return self.register_write(base_address=0x43c10000, offset=0x1CC, data=1)
+        return self.register_write(base_address=0x43C10000, offset=0x1CC, data=1)
 
     def _nut_set_clock_enable(self, enable: bool) -> tuple[int, None]:
         status, res = self._glitch_clock_normal_enable(enable)

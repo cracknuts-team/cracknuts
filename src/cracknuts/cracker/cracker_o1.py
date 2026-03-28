@@ -40,12 +40,11 @@ class CrackerO1(CrackerG1):
         address: tuple | str | None = None,
         bin_server_path: str | None = None,
         bin_bitstream_path: str | None = None,
-        operator_port: int = None,
     ):
         """
         Cracker O1 设备接口类。
         """
-        super().__init__(address, bin_server_path, bin_bitstream_path, operator_port)
+        super().__init__(address, bin_server_path, bin_bitstream_path)
         self._config: ConfigG1 = self._config
         self._gpio_map = {
             "r": {

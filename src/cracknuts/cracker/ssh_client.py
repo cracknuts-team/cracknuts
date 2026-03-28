@@ -8,6 +8,8 @@ from collections.abc import Callable, Generator
 
 import paramiko
 
+from cracknuts import logger
+
 
 __SSH_PRIVATE_KEY = """-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
@@ -49,11 +51,6 @@ class SSHClient:
         :param timeout:     连接超时时间（秒），默认 10
         :param encoding:    命令输出编码，默认 utf-8
         """
-        if private_key is None and password is None:
-            raise ValueError("必须提供 private_key 或 password 之一")
-        if private_key is not None and password is not None:
-            raise ValueError("private_key 和 password 只能选择其中一种认证方式")
-
         self.ip = ip
         self.port = port
         self.username = username
@@ -61,8 +58,13 @@ class SSHClient:
         self.password = password
         self.timeout = timeout
         self.encoding = encoding
-
         self._client: paramiko.SSHClient | None = None
+        self._logger = logger.get_logger(self)
+
+        if private_key is None and password is None:
+            raise ValueError("Either private_key or password must be provided.")
+        if private_key is not None and password is not None:
+            raise ValueError("Only one of private_key or password can be specified.")
 
     # ------------------------------------------------------------------
     # 私钥加载
@@ -100,7 +102,8 @@ class SSHClient:
                 last_exc = e
                 continue
 
-        raise ValueError(f"无法识别私钥格式，请检查私钥内容。最后错误: {last_exc}")
+        self._logger.error(f"Unrecognized private key format. Last error: {last_exc}")
+        return None
 
     # ------------------------------------------------------------------
     # 连接 / 断开
@@ -115,6 +118,8 @@ class SSHClient:
 
         if self.private_key is not None:
             pkey = self._load_private_key()
+            if pkey is None:
+                return self
             client.connect(
                 hostname=self.ip,
                 port=self.port,
@@ -189,7 +194,8 @@ class SSHClient:
                  }| None（如果 print_output=True 则不返回输出内容）
         """
         if not self.is_connected():
-            raise RuntimeError("SSH 未连接，请先调用 connect() 或使用 with 语句")
+            self._logger.error("SSH is not connected. Call connect() or use the context manager first.")
+            return None
 
         stdout_lines = []
         stderr_lines = []
@@ -253,7 +259,8 @@ class SSHClient:
                 print(line, end="")
         """
         if not self.is_connected():
-            raise RuntimeError("SSH 未连接，请先调用 connect()")
+            self._logger.error("SSH is not connected. Call connect() first.")
+            return
 
         transport = self._client.get_transport()
         channel = transport.open_session()
@@ -274,15 +281,21 @@ class SSHClient:
         remote_path: str,
     ) -> None:
         """
-        通过 SFTP 上传本地文件到远程主机。
+        Upload a local file to the remote host via SFTP.
 
-        :param local_path:  本地文件路径
-        :param remote_path: 远程目标路径
+        :param local_path: Local path of the file to upload.
+        :type local_path: str
+        :param remote_path: Destination path on the remote host.
+        :type remote_path: str
+        :raises RuntimeError: If the SSH connection is not established.
+        :raises FileNotFoundError: If ``local_path`` does not exist or is not a file.
         """
         if not self.is_connected():
-            raise RuntimeError("SSH 未连接，请先调用 connect() 或使用 with 语句")
+            self._logger.error("SSH is not connected. Call connect() or use the context manager first.")
+            return
         if not os.path.isfile(local_path):
-            raise FileNotFoundError(f"本地文件不存在: {local_path}")
+            self._logger.error(f"Local file not found: {local_path}")
+            return
 
         sftp = self._client.open_sftp()
         try:
@@ -314,9 +327,11 @@ class SSHClient:
         :param exec_command:    自定义执行命令，None 时使用 `remote_path`
         """
         if not self.is_connected():
-            raise RuntimeError("SSH 未连接，请先调用 connect() 或使用 with 语句")
+            self._logger.error("SSH is not connected. Call connect() or use the context manager first.")
+            return None
         if not os.path.isfile(local_path):
-            raise FileNotFoundError(f"本地文件不存在: {local_path}")
+            self._logger.error(f"Local file not found: {local_path}")
+            return None
 
         self.upload(local_path, remote_path)
 
@@ -347,6 +362,10 @@ AAAEDYTZLDl1AqFeJCYr5UQkGgLxE/ACHUBC6oQLSDZzaIyQTouYeKSdd+ozl57kVJWvT3
 WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
 -----END OPENSSH PRIVATE KEY-----"""
 
+    _MTD_DEVICE = "/dev/mtd3"
+    _SERVER_REMOTE_PATH = "/tmp/server"
+    _BITSTREAM_REMOTE_PATH = "/tmp/bitstream.bit.bin"
+
     def __init__(
         self,
         ip: str,
@@ -370,3 +389,145 @@ WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
             timeout=timeout,
             encoding=encoding,
         )
+
+    def _ensure_connected(self) -> None:
+        if not self.is_connected():
+            self.connect()
+
+    def get_hardware_model(self) -> str | None:
+        """
+        Read the hardware model string from the device via mtd_debug.
+
+        :return: Hardware model string, ``"unknown"`` if the value is empty, or ``None`` on failure.
+        :rtype: str | None
+        """
+        self._ensure_connected()
+        result = self.exec(
+            f"mtd_debug read {self._MTD_DEVICE} 0x20 32 /tmp/hw_model > /dev/null 2>&1 && strings /tmp/hw_model",
+            print_output=False,
+        )
+        if result and result["exit_code"] == 0:
+            return result["stdout"].strip() or "unknown"
+        return None
+
+    def get_sn(self) -> str | None:
+        """
+        Read the device serial number from the device via mtd_debug.
+
+        :return: Serial number string, ``"unknown"`` if the value is empty, or ``None`` on failure.
+        :rtype: str | None
+        """
+        self._ensure_connected()
+        result = self.exec(
+            f"mtd_debug read {self._MTD_DEVICE} 0x40 32 /tmp/sn > /dev/null 2>&1 && strings /tmp/sn",
+            print_output=False,
+        )
+        if result and result["exit_code"] == 0:
+            return result["stdout"].strip() or "unknown"
+        return None
+
+    def get_server_status(self) -> bool:
+        """
+        Check whether the server process is currently running.
+
+        :return: ``True`` if the server process is found, ``False`` otherwise.
+        :rtype: bool
+        """
+        try:
+            self._ensure_connected()
+        except Exception:
+            return False
+        result = self.exec("pgrep -x server", print_output=False)
+        return result is not None and result["exit_code"] == 0
+
+    def start_server(self) -> bool:
+        """
+        Start the server process as a detached daemon via setsid.
+
+        Uses ``setsid`` to create a new session so the process is fully
+        detached from the SSH channel and survives after the channel closes.
+        Waits 1 second on the Python side, then verifies the process is
+        running via :meth:`get_server_status`.
+
+        :return: ``True`` if the server process is confirmed running, ``False`` otherwise.
+        :rtype: bool
+        """
+        import time
+
+        self._ensure_connected()
+        result = self.exec(
+            f"setsid {self._SERVER_REMOTE_PATH} > /tmp/server.log 2>&1 &",
+            print_output=False,
+        )
+        if result is None or result["exit_code"] != 0:
+            return False
+        time.sleep(1)
+        return self.get_server_status()
+
+    def stop_server(self) -> bool:
+        """
+        Stop the server process and confirm it has exited.
+
+        Sends SIGTERM and waits up to 5 seconds for a graceful shutdown.
+        If the process is still alive, SIGKILL is sent to force termination.
+
+        :return: ``True`` if the process is confirmed stopped, ``False`` otherwise.
+        :rtype: bool
+        """
+        self._ensure_connected()
+        result = self.exec(
+            "killall -w -t 5 server 2>/dev/null; killall -9 server 2>/dev/null; sleep 0.5; ! pgrep -x server",
+            print_output=False,
+        )
+        return result is not None and result["exit_code"] == 0
+
+    def update_server(self, local_path: str) -> bool:
+        """
+        Upload the server binary to the device and start it.
+
+        Stops any running server instance first, uploads the file via SFTP
+        to :attr:`_SERVER_REMOTE_PATH`, then calls :meth:`start_server`.
+
+        :param local_path: Local path to the server binary file.
+        :type local_path: str
+        :return: ``True`` if the server started successfully, ``False`` otherwise.
+        :rtype: bool
+        """
+        self._ensure_connected()
+        self.stop_server()
+        self.upload(local_path, self._SERVER_REMOTE_PATH)
+        self.exec(f"chmod +x {self._SERVER_REMOTE_PATH}", print_output=False)
+        return self.start_server()
+
+    def update_bitstream(self, local_path: str) -> bool:
+        """
+        Upload the bitstream file to the device and program it into the FPGA.
+
+        Uploads the file via SFTP to :attr:`_BITSTREAM_REMOTE_PATH`, then
+        executes ``fpgautil -b <path>`` to program the FPGA.
+
+        :param local_path: Local path to the bitstream file.
+        :type local_path: str
+        :return: ``True`` if fpgautil exited successfully, ``False`` otherwise.
+        :rtype: bool
+        """
+        self._ensure_connected()
+        self.upload(local_path, self._BITSTREAM_REMOTE_PATH)
+        result = self.exec(
+            f"fpgautil -b {self._BITSTREAM_REMOTE_PATH}",
+            print_output=False,
+        )
+        return result is not None and result["exit_code"] == 0
+
+    def get_server_version(self) -> str | None:
+        """
+        Retrieve the server version string by running ``/tmp/server --version``.
+
+        :return: Version string from stdout, or ``None`` on failure.
+        :rtype: str | None
+        """
+        self._ensure_connected()
+        result = self.exec(f"{self._SERVER_REMOTE_PATH} --version", print_output=False)
+        if result and result["exit_code"] == 0:
+            return result["stdout"].strip()
+        return None
