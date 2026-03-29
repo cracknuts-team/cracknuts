@@ -510,6 +510,12 @@ class CrackerBasic(ABC, typing.Generic[T]):
                     self._server_address,
                     hex_util.get_bytes_matrix(resp_header),
                 )
+            if len(resp_header) != protocol.RES_HEADER_SIZE:
+                self._logger.error(
+                    f"Response header length error: require {protocol.RES_HEADER_SIZE} but get {len(resp_header)}: "
+                    f"{hex_util.get_hex(resp_header)}"
+                )
+                return protocol.STATUS_ERROR, None
             magic, version, direction, status, length = struct.unpack(protocol.RES_HEADER_FORMAT, resp_header)
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
