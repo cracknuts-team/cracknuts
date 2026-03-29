@@ -634,10 +634,10 @@ class CrackerBasic[T: ConfigBasic](ABC):
         if bin_bitstream_path is not None:
             bin_bitstream_path = os.path.join(firmware_path, bin_bitstream_path)
         if not os.path.exists(bin_server_path) or not os.path.isfile(bin_server_path):
-            self._logger.error("Find bin server path, but it is not exist or not a file.")
+            self._logger.error(f"Find bin server path: {bin_server_path}, but it is not exist or not a file.")
             bin_server_path = None
         if not os.path.exists(bin_bitstream_path) or not os.path.isfile(bin_bitstream_path):
-            self._logger.error("Find bin_bitstream path, but it is not exist or not a file.")
+            self._logger.error(f"Find bin_bitstream path: {bin_bitstream_path}, but it is not exist or not a file.")
             bin_bitstream_path = None
 
         return bin_server_path, bin_bitstream_path

@@ -18,7 +18,7 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
     _esm = pathlib.Path(__file__).parent / "static" / "CrackerS1PanelWidget.js"
     _css = ""
 
-    uri = traitlets.Unicode("cnp://192.168.0.10:8080").tag(sync=True)
+    uri = traitlets.Unicode("cnp://192.168.0.10:9761").tag(sync=True)
     connect_status = traitlets.Bool(False).tag(sync=True)
     cracker_id = traitlets.Unicode("Unknown").tag(sync=True)
     cracker_name = traitlets.Unicode("Unknown").tag(sync=True)
@@ -101,7 +101,6 @@ class CrackerPanelWidget(MsgHandlerPanelWidget):
         if cracker_config is None:
             cracker_config = self.cracker.get_default_config().__dict__
         self.update_cracker_panel_config(cracker_config, connect_uri)
-
 
     def write_config_to_cracker(self) -> None:
         self.cracker.write_config_to_cracker(self.get_cracker_panel_config())
