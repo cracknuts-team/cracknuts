@@ -26,6 +26,12 @@ def get_next_version(file_path, version_level, next_pre_release):
         None if match.group(5) is None else int(match.group(5)),
     )
 
+    current_version = (
+        f"{major}.{minor}.{patch}-{pre_release}.{pre_release_no}"
+        if pre_release is not None
+        else f"{major}.{minor}.{patch}"
+    )
+
     if pre_release is not None and pre_release_no is None:
         pre_release_no = 0
 
@@ -118,7 +124,7 @@ def get_next_version(file_path, version_level, next_pre_release):
     else:
         new_version = f"{major}.{minor}.{patch}"
 
-    return new_version
+    return current_version, new_version
 
 
 def update_version(file_path, new_version):
@@ -130,6 +136,12 @@ def update_version(file_path, new_version):
         file.seek(0)
         file.write(new_content)
         file.truncate()
+
+
+def git_push(version, repo_root):
+    subprocess.run(["git", "push"], cwd=repo_root, check=True)
+    subprocess.run(["git", "push", "origin", version], cwd=repo_root, check=True)
+    print(f"Pushed tag {version}")
 
 
 def git_commit_and_tag(file_path, version, repo_root):
@@ -148,23 +160,22 @@ def git_commit_and_tag(file_path, version, repo_root):
 
 def help():
     return r"""
-    release.py [version_level] [pre_release]
+    release.py <command> [args]
 
     Commands:
-    version_level:
-        major
-        minor
-        patch
-    pre_release:
-        alpha
-        beta
-        rc
+        preview  <version_level> [pre_release]  Show current and next version without making changes
+        generate <version_level> [pre_release]  Bump version, commit and tag (default command)
+        push                                    Push latest commit and tag to remote
+
+    version_level: major | minor | patch
+    pre_release:   alpha | beta | rc | -
 
     Examples:
-    - increase major|minor|patch on no pre-release: release.py major|minor|patch
-    - increase major|minor|patch on pre-release: release.py major|minor|patch -
-    - release pre-release on pre-release: release.py major|minor|patch
-    - increase major|minor|patch with pre-release: release.py major|minor|patch alpha|beta|rc
+        release.py preview patch
+        release.py generate minor alpha
+        release.py generate rc
+        release.py patch              (same as: release.py generate patch)
+        release.py push
     """
 
 
@@ -175,12 +186,45 @@ def main(args):
 
     root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+    COMMANDS = ("preview", "generate", "push")
+    VERSION_LEVELS = ("major", "minor", "patch")
+
+    command = args[1]
+    command_args = args[2:]
+
+    if command not in COMMANDS:
+        if command in VERSION_LEVELS or command in PRE_RELEASE_SEQ:
+            command_args = args[1:]
+            command = "generate"
+        else:
+            print(f"Usage: {help()}")
+            sys.exit(1)
+
+    if command == "push":
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"], cwd=root_path, capture_output=True, text=True, check=True
+        )
+        git_push(result.stdout.strip(), root_path)
+        return
+
+    if len(command_args) < 1:
+        print(f"Usage: {help()}")
+        sys.exit(1)
+
     file_path = os.path.join(root_path, "src/cracknuts/__init__.py")
 
-    if len(args) == 2 and args[1] in PRE_RELEASE_SEQ:
-        new_version = get_next_version(file_path, None, args[1])
+    if len(command_args) == 1 and command_args[0] in PRE_RELEASE_SEQ:
+        current_version, new_version = get_next_version(file_path, None, command_args[0])
     else:
-        new_version = get_next_version(file_path, args[1], args[2] if len(args) == 3 else None)
+        current_version, new_version = get_next_version(
+            file_path, command_args[0], command_args[1] if len(command_args) >= 2 else None
+        )
+
+    if command == "preview":
+        print(f"current: {current_version}")
+        print(f"next:    {new_version}")
+        return
+
     update_version(file_path, new_version)
     git_commit_and_tag(file_path, new_version, root_path)
 
