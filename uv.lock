@@ -461,8 +461,8 @@ test = [
 requires-dist = [
     { name = "anywidget", specifier = ">=0.9.0,<1.0.0" },
     { name = "click", specifier = ">=8.0.0,<9.0.0" },
-    { name = "ipykernel", marker = "extra == 'jupyter'", specifier = "~=6.30.1" },
-    { name = "jupyter", marker = "extra == 'jupyter'", specifier = "~=1.1.1" },
+    { name = "ipykernel", marker = "extra == 'jupyter'", specifier = ">=6.29.0" },
+    { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.0" },
     { name = "numba", specifier = ">=0.63.0,<1.0.0" },
     { name = "numpy", specifier = ">=2.0.0,<3.0.0" },
     { name = "packaging", specifier = ">=24.0" },
