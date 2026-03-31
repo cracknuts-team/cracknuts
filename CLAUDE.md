@@ -12,3 +12,11 @@ This project uses [uv](https://github.com/astral-sh/uv) for environment and depe
 - Run scripts: `uv run python <script.py>`
 - Run tests: `uv run pytest`
 - Add dependencies: `uv add <package>`
+
+## Pull Requests
+
+Before creating a PR, run the copyright fixer to ensure all source files have the required header:
+
+```bash
+uv run python scripts/copyright.py
+```

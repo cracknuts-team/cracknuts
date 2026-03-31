@@ -1,3 +1,5 @@
+# Copyright 2024 CrackNuts. All rights reserved.
+
 """
 arm_a1.py - 三轴串联机械臂驱动与运动规划
 
