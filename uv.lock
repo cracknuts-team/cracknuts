@@ -426,6 +426,7 @@ dependencies = [
     { name = "pandas" },
     { name = "paramiko" },
     { name = "pillow" },
+    { name = "pymodbus" },
     { name = "scipy" },
     { name = "zarr" },
 ]
@@ -469,6 +470,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.0.0,<3.0.0" },
     { name = "paramiko", specifier = ">=4.0.0" },
     { name = "pillow", specifier = ">=12.0.0,<13.0.0" },
+    { name = "pymodbus", specifier = "==3.5.2" },
     { name = "scipy", specifier = ">=1.16.0,<2.0.0" },
     { name = "zarr", specifier = ">=2.18.0,<3.0.0" },
 ]
@@ -1846,6 +1848,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
+]
+
+[[package]]
+name = "pymodbus"
+version = "3.5.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/f4/0b001d0199203d5432d0347855fd666de129e248713e2479bbbb0f0788b6/pymodbus-3.5.2.tar.gz", hash = "sha256:26c1aa9919b24f2247794d5d9d80f65ec06fdfd9bd6b76b81d446b55335cabf3", size = 201233, upload-time = "2023-09-09T14:36:15.853Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/76/59dcf6737fba6ae588e6c45714e226f93fb9f68f7f3fbe82e8d1974877d5/pymodbus-3.5.2-py3-none-any.whl", hash = "sha256:c861d30390d7b7cd0bca7b529392fc58fc35b63947d6ef574192b8026180f1c7", size = 203102, upload-time = "2023-09-09T14:36:13.739Z" },
 ]
 
 [[package]]
