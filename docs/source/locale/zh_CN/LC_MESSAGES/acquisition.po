@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-31 22:22+0800\n"
+"POT-Creation-Date: 2026-04-01 14:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -20,8 +20,9 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../source/acquisition.rst:2
-msgid "Acquisition"
-msgstr "Acquisition"
+#, fuzzy
+msgid "Acquisition Module"
+msgstr "Acquisition 模块"
 
 #: ../../source/acquisition.rst:4
 msgid ""
@@ -105,8 +106,8 @@ msgstr "流程图如下："
 
 #: ../../source/acquisition.rst:34
 #, fuzzy
-msgid "Acquisition Module"
-msgstr "Acquisition 模块"
+msgid "Acquisition"
+msgstr "Acquisition"
 
 #: cracknuts.acquisition.acquisition.Acquisition:1 of
 msgid "Bases: :py:class:`~abc.ABC`"

@@ -1,5 +1,5 @@
-Acquisition
-===========
+Acquisition Module
+==================
 
 `Acquisition` is responsible for managing the process of waveform data acquisition.
 
@@ -30,8 +30,8 @@ The flowchart is shown below:
 
 .. image:: _static/acquisition_struct.drawio.png
 
-Acquisition Module
-------------------
+Acquisition
+-----------
 
 .. autoclass:: cracknuts.acquisition.acquisition.Acquisition
     :members:
