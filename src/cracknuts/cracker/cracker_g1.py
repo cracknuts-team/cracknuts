@@ -188,7 +188,7 @@ class CrackerG1(CrackerS1):
 
     def glitch_vcc_arm(self):
         """
-        设置glitch VCC 为armed状态。
+        Set the glitch VCC to the armed state.
         """
         self._glitch_vcc_arm(True)
 
@@ -206,7 +206,7 @@ class CrackerG1(CrackerS1):
 
     def glitch_vcc_config(self, wait: int, level: int | float | str, length: int, delay: int, repeat: int):
         """
-        配置glitch ::
+        Configure the VCC glitch parameters::
 
             v_normal────┬───────────────────┐       ┌────────────┐       ┌───────
                         |       wait        | count |    delay   | count |
@@ -215,15 +215,17 @@ class CrackerG1(CrackerS1):
                         |                       └────────────────────┘
                          Trigger                         repeat
 
-        :param wait: glitch产生前等待时间（时钟个数）
+        :param wait: Number of clock cycles to wait before the glitch is generated.
         :type wait: int
-        :param level: Glitch DAC电压值
-        :type level: int
-        :param length: Glitch持续时间, 单位 10ns
+        :param level: Glitch DAC voltage value.
+        :type level: int | float | str
+        :param length: Glitch duration in units of 10 ns.
+        :type length: int
+        :param delay: Delay between glitch pulses.
         :type delay: int
-        :param repeat: Glitch重复次数
+        :param repeat: Number of glitch repetitions.
         :type repeat: int
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         level = self._parse_voltage(level)
@@ -241,7 +243,7 @@ class CrackerG1(CrackerS1):
 
     def glitch_vcc_reset(self):
         """
-        重置glitch VCC配置。
+        Reset the glitch VCC configuration.
         """
         self._logger.debug(f"glitch_vcc_reset payload: {None}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_RESET, payload=None)
@@ -252,7 +254,7 @@ class CrackerG1(CrackerS1):
 
     def glitch_vcc_force(self):
         """
-        强制触发glitch VCC。
+        Force-trigger the VCC glitch.
         """
         self._logger.debug(f"glitch_vcc_force payload: {None}")
         status, res = self.send_with_command(CommandG1.GLITCH_VCC_FORCE, payload=None)
@@ -266,7 +268,12 @@ class CrackerG1(CrackerS1):
 
     def glitch_vcc_normal(self, voltage: float | str | int) -> tuple[int, None]:
         """
-        设置glitch VCC正常电压值。
+        Set the normal VCC voltage for the glitch module.
+
+        :param voltage: Voltage value in Volts, or a string with unit suffix (e.g. ``"3.3V"``).
+        :type voltage: float | str | int
+        :return: Device response status and received data: (status, response).
+        :rtype: tuple[int, None]
         """
         voltage = self._parse_voltage(voltage)
         dac_code = self._get_dac_code_from_voltage(voltage, _vcc_interp_func_vc)
@@ -435,17 +442,21 @@ class CrackerG1(CrackerS1):
     @staticmethod
     def _get_clock_from_wave_len(wave_len: int) -> tuple[float, list[float]]:
         """
-        获取cracker当前nut时钟频率，单位kHz。
-        :return: nut时钟频率，单位kHz
-        :rtype: float
+        Calculate the nut clock frequency in kHz from the waveform length.
+
+        :param wave_len: Number of waveform samples (wave length register value).
+        :type wave_len: int
+        :return: Clock frequency in kHz and corresponding waveform sample list.
+        :rtype: tuple[float, list[float]]
         """
         # 这里在cracker中只能拿到寄存器中的波形长度信息，没有波形信息，所有只根据对半将波形分为高低电平来计算频率
         return get_clock_from_wave_length(wave_len), [3.2 if i < wave_len / 2 else 0.0 for i in range(wave_len)]
 
     def _get_cracker_nut_vcc_voltage(self) -> float:
         """
-        获取cracker当前nut电压，单位V。
-        :return: nut电压，单位V
+        Get the current nut VCC voltage from the device, in Volts.
+
+        :return: Nut VCC voltage in Volts.
         :rtype: float
         """
         s, r = self.register_read(base_address=0x43C10000, offset=0x150)
@@ -460,8 +471,9 @@ class CrackerG1(CrackerS1):
 
     def _get_cracker_nut_gnd_voltage(self) -> float:
         """
-        获取cracker当前nut电压，单位V。
-        :return: nut电压，单位V
+        Get the current nut GND voltage from the device, in Volts.
+
+        :return: Nut GND voltage in Volts.
         :rtype: float
         """
         s, r = self.register_read(base_address=0x43C10000, offset=0x190)
@@ -476,8 +488,9 @@ class CrackerG1(CrackerS1):
 
     def _get_cracker_nut_clock_enabled(self) -> bool:
         """
-        获取cracker当前nut时钟是否enabled。
-        :return: nut时钟是否enabled
+        Get whether the nut clock output is currently enabled.
+
+        :return: True if the nut clock is enabled, False otherwise.
         :rtype: bool
         """
         s, r = self.register_read(base_address=0x43C10000, offset=0x1C4)

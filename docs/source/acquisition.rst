@@ -30,8 +30,8 @@ The flowchart is shown below:
 
 .. image:: _static/acquisition_struct.drawio.png
 
-Acquisition
------------
+Acquisition Module
+------------------
 
 .. autoclass:: cracknuts.acquisition.acquisition.Acquisition
     :members:

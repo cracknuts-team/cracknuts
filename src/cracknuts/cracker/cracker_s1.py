@@ -815,18 +815,18 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def spi_enable(self) -> tuple[int, None]:
         """
-        启用SPI
+        Enable the SPI interface.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         return self._spi_enable(True)
 
     def spi_disable(self) -> tuple[int, None]:
         """
-        禁用 SPI
+        Disable the SPI interface.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         return self._spi_enable(False)
@@ -834,11 +834,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def _spi_enable(self, enable: bool):
         """
-        配置SPI接口是否使能
+        Configure whether the SPI interface is enabled.
 
-        :param enable: True 启用, False 禁用.
+        :param enable: True to enable, False to disable.
         :type enable: bool
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">?", enable)
@@ -851,9 +851,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def spi_reset(self) -> tuple[int, None]:
         """
-        复位SPI硬件。
+        Reset the SPI hardware.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         payload = None
@@ -870,19 +870,23 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         csn_delay: bool | None = None,
     ) -> tuple[int, None | str]:
         """
-        配置SPI接口参数。CPOL（时钟极性）和CPHA（时钟相位）
+        Configure the SPI interface parameters, including CPOL (clock polarity) and CPHA (clock phase).
 
-        :param speed: 通信速率，默认10kHz，同CFG_PROTOCOL寄存器中PSC关系为：speed=(100×10^6)/(2*PSC)
-        :type speed: int
-        :param cpol: 时钟极性.
-        :type cpol: serial.SpiCpol
-        :param cpha: 时钟相位.
-        :type cpha: serial.SpiCpha
-        :param csn_auto: True，片选（Chip Select）信号只在数据通信时拉低。False，片选信号一直拉低。
-        :type csn_auto: bool,
-        :param csn_delay: True，片选（Chip Select）信号在Delay过程中保持低电平。False，片选信号在Delay期间为高电平。
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
-        :rtype: tuple[int, None]
+        :param speed: Communication speed in kHz (default 10 kHz). Relationship to PSC register:
+            speed = (100e6) / (2 * PSC).
+        :type speed: float | None
+        :param cpol: Clock polarity.
+        :type cpol: serial.SpiCpol | None
+        :param cpha: Clock phase.
+        :type cpha: serial.SpiCpha | None
+        :param csn_auto: If True, the chip-select (CSN) signal is pulled low only during data
+            communication. If False, CSN remains low continuously.
+        :type csn_auto: bool | None
+        :param csn_delay: If True, the CSN signal stays low during the delay period. If False,
+            CSN is high during the delay.
+        :type csn_delay: bool | None
+        :return: Device response status and received data: (status, response).
+        :rtype: tuple[int, None | str]
         """
 
         if speed is None or cpol is None or csn_auto is None or csn_delay is None:
@@ -1070,11 +1074,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self, rx_count: int, dummy: bytes | str = b"\x00", is_trigger: bool = False
     ) -> tuple[int, bytes | None]:
         """
-        通过SPI接口读取rx_count个bytes型数据，根据 is_trigger 决定在数据接收后是否产生触发信号。
+        Receive ``rx_count`` bytes over the SPI interface.
 
-        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
-
-        ::
+        When ``is_trigger=True``, the Trigger signal is pulled low at the start of transmission and
+        high upon completion::
 
             TRIG: ───┐            ┌─── HIGH
                      |            |
@@ -1083,9 +1086,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   rx_data  │
                      └────────────┘
 
-        is_trigger=False 时，Trigger 信号不变
-
-        ::
+        When ``is_trigger=False``, the Trigger signal remains unchanged::
 
             TRIG: ──────────────────── HIGH
 
@@ -1094,14 +1095,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   rx_data  │
                      └────────────┘
 
-        :param rx_count: 要读取数据字节长度。
+        :param rx_count: Number of bytes to read.
         :type rx_count: int
-        :param dummy: 需要在spi读取阶段发送的填充数据
-        :type dummy: bytes|str
-        :param is_trigger: 在数据发送时是否产生触发信息（即：发送开始时拉低，结束时拉高）
+        :param dummy: Filler data sent during the SPI read phase.
+        :type dummy: bytes | str
+        :param is_trigger: Whether to generate a trigger signal during data transmission
+            (pulled low at start, high at end).
         :type is_trigger: bool
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
-                 Return None if an exception is caught.
+        :return: Device response status and received data: (status, response).
+            Returns None if an exception is caught.
         :rtype: tuple[int, bytes | None]
         """
         if isinstance(dummy, str):
@@ -1246,18 +1248,18 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def i2c_enable(self) -> tuple[int, None]:
         """
-        Enable the I2C
+        Enable the I2C interface.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         return self._i2c_enable(True)
 
     def i2c_disable(self) -> tuple[int, None]:
         """
-        Disable the I2C
+        Disable the I2C interface.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         return self._i2c_enable(False)
@@ -1265,11 +1267,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def _i2c_enable(self, enable: bool):
         """
-        启用 I2C.
+        Enable or disable the I2C interface.
 
-        :param enable: True：启用, False：停用.
+        :param enable: True to enable, False to disable.
         :type enable: bool
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         payload = struct.pack(">?", enable)
@@ -1282,9 +1284,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def i2c_reset(self) -> tuple[int, None]:
         """
-        重置 I2C 配置。
+        Reset the I2C configuration.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
         payload = None
@@ -1296,15 +1298,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         self, dev_addr: int | None = None, speed: serial.I2cSpeed | None = None, enable_stretch: bool = False
     ) -> tuple[int, None]:
         """
-        配置 I2C。
+        Configure the I2C interface.
 
-        :param dev_addr: 设备地址.
-        :type dev_addr: int
-        :param speed: 速度.
-        :type speed: serial.I2cSpeed
-        :enable_stretch: 是否启用 stretch
+        :param dev_addr: Device address.
+        :type dev_addr: int | None
+        :param speed: Bus speed.
+        :type speed: serial.I2cSpeed | None
+        :param enable_stretch: Whether to enable clock stretching.
         :type enable_stretch: bool
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
 
@@ -1461,11 +1463,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def i2c_receive(self, rx_count, is_trigger: bool = False) -> tuple[int, bytes | None]:
         """
-        通过i2c协议接收数据
+        Receive data over the I2C interface.
 
-        is_trigger=True 时，rx_data传输开始时 Trigger 信号拉低，完毕后 Trigger 信号拉高
-
-        is_trigger=True::
+        When ``is_trigger=True``, the Trigger signal is pulled low at the start of reception and
+        high upon completion::
 
             TRIG: ───┐            ┌─── HIGH
                      |            |
@@ -1474,9 +1475,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   rx_data  │
                      └────────────┘
 
-        is_trigger=False 时，Trigger 信号不变
-
-        is_trigger=False::
+        When ``is_trigger=False``, the Trigger signal remains unchanged::
 
             TRIG: ──────────────────── HIGH
 
@@ -1485,10 +1484,12 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   rx_data  │
                      └────────────┘
 
-        :param rx_count: 要接收数据的长度
+        :param rx_count: Number of bytes to receive.
         :type rx_count: int
-        :param is_trigger: 在数据接收时是否产生触发信息（即：接收开始时拉低，结束时拉高）
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :param is_trigger: Whether to generate a trigger signal during data reception
+            (pulled low at start, high at end).
+        :type is_trigger: bool
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         transfer_rw = (1, 1, 1, 1, 1, 1, 1, 1)
@@ -1621,21 +1622,23 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         )
 
     def uart_io_enable(self) -> tuple[int, None]:
-        """ "
-        使能UART通信接口，使能后TX引脚变为高电平，RX引脚置为三态输入状态。
+        """
+        Enable the UART communication interface. After enabling, the TX pin goes high and the RX
+        pin is set to a tri-state input.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
-
         """
         return self._uart_io_enable(True)
 
     def uart_enable(self) -> tuple[int, None]:
         """
-        .. deprecated:: 0.19.0
-            此函数将在未来版本中移除，请使用`uart_io_enable`代替。
+        Enable the UART interface.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        .. deprecated:: 0.19.0
+            This function will be removed in a future version. Use ``uart_io_enable`` instead.
+
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         warnings.warn(
@@ -1647,20 +1650,22 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def uart_io_disable(self) -> tuple[int, None]:
         """
-        关闭UART通信接口，关闭后TX引脚、RX引脚置为三态输入状态。
+        Disable the UART communication interface. After disabling, both TX and RX pins are set to
+        a tri-state input.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
-
         return self._uart_io_enable(False)
 
     def uart_disable(self) -> tuple[int, None]:
         """
-        .. deprecated:: 0.19.0
-            此函数将在未来版本中移除，请使用`uart_io_disable`代替。
+        Disable the UART interface.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        .. deprecated:: 0.19.0
+            This function will be removed in a future version. Use ``uart_io_disable`` instead.
+
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         warnings.warn(
@@ -1673,13 +1678,14 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def _uart_io_enable(self, enable: bool) -> tuple[int, None]:
         """
-        配置UART通信接口使能，
-        True: 使能UART通信接口，使能后TX引脚变为高电平，RX引脚置为三态输入状态。
-        False: 关闭UART通信接口，关闭后TX引脚、RX引脚置为三态输入状态。
+        Configure the UART communication interface enable state.
 
-        :param enable: True：使能, False：关闭.
+        When True, the UART interface is enabled: TX pin goes high and RX pin is set to tri-state.
+        When False, the UART interface is disabled: both TX and RX pins are set to tri-state.
+
+        :param enable: True to enable, False to disable.
         :type enable: bool
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         payload = struct.pack(">?", enable)
@@ -1692,9 +1698,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_reset(self) -> tuple[int, None]:
         """
-        复位UART硬件逻辑。
+        Reset the UART hardware logic.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         payload = None
@@ -1710,17 +1716,17 @@ class CrackerS1(CrackerBasic[ConfigS1]):
         stopbits: serial.Stopbits | None = None,
     ) -> tuple[int, None]:
         """
-        配置UART接口参数。
+        Configure the UART interface parameters.
 
-        :param baudrate: 波特率。
-        :type baudrate: serial.Baudrate
-        :param bytesize: 数据位长度。
-        :type bytesize: serial.Bytesize
-        :param parity: 校验方式。
-        :type parity: serial.Parity
-        :param stopbits: 停止位。
-        :type stopbits: serial.Stopbits
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :param baudrate: Baud rate.
+        :type baudrate: serial.Baudrate | None
+        :param bytesize: Data bit length.
+        :type bytesize: serial.Bytesize | None
+        :param parity: Parity mode.
+        :type parity: serial.Parity | None
+        :param stopbits: Stop bits.
+        :type stopbits: serial.Stopbits | None
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, None]
         """
 
@@ -1834,11 +1840,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def uart_receive(self, rx_count: int, timeout: int = 10000, is_trigger: bool = False) -> tuple[int, bytes | None]:
         """
-        通过UART接口接收数据，根据用户配置决定是否产生Trigger信号。
+        Receive data over the UART interface, optionally generating a trigger signal.
 
-        is_trigger=True 时，tx_data传输完毕后，Trigger 信号拉高
-
-        ::
+        When ``is_trigger=True``, the Trigger signal is pulled low at the start of reception and
+        high upon completion::
 
             TRIG: ───┐            ┌─── HIGH
                      |            |
@@ -1847,9 +1852,7 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   rx_data  │
                      └────────────┘
 
-        is_trigger=False 时，Trigger 信号不变
-
-        ::
+        When ``is_trigger=False``, the Trigger signal remains unchanged::
 
             TRIG: ──────────────────── HIGH
 
@@ -1858,15 +1861,15 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                      │   rx_data  │
                      └────────────┘
 
-        :param rx_count: 要接收数据长度。
+        :param rx_count: Number of bytes to receive.
         :type rx_count: int
-        :param timeout: 超时时间，单位毫秒。
+        :param timeout: Receive timeout in milliseconds.
         :type timeout: int
-        :param is_trigger: 接收完成时是否产生触发信号。
-                           True：接收完成时，Trigger信号拉高，
-                           False：接收完成时，Trigger信号不变
+        :param is_trigger: Whether to generate a trigger signal upon reception completion.
+            True: Trigger signal goes high when reception completes.
+            False: Trigger signal remains unchanged.
         :type is_trigger: bool
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         return self.uart_transmit_receive(tx_data=None, rx_count=rx_count, timeout=timeout, is_trigger=is_trigger)
@@ -1874,9 +1877,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_receive_fifo_remained(self) -> tuple[int, int]:
         """
-        读取UART接收FIFO剩余未读字节数。
+        Read the number of unread bytes remaining in the UART receive FIFO.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and the remaining byte count: (status, count).
         :rtype: tuple[int, int]
         """
         payload = None
@@ -1887,9 +1890,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_receive_fifo_dump(self) -> tuple[int, bytes | None]:
         """
-        读取UART接收FIFO中剩余的所有数据。
+        Read all remaining data from the UART receive FIFO.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         payload = None
@@ -1899,9 +1902,9 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_receive_fifo_clear(self) -> tuple[int, bytes | None]:
         """
-        清除UART接收FIFO中剩余的所有数据。
+        Clear all remaining data in the UART receive FIFO.
 
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         payload = None
@@ -1910,9 +1913,10 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def nut_reset(self, polar: int = 0, time: int = 10):
         """
-        复位nut芯片的RESET管脚，可配置复位电平极性，复位电平时间。默认RESET管脚为三态输入，
-        用户在测试板设计时需确保默认不复位（如默认上拉），
-        下发nut_reset()命令后，RESET管脚根据极性持续相应的复位时间。
+        Reset the RESET pin of the nut chip. The reset level polarity and duration are configurable.
+        By default the RESET pin is in tri-state input mode; the board design must ensure the default
+        state is non-reset (e.g. pulled high). After calling ``nut_reset()``, the RESET pin is driven
+        to the configured polarity level for the specified duration.
 
         ::
 
@@ -1926,11 +1930,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                  ~~~ ┘            └ ~~~
                      |<-  time  ->|
 
-        :param polar: 极性 0 低电平，1 高电平
+        :param polar: Polarity: 0 for low level, 1 for high level.
         :type polar: int
-        :param time: 高低电平持续时间
+        :param time: Duration of the reset level (in milliseconds).
         :type time: int
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         time = time * 1_000_00  # the uint is 10 ns
@@ -1950,11 +1954,11 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def digital_read(self, pin_num: int):
         """
-        读取数字IO引脚电平状态
+        Read the level state of a digital IO pin.
 
-        :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
+        :param pin_num: Pin number (zero-indexed); supports pins 5 and 6.
         :type pin_num: int
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and pin level: (status, level).
         :rtype: tuple[int, bytes | None | int]
         """
         pin_num = pin_num - 5  # 从第五个引脚开始编号
@@ -1967,13 +1971,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def digital_write(self, pin_num: int, value: int):
         """
-        设置数字IO引脚电平状态
+        Set the level state of a digital IO pin.
 
-        :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
+        :param pin_num: Pin number (zero-indexed); supports pins 5 and 6.
         :type pin_num: int
-        :param value: 引脚电平状态，1：高电平，0：
+        :param value: Pin level state: 1 for high, 0 for low.
         :type value: int
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         pin_num = pin_num - 5  # 从第五个引脚开始编号
@@ -1994,13 +1998,13 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     def digital_pin_mode(self, pin_num: int, mode: int | str):
         """
-        设置数字IO引脚工作模式
+        Set the operating mode of a digital IO pin.
 
-        :param pin_num: 引脚编号，从0开始编号，支持 5，6 两个引脚
+        :param pin_num: Pin number (zero-indexed); supports pins 5 and 6.
         :type pin_num: int
-        :param mode: 引脚工作模式，1：输入模式，0：输出模式，或者 "INPUT"、"OUTPUT"
+        :param mode: Pin operating mode: 1 for input, 0 for output, or ``"INPUT"`` / ``"OUTPUT"``.
         :type mode: int | str
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         if isinstance(mode, str):

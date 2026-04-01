@@ -42,7 +42,14 @@ class CrackerO1(CrackerG1):
         bin_bitstream_path: str | None = None,
     ):
         """
-        Cracker O1 设备接口类。
+        Initialize the CrackNuts O1 device interface.
+
+        :param address: Device address as ``(ip, port)``, URI string, or ``None``.
+        :type address: tuple | str | None
+        :param bin_server_path: Path to the server firmware file for updates; normally not specified.
+        :type bin_server_path: str | None
+        :param bin_bitstream_path: Path to the bitstream firmware file for updates; normally not specified.
+        :type bin_bitstream_path: str | None
         """
         super().__init__(address, bin_server_path, bin_bitstream_path)
         self._config: ConfigG1 = self._config
@@ -97,15 +104,17 @@ class CrackerO1(CrackerG1):
 
     def set_waveform_arbitrary(self, wave: list[float], wave_clk_div: int = 1) -> tuple[int, None | bytes]:
         """
-        设置波形发生器输出波形。
+        Set the waveform generator output waveform.
 
-        :param wave: 单组波形的电压采样点序列（单位：伏特 V）。列表中每个元素表示一个离散采样点的输出电压值。
-                     - 单个采样点时间间隔： 100 ns（对应 10 MHz 的采样率）
-                     - 波形按照数组顺序依次输出
-                     - 一个数组表示一个完整周期的波形
+        :param wave: A sequence of voltage sample points for a single waveform period (unit: Volts).
+            Each element represents the output voltage of one discrete sample point.
+            The time interval per sample is 100 ns (corresponding to a 10 MHz sample rate).
+            Samples are output in array order; one array represents one complete waveform period.
         :type wave: list[float]
-        :param wave_clk_div: 波形时钟分频系数，整数，默认为1。实际输出频率 = DAC采样率 / (len(wave) * wave_clk_div)。
-        :return: 执行状态码与设备返回数据。
+        :param wave_clk_div: Waveform clock divider (integer, default 1).
+            Actual output frequency = DAC sample rate / (len(wave) * wave_clk_div).
+        :type wave_clk_div: int
+        :return: Execution status code and device response data.
         :rtype: tuple[int, None | bytes]
         """
 
@@ -137,17 +146,15 @@ class CrackerO1(CrackerG1):
     @staticmethod
     def _parse_frequency(frequency) -> float:
         """
-        将 frequency 转为 Hz
+        Convert a frequency value to Hz.
 
-        支持：
-            1e6
-            1000000
-            "1M"
-            "1MHz"
-            "500k"
-            "500kHz"
-            "2.5G"
-            "10"        -> 默认 Hz
+        Supported formats: ``1e6``, ``1000000``, ``"1M"``, ``"1MHz"``, ``"500k"``,
+        ``"500kHz"``, ``"2.5G"``, ``"10"`` (plain number defaults to Hz).
+
+        :param frequency: Frequency value as a number or a string with optional unit suffix.
+        :type frequency: int | float | str
+        :return: Frequency in Hz.
+        :rtype: float
         """
 
         if isinstance(frequency, int | float):
@@ -195,41 +202,33 @@ class CrackerO1(CrackerG1):
         phase: float = 0.0,
     ) -> tuple[int, None | bytes]:
         """
-        设置标准波形输出。
+        Set standard waveform output.
 
-        本函数根据指定参数在软件中生成 **单周期波形数据**，并写入设备任意波形缓冲区，由 DAC 循环播放该波形。
+        This function generates a single-period waveform dataset in software according to the specified
+        parameters, writes it into the device arbitrary waveform buffer, and the DAC loops over it.
 
-        支持波形类型：
+        Supported waveform types: ``"dc"`` (DC voltage), ``"sine"`` (sine wave),
+        ``"square"`` (square wave), ``"triangle"`` (triangle wave), ``"sawtooth"`` (sawtooth wave).
 
-        - ``"dc"``       ：直流电压
-        - ``"sine"``     ：正弦波
-        - ``"square"``   ：方波
-        - ``"triangle"`` ：三角波
-        - ``"sawtooth"`` ：锯齿波（可调坡度）
-
-        :param waveform: 波形类型名称（大小写不敏感）。
+        :param waveform: Waveform type name (case-insensitive).
         :type waveform: str
-        :param vpp: 峰峰值电压（Volt）。对于非 DC 波形，振幅 `amplitude = vpp / 2`。
+        :param vpp: Peak-to-peak voltage (Volts). For non-DC waveforms, amplitude = vpp / 2.
         :type vpp: float
-        :param frequency: 输出频率（Hz）。对 ``"dc"`` 可省略，其他波形必须指定。
-                          支持数值或带单位字符串（例如 `1e6`、`"1MHz"`、`"100kHz"`）。
-        :type frequency: float, str, or None, optional
-        :param offset: 直流偏置电压（Volt）。若为 `None`，默认 `offset = vpp / 2`，保证波形非负。
-        :type offset: float or None, optional
-
-        :param duty: 波形占空比 / 坡度参数（0~1）。
-                     - ``square``：高电平占周期比例
-                     - ``sawtooth``：上升段占周期比例
-                       - 接近 1 → 慢上升 + 快下降（标准锯齿波）
-                       - 0.5 → 对称三角波
-                       - 接近 0 → 快速上升 + 慢下降
-                     - 对 ``sine`` 与 ``triangle`` 无作用
-        :type duty: float, optional
-        :default duty: 0.5
-        :param phase: 初始相位（弧度 rad）。数学定义：`2π rad = 1 个周期`
-        :type phase: float, optional
-        :default phase: 0.0
-        :return: 执行状态码与设备返回数据。
+        :param frequency: Output frequency (Hz). May be omitted for ``"dc"``; required for all others.
+            Accepts a numeric value or a string with unit suffix (e.g. ``1e6``, ``"1MHz"``, ``"100kHz"``).
+        :type frequency: float, str, or None
+        :param offset: DC offset voltage (Volts). If ``None``, defaults to ``vpp / 2`` to keep the
+            waveform non-negative.
+        :type offset: float or None
+        :param duty: Duty cycle or slope parameter between 0 and 1.
+            For ``square``, this is the fraction of the period at high level.
+            For ``sawtooth``, this is the fraction of the period occupied by the rising edge
+            (near 1.0 means slow rise and fast fall; 0.5 gives a symmetric triangle;
+            near 0.0 means fast rise and slow fall). Has no effect on ``sine`` or ``triangle``.
+        :type duty: float
+        :param phase: Initial phase in radians (2π rad = one full period).
+        :type phase: float
+        :return: Execution status code and device response data.
         :rtype: tuple[int, None | bytes]
         """
 
@@ -321,19 +320,19 @@ class CrackerO1(CrackerG1):
         offset: float | None = None,
     ):
         """
-        设置正弦波输出。
+        Set sine wave output.
 
-        :param frequency: 输出频率（Hz）。支持数值或带单位的字符串形式，例如 `1e6`、`1m`、`"1MHz"`、`"10kHz"`。
+        :param frequency: Output frequency (Hz). Accepts a numeric value or a string with unit suffix,
+            e.g. ``1e6``, ``"1m"``, ``"1MHz"``, ``"10kHz"``.
         :type frequency: float or str
-        :param vpp: 峰峰值电压（Volt）。
-        :type vpp: float, optional
-        :default vpp: 1.0
-        :param phase: 初始相位（弧度 rad）。
-        :type phase: float, optional
-        :default phase: 0.0
-        :param offset: 直流偏置电压（Volt）。若为 `None`，默认自动设置为 `vpp / 2` 以避免负电压。
-        :type offset: float or None, optional
-        :return: 设备返回状态与响应数据。
+        :param vpp: Peak-to-peak voltage (Volts). Default is 1.0.
+        :type vpp: float
+        :param phase: Initial phase in radians. Default is 0.0.
+        :type phase: float
+        :param offset: DC offset voltage (Volts). If ``None``, automatically set to ``vpp / 2``
+            to avoid negative voltage.
+        :type offset: float or None
+        :return: Device response status and response data.
         :rtype: tuple[int, None | bytes]
         """
         return self.set_waveform_standard(
@@ -354,24 +353,20 @@ class CrackerO1(CrackerG1):
         offset: float | None = None,
     ):
         """
-        设置方波输出。
+        Set square wave output.
 
-        :param frequency: 输出频率（Hz）。
+        :param frequency: Output frequency (Hz).
         :type frequency: float
-        :param duty: 占空比（0~1）。
-                     - 0.5 表示标准 50% 方波
-                     - 0.2 表示高电平占 20% 周期
-        :type duty: float, optional
-        :default duty: 0.5
-        :param vpp: 峰峰值电压（Volt）。
-        :type vpp: float, optional
-        :default vpp: 1.0
-        :param phase: 初始相位（弧度 rad）。
-        :type phase: float, optional
-        :default phase: 0.0
-        :param offset: 直流偏置电压（Volt）。
-        :type offset: float or None, optional
-        :return: 设备返回状态与响应数据。
+        :param duty: Duty cycle (0–1). 0.5 means a standard 50% square wave;
+            0.2 means high level occupies 20% of the period. Default is 0.5.
+        :type duty: float
+        :param vpp: Peak-to-peak voltage (Volts). Default is 1.0.
+        :type vpp: float
+        :param phase: Initial phase in radians. Default is 0.0.
+        :type phase: float
+        :param offset: DC offset voltage (Volts).
+        :type offset: float or None
+        :return: Device response status and response data.
         :rtype: tuple[int, None | bytes]
         """
         return self.set_waveform_standard(
@@ -392,19 +387,17 @@ class CrackerO1(CrackerG1):
         offset: float | None = None,
     ):
         """
-        设置三角波输出。
+        Set triangle wave output.
 
-        :param frequency: 输出频率（Hz）。
+        :param frequency: Output frequency (Hz).
         :type frequency: float
-        :param vpp: 峰峰值电压（Volt）。
-        :type vpp: float, optional
-        :default vpp: 1.0
-        :param phase: 初始相位（弧度 rad）。
-        :type phase: float, optional
-        :default phase: 0.0
-        :param offset: 直流偏置电压（Volt）。
-        :type offset: float or None, optional
-        :return: 设备返回状态与响应数据。
+        :param vpp: Peak-to-peak voltage (Volts). Default is 1.0.
+        :type vpp: float
+        :param phase: Initial phase in radians. Default is 0.0.
+        :type phase: float
+        :param offset: DC offset voltage (Volts).
+        :type offset: float or None
+        :return: Device response status and response data.
         :rtype: tuple[int, None | bytes]
         """
         return self.set_waveform_standard(
@@ -425,25 +418,21 @@ class CrackerO1(CrackerG1):
         offset: float | None = None,
     ):
         """
-        设置锯齿波输出。
+        Set sawtooth wave output.
 
-        :param frequency: 输出频率（Hz）。
+        :param frequency: Output frequency (Hz).
         :type frequency: float
-        :param vpp: 峰峰值电压（Volt）。
-        :type vpp: float, optional
-        :default vpp: 1.0
-        :param slope: 上升段占整个周期的比例（0~1）。
-                      - 1.0 → 标准锯齿波（慢上升，快下降）
-                      - 0.5 → 对称三角波
-                      - 接近 0 → 快速上升，慢下降
-        :type slope: float, optional
-        :default slope: 1.0
-        :param phase: 初始相位（弧度 rad）。
-        :type phase: float, optional
-        :default phase: 0.0
-        :param offset: 直流偏置电压（Volt）。
-        :type offset: float or None, optional
-        :return: 设备返回状态与响应数据。
+        :param vpp: Peak-to-peak voltage (Volts). Default is 1.0.
+        :type vpp: float
+        :param slope: Fraction of the period occupied by the rising edge (0–1).
+            1.0 = standard sawtooth (slow rise, fast fall); 0.5 = symmetric triangle;
+            near 0 = fast rise, slow fall. Default is 1.0.
+        :type slope: float
+        :param phase: Initial phase in radians. Default is 0.0.
+        :type phase: float
+        :param offset: DC offset voltage (Volts).
+        :type offset: float or None
+        :return: Device response status and response data.
         :rtype: tuple[int, None | bytes]
         """
         return self.set_waveform_standard(
@@ -457,11 +446,12 @@ class CrackerO1(CrackerG1):
 
     def set_waveform_dc(self, voltage: float):
         """
-        设置直流电压输出。
+        Set DC voltage output.
 
-        :param voltage: 输出直流电压（Volt）。电压值必须在设备允许的输出范围内，且不得为负值。
+        :param voltage: Output DC voltage (Volts). Must be within the device's allowed output range
+            and must not be negative.
         :type voltage: float
-        :return: 设备返回状态与响应数据。
+        :return: Device response status and response data.
         :rtype: tuple[int, None | bytes]
         """
         return self.set_waveform_standard(
@@ -473,16 +463,16 @@ class CrackerO1(CrackerG1):
 
     def set_waveform_from_file(self, file_path: str) -> tuple[int, None | bytes]:
         """
-        从文件加载波形数据并设置输出波形。
+        Load waveform data from a file and set the output waveform.
 
-        文件内容应为电压采样点序列（单位：伏特 V），
-        支持逗号分隔或逐行排列的数值格式。
-        采样点数量最大不得超过 2048 个。
+        The file should contain a sequence of voltage sample points (unit: Volts),
+        supporting comma-separated or newline-separated numeric formats.
+        The maximum number of sample points is 2048.
 
-        :param file_path: 包含波形数据的文本文件路径。
-                          文件中每个数值表示一个电压采样点（单位 V）。
+        :param file_path: Path to a text file containing waveform data.
+            Each numeric value in the file represents a voltage sample point (unit: V).
         :type file_path: str
-        :return: 设备返回状态与响应数据。
+        :return: Device response status and response data.
         :rtype: tuple[int, None | bytes]
         """
 
@@ -531,7 +521,10 @@ class CrackerO1(CrackerG1):
 
     def get_voltage_a0(self):
         """
-        获取测量点a0电压
+        Get the voltage at measurement point A0.
+
+        :return: Device response status and measured voltage in Volts, or None on error.
+        :rtype: tuple[int, float] or None
         """
         status, res = self.register_read(base_address=0x43C10000, offset=0x1E70)
         if status != protocol.STATUS_OK:
@@ -540,7 +533,10 @@ class CrackerO1(CrackerG1):
 
     def get_voltage_a1(self):
         """
-        获取测量点a1电压
+        Get the voltage at measurement point A1.
+
+        :return: Device response status and measured voltage in Volts, or None on error.
+        :rtype: tuple[int, float] or None
         """
         status, res = self.register_read(base_address=0x43C10000, offset=0x1E40)
         if status != protocol.STATUS_OK:
@@ -549,9 +545,14 @@ class CrackerO1(CrackerG1):
 
     def set_pwm(self, freq, duty_cycle):
         """
-        设置PWM输出, GP29引脚
-        :param freq: PWM频率，单位Hz
-        :param duty_cycle: PWM占空比，0-1之间的小数
+        Set the PWM output on pin GP29.
+
+        :param freq: PWM frequency in Hz.
+        :type freq: float | int
+        :param duty_cycle: PWM duty cycle as a fraction between 0 and 1.
+        :type duty_cycle: float
+        :return: Device response status and received data: (status, response).
+        :rtype: tuple[int, None | bytes]
         """
 
         period = struct.pack(">I", round((freq * 2**32) / 100_000_000))
@@ -568,12 +569,13 @@ class CrackerO1(CrackerG1):
 
     def get_switch_status(self, switch_id: str) -> tuple[int, None | tuple[int, int]]:
         """
-        获取开关状态
+        Get the switch status.
 
-        :param switch_id: 开关ID，'pl'或'ps'
+        :param switch_id: Switch identifier, either ``'pl'`` or ``'ps'``.
         :type switch_id: str
-        :return: (status, (sw1, sw2))，其中status为协议状态码，
-                 sw1和sw2分别为开关的两个状态位, 0表示开关关闭，1表示开关打开
+        :return: Status tuple ``(status, (sw1, sw2))``, where ``status`` is the protocol status code
+            and ``sw1`` / ``sw2`` are the two switch state bits (0 = open, 1 = closed).
+        :rtype: tuple[int, None | tuple[int, int]]
         """
         switch_id = switch_id.lower()
         if switch_id == "pl":
@@ -592,31 +594,34 @@ class CrackerO1(CrackerG1):
 
     def get_switch_status_pl(self) -> tuple[int, None | tuple[int, int]]:
         """
-        获取PL开关状态
-        :return: (status, (sw1, sw2))，其中status为协议状态码，
-                 sw1和sw2分别为PL开关的两个状态位, 0表示开关关闭，1表示开关打开
+        Get the PL switch status.
+
+        :return: Status tuple ``(status, (sw1, sw2))``, where ``status`` is the protocol status code
+            and ``sw1`` / ``sw2`` are the two PL switch state bits (0 = open, 1 = closed).
+        :rtype: tuple[int, None | tuple[int, int]]
         """
         return self.get_switch_status("pl")
 
     def get_switch_status_ps(self) -> tuple[int, None | tuple[int, int]]:
         """
-        获取PS开关状态
-        :return: (status, (sw1, sw2))，其中status为协议状态码，
-                 sw1和sw2分别为PS开关的两个状态位, 0表示开关关闭，1表示开关打开
+        Get the PS switch status.
+
+        :return: Status tuple ``(status, (sw1, sw2))``, where ``status`` is the protocol status code
+            and ``sw1`` / ``sw2`` are the two PS switch state bits (0 = open, 1 = closed).
+        :rtype: tuple[int, None | tuple[int, int]]
         """
         return self.get_switch_status("ps")
 
     def _load_image(self, image_path: str, fit: bool = True) -> np.ndarray | None:
         """
-        读取图片并转换为 RGB888 数组。
+        Load an image and convert it to an RGB888 array.
 
-        :param image_path: 图片路径。
+        :param image_path: Path to the image file.
         :type image_path: str
-
-        :return: 转换后的 RGB888 数组。
-                 - 若 `should_resize=True`：形状为 (64, 64, 3)
-                 - 若 `should_resize=False`：形状为 (H, W, 3)，取决于原图
-                 - 出错时返回 None
+        :param fit: Whether to resize the image to 64x64 pixels.
+        :type fit: bool
+        :return: Converted RGB888 array. Shape is ``(64, 64, 3)`` when ``fit=True``, or
+            ``(H, W, 3)`` depending on the original image when ``fit=False``. Returns None on error.
         :rtype: np.ndarray or None
         """
         target_size = 64
@@ -658,13 +663,19 @@ class CrackerO1(CrackerG1):
 
     def set_led_content(self, t: int, x: int, y: int, c: bytes, w: int = None) -> None:
         """
-        设置LED显示内容
+        Set the LED display content.
 
-        :param t: 显示内容类型，0表示文本，1表示图片
-        :param x: 显示内容的x坐标，单位为像素
-        :param y: 显示内容的y坐标，单位为像素
-        :param c: 显示内容，文本类型为UTF-8编码的字符串，图片类型为RGB888格式的字节数组
-        :param w: 显示内容的宽度，单位为像素，文本类型为内容的像素宽度，图片类型为图片的宽度
+        :param t: Content type: 0 for text, 1 for image.
+        :type t: int
+        :param x: X coordinate of the content in pixels.
+        :type x: int
+        :param y: Y coordinate of the content in pixels.
+        :type y: int
+        :param c: Content data: UTF-8 encoded string for text, or RGB888 byte array for images.
+        :type c: bytes
+        :param w: Width of the content in pixels. For text, this is the pixel width of the content;
+            for images, this is the image width.
+        :type w: int | None
         """
         if t == 0:
             payload = struct.pack(">Bii", t, x, y)
@@ -675,13 +686,19 @@ class CrackerO1(CrackerG1):
 
     def set_led_text(self, text: str, x: int = 0, y: int = 0, auto_wrap: bool = True) -> None:
         """
-        设置LED显示文本，仅支持英文字符显示。字符宽度为5像素，高度为6像素，字符间距为1像素。
-        屏幕分辨率为64x64像素，坐标原点在屏幕左上角，x坐标向右增加，y坐标向下增加。
+        Set the LED display text. Only ASCII characters are supported. Each character is 5 pixels
+        wide and 6 pixels tall with 1 pixel spacing. The screen resolution is 64x64 pixels with
+        the origin at the top-left corner; x increases rightward and y increases downward.
 
-        :param text: 显示文本内容
-        :param x: 显示文本的x坐标，单位为像素
-        :param y: 显示文本的y坐标，单位为像素。
-                  注意，坐标表示文本基线的位置，即文本的底部位置。所以如果要显示完整的一行文字，则要设置y为6（字符高度为6）
+        :param text: Text content to display.
+        :type text: str
+        :param x: X coordinate of the text in pixels.
+        :type x: int
+        :param y: Y coordinate of the text baseline in pixels. Note that the coordinate represents
+            the baseline (bottom) of the text, so set y to 6 to display a complete first line.
+        :type y: int
+        :param auto_wrap: Whether to automatically wrap text when it exceeds the screen width.
+        :type auto_wrap: bool
         """
         if auto_wrap:
             max_chars_per_line = (64 - x) // 6  # 每行最多显示的字符数（5像素字符宽度 + 1像素间距）
@@ -700,14 +717,18 @@ class CrackerO1(CrackerG1):
 
     def set_led_image(self, image_path: str, x: int = 0, y: int = 0, fit: bool = True) -> None:
         """
-        设置LED显示图片
+        Set the LED display image.
 
-        :param image_path: 图片文件路径，支持常见格式如PNG、JPEG等
-        :param x: 显示图片的x坐标，单位为像素
-        :param y: 显示图片的y坐标，单位为像素
-        :param fit: 是否强制缩放图片至64x64像素
-             - True: 无论原图大小，统一缩放至64x64。
-             - False: 保持原图尺寸，不进行缩放。
+        :param image_path: Path to the image file; common formats such as PNG and JPEG are supported.
+        :type image_path: str
+        :param x: X coordinate of the image in pixels.
+        :type x: int
+        :param y: Y coordinate of the image in pixels.
+        :type y: int
+        :param fit: Whether to force-resize the image to 64x64 pixels.
+            True: always resize to 64x64 regardless of original size.
+            False: preserve the original image dimensions.
+        :type fit: bool
         """
         img_array = self._load_image(image_path, fit)
         if img_array is not None:
@@ -734,11 +755,11 @@ class CrackerO1(CrackerG1):
 
     def digital_read(self, pin_id: str):
         """
-        读取数字IO引脚电平状态，高电平需要大于 1.4v
+        Read the level state of a digital IO pin. A high level requires more than 1.4 V.
 
-        :param pin_id: 引脚ID, 支持 GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9
+        :param pin_id: Pin identifier. Supported pins: GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9.
         :type pin_id: str
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and pin level: (status, level).
         :rtype: tuple[int, bytes | None | int]
         """
         pin_index, _, offset, _ = self._get_gpio_offset_and_index(pin_id)
@@ -755,13 +776,13 @@ class CrackerO1(CrackerG1):
 
     def digital_write(self, pin_id: str, value: int):
         """
-        设置数字IO引脚电平状态
+        Set the level state of a digital IO pin.
 
-        :param pin_id: 引脚ID, 支持 GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9
+        :param pin_id: Pin identifier. Supported pins: GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9.
         :type pin_id: str
-        :param value: 引脚电平状态，1：高电平，0：
+        :param value: Pin level state: 1 for high, 0 for low.
         :type value: int
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         pin_index, offset, _, _ = self._get_gpio_offset_and_index(pin_id)
@@ -780,13 +801,13 @@ class CrackerO1(CrackerG1):
 
     def digital_pin_mode(self, pin_id: str, mode: int | str):
         """
-        设置数字IO引脚工作模式
+        Set the operating mode of a digital IO pin.
 
-        :param pin_id: 引脚ID, 支持 GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9
+        :param pin_id: Pin identifier. Supported pins: GP0-GP7, GP21-GP27, A, A2-A5, IO2-IO9.
         :type pin_id: str
-        :param mode: 引脚工作模式，1：输入模式，0：输出模式，或者 "INPUT"、"OUTPUT"
+        :param mode: Pin operating mode: 1 for input, 0 for output, or ``"INPUT"`` / ``"OUTPUT"``.
         :type mode: int | str
-        :return: Cracker设备响应状态和接收到的数据：(status, response)。
+        :return: Device response status and received data: (status, response).
         :rtype: tuple[int, bytes | None]
         """
         if isinstance(mode, str):

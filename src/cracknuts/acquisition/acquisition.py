@@ -231,9 +231,13 @@ class Acquisition(abc.ABC):
     def on_status_changed(self, callback: typing.Callable[[int], None]) -> None:
         """
         User should not use this function. If you need to perform actions when the ACQ state changes,
-        please use the node functions in the ACQ lifecycle point: `init`, `do`, and `finish`.
+        please use the node functions in the ACQ lifecycle point: ``init``, ``do``, and ``finish``.
 
-        status: 0 stopped, 1 testing, 2 running 3 paused
+        Status values: 0 = stopped, 1 = testing, 2 = running, 3 = paused.
+
+        :param callback: Callable that receives the new status integer.
+        :type callback: typing.Callable[[int], None]
+        :return: None
         """
         self._on_status_change_listeners.append(callback)
 
@@ -774,15 +778,13 @@ class Acquisition(abc.ABC):
 
     def connect_scrat(self):
         """
-        Connect to scrat device
-        :return:
+        Connect to scrat device.
         """
         ...
 
     def connect_cracker(self):
         """
         Connect to cracker device.
-        :return:
         """
         self.cracker.connect()
 
@@ -812,21 +814,17 @@ class Acquisition(abc.ABC):
     @abc.abstractmethod
     def do(self, count: int) -> dict[str, bytes]:
         """
-        The `do` logic, which the user should implement in the subclass.
+        The ``do`` logic, which the user should implement in the subclass.
+
+        The returned dictionary should contain ``plaintext`` and ``ciphertext`` keys and may
+        optionally include ``key`` and ``extended`` keys. The plaintext is the data to be
+        encrypted, the ciphertext is the encrypted result, the key is used to encrypt the
+        plaintext, and the extended field is for any custom data you want to save.
+        Expected structure: ``{"plaintext": bytes, "ciphertext": bytes, "key": bytes, "extended": bytes}``.
 
         :param count: The loop count, starting from 0.
         :type count: int
-        :return: The data in dictionary format to be saved should contain the ciphertext and plaintext keys,
-                 and may optionally include the key and extended keys.
-                 The plaintext is the data to be encrypted, the ciphertext is the encrypted result, the key is used
-                 to encrypt the plaintext, and the extended field is for any custom data you want to save.
-                 The data is structured as follows:
-                 {
-                    "plaintext": plaintext_data_bytes,
-                    "ciphertext": ciphertext_data_bytes,
-                    "key": key_data_bytes,
-                    "extended": extended_data_bytes,
-                }
+        :return: Data in dictionary format to be saved.
         :rtype: dict[str, bytes]
         """
         ...
@@ -897,8 +895,10 @@ class Acquisition(abc.ABC):
 
     def get_last_wave(self) -> dict[int, np.ndarray] | None:
         """
-        Get the last wave.
+        Get the last acquired wave.
 
+        :return: Dictionary mapping channel index to wave data array, or None if not yet available.
+        :rtype: dict[int, np.ndarray] | None
         """
         return self._last_wave
 
@@ -906,8 +906,10 @@ class Acquisition(abc.ABC):
         """
         Dump the current config to a JSON file if a path is specified, or to a JSON string if no path is specified.
 
-        :param path: the path to the JSON file
-        :return: the content of JSON string or None if no path is specified.
+        :param path: The path to the JSON file.
+        :type path: str | None
+        :return: The JSON string content, or None if a file path was specified.
+        :rtype: str | None
         """
         config = AcquisitionConfig(
             self.trace_count,
@@ -930,7 +932,9 @@ class Acquisition(abc.ABC):
         """
         Load config from a JSON file.
 
-        :param path: the path to the JSON file
+        :param path: The path to the JSON file.
+        :type path: str
+        :return: None
         """
         with open(path) as f:
             self.load_config_from_str(json.load(f))
@@ -939,7 +943,9 @@ class Acquisition(abc.ABC):
         """
         Load config from a JSON string.
 
-        :param json_str: the JSON string
+        :param json_str: The JSON string.
+        :type json_str: str
+        :return: None
         """
         config = json.loads(json_str)
         self.load_config_from_json(config)
@@ -948,7 +954,9 @@ class Acquisition(abc.ABC):
         """
         Load config from a JSON object.
 
-        :param config: the JSON object
+        :param config: The JSON object containing configuration values.
+        :type config: dict
+        :return: None
         """
         self.trace_count = config["trace_count"]
         self.sample_length = config["sample_length"]

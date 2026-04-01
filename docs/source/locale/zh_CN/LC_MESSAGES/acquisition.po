@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CrackNuts 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-16 16:13+0800\n"
+"POT-Creation-Date: 2026-03-31 22:22+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_CN\n"
@@ -17,11 +17,11 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.16.0\n"
+"Generated-By: Babel 2.18.0\n"
 
-#: ../../source/acquisition.rst:2 ../../source/acquisition.rst:34
+#: ../../source/acquisition.rst:2
 msgid "Acquisition"
-msgstr ""
+msgstr "Acquisition"
 
 #: ../../source/acquisition.rst:4
 msgid ""
@@ -103,25 +103,147 @@ msgstr ""
 msgid "The flowchart is shown below:"
 msgstr "流程图如下："
 
+#: ../../source/acquisition.rst:34
+#, fuzzy
+msgid "Acquisition Module"
+msgstr "Acquisition 模块"
+
 #: cracknuts.acquisition.acquisition.Acquisition:1 of
 msgid "Bases: :py:class:`~abc.ABC`"
-msgstr ""
+msgstr "基类：:py:class:`~abc.ABC`"
 
 #: cracknuts.acquisition.acquisition.Acquisition:1 of
 msgid "Trace acquisition process control class"
 msgstr "数据采集流程控制类"
 
+#: ../../source/acquisition.rst
+msgid "Parameters"
+msgstr "参数"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:2 of
+msgid "The controlled Cracker object."
+msgstr "被控制的 Cracker 对象。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:5
+#: cracknuts.acquisition.acquisition.Acquisition.run:5
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:4 of
+msgid "The number of traces to acquire."
+msgstr "需要曲线的数量。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:8 of
+msgid ""
+"the sample length to be acquired, If it is -1, it will be set to the "
+"value of `cracker.current_count().sample_len`."
+msgstr "需要采集的曲线长度，如果为 -1，则使用 `cracker.current_count().sample_len` 的值。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:12 of
+#, fuzzy
+msgid "the sample offset to be acquired."
+msgstr "采集偏移。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:15
+#: cracknuts.acquisition.acquisition.Acquisition.run:17
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:16
+#: cracknuts.acquisition.acquisition.Acquisition.test:15
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:16 of
+msgid "The trigger judge timeout in seconds."
+msgstr "`触发` 超时时常，单位：秒"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:18
+#: cracknuts.acquisition.acquisition.Acquisition.run:14
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:13
+#: cracknuts.acquisition.acquisition.Acquisition.test:12
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:13 of
+msgid "The trigger judge wait time in seconds."
+msgstr "`触发` 判断等待时常，单位：秒。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:21
+#: cracknuts.acquisition.acquisition.Acquisition.run:24
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:23
+#: cracknuts.acquisition.acquisition.Acquisition.test:22
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:23 of
+msgid ""
+"The strategy to handle error handling. 0: Exit immediately, 1: Exit after"
+" exceeding the error count."
+msgstr "错误处理策略：0 立即退出，1 超过尝试次数后退出。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:25
+#: cracknuts.acquisition.acquisition.Acquisition.run:20
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:19
+#: cracknuts.acquisition.acquisition.Acquisition.test:18
+#: cracknuts.acquisition.acquisition.Acquisition.test_sync:19 of
+msgid ""
+"The maximum number of error count. If `do_error_handler_strategy` is 0, "
+"this setting is invalid."
+msgstr "最大出现错误次数，如果 `do_error_handler_strategy` 设置 0，则不生效。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:29
+#: cracknuts.acquisition.acquisition.Acquisition.run:28
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:27 of
+#, fuzzy
+msgid "The file format of the trace dataset. \"zarr\" or \"numpy\"."
+msgstr "保存文件格式，\"scarr\" 或者 \"numpy\""
+
+#: cracknuts.acquisition.acquisition.Acquisition.__init__:32
+#: cracknuts.acquisition.acquisition.Acquisition.run:31
+#: cracknuts.acquisition.acquisition.Acquisition.run_sync:30 of
+msgid ""
+"The file path of the trace dataset. If set to \"auto\", a folder with a "
+"timestamp format will be created in the current working directory to save"
+" the data."
+msgstr "文件保存路径，如果设置了 \"auto\"，则在当前工作目录下创建一个以时间戳格式命名的文件夹保存数据。"
+
+#: ../../docstring cracknuts.acquisition.acquisition.Acquisition.__weakref__:1
+#: of
+msgid "list of weak references to the object"
+msgstr "对象的弱引用列表"
+
 #: cracknuts.acquisition.acquisition.Acquisition.connect_cracker:1 of
-msgid "Connect to cracker device. :return:"
+#, fuzzy
+msgid "Connect to cracker device."
 msgstr "连接到cracker设备"
 
 #: cracknuts.acquisition.acquisition.Acquisition.connect_scrat:1 of
-msgid "Connect to scrat device :return:"
-msgstr ""
+#, fuzzy
+msgid "Connect to scrat device."
+msgstr "连接到cracker设备"
 
 #: cracknuts.acquisition.acquisition.Acquisition.do:1 of
-msgid "The `do` logic, which the user should implement in the subclass."
+#, fuzzy
+msgid "The ``do`` logic, which the user should implement in the subclass."
 msgstr "`do` 逻辑函数，用户需要在子类实现。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.do:3 of
+#, python-brace-format
+msgid ""
+"The returned dictionary should contain ``plaintext`` and ``ciphertext`` "
+"keys and may optionally include ``key`` and ``extended`` keys. The "
+"plaintext is the data to be encrypted, the ciphertext is the encrypted "
+"result, the key is used to encrypt the plaintext, and the extended field "
+"is for any custom data you want to save. Expected structure: "
+"``{\"plaintext\": bytes, \"ciphertext\": bytes, \"key\": bytes, "
+"\"extended\": bytes}``."
+msgstr ""
+"返回的字典应包含 ``plaintext`` 和 ``ciphertext`` 键，可选包含 ``key`` 和 ``extended`` "
+"键。plaintext 是待加密的数据，ciphertext 是加密结果，key 用于加密明文，extended "
+"字段用于保存任意自定义数据。期望结构：``{\"plaintext\": bytes, \"ciphertext\": bytes, "
+"\"key\": bytes, \"extended\": bytes}``。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.do:10 of
+msgid "The loop count, starting from 0."
+msgstr "循环计数，从 0 开始。"
+
+#: ../../source/acquisition.rst
+msgid "Returns"
+msgstr "返回"
+
+#: cracknuts.acquisition.acquisition.Acquisition.do:12 of
+msgid "Data in dictionary format to be saved."
+msgstr "以字典格式保存的数据。"
+
+#: ../../source/acquisition.rst
+msgid "Return type"
+msgstr "返回类型"
 
 #: cracknuts.acquisition.acquisition.Acquisition.dump_config:1 of
 msgid ""
@@ -129,43 +251,27 @@ msgid ""
 "JSON string if no path is specified."
 msgstr "导出当前配置到JSON，如果指定了 path 则导出到文件，否则导出到字符串。"
 
-#: ../../source/acquisition.rst
-msgid "Parameters"
-msgstr "参数"
-
 #: cracknuts.acquisition.acquisition.Acquisition.dump_config:4
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:4 of
-msgid "the path to the JSON file"
+#, fuzzy
+msgid "The path to the JSON file."
 msgstr "JSON 路径"
 
-#: ../../source/acquisition.rst
-msgid "Return type"
-msgstr "返回类型"
-
-#: cracknuts.acquisition.acquisition.Acquisition.dump_config:5 of
-msgid ""
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\| "
-"\\:py\\:obj\\:\\`None\\``"
-msgstr ""
-
-#: ../../source/acquisition.rst
-msgid "Returns"
-msgstr "返回"
-
 #: cracknuts.acquisition.acquisition.Acquisition.dump_config:6 of
-msgid "the content of JSON string or None if no path is specified."
+#, fuzzy
+msgid "The JSON string content, or None if a file path was specified."
 msgstr "JSON 内容，如果 path 指定则返回空"
 
 #: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:1 of
-msgid "Get the last wave."
+#, fuzzy
+msgid "Get the last acquired wave."
 msgstr "获取最后的波形数据。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:5 of
+#: cracknuts.acquisition.acquisition.Acquisition.get_last_wave:3 of
 msgid ""
-":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`dict\\`\\\\ "
-"\\\\\\[\\:py\\:class\\:\\`int\\`\\, "
-"\\:py\\:class\\:\\`\\~numpy.ndarray\\`\\] \\| \\:py\\:obj\\:\\`None\\``"
-msgstr ""
+"Dictionary mapping channel index to wave data array, or None if not yet "
+"available."
+msgstr "通道索引到波形数据数组的映射字典，如果尚无数据则为 None。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.init:1 of
 msgid "The `init` logic, which the user should implement in the subclass."
@@ -178,9 +284,16 @@ msgstr "从 JSON 文件加载配置。"
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:6
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:6
 #: cracknuts.acquisition.acquisition.Acquisition.on_run_progress_changed:2
-#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:7
+#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:9
 #: cracknuts.acquisition.acquisition.Acquisition.on_wave_loaded:2 of
 msgid ":sphinx_autodoc_typehints_type:`\\:py\\:obj\\:\\`None\\``"
+msgstr ""
+
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_file:7
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_json:6
+#: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:7
+#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:10 of
+msgid "None"
 msgstr ""
 
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_json:1 of
@@ -189,27 +302,32 @@ msgid "Load config from a JSON object."
 msgstr "从 JSON 文件加载配置。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_json:4 of
-msgid "the JSON object"
-msgstr ""
+msgid "The JSON object containing configuration values."
+msgstr "包含配置值的 JSON 对象。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:1 of
 msgid "Load config from a JSON string."
-msgstr ""
+msgstr "从 JSON 字符串加载配置。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.load_config_from_str:4 of
-msgid "the JSON string"
-msgstr ""
+msgid "The JSON string."
+msgstr "JSON 字符串。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:1 of
+#, fuzzy
 msgid ""
 "User should not use this function. If you need to perform actions when "
 "the ACQ state changes, please use the node functions in the ACQ lifecycle"
-" point: `init`, `do`, and `finish`."
+" point: ``init``, ``do``, and ``finish``."
 msgstr "最终用户不需要使用该函数。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:4 of
-msgid "status: 0 stopped, 1 testing, 2 running 3 paused"
-msgstr ""
+msgid "Status values: 0 = stopped, 1 = testing, 2 = running, 3 = paused."
+msgstr "状态值：0 = 已停止，1 = 测试中，2 = 运行中，3 = 已暂停。"
+
+#: cracknuts.acquisition.acquisition.Acquisition.on_status_changed:7 of
+msgid "Callable that receives the new status integer."
+msgstr "接收新状态整数的回调函数。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.pause:1 of
 msgid "Pause test or run mode."
@@ -225,69 +343,19 @@ msgid ""
 "override the settings specified in `__init__`."
 msgstr "在后台启动运行模式，该方法的参数会覆盖 `__init__` 中配置的参数。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.run:5
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:4 of
-msgid "The number of traces to acquire."
-msgstr "需要曲线的数量。"
-
 #: cracknuts.acquisition.acquisition.Acquisition.run:8
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:7
-#: cracknuts.acquisition.acquisition.Acquisition.test:7
+#: cracknuts.acquisition.acquisition.Acquisition.test:6
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:7 of
 msgid "The sample length to be acquired."
 msgstr "需要采集的曲线长度。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.run:11
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:10
-#: cracknuts.acquisition.acquisition.Acquisition.test:10
+#: cracknuts.acquisition.acquisition.Acquisition.test:9
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:10 of
 msgid "The sample offset to be acquired."
 msgstr "采集偏移。"
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:14
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:13
-#: cracknuts.acquisition.acquisition.Acquisition.test:13
-#: cracknuts.acquisition.acquisition.Acquisition.test_sync:13 of
-msgid "The trigger judge wait time in seconds."
-msgstr "`触发` 判断等待时常，单位：秒。"
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:17
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:16
-#: cracknuts.acquisition.acquisition.Acquisition.test:16
-#: cracknuts.acquisition.acquisition.Acquisition.test_sync:16 of
-msgid "The trigger judge timeout in seconds."
-msgstr "`触发` 超时时常，单位：秒"
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:20
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:19
-#: cracknuts.acquisition.acquisition.Acquisition.test:19
-#: cracknuts.acquisition.acquisition.Acquisition.test_sync:19 of
-msgid ""
-"The maximum number of error count. If `do_error_handler_strategy` is 0, "
-"this setting is invalid."
-msgstr "最大出现错误次数，如果 `do_error_handler_strategy` 设置 0，则不生效。"
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:24
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:23
-#: cracknuts.acquisition.acquisition.Acquisition.test:23
-#: cracknuts.acquisition.acquisition.Acquisition.test_sync:23 of
-msgid ""
-"The strategy to handle error handling. 0: Exit immediately, 1: Exit after"
-" exceeding the error count."
-msgstr "错误处理策略：0 立即退出，1 超过尝试次数后退出。"
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:28
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:27 of
-msgid "The file format of the trace dataset. \"scarr\" or \"numpy\"."
-msgstr "保存文件格式，\"scarr\" 或者 \"numpy\""
-
-#: cracknuts.acquisition.acquisition.Acquisition.run:31
-#: cracknuts.acquisition.acquisition.Acquisition.run_sync:30 of
-msgid ""
-"The file path of the trace dataset. If set to \"auto\", a folder with a "
-"timestamp format will be created in the current working directory to save"
-" the data."
-msgstr "文件保存路径，如果设置了 \"auto\"，则在当前工作目录下创建一个以时间戳格式命名的文件夹保存数据。"
 
 #: cracknuts.acquisition.acquisition.Acquisition.run_sync:1 of
 msgid "Start run mode in the foreground, which will cause blocking."
@@ -301,7 +369,7 @@ msgstr "停止测试或运行模式。"
 msgid "Start test mode in background."
 msgstr "在后台启动 `测试` 模式。"
 
-#: cracknuts.acquisition.acquisition.Acquisition.test:4
+#: cracknuts.acquisition.acquisition.Acquisition.test:3
 #: cracknuts.acquisition.acquisition.Acquisition.test_sync:4 of
 msgid "The number of traces to acquire. normally this value should be -1."
 msgstr "需要采集的曲线数量，一般不要指定，使用默认值：-1。"
@@ -312,4 +380,76 @@ msgstr "前台启动 `测试` 模式，这会导致阻塞。"
 
 #~ msgid "The data length to be acquired."
 #~ msgstr "采集的数据的长度。"
+
+#~ msgid "Connect to scrat device :return:"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The data in dictionary format to "
+#~ "be saved should contain the ciphertext"
+#~ " and plaintext keys,  and may "
+#~ "optionally include the key and extended"
+#~ " keys.  The plaintext is the data "
+#~ "to be encrypted, the ciphertext is "
+#~ "the encrypted result, the key is "
+#~ "used  to encrypt the plaintext, and "
+#~ "the extended field is for any "
+#~ "custom data you want to save.  The"
+#~ " data is structured as follows:  {"
+#~ "     \"plaintext\": plaintext_data_bytes,     "
+#~ "\"ciphertext\": ciphertext_data_bytes,     \"key\": "
+#~ "key_data_bytes,     \"extended\": extended_data_bytes, "
+#~ "}"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The data in dictionary format to "
+#~ "be saved should contain the ciphertext"
+#~ " and plaintext keys,"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "and may optionally include the key "
+#~ "and extended keys. The plaintext is "
+#~ "the data to be encrypted, the "
+#~ "ciphertext is the encrypted result, the"
+#~ " key is used to encrypt the "
+#~ "plaintext, and the extended field is "
+#~ "for any custom data you want to"
+#~ " save. The data is structured as "
+#~ "follows: {"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "\"plaintext\": plaintext_data_bytes, \"ciphertext\": "
+#~ "ciphertext_data_bytes, \"key\": key_data_bytes, "
+#~ "\"extended\": extended_data_bytes,"
+#~ msgstr ""
+
+#~ msgid "}"
+#~ msgstr ""
+
+#~ msgid ""
+#~ ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`str\\` \\|"
+#~ " \\:py\\:obj\\:\\`None\\``"
+#~ msgstr ""
+
+#~ msgid ""
+#~ ":sphinx_autodoc_typehints_type:`\\:py\\:class\\:\\`dict\\`\\\\ "
+#~ "\\\\\\[\\:py\\:class\\:\\`int\\`\\, "
+#~ "\\:py\\:class\\:\\`\\~numpy.ndarray\\`\\] \\| "
+#~ "\\:py\\:obj\\:\\`None\\``"
+#~ msgstr ""
+
+#~ msgid "the JSON object"
+#~ msgstr ""
+
+#~ msgid "the JSON string"
+#~ msgstr ""
+
+#~ msgid "status: 0 stopped, 1 testing, 2 running 3 paused"
+#~ msgstr ""
+
+#~ msgid "Acquisition Classes"
+#~ msgstr "Acquisition"
 
