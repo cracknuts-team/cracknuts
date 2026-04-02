@@ -567,31 +567,6 @@ class CrackerO1(CrackerG1):
 
         return protocol.STATUS_OK, None
 
-    def get_switch_status(self, switch_id: str) -> tuple[int, None | tuple[int, int]]:
-        """
-        Get the switch status.
-
-        :param switch_id: Switch identifier, either ``'pl'`` or ``'ps'``.
-        :type switch_id: str
-        :return: Status tuple ``(status, (sw1, sw2))``, where ``status`` is the protocol status code
-            and ``sw1`` / ``sw2`` are the two switch state bits (0 = open, 1 = closed).
-        :rtype: tuple[int, None | tuple[int, int]]
-        """
-        switch_id = switch_id.lower()
-        if switch_id == "pl":
-            offset = 0x193C
-        elif switch_id == "ps":
-            offset = 0x193C
-        else:
-            self._logger.error(f"switch_id {switch_id} not supported")
-            return self.NON_PROTOCOL_ERROR, None
-        status, res = self.register_read(base_address=0x43C10000, offset=offset)
-        if status != protocol.STATUS_OK:
-            return status, res
-        res = struct.unpack(">I", res)[0]
-        sw1, sw2 = ((res >> i) & 1 for i in (0, 1))
-        return status, (sw1, sw2)
-
     def get_switch_status_pl(self) -> tuple[int, None | tuple[int, int]]:
         """
         Get the PL switch status.
@@ -600,7 +575,12 @@ class CrackerO1(CrackerG1):
             and ``sw1`` / ``sw2`` are the two PL switch state bits (0 = open, 1 = closed).
         :rtype: tuple[int, None | tuple[int, int]]
         """
-        return self.get_switch_status("pl")
+        status, res = self.register_read(base_address=0x43C10000, offset=0x193C)
+        if status != protocol.STATUS_OK:
+            return status, res
+        res = struct.unpack(">I", res)[0]
+        sw1, sw2 = ((res >> i) & 1 for i in (0, 1))
+        return status, (sw1, sw2)
 
     def get_switch_status_ps(self) -> tuple[int, None | tuple[int, int]]:
         """
@@ -610,7 +590,16 @@ class CrackerO1(CrackerG1):
             and ``sw1`` / ``sw2`` are the two PS switch state bits (0 = open, 1 = closed).
         :rtype: tuple[int, None | tuple[int, int]]
         """
-        return self.get_switch_status("ps")
+        res = self._ssh_cracker.exec("gpioget -c 0 9 14", print_output=False)
+        if res is not None and res["exit_code"] == 0:
+            output = res["stdout"].strip()
+            if output is not None and len(output) > 0:
+                gpio_states = []
+                for item in output.split():
+                    _, state = item.split("=")
+                    gpio_states.append(1 if state == "active" else 0)
+                return protocol.STATUS_OK, tuple(gpio_states)
+        return self.NON_PROTOCOL_ERROR, None
 
     def _load_image(self, image_path: str, fit: bool = True) -> np.ndarray | None:
         """
