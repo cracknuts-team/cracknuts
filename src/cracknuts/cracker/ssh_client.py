@@ -11,23 +11,14 @@ import paramiko
 from cracknuts import logger
 
 
-__SSH_PRIVATE_KEY = """-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACAE6LmHiknXfqM5ee5FSVr091gRm9nv55p46K1EKWwyDQAAAKDq5Kma6uSp
-mgAAAAtzc2gtZWQyNTUxOQAAACAE6LmHiknXfqM5ee5FSVr091gRm9nv55p46K1EKWwyDQ
-AAAEDYTZLDl1AqFeJCYr5UQkGgLxE/ACHUBC6oQLSDZzaIyQTouYeKSdd+ozl57kVJWvT3
-WBGb2e/nmnjorUQpbDINAAAAGWNyYWNrZXJBZG1pbkBjcmFja251dHMuaW8BAgME
------END OPENSSH PRIVATE KEY-----"""
-
-
 class SSHClient:
-    """
-    SSH 客户端封装类
+    """SSH client wrapper for remote command execution and file transfer.
 
-    支持：
-    - ip / port / username / private_key 配置
-    - private_key 可以是文件路径，也可以是 PEM 格式的字符串
-    - exec() 执行命令并实时流式输出结果
+    Supports:
+
+    - Configuration via ``ip``, ``port``, ``username``, and ``private_key``.
+    - Private key as a file path or PEM-encoded string.
+    - Streaming output during command execution via :meth:`exec`.
     """
 
     def __init__(
@@ -40,16 +31,17 @@ class SSHClient:
         timeout: float = 10.0,
         encoding: str = "utf-8",
     ):
-        """
-        初始化 SSH 客户端（不立即连接）
+        """Initialise the SSH client without connecting.
 
-        :param ip:          目标主机 IP 或主机名
-        :param username:    SSH 用户名
-        :param private_key: 私钥文件路径，或 -----BEGIN OPENSSH PRIVATE KEY----- 格式的字符串（与 password 二选一）
-        :param password:    SSH 密码（与 private_key 二选一）
-        :param port:        SSH 端口，默认 22
-        :param timeout:     连接超时时间（秒），默认 10
-        :param encoding:    命令输出编码，默认 utf-8
+        :param ip: Target host IP address or hostname.
+        :param username: SSH username.
+        :param private_key: Path to a private key file, or a PEM-encoded key string.
+            Mutually exclusive with ``password``.
+        :param password: SSH password. Mutually exclusive with ``private_key``.
+        :param port: SSH port. Defaults to ``22``.
+        :param timeout: Connection timeout in seconds. Defaults to ``10.0``.
+        :param encoding: Command output encoding. Defaults to ``"utf-8"``.
+        :raises ValueError: If neither or both ``private_key`` and ``password`` are provided.
         """
         self.ip = ip
         self.port = port
@@ -66,18 +58,19 @@ class SSHClient:
         if private_key is not None and password is not None:
             raise ValueError("Only one of private_key or password can be specified.")
 
-    # ------------------------------------------------------------------
-    # 私钥加载
-    # ------------------------------------------------------------------
-
     def _load_private_key(self) -> paramiko.PKey:
-        """
-        自动识别私钥来源（文件路径 or 字符串），并加载为 PKey 对象。
-        支持 OpenSSH / RSA / DSS / ECDSA / Ed25519 格式。
+        """Load the private key from a file path or PEM string.
+
+        Automatically detects whether the key is stored in a file or provided
+        as a string, then parses it into a :class:`paramiko.PKey` object.
+        Supports OpenSSH, RSA, ECDSA, and Ed25519 key formats.
+
+        :return: Loaded private key object, or ``None`` if the format is unrecognized.
+        :rtype: paramiko.PKey
         """
         key_str = self.private_key.strip()
 
-        # 判断是否为文件路径（不含换行且文件存在）
+        # Check if it's a file path (no newlines and file exists)
         import os
 
         if "\n" not in key_str and os.path.isfile(key_str):
@@ -86,7 +79,7 @@ class SSHClient:
 
         key_file = io.StringIO(key_str)
 
-        # 按顺序尝试各种密钥类型
+        # Try key types in order
         key_classes = [
             paramiko.Ed25519Key,
             paramiko.ECDSAKey,
@@ -105,13 +98,11 @@ class SSHClient:
         self._logger.error(f"Unrecognized private key format. Last error: {last_exc}")
         return None
 
-    # ------------------------------------------------------------------
-    # 连接 / 断开
-    # ------------------------------------------------------------------
-
     def connect(self) -> "SSHClient":
-        """
-        建立 SSH 连接，返回 self 以支持链式调用。
+        """Establish an SSH connection.
+
+        :return: The current instance for method chaining.
+        :rtype: SSHClient
         """
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -144,32 +135,28 @@ class SSHClient:
         self._client = client
         return self
 
-    def disconnect(self):
-        """断开 SSH 连接"""
+    def disconnect(self) -> None:
+        """Close the SSH connection and release resources."""
         if self._client:
             self._client.close()
             self._client = None
 
     def is_connected(self) -> bool:
-        """检查连接是否仍然活跃"""
+        """Check if the SSH connection is still active.
+
+        :return: ``True`` if connected, ``False`` otherwise.
+        :rtype: bool
+        """
         if self._client is None:
             return False
         transport = self._client.get_transport()
         return transport is not None and transport.is_active()
-
-    # ------------------------------------------------------------------
-    # 上下文管理器
-    # ------------------------------------------------------------------
 
     def __enter__(self) -> "SSHClient":
         return self.connect()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
-
-    # ------------------------------------------------------------------
-    # 执行命令
-    # ------------------------------------------------------------------
 
     def exec(
         self,
@@ -179,19 +166,17 @@ class SSHClient:
         on_stderr: Callable[[str], None] | None = None,
         print_output: bool = True,
     ) -> dict | None:
-        """
-        在远程主机上执行命令，实时流式输出结果。
+        """Execute a command on the remote host with streaming output.
 
-        :param command:     要执行的 Shell 命令
-        :param timeout:     命令执行超时（秒），None 表示不限制
-        :param on_stdout:   stdout 每行回调函数（可选）
-        :param on_stderr:   stderr 每行回调函数（可选）
-        :param print_output: 是否自动打印到控制台，默认 True
-        :return: {
-                    "stdout": str,   # 完整标准输出
-                    "stderr": str,   # 完整错误输出
-                    "exit_code": int # 退出码
-                 }| None（如果 print_output=True 则不返回输出内容）
+        :param command: Shell command to execute.
+        :param timeout: Command execution timeout in seconds. ``None`` for no timeout.
+        :param on_stdout: Optional callback invoked for each line of stdout.
+        :param on_stderr: Optional callback invoked for each line of stderr.
+        :param print_output: If ``True``, automatically print output to the console.
+            Defaults to ``True``.
+        :return: A dictionary with keys ``stdout``, ``stderr``, and ``exit_code`` if
+            ``print_output`` is ``False``; otherwise ``None``.
+        :rtype: dict | None
         """
         if not self.is_connected():
             self._logger.error("SSH is not connected. Call connect() or use the context manager first.")
@@ -200,21 +185,21 @@ class SSHClient:
         stdout_lines = []
         stderr_lines = []
 
-        # 打开独立 channel（比 exec_command 更可控）
+        # Open a dedicated channel for finer-grained control than `exec_command`.
         transport = self._client.get_transport()
         channel = transport.open_session()
         if timeout is not None:
             channel.settimeout(timeout)
         channel.exec_command(command)
 
-        # 实时读取 stdout / stderr
+        # Stream stdout / stderr in real time
         def _read_stream(stream, collector: list, label: str, callback):
-            """在独立线程中逐行读取流"""
+            """Read stream line by line in a separate thread."""
             for raw_line in stream:
                 try:
                     line = raw_line.decode(self.encoding, errors="replace")
                 except AttributeError:
-                    line = raw_line  # 已经是 str（paramiko 某些版本）
+                    line = raw_line  # Already a str (some paramiko versions)
                 collector.append(line)
                 if print_output:
                     print(line, end="", flush=True)
@@ -251,10 +236,10 @@ class SSHClient:
             return None
 
     def exec_iter(self, command: str) -> Generator[str, None, None]:
-        """
-        生成器版本：逐行 yield stdout 输出（不含 stderr）。
+        """Generator-based version: yield stdout lines one by one (stderr excluded).
 
-        示例：
+        Example::
+
             for line in client.exec_iter("tail -f /var/log/syslog"):
                 print(line, end="")
         """
@@ -314,17 +299,21 @@ class SSHClient:
         make_executable: bool = True,
         exec_command: str | None = None,
     ) -> dict:
-        """
-        上传本地文件到远程主机并执行。
+        """Upload a local file to the remote host and execute it.
 
-        :param local_path:      本地文件路径
-        :param remote_path:     远程目标路径
-        :param timeout:         命令执行超时（秒），None 表示不限制
-        :param on_stdout:       stdout 每行回调函数（可选）
-        :param on_stderr:       stderr 每行回调函数（可选）
-        :param print_output:    是否自动打印输出
-        :param make_executable: 是否添加执行权限 `chmod +x`
-        :param exec_command:    自定义执行命令，None 时使用 `remote_path`
+        :param local_path: Path to the local file.
+        :param remote_path: Destination path on the remote host.
+        :param timeout: Command execution timeout in seconds. None for no timeout.
+        :param on_stdout: Optional callback invoked for each line of stdout.
+        :param on_stderr: Optional callback invoked for each line of stderr.
+        :param print_output: If True, automatically print output to the console.
+            Defaults to True.
+        :param make_executable: If True, add execute permission via chmod +x.
+            Defaults to True.
+        :param exec_command: Custom command to execute. None uses remote_path directly.
+        :return: A dictionary with keys stdout, stderr, and exit_code if
+            print_output is False; otherwise None.
+        :rtype: dict | None
         """
         if not self.is_connected():
             self._logger.error("SSH is not connected. Call connect() or use the context manager first.")

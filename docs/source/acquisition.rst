@@ -1,5 +1,5 @@
-Acquisition
-===========
+Acquisition Module
+==================
 
 `Acquisition` is responsible for managing the process of waveform data acquisition.
 

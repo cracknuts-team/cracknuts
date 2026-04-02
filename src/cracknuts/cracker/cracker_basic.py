@@ -47,6 +47,8 @@ class ConfigBasic:
         """
         Dump the configuration to a JSON string.
 
+        :return: JSON string representation of the configuration.
+        :rtype: str
         """
 
         def enum_converter(obj):
@@ -60,9 +62,13 @@ class ConfigBasic:
 
     def load_from_json(self, json_str: str) -> "ConfigBasic":
         """
-        Load configuration from a JSON string. If a value in the JSON string is null, it will be skipped,
+        Load configuration from a JSON string. If a value in the JSON string is null, it will be skipped
         and the default configuration will be used.
 
+        :param json_str: JSON string to load configuration from.
+        :type json_str: str
+        :return: This configuration instance with values updated from the JSON string.
+        :rtype: ConfigBasic
         """
         for k, v in json.loads(json_str).items():
             if v is not None:
@@ -442,7 +448,9 @@ class CrackerBasic[T: ConfigBasic](ABC):
         """
         Set the Cracker OS logging level.
 
-        :param level: The logging level, debug, info, warning, error,
+        :param level: The logging level: ``debug``, ``info``, ``warning``, or ``error``.
+        :type level: str
+        :return: None
         """
 
         if level.lower() not in ("debug", "info", "warning", "error"):
