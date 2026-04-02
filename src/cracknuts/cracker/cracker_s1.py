@@ -864,28 +864,35 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     def spi_config(
         self,
         speed: float | None = None,
-        cpol: serial.SpiCpol | None = None,
-        cpha: serial.SpiCpha | None = None,
+        cpol: serial.SpiCpol | int | str | None = None,
+        cpha: serial.SpiCpha | int | str | None = None,
         csn_auto: bool | None = None,
         csn_delay: bool | None = None,
     ) -> tuple[int, None | str]:
         """
         Configure the SPI interface parameters, including CPOL (clock polarity) and CPHA (clock phase).
 
+        Accepts enum members from ``cracknuts.cracker.serial`` or direct numeric/string values
+        (eliminating the need to import the enum module). Invalid values are rejected with
+        an error and the function returns ``(self.NON_PROTOCOL_ERROR, None)``.
+
         :param speed: Communication speed in kHz (default 10 kHz). Relationship to PSC register:
-            speed = (100e6) / (2 * PSC).
+            speed = (100e6) / (2 * PSC). Default: current config value.
         :type speed: float | None
-        :param cpol: Clock polarity.
-        :type cpol: serial.SpiCpol | None
-        :param cpha: Clock phase.
-        :type cpha: serial.SpiCpha | None
+        :param cpol: Clock polarity. Can be a ``serial.SpiCpol`` enum, int (0=LOW, 1=HIGH),
+            or string ("LOW", "HIGH", "0", "1"). Default: current config value.
+        :type cpol: serial.SpiCpol | int | str | None
+        :param cpha: Clock phase. Can be a ``serial.SpiCpha`` enum, int (0=LOW, 1=HIGH),
+            or string ("LOW", "HIGH", "0", "1"). Default: current config value.
+        :type cpha: serial.SpiCpha | int | str | None
         :param csn_auto: If True, the chip-select (CSN) signal is pulled low only during data
             communication. If False, CSN remains low continuously.
+            Default: current config value.
         :type csn_auto: bool | None
         :param csn_delay: If True, the CSN signal stays low during the delay period. If False,
-            CSN is high during the delay.
+            CSN is high during the delay. Default: current config value.
         :type csn_delay: bool | None
-        :return: Device response status and received data: (status, response).
+        :return: Device response status and optional error message.
         :rtype: tuple[int, None | str]
         """
 
@@ -904,6 +911,54 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 csn_auto = config.nut_spi_csn_auto
             if csn_delay is None:
                 csn_delay = config.nut_spi_csn_delay
+
+        # Coerce cpol and cpha to enum types
+        cpol_map = {
+            0: serial.SpiCpol.SPI_CPOL_LOW,
+            1: serial.SpiCpol.SPI_CPOL_HIGH,
+            "0": serial.SpiCpol.SPI_CPOL_LOW,
+            "1": serial.SpiCpol.SPI_CPOL_HIGH,
+            "LOW": serial.SpiCpol.SPI_CPOL_LOW,
+            "HIGH": serial.SpiCpol.SPI_CPOL_HIGH,
+        }
+        cpha_map = {
+            0: serial.SpiCpha.SPI_CPHA_LOW,
+            1: serial.SpiCpha.SPI_CPHA_HIGH,
+            "0": serial.SpiCpha.SPI_CPHA_LOW,
+            "1": serial.SpiCpha.SPI_CPHA_HIGH,
+            "LOW": serial.SpiCpha.SPI_CPHA_LOW,
+            "HIGH": serial.SpiCpha.SPI_CPHA_HIGH,
+        }
+
+        try:
+            if isinstance(cpol, serial.SpiCpol):
+                pass
+            elif isinstance(cpol, int | str):
+                if isinstance(cpol, str):
+                    cpol = cpol.strip().upper()
+                if cpol not in cpol_map:
+                    self._logger.error(f"Invalid cpol: {cpol}. Allowed values: {list(cpol_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                cpol = cpol_map[cpol]
+            else:
+                self._logger.error(f"Invalid cpol type: {type(cpol)}")
+                return self.NON_PROTOCOL_ERROR, None
+
+            if isinstance(cpha, serial.SpiCpha):
+                pass
+            elif isinstance(cpha, int | str):
+                if isinstance(cpha, str):
+                    cpha = cpha.strip().upper()
+                if cpha not in cpha_map:
+                    self._logger.error(f"Invalid cpha: {cpha}. Allowed values: {list(cpha_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                cpha = cpha_map[cpha]
+            else:
+                self._logger.error(f"Invalid cpha type: {type(cpha)}")
+                return self.NON_PROTOCOL_ERROR, None
+        except Exception as e:
+            self._logger.error(f"Error coercing SPI parameters: {e}")
+            return self.NON_PROTOCOL_ERROR, None
 
         # System clock is 100e6
         # Clock divider is 2
@@ -1295,18 +1350,28 @@ class CrackerS1(CrackerBasic[ConfigS1]):
 
     @connection_status_check
     def i2c_config(
-        self, dev_addr: int | None = None, speed: serial.I2cSpeed | None = None, enable_stretch: bool = False
+        self,
+        dev_addr: int | str | None = None,
+        speed: serial.I2cSpeed | int | str | None = None,
+        enable_stretch: bool = False,
     ) -> tuple[int, None]:
         """
         Configure the I2C interface.
 
-        :param dev_addr: Device address.
-        :type dev_addr: int | None
-        :param speed: Bus speed.
-        :type speed: serial.I2cSpeed | None
+        Accepts enum members from ``cracknuts.cracker.serial`` or direct numeric/string values
+        (eliminating the need to import the enum module). Invalid values are rejected with
+        an error and the function returns ``(self.NON_PROTOCOL_ERROR, None)``.
+
+        :param dev_addr: Device address (0-127). Can be an int (0-127), or string in hex format
+            ("0x1A", "1A") or decimal format ("26"). Default: current config value.
+        :type dev_addr: int | str | None
+        :param speed: Bus speed. Can be a ``serial.I2cSpeed`` enum, int (100000, 400000, 1000000,
+            3400000, 5000000 Hz), or string ("100K", "400K", "1M", "3400K", "5M").
+            Default: current config value.
+        :type speed: serial.I2cSpeed | int | str | None
         :param enable_stretch: Whether to enable clock stretching.
         :type enable_stretch: bool
-        :return: Device response status and received data: (status, response).
+        :return: Device response status and None.
         :rtype: tuple[int, None]
         """
 
@@ -1319,6 +1384,60 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 dev_addr = config.nut_i2c_dev_addr
             if speed is None:
                 speed = config.nut_i2c_speed
+
+        # Coerce dev_addr (allow hex string or decimal)
+        if isinstance(dev_addr, str):
+            s = dev_addr.strip()
+            if s.lower().startswith("0x"):
+                try:
+                    dev_addr = int(s, 16)
+                except Exception:
+                    self._logger.error(f"Invalid dev_addr hex string: {dev_addr}")
+                    return self.NON_PROTOCOL_ERROR, None
+            else:
+                if s.isdigit():
+                    dev_addr = int(s)
+                else:
+                    try:
+                        dev_addr = int(s, 16)
+                    except Exception:
+                        self._logger.error(f"Invalid dev_addr string: {dev_addr}")
+                        return self.NON_PROTOCOL_ERROR, None
+
+        if not isinstance(dev_addr, int) or not (0 <= dev_addr <= 0x7F):
+            self._logger.error("I2C dev_addr must be an integer in range 0..127")
+            return self.NON_PROTOCOL_ERROR, None
+
+        # Mappings for I2C speeds
+        speed_map = {
+            100000: serial.I2cSpeed.STANDARD_100K,
+            400000: serial.I2cSpeed.FAST_400K,
+            1000000: serial.I2cSpeed.FAST_PLUS_1M,
+            3400000: serial.I2cSpeed.HIGH_SPEED_3400K,
+            5000000: serial.I2cSpeed.ULTRA_FAST_5M,
+            "100K": serial.I2cSpeed.STANDARD_100K,
+            "400K": serial.I2cSpeed.FAST_400K,
+            "1M": serial.I2cSpeed.FAST_PLUS_1M,
+            "3400K": serial.I2cSpeed.HIGH_SPEED_3400K,
+            "5M": serial.I2cSpeed.ULTRA_FAST_5M,
+        }
+
+        try:
+            if isinstance(speed, serial.I2cSpeed):
+                pass
+            elif isinstance(speed, int | str):
+                if isinstance(speed, str):
+                    speed = speed.strip().upper()
+                if speed not in speed_map:
+                    self._logger.error(f"Invalid I2C speed: {speed}. Allowed values: {list(speed_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                speed = speed_map[speed]
+            else:
+                self._logger.error(f"Invalid speed type: {type(speed)}")
+                return self.NON_PROTOCOL_ERROR, None
+        except Exception as e:
+            self._logger.error(f"Error coercing I2C speed: {e}")
+            return self.NON_PROTOCOL_ERROR, None
 
         payload = struct.pack(">BB?", dev_addr, speed.value, enable_stretch)
         self._logger.debug(f"cracker_i2c_config payload: {payload.hex()}")
@@ -1710,23 +1829,33 @@ class CrackerS1(CrackerBasic[ConfigS1]):
     @connection_status_check
     def uart_config(
         self,
-        baudrate: serial.Baudrate | None = None,
-        bytesize: serial.Bytesize | None = None,
-        parity: serial.Parity | None = None,
-        stopbits: serial.Stopbits | None = None,
+        baudrate: serial.Baudrate | int | str | None = None,
+        bytesize: serial.Bytesize | int | str | None = None,
+        parity: serial.Parity | int | str | None = None,
+        stopbits: serial.Stopbits | int | str | None = None,
     ) -> tuple[int, None]:
         """
         Configure the UART interface parameters.
 
-        :param baudrate: Baud rate.
-        :type baudrate: serial.Baudrate | None
-        :param bytesize: Data bit length.
-        :type bytesize: serial.Bytesize | None
-        :param parity: Parity mode.
-        :type parity: serial.Parity | None
-        :param stopbits: Stop bits.
-        :type stopbits: serial.Stopbits | None
-        :return: Device response status and received data: (status, response).
+        Accepts enum members from ``cracknuts.cracker.serial`` or direct numeric/string values
+        (eliminating the need to import the enum module). Invalid values are rejected with
+        an error and the function returns ``(self.NON_PROTOCOL_ERROR, None)``.
+
+        :param baudrate: Baud rate. Can be a ``serial.Baudrate`` enum, int (9600, 19200,
+            38400, 57600, 115200, 1000000), or string ("9600", "115200", etc.).
+            Default: current config value.
+        :type baudrate: serial.Baudrate | int | str | None
+        :param bytesize: Data bit length. Can be a ``serial.Bytesize`` enum, int (8),
+            or string ("8", "EIGHTBITS"). Default: current config value.
+        :type bytesize: serial.Bytesize | int | str | None
+        :param parity: Parity mode. Can be a ``serial.Parity`` enum, int (0=NONE, 1=EVEN,
+            2=ODD), or string ("NONE", "EVEN", "ODD", "0", "1", "2").
+            Default: current config value.
+        :type parity: serial.Parity | int | str | None
+        :param stopbits: Stop bits. Can be a ``serial.Stopbits`` enum, int (1=ONE, 2=TWO),
+            or string ("1", "2", "ONE", "TWO"). Default: current config value.
+        :type stopbits: serial.Stopbits | int | str | None
+        :return: Device response status and None.
         :rtype: tuple[int, None]
         """
 
@@ -1743,6 +1872,102 @@ class CrackerS1(CrackerBasic[ConfigS1]):
                 parity = config.nut_uart_parity
             if stopbits is None:
                 stopbits = config.nut_uart_stopbits
+
+        # Coerce parameters to enum types
+        baud_map = {
+            9600: serial.Baudrate.BAUDRATE_9600,
+            19200: serial.Baudrate.BAUDRATE_19200,
+            38400: serial.Baudrate.BAUDRATE_38400,
+            57600: serial.Baudrate.BAUDRATE_57600,
+            115200: serial.Baudrate.BAUDRATE_115200,
+            1000000: serial.Baudrate.BAUDRATE_1000000,
+            "9600": serial.Baudrate.BAUDRATE_9600,
+            "19200": serial.Baudrate.BAUDRATE_19200,
+            "38400": serial.Baudrate.BAUDRATE_38400,
+            "57600": serial.Baudrate.BAUDRATE_57600,
+            "115200": serial.Baudrate.BAUDRATE_115200,
+            "1000000": serial.Baudrate.BAUDRATE_1000000,
+        }
+        bytesize_map = {
+            8: serial.Bytesize.EIGHTBITS,
+            "8": serial.Bytesize.EIGHTBITS,
+            "EIGHTBITS": serial.Bytesize.EIGHTBITS,
+        }
+        parity_map = {
+            0: serial.Parity.PARITY_NONE,
+            1: serial.Parity.PARITY_EVEN,
+            2: serial.Parity.PARITY_ODD,
+            "0": serial.Parity.PARITY_NONE,
+            "1": serial.Parity.PARITY_EVEN,
+            "2": serial.Parity.PARITY_ODD,
+            "NONE": serial.Parity.PARITY_NONE,
+            "EVEN": serial.Parity.PARITY_EVEN,
+            "ODD": serial.Parity.PARITY_ODD,
+        }
+        stopbits_map = {
+            1: serial.Stopbits.STOPBITS_ONE,
+            2: serial.Stopbits.STOPBITS_TWO,
+            "1": serial.Stopbits.STOPBITS_ONE,
+            "2": serial.Stopbits.STOPBITS_TWO,
+            "ONE": serial.Stopbits.STOPBITS_ONE,
+            "TWO": serial.Stopbits.STOPBITS_TWO,
+        }
+
+        try:
+            if isinstance(baudrate, serial.Baudrate):
+                pass
+            elif isinstance(baudrate, int | str):
+                if isinstance(baudrate, str):
+                    baudrate = baudrate.strip()
+                if baudrate not in baud_map:
+                    self._logger.error(f"Invalid baudrate: {baudrate}. Allowed values: {list(baud_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                baudrate = baud_map[baudrate]
+            else:
+                self._logger.error(f"Invalid baudrate type: {type(baudrate)}")
+                return self.NON_PROTOCOL_ERROR, None
+
+            if isinstance(bytesize, serial.Bytesize):
+                pass
+            elif isinstance(bytesize, int | str):
+                if isinstance(bytesize, str):
+                    bytesize = bytesize.strip()
+                if bytesize not in bytesize_map:
+                    self._logger.error(f"Invalid bytesize: {bytesize}. Allowed values: {list(bytesize_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                bytesize = bytesize_map[bytesize]
+            else:
+                self._logger.error(f"Invalid bytesize type: {type(bytesize)}")
+                return self.NON_PROTOCOL_ERROR, None
+
+            if isinstance(parity, serial.Parity):
+                pass
+            elif isinstance(parity, int | str):
+                if isinstance(parity, str):
+                    parity = parity.strip().upper()
+                if parity not in parity_map:
+                    self._logger.error(f"Invalid parity: {parity}. Allowed values: {list(parity_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                parity = parity_map[parity]
+            else:
+                self._logger.error(f"Invalid parity type: {type(parity)}")
+                return self.NON_PROTOCOL_ERROR, None
+
+            if isinstance(stopbits, serial.Stopbits):
+                pass
+            elif isinstance(stopbits, int | str):
+                if isinstance(stopbits, str):
+                    stopbits = stopbits.strip().upper()
+                if stopbits not in stopbits_map:
+                    self._logger.error(f"Invalid stopbits: {stopbits}. Allowed values: {list(stopbits_map.keys())}")
+                    return self.NON_PROTOCOL_ERROR, None
+                stopbits = stopbits_map[stopbits]
+            else:
+                self._logger.error(f"Invalid stopbits type: {type(stopbits)}")
+                return self.NON_PROTOCOL_ERROR, None
+        except Exception as e:
+            self._logger.error(f"Error coercing UART parameters: {e}")
+            return self.NON_PROTOCOL_ERROR, None
 
         payload = struct.pack(">BBBB", stopbits.value, parity.value, bytesize.value, baudrate.value)
         self._logger.debug(f"cracker_uart_config payload: {payload.hex()}")
