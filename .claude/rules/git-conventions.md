@@ -3,7 +3,7 @@
 ## Commit Message Format
 
 ```
-<type>(<scope>): <short description>
+<type>[(<scope>)]: <short description>
 
 <body (optional)>
 
@@ -24,6 +24,7 @@
 
 - English only
 - Subject line ≤ 50 chars, imperative mood ("Add X", not "Added X")
+- Scope is optional; use it to indicate the affected module (e.g. `fix(cracker):`)
 - No Co-Authored-By or Claude attribution lines
 
 **Example:**
@@ -37,6 +38,6 @@ Closes #42
 
 ## GitHub PR Format
 
-- Title follows the same `<type>(<scope>): <description>` format
+- Title follows the same `<type>: <description>` format
 - Body in English only
 - No Co-Authored-By or Claude attribution lines
