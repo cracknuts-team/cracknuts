@@ -1,94 +1,134 @@
 # 开发说明
 
-介绍项目结构技术栈
-
 ## 项目目录说明
 
-`src`作为源码目录，用于存放项目正式代码  
-`test`作为测试代码目录，用于存放单元测试代码
+`src/` — 源码目录，用于存放项目正式代码  
+`tests/` — 测试代码目录，用于存放单元测试及集成测试代码
 
 ## 分支说明
 
-- `main` 分支为主分支，经过测试的代码才能合并到主分支，该分支保持最新的代码  
-- `major.minor_dev` 分支为特性开发分支，用于特定版本新特性开发阶段代码，功能稳定后合并到相应的`major.minor`分支  
-- `major.minor` 分支为特性开发分支，存储该版本下的特性稳定代码，以及后续的bug修复  
+- `main` — 主分支，经过测试和评审的代码才能合并到此分支，保持最新稳定代码
+- `major.minor_dev` — 特性开发分支，用于特定版本新特性开发阶段，功能稳定后合并到对应的 `major.minor` 分支
+- `major.minor` — 版本稳定分支，存储该版本的稳定代码，后续只接受 bug 修复
 
-开发人员需要自己在本地分支完成功能开发及测试后推送代码远程dev分支，最终校验无误后合并的主分支和相对应的版本分支。
+开发人员应在本地分支完成功能开发及测试后，通过 Pull Request 向 `main` 或对应的 `major.minor` 分支提交合并请求。
 
 ## 开发环境
 
-在项目代码根目录执行：  
+本项目使用 [uv](https://github.com/astral-sh/uv) 管理虚拟环境和依赖。
+
+**1. 克隆仓库**
 
 ```shell
-python -m pip install -e .
+git clone https://github.com/cracknuts-team/cracknuts.git
+cd cracknuts
 ```
 
-## 构建
+**2. 安装 uv**（若已安装可跳过）
+
+Linux / macOS：
 
 ```shell
-python -m build
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+Windows：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**3. 安装项目依赖**
+
+```shell
+uv sync
+```
+
+该命令会自动创建 `.venv/` 并以可编辑模式安装所有依赖（含开发依赖）。
+
+**4. 安装 JavaScript 依赖**
+
+```shell
+cd jupyter_frontend
+pnpm install
+```
+
+**5. 启动开发模式**
+
+```shell
+pnpm run dev
+```
+
+启用 HMR（热模块替换）需设置环境变量 `ANYWIDGET_HMR=1`：
+
+```shell
+# bash
+ANYWIDGET_HMR=1 jupyter lab
+```
+
+```powershell
+# PowerShell
+$env:ANYWIDGET_HMR=1; jupyter lab
+```
+
+## 常用命令
+
+| 任务 | 命令 |
+|---|---|
+| 运行 Python | `uv run python` |
+| 运行脚本 | `uv run python <script.py>` |
+| 运行测试 | `uv run pytest` |
+| 添加依赖 | `uv add <package>` |
+| 构建包 | `uv build` |
 
 ## 代码规范
 
-变量、方法命名采用蛇形规则，类采用驼峰。
-
-方法、变量要声明类型
-
-日志logger在类中的必须是`包路径+名称`
-
-## docstring规范
-
-reStructuredText（reST）
+- 变量、方法命名采用蛇形命名法（`snake_case`），类采用大驼峰（`PascalCase`）
+- 方法参数和变量需声明类型注解
+- 类中的日志 logger 必须使用完整包路径作为名称（例如 `cracknuts.cracker.cracker_s1`）
+- Docstring 采用 reStructuredText（reST）格式
 
 ## 提交注释规范
 
-1. 基本结构： 通常采用如下格式：
+所有提交信息必须使用**英文**编写。
 
-   ```
-   <类型>(<范围>): <简短描述>
+**格式：**
 
-   <详细描述（可选）>
-    
-   <关联问题或备注（可选）>
-   ```
+```
+<类型>[(<范围>)]: <简短描述>
 
-   示例
+[正文]
 
-   ```
-   feat(cracker): 添加配置电压接口
+[尾部]
+```
 
-   增加了新的 配置电压接口。
-   关联问题：#42
-   ```
+**类型说明：**
 
-2. 第一行（标题）：
+| 类型 | 适用场景 |
+|---|---|
+| `feat` | 新功能 |
+| `fix` | Bug 修复 |
+| `docs` | 仅修改文档 |
+| `style` | 代码格式调整（不影响逻辑） |
+| `refactor` | 代码重构（不引入新功能或修复 bug） |
+| `test` | 添加或更新测试 |
+| `chore` | 构建工具、配置文件、依赖等杂项变更 |
 
-    1. 限制在 50 个字符内，简明扼要。
-    2. 动词时态使用祈使句（如 "Add" 而不是 "Added"），强调动作，例如：
-       - fix: 修复用户注册中的 NPE 错误
-       - feat: 新增用户注销功能
+**规则：**
 
-3. 类型（Type）： 采用常见的类型标签，帮助分类提交内容：
+- 标题行限制在 50 个字符以内，使用祈使句（如 "Add X"，而非 "Added X"）
+- 范围（scope）可选，用于标明所涉及的模块（例如 `fix(cracker):`）
+- 标题与正文之间留一个空行
 
-    - feat：新功能（feature）
-    - fix：修复 bug
-    - docs：修改文档
-    - style：代码格式修改（不影响功能）
-    - refactor：重构代码（不引入新功能或修复 bug）
-    - test：添加测试
-    - chore：杂项更改（如构建工具、配置文件）
+**示例：**
 
-4. 范围（Scope）：
+```
+feat(cracker): add voltage configuration interface
 
-    - 用括号标明所涉及模块、功能或子系统（可选），例如 feat(ui) 或 fix(auth)。
+Added new interface for configuring voltage settings.
+Closes #42
+```
 
-5. 详细描述（可选）：
-
-   - 空一行后编写，解释更改的原因及背景，给团队成员提供更多上下文。
-
-6. 关联问题或备注（可选）：
-
-    - 标明关联的 issue 或 PR，例如：
-
-      关联问题：#123
+```
+fix: correct ADC sampling rate calculation
+```
